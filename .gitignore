@@ -1,0 +1,43 @@
+# Dependências
+node_modules/
+
+# Build e cache
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+
+# Cobertura de testes (Vitest)
+coverage/
+
+# Variáveis de ambiente
+# O jogo é 100% client-side (CLAUDE.md §2) — se um .env aparecer, desconfie.
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Configuração local do Claude Code
+# ATENÇÃO: .claude/settings.json É versionado de propósito (CLAUDE.md §4.1) —
+# ele carrega os guardrails de git para todo mundo que entrar no projeto.
+# Só o settings.local.json, que é por máquina, fica de fora.
+.claude/settings.local.json
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# Sistema operacional
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Arquivos locais soltos
+*.local
