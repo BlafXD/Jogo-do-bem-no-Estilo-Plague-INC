@@ -1,2 +1,9 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Hooks precisam de LF mesmo no Windows.
+# Com core.autocrlf=true (o padrão aqui), o checkout entregaria o script com
+# CRLF e o shebang viraria "#!/bin/sh\r" — o sh recusa com "bad interpreter" e
+# o hook simplesmente não roda. Falha silenciosa: o commit passa, sem a trava.
+.githooks/** text eol=lf
+

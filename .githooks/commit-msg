@@ -1,0 +1,6 @@
+#!/bin/sh
+# Remove qualquer atribuição automática de IA da mensagem de commit.
+grep -v -e '^Co-Authored-By: Claude' \
+        -e 'Generated with \[Claude Code\]' \
+        -e '^🤖' "$1" > "$1.tmp" || true
+mv "$1.tmp" "$1"

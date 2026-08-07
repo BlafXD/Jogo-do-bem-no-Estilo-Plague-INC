@@ -28,6 +28,35 @@ Regras curtas:
 
 ---
 
+## 2026-08-07 — Guardrails de git e remoção do teste de fumaça
+
+- **Parte / tarefa:** `SETUP-07` (em andamento — falta uma observação, ver abaixo)
+- **O que mudou:**
+  - `tests/toolchain.test.ts` **apagado**, com autorização. Cumpriu o que prometia: existiu do `SETUP-03` ao `SETUP-06` só para o `npm run test` ter o que rodar. A suíte segue com 10 testes, todos do RNG.
+  - `.claude/settings.json` **criado e versionado** — `includeCoAuthoredBy: false` e a lista de `deny` do `FORMA-DE-TRABALHO.md §4.1`. Versionado de propósito: quando o grupo entrar, a trava já vale para todo mundo sem ninguém configurar nada.
+  - `.githooks/commit-msg` **criado**, executável, e `core.hooksPath` apontado para `.githooks`.
+  - `.gitattributes` — regra nova, explicada abaixo.
+- **Bug encontrado e corrigido antes de existir: o hook quebraria em qualquer máquina que clonasse o repositório.** O `core.autocrlf` está em `true` e o `.gitattributes` só tinha `* text=auto`. Com isso o checkout entregaria o `commit-msg` com CRLF, o shebang viraria `#!/bin/sh\r`, e o `sh` recusaria com "bad interpreter". **A falha é silenciosa** — o commit passa normalmente, só que sem trava nenhuma. E não apareceria aqui: o arquivo escrito localmente já nasceu com LF; o estrago só surgiria no `git clone` do colega. Corrigido com `.githooks/** text eol=lf`, e conferido com `git check-attr` (`eol: lf`).
+- **Teste do hook, sem commitar.** Chamei o script direto com quatro arquivos de mensagem:
+  1. Mensagem normal → intacta.
+  2. `Co-Authored-By: Claude ...` → linha removida.
+  3. `🤖 Generated with [Claude Code](...)` → linha removida.
+  4. **Co-autor real + o da IA → o real ficou, só o da IA saiu.** É o caso que vai importar quando o grupo se formar e houver commit de duas pessoas.
+- **A trava de `deny` foi demonstrada por acidente:** logo depois de criar o `settings.json`, um comando meu de limpeza com `rm -rf` foi **bloqueado** pela regra `Bash(rm -rf:*)`. Não estava planejado, mas é a evidência mais honesta de que a lista funciona.
+- **Conferido que nada foi desativado:** `.git/hooks/` só tinha arquivos `.sample` (inativos), então apontar o `core.hooksPath` para `.githooks` não desligou nenhum hook em uso.
+- **Como verificar:**
+  ```bash
+  git config core.hooksPath                       # .githooks
+  git check-attr text eol -- .githooks/commit-msg # text: set, eol: lf
+  ls -l .githooks/commit-msg                      # precisa estar executável (x)
+  ```
+- **Pendente:**
+  - **`core.hooksPath` é por máquina e não é versionado.** Quem clonar o repositório precisa rodar `git config core.hooksPath .githooks` uma vez. Está escrito no `FORMA-DE-TRABALHO.md §4.1` e vai para o `README.md` de onboarding (`P4-04`).
+  - **A tarefa fica `[~]` por um motivo específico:** o aceite tem duas partes que eu não posso verificar sem violar as próprias regras que acabei de instalar. Não testei `git commit` porque tentar já é proibido (§12), e não posso fazer o commit de teste. **Vira `[x]` no seu próximo commit** — se ele sair sem trailer de IA, está fechado. É observação, não trabalho.
+- **Evidência:** —
+
+---
+
 ## 2026-08-07 — RNG semeado (mulberry32) — primeiro código do engine
 
 - **Parte / tarefa:** `SETUP-06` ✔
