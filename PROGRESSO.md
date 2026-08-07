@@ -28,6 +28,33 @@ Regras curtas:
 
 ---
 
+## 2026-08-07 — RNG semeado (mulberry32) — primeiro código do engine
+
+- **Parte / tarefa:** `SETUP-06` ✔
+- **O que mudou:**
+  - `src/engine/rng.ts` — implementado. Três exportações: `nextRandom` (passo puro), `mulberry32` (gerador com estado interno, a forma escrita no `docs/GDD.md §3`) e `createRngState` (normaliza a seed).
+  - `tests/rng.test.ts` — 12 testes.
+- **Decisão de desenho: o núcleo é um passo puro, não um closure.** A versão mais divulgada do mulberry32 devolve uma função que guarda o estado dentro dela. Isso não serve aqui por dois motivos:
+  1. **§4 manda funções do engine serem puras.** Um closure com estado mutável dentro do `engine/` contraria a regra logo no primeiro arquivo.
+  2. **`P6-07` vai salvar a partida no `localStorage`.** Closure não se serializa. Salvar no meio da partida e recarregar reiniciaria o sorteio do zero — a partida deixaria de ser reprodutível justamente no caso em que a reprodutibilidade importa.
+  - `nextRandom(state)` devolve `{ value, state }` e não toca no que recebeu. O `mulberry32(seed)` do GDD continua existindo, implementado em cima dele, para uso local dentro de uma função. Está escrito no próprio arquivo que ele **não** deve ser usado em nada que precise ser salvo.
+- **Detalhe de implementação que evita um bug lento:** o estado é mantido em 32 bits (`>>> 0`) em vez de deixar o acumulador crescer como ponto flutuante, que é como o código mais copiado do algoritmo faz. Deixar crescer funciona no começo e apodrece depois: passando de 2⁵³ o `number` perde precisão inteira e a sequência para de ser reprodutível. Numa partida de 900 ticks talvez nunca aparecesse — mas apareceria num teste longo, e o custo de fazer certo agora é zero.
+- **Testes travam valores de referência, não só coerência interna.** `SEQUENCIA_SEED_42` guarda os 6 primeiros valores da seed 42, e outro teste guarda o estado após 3 passos da seed 2025. Isso é o que faz o determinismo valer **entre builds**: sem essas constantes, uma refatoração muda o gerador, todos os outros testes continuam verdes (a sequência segue igual a ela mesma) e toda partida salva muda em silêncio.
+- **Verificação de que os testes realmente pegam:** alterei a constante do algoritmo de `0x6d2b79f5` para `0x6d2b79f6` de propósito e rodei. **Só os 2 testes de valor de referência falharam; os outros 10 passaram** — que é exatamente a demonstração de por que eles existem. Constante revertida em seguida.
+- **Como verificar:**
+  ```bash
+  npm run test                # 2 arquivos, 12 testes
+  npm run typecheck && npm run lint && npm run build && npm run format:check
+  ```
+  Números conferidos contra a referência pública do mulberry32 (seed 42 começa em `0.6011037519201636`) e distribuição sã: média `0,49925` em 200 mil sorteios.
+- **Pendente:**
+  - **`tests/toolchain.test.ts` deveria morrer agora.** O próprio arquivo diz que sai no `SETUP-06`. Não apaguei porque a regra 3 proíbe o agente apagar arquivo sem pedir — fica para a próxima sessão, ou some no mesmo commit se eu remover à mão.
+  - Faltam auxiliares que os eventos vão precisar (sortear inteiro numa faixa, escolher item por peso). São escopo de `P7-01`, não deste `SETUP-06` — entram junto com quem os usa.
+  - O `RngState` ainda não está no `GameState`; isso é `P6-01`.
+- **Evidência:** —
+
+---
+
 ## 2026-08-07 — Esqueleto de pastas do projeto
 
 - **Parte / tarefa:** `SETUP-05` ✔
