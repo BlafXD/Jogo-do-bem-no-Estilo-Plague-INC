@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "id": "na",
+    "name": "América do Norte",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "la",
+    "name": "América Latina",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "eu",
+    "name": "Europa",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "af",
+    "name": "África",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "me",
+    "name": "Oriente Médio",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "ea",
+    "name": "Ásia Oriental",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "sa",
+    "name": "Ásia Meridional",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  },
+  {
+    "id": "oc",
+    "name": "Oceania",
+    "population": 0,
+    "emissions": 0,
+    "cleanShare": 0,
+    "support": 50,
+    "resilience": 50,
+    "economy": 100
+  }
+]

@@ -28,6 +28,36 @@ Regras curtas:
 
 ---
 
+## 2026-08-07 — Tipos do domínio e estado inicial da partida
+
+- **Parte / tarefa:** `P6-01` ✔
+- **O que mudou:**
+  - `src/engine/state.ts` — todos os tipos do `docs/GDD.md §3` (`Region`, `Skill`, `Effect`, `ClimateEvent`, `GameState`), mais `createInitialState(seed)` e `parseRegions`.
+  - `src/data/balance.json` — preenchido com os 11 valores do `docs/GDD.md §4`.
+  - `src/data/regions.json` — as 8 macrorregiões, com nome e id.
+  - `tests/state.test.ts` — 13 testes. Suíte total: 23.
+  - `docs/CIENCIA.md` — registradas as constantes climáticas que entraram, todas marcadas como **sem fonte**.
+- **Três tipos que o GDD cita mas não define, e que precisei desenhar:** `SkillId` (alias de `string`, porque as habilidades vêm de JSON e não dá para enumerar em tipo), `ActiveEvent` e `Snapshot`. Os dois últimos ficaram na forma mínima de propósito — quem define o ciclo de vida de um evento é `P7-01`, e quem define o que o gráfico final precisa é `P7-06`. Estão marcados assim no código.
+- **Campo novo no `GameState`, que precisa da sua confirmação: `rngState`.** O `GDD §3` prevê só `seed: number`. Separei em dois:
+  - `seed` — a seed original, nunca muda. É o que identifica a partida e permite repetir uma igual.
+  - `rngState` — a posição atual do gerador, que anda a cada sorteio.
+  - **Por que não dá para ser um campo só:** o `P6-07` vai salvar em `localStorage`. Se o mesmo número fizesse os dois papéis, ou o save perderia a identidade da partida, ou recarregar reiniciaria o sorteio do zero — que é justamente o bug que o RNG semeado existe para evitar. **Não editei o `docs/GDD.md`** (§12 proíbe sem pedir); a decisão está registrada no comentário do campo.
+- **`parseRegions` valida o que o `tsc` não alcança.** O compilador garante o formato do JSON, mas não sabe que `support` vai de 0 a 100, que os 8 ids têm que estar presentes e sem repetição, nem que `"br"` não é uma região válida. Como `src/data/*.json` é exatamente o arquivo que o pacote `[D-Historia]` vai editar à mão sem abrir um `.ts`, o erro precisa apontar o campo errado — não estourar longe dali, no meio de um tick. Sete testes cobrem exatamente esses casos.
+- **Limite importante do que foi entregue: `population`, `emissions` e `cleanShare` estão todos em zero nas 8 regiões.** Não é esquecimento — são dados do mundo real e a regra 9 proíbe inventá-los. **Enquanto estiverem zerados, a simulação de clima roda mas não produz resultado com significado.** Quem resolve é `P3-01`, com fonte. Registrado em `docs/CIENCIA.md`.
+  - Mesmo problema, menor, nas constantes de `balance.json`: os valores vieram da redação do `GDD §4`, não de publicação consultada. São plausíveis, não verificados. Nenhum deles pode ser citado como fato no relatório ou na feira antes de `P3-01`.
+- **Como verificar:**
+  ```bash
+  npm run test        # 2 arquivos, 23 testes
+  npm run typecheck && npm run lint && npm run build && npm run format:check
+  ```
+- **Pendente:**
+  - **Decisão sua:** confirmar (ou recusar) o `rngState` no `GDD §3`.
+  - `P3-01` virou bloqueio real de `P6-02`: dá para escrever a fórmula do clima e testá-la com números sintéticos, mas não dá para verificar o aceite ("sem nenhuma habilidade, a partida termina acima de 3 °C") com emissões zeradas.
+  - `skills.json` e `events.json` continuam vazios — são `P6-05` e `P7-01`.
+- **Evidência:** —
+
+---
+
 ## 2026-08-07 — Guardrails de git e remoção do teste de fumaça
 
 - **Parte / tarefa:** `SETUP-07` (em andamento — falta uma observação, ver abaixo)

@@ -19,11 +19,32 @@
 
 ## Constantes de balanceamento
 
-Nada registrado ainda. Preencher junto com `P3-01`, que é a tarefa dona deste arquivo.
+> **Atenção: nenhuma linha desta tabela tem fonte ainda.** Os valores entraram no
+> `src/data/balance.json` em `P6-01` porque estavam escritos no `docs/GDD.md §4` e o
+> engine precisava de algo para ler. Eles são **plausíveis, não verificados** — vieram da
+> redação do GDD, não de uma publicação consultada.
+>
+> **Fechar as fontes é a tarefa `P3-01`.** Até lá, nenhum número desta tabela pode ser
+> citado como fato no relatório, na feira ou na apresentação.
 
 | Valor | Onde aparece | Fonte | Observação |
 |---|---|---|---|
-| — | — | — | — |
+| 1,3 °C acima do pré-industrial | `balance.json → startTemperature` | **pendente** (`P3-01`) | Aquecimento no início da partida, 2025 |
+| 41 GtCO₂/ano | `balance.json → startEmissions` | **pendente** (`P3-01`) | Emissão global anual de partida |
+| 0,00045 °C por GtCO₂ | `balance.json → tcre` | **pendente** (`P3-01`) | Resposta transiente ao carbono acumulado. Fonte natural: IPCC AR6 |
+| 3,0 °C | `balance.json → loseTemperature` | não se aplica | Limiar de derrota — decisão de jogo, não dado científico |
+
+## Dados por região
+
+`src/data/regions.json` tem as 8 macrorregiões com nome e id corretos, mas
+**`population`, `emissions` e `cleanShare` estão todos em zero**. Não é esquecimento: são
+dados do mundo real e a regra 9 proíbe inventá-los. Entram em `P3-01`, com fonte, de uma
+vez só.
+
+Os campos `support`, `resilience` e `economy` começam em 50, 50 e 100 — esses são valores
+de balanceamento, não dados científicos, e não precisam de fonte.
+
+**Enquanto o zero estiver aí, a simulação de clima não produz resultado com significado.**
 
 ## Fatos das habilidades
 

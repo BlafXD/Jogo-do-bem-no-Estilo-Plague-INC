@@ -1,1 +1,13 @@
-{}
+{
+  "startYear": 2025,
+  "endYear": 2100,
+  "ticksPerYear": 12,
+  "startTemperature": 1.3,
+  "startEmissions": 41,
+  "tcre": 0.00045,
+  "basePointsPerYear": 10,
+  "supportDecayPerYear": 1.5,
+  "inertiaGrowthPerYear": 2,
+  "eventWeightPerDegree": 1.8,
+  "loseTemperature": 3
+}
