@@ -1,37 +1,35 @@
-# CLAUDE.md — "Ponto de Virada" (codinome provisório)
+# CLAUDE.md — regras de trabalho no repositório
 
-> **Este arquivo é a fonte da verdade do projeto.** Leia-o inteiro antes de qualquer tarefa.
-> Em caso de conflito entre uma instrução do chat e este arquivo, avise e peça confirmação antes de prosseguir.
+> **Leia `docs/GDD.md` antes de qualquer tarefa.** Ele é o Documento de Design do Jogo: o que o
+> jogo é, como se comporta, contratos de dados e balanceamento. Este arquivo aqui cobre só
+> *como se trabalha neste repositório* — stack, convenções, git, fluxo de entrega.
+>
+> Em caso de conflito entre uma instrução do chat e estes dois arquivos, avise e peça
+> confirmação antes de prosseguir.
 > Ao final de cada tarefa, atualize `PROGRESSO.md`.
 
----
-
-## 0. Contexto
-
-Jogo digital desenvolvido como Projeto de Sala de Aula da disciplina **Desenvolvimento de Jogos e Simuladores** (UniSENAI).
-
-| Item | Valor |
+| Arquivo | Para quê |
 |---|---|
-| ODS | **13 — Combate às alterações climáticas** |
-| Inspiração de mecânica | *Plague Inc*, com a lógica **invertida** |
-| Papel do jogador | **O Gerente** — coordenador de uma agência climática global |
-| Equipe | 4 a 6 integrantes (exigência da disciplina) — **execução atual: solo**, com Design, Música e História a delegar depois |
-| Entregas | Nota parcial a cada aula → **uma evolução visível por aula, sempre** |
-| Marco final | Feira de Jogos Digitais (penúltima aula) + apresentação (última aula) |
+| `docs/GDD.md` | **O jogo**: mecânicas, indicadores, regiões, árvore, eventos, dados, balanceamento |
+| `CLAUDE.md` (este) | **O trabalho**: stack, arquitetura, convenções, git, fluxo |
+| `PLANO.md` | Backlog por aula, com checkboxes |
+| `PROGRESSO.md` | Diário datado — evidência de evolução |
 
-**Fantasia central:** em *Plague Inc* você evolui um patógeno até o mundo colapsar. Aqui você evolui **soluções climáticas** contra um mundo que já está esquentando. A tensão não vem de "vencer o relógio", vem de **escolher o que sacrificar**: nenhuma partida tem pontos suficientes para comprar tudo.
+> **Sobre a numeração:** as seções §0, §6 a §10, §13 e §14 mudaram para `docs/GDD.md`. As que
+> ficaram mantiveram o número original de propósito — há referências a `§3`, `§4.1` e `§5` em
+> `PLANO.md`, `PROGRESSO.md` e em comentários de código. A lacuna é intencional.
 
 ---
 
 ## 1. Regras inegociáveis do agente
 
-1. **Escopo primeiro.** Não implemente nada que não esteja neste arquivo ou em `PLANO.md`. Ideia nova → proponha no chat, não escreva código.
+1. **Escopo primeiro.** Não implemente nada que não esteja em `docs/GDD.md` ou em `PLANO.md`. Ideia nova → proponha no chat, não escreva código.
 2. **Tarefas pequenas.** Uma tarefa = um objetivo verificável = **um diff que cabe em uma revisão**. Nada de PRs gigantes — quem revisa é uma pessoa, à noite, depois da aula.
 3. **Nunca apague nem renomeie arquivos existentes sem pedir.**
 4. **Nunca instale dependência fora da lista permitida (§2)** sem justificar e obter aprovação.
 5. **Antes de considerar qualquer tarefa concluída:** `npm run typecheck && npm run test && npm run build` passando.
 6. **Sem `any`, sem `@ts-ignore`, sem `console.log` no código final.**
-7. **Sem `Math.random()`** em qualquer lugar. Todo sorteio usa o RNG semeado (§7).
+7. **Sem `Math.random()`** em qualquer lugar. Todo sorteio usa o RNG semeado (`docs/GDD.md §3`).
 8. **Números de balanceamento e textos de UI nunca ficam hardcoded** no código — vivem em `src/data/*.json` e `src/data/i18n.ts`.
 9. **Nenhum dado científico inventado.** Todo número climático precisa de fonte registrada em `docs/CIENCIA.md`.
 10. **Nenhum asset de terceiros com direito autoral.** Nada de arte, ícones, fontes, sons ou UI de *Plague Inc* ou de marcas reais. Só CC0/CC-BY com crédito em `docs/CREDITOS.md`.
@@ -62,13 +60,15 @@ Jogo digital desenvolvido como Projeto de Sala de Aula da disciplina **Desenvolv
 
 ```
 /
-├── CLAUDE.md              # este arquivo (não editar sem pedir)
+├── CLAUDE.md              # este arquivo — regras de trabalho (não editar sem pedir)
 ├── PLANO.md               # backlog por aula, com checkboxes
 ├── PROGRESSO.md           # diário datado — evidência de evolução por aula
 ├── docs/
+│   ├── GDD.md             # Documento de Design do Jogo (não editar sem pedir)
 │   ├── CIENCIA.md         # cada número climático + fonte
 │   ├── CREDITOS.md        # assets e licenças
-│   └── BALANCEAMENTO.md   # o que foi ajustado, por quê, resultado
+│   ├── BALANCEAMENTO.md   # o que foi ajustado, por quê, resultado
+│   └── evidencias/        # prints e GIFs por aula (Definition of Done, §11)
 ├── src/
 │   ├── engine/            # TS PURO — sem DOM, sem window, sem import de UI
 │   │   ├── state.ts       # tipos e estado inicial
@@ -198,7 +198,7 @@ Se algum commit já tiver saído com o trailer: `git rebase -i` para poucos comm
 
 A cada sessão:
 
-1. Ler `CLAUDE.md`, `PLANO.md` e as últimas 3 entradas de `PROGRESSO.md`.
+1. Ler `CLAUDE.md`, `docs/GDD.md`, `PLANO.md` e as últimas 3 entradas de `PROGRESSO.md`.
 2. Escolher **uma** tarefa não concluída de `PLANO.md` (ou a que o usuário indicar).
 3. Declarar em 3 linhas o que vai fazer e quais arquivos vai tocar. **Esperar "ok" se a tarefa mexer em mais de 4 arquivos.**
 4. Implementar + testes.
@@ -222,201 +222,6 @@ Se algo do plano estiver ambíguo, **pergunte antes de assumir**. Assumir errado
 
 ---
 
-## 6. Design do jogo (fonte da verdade)
-
-### 6.1 Loop principal
-
-O tempo corre sozinho (com pausa e 3 velocidades), **1 tick = 1 mês**, partida de **2025 a 2100**.
-
-```
-tempo avança
-  → regiões emitem CO₂ (reduzido pelas habilidades ativas)
-  → CO₂ acumulado sobe → temperatura sobe
-  → temperatura maior = eventos mais frequentes e mais severos
-  → eventos derrubam apoio público, PIB e podem custar pontos
-  → o Gerente acumula Pontos de Ação (PAC) e decide onde gastar
-  → habilidades reduzem emissões / aumentam resiliência / geram mais PAC
-```
-
-**A decisão interessante em toda partida:** *mitigar* (reduzir emissões, resultado lento, evita o problema) **vs** *adaptar* (resiliência, alívio imediato, não resolve a causa). Quem só adapta perde no longo prazo. Quem só mitiga perde o apoio público antes de colher o resultado. **Isso é a mensagem do ODS 13 embutida na mecânica — não em um texto de tutorial.**
-
-### 6.2 Indicadores
-
-| Indicador | Faixa | Papel |
-|---|---|---|
-| **PAC** (Pontos de Ação Climática) | acumula | moeda da árvore de habilidades |
-| **Emissões globais** | GtCO₂/ano | soma das regiões; meta é chegar a zero |
-| **CO₂ acumulado** | GtCO₂ desde 2025 | dirige a temperatura |
-| **Temperatura** | °C acima do pré-industrial | dirige frequência/severidade dos eventos |
-| **Apoio público** | 0–100 por região | zerou em muitas regiões = derrota |
-| **Resiliência** | 0–100 por região | reduz o dano dos eventos |
-| **Inércia** | 0–100 | força do antagonista |
-
-### 6.3 Regiões
-
-8 macrorregiões (América do Norte, América Latina, Europa, África, Oriente Médio, Ásia Oriental, Ásia Meridional, Oceania). Cada uma tem população, emissões próprias, matriz energética, apoio e resiliência. **Regiões diferentes = estratégias diferentes**: quem tem sol abundante e pouca verba não se resolve igual a quem tem indústria pesada e verba alta.
-
-### 6.4 Árvore de habilidades
-
-5 ramos, ~8 nós cada (~40 no total). Nós de nível 1 são baratos e genéricos; níveis 3–4 são caros e transformadores.
-
-| Ramo | Exemplos de nós |
-|---|---|
-| **Energia** | solar, eólica, hidrelétrica, armazenamento em bateria, rede inteligente |
-| **Transporte e Cidades** | eletrificação de frotas, transporte público, ciclovias, prédios eficientes |
-| **Natureza** | reflorestamento, manguezais, agricultura regenerativa, proteção oceânica |
-| **Indústria** | eficiência industrial, economia circular, cimento e aço verdes |
-| **Sociedade** | educação climática, acordos internacionais, alerta precoce, defesa costeira |
-
-Todo nó tem: custo em PAC, pré-requisitos, **efeito mecânico** e **um fato real de uma frase com fonte** (é isso que transforma o jogo em conscientização sem virar palestra).
-
-### 6.5 Eventos
-
-Sorteados por tick, com peso crescente conforme a temperatura. Cada um tem um limiar: tsunami e elevação do mar só entram acima de certo aquecimento — **o jogador precisa sentir que o mundo piora porque ele demorou.**
-
-Tipos: onda de calor, seca, enchente, tempestade/ciclone, incêndio florestal, deslizamento/desabamento, tsunami e elevação do nível do mar, colapso de safra.
-
-> **Nota de honestidade científica:** tsunamis são geológicos, não climáticos. Se o jogo incluir tsunami (está no conceito original), o texto do evento deve tratá-lo como **elevação do nível do mar + ressaca extrema**, ou marcar explicitamente que é licença de jogo. Registre a decisão em `docs/CIENCIA.md`. Não venda desinformação como educação.
-
-Cada evento carrega uma frase educativa curta ligada a um fenômeno real.
-
-### 6.6 O antagonista — "A Inércia"
-
-Não é um vilão de bigode. É a **força que resiste à mudança**: lobby fóssil, desinformação, subsídios, prioridade de curto prazo. Age a cada ~6 ticks: campanhas de desinformação (derrubam apoio), subsídios (aumentam emissões), recuos regulatórios (encarecem habilidades).
-
-Cresce quando o jogador avança rápido demais sem preparar apoio público. **É um espelho das decisões do jogador, não um dado aleatório.** Habilidades do ramo Sociedade são o contra-ataque.
-
-### 6.7 Vitória e derrota
-
-- **Vitória**: emissões líquidas ≈ 0 antes de 2100.
-  - `< 1,5 °C` → Ouro · `< 2,0 °C` → Prata · `< 2,5 °C` → Bronze
-- **Derrota**: temperatura > 3,0 °C, **ou** apoio público médio global = 0 (a agência é dissolvida).
-- Tela final: gráfico da linha do tempo + "o que você poderia ter feito diferente" + 3 ações reais do mundo real. Curto. Sem sermão.
-
----
-
-## 7. Contratos de dados
-
-```ts
-type RegionId = 'na' | 'la' | 'eu' | 'af' | 'me' | 'ea' | 'sa' | 'oc';
-
-type Region = {
-  id: RegionId;
-  name: string;
-  population: number;        // milhões
-  emissions: number;         // GtCO₂e/ano
-  cleanShare: number;        // 0..1 da matriz energética
-  support: number;           // 0..100
-  resilience: number;        // 0..100
-  economy: number;           // índice relativo, base 100
-};
-
-type GameState = {
-  year: number;
-  tick: number;              // 1 tick = 1 mês
-  actionPoints: number;      // PAC
-  cumulativeCO2: number;     // GtCO₂ desde 2025
-  temperature: number;       // °C acima do pré-industrial
-  regions: Record<RegionId, Region>;
-  unlockedSkills: SkillId[];
-  activeEvents: ActiveEvent[];
-  inertia: number;           // 0..100
-  seed: number;
-  history: Snapshot[];       // para o gráfico final
-};
-
-type Effect =
-  | { kind: 'emissionCut'; target: RegionId | 'global'; value: number }   // % ao ano
-  | { kind: 'pointsPerYear'; value: number }
-  | { kind: 'resilience'; target: RegionId | 'global'; value: number }
-  | { kind: 'support'; target: RegionId | 'global'; value: number }
-  | { kind: 'inertiaCut'; value: number };
-
-type Skill = {
-  id: SkillId;
-  branch: 'energy' | 'transport' | 'nature' | 'industry' | 'society';
-  name: string;
-  description: string;   // efeito no jogo, 1 frase
-  fact: string;          // fato real, 1 frase — fonte em docs/CIENCIA.md
-  cost: number;
-  requires: SkillId[];
-  effects: Effect[];
-};
-
-type ClimateEvent = {
-  id: string;
-  name: string;
-  tempThreshold: number;                    // só sorteia acima disso
-  baseWeight: number;
-  targets: RegionId[] | 'any';
-  impact: { support: number; economy: number; points: number };
-  mitigatedByResilience: boolean;
-  fact: string;
-};
-```
-
-**Toda função do engine tem esta forma:** `(state: GameState, ...args) => GameState`.
-**RNG:** `mulberry32(seed)` — mesma seed, mesma partida. Isso torna bugs reproduzíveis e o playtest confiável.
-
----
-
-## 8. Balanceamento inicial (`balance.json`)
-
-Ponto de partida para ajustar com playtest, **não é sagrado**:
-
-```jsonc
-{
-  "startYear": 2025,
-  "endYear": 2100,
-  "ticksPerYear": 12,
-  "startTemperature": 1.3,        // °C acima do pré-industrial
-  "startEmissions": 41,           // GtCO₂/ano global
-  "tcre": 0.00045,                // °C por GtCO₂ acumulado
-  "basePointsPerYear": 10,
-  "supportDecayPerYear": 1.5,
-  "inertiaGrowthPerYear": 2,
-  "eventWeightPerDegree": 1.8,    // multiplicador de frequência por °C
-  "loseTemperature": 3.0
-}
-```
-
-Fórmula da temperatura: `temperature = startTemperature + tcre * cumulativeCO2`.
-Peso de um evento: `baseWeight * (1 + eventWeightPerDegree * max(0, T - tempThreshold))`.
-
-Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor antigo → novo → por quê → o que mudou no playtest.**
-
----
-
-## 9. Acessibilidade e UX (obrigatório, não "se der tempo")
-
-- **Nunca comunicar informação só por cor.** Todo estado tem ícone + rótulo em texto. Verde/vermelho sozinhos não valem.
-- Contraste mínimo AA (4.5:1) em todo texto.
-- Fonte mínima 16px; o jogo será visto de pé, numa feira, de longe.
-- Todo painel navegável por teclado; `Esc` sempre fecha.
-- Tooltip em tudo que tem número.
-- **Partida de demonstração da feira cabe em ~5 minutos** (modo rápido). Ninguém vai jogar 40 minutos no estande.
-
----
-
-## 10. Roadmap por aula
-
-Espelha as 8 partes do plano de ensino. Cada aula precisa de **algo jogável ou visível** — vale nota parcial.
-
-| Parte | Entrega |
-|---|---|
-| 1. Introdução | Conceito fechado + **protótipo de papel** (print and play) da árvore e dos eventos — testar diversão antes de programar |
-| 2. Narrativa e personagens | O Gerente, A Inércia, vozes regionais, tom do texto |
-| 3. Mecânicas | Loop no papel, curva de dificuldade, Teoria do Fluxo aplicada |
-| 4. Projetando | Escopo travado, cronograma, repo + CI + este arquivo no lugar |
-| 5. Primeiros cenários | Mapa SVG/canvas com 8 regiões, HUD, identidade visual |
-| 6. Primeiras mecânicas | Engine com tick, clima e árvore funcionando de ponta a ponta |
-| 7. Desenvolvimento | Eventos, Inércia, áudio, telas de fim de jogo |
-| 8. Testes e finalização | Playtests (vira a **APS 2**), balanceamento, build da feira |
-
-**Regra do protótipo de papel:** se a mecânica não for interessante com papel e caneta, programar não vai salvar.
-
----
-
 ## 11. Definition of Done (por aula)
 
 - [ ] `typecheck`, `test` e `build` passando
@@ -436,23 +241,5 @@ Espelha as 8 partes do plano de ensino. Cada aula precisa de **algo jogável ou 
 - Backend, banco de dados ou chamada de API externa
 - Rodar `git commit`, `add`, `push`, `rebase`, `reset`, `merge`, `checkout` ou `gh pr` — o histórico é da equipe
 - Trailer de co-autoria, rodapé "Generated with Claude Code" ou emoji 🤖 em commits, PRs ou issues
-- Reescrever este arquivo sem pedir
+- Reescrever este arquivo ou `docs/GDD.md` sem pedir
 - "Ajustar" balanceamento direto no código em vez de `balance.json`
-
----
-
-## 13. Entregas acadêmicas paralelas
-
-- **APS 1 — Relatório técnico** sobre o jogo que inspirou o projeto (*Plague Inc*): mecânica de propagação, moeda de evolução (DNA), árvore de upgrades, curva de dificuldade, e **como cada um desses elementos foi invertido aqui**. Diagramado, com logo do UniSENAI. Entrega na Avaliação Parcial, via AVA.
-- **APS 2 — Vídeo de 1 a 3 min** com alguém de fora da equipe jogando o protótipo, com opiniões positivas e negativas. Sai naturalmente do playtest da Parte 8. Entrega na data da apresentação, via AVA.
-- **Feira de Jogos Digitais** — build offline, modo demo de 5 min, cartaz com o ODS 13 e QR code para jogar.
-
----
-
-## 14. Decisões pendentes (resolver com a equipe antes da Parte 4)
-
-- [ ] Nome definitivo do jogo
-- [ ] Formar o grupo e distribuir os 3 pacotes delegáveis (Design, Música, História) — ver `PLANO.md`
-- [ ] Direção de arte (pixel art? flat vetorial? mapa estilizado?)
-- [ ] Trilha e efeitos sonoros (fonte CC0)
-- [ ] Confirmar stack com o professor

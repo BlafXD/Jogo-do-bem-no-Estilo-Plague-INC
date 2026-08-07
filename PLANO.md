@@ -1,7 +1,7 @@
 # PLANO.md — Backlog do projeto
 
 > **Modo atual: solo.** O projeto é executado por uma pessoa + Claude Code.
-> Regras do projeto: `CLAUDE.md`. Diário de evolução: `PROGRESSO.md`.
+> Design do jogo: `docs/GDD.md`. Regras de trabalho: `CLAUDE.md`. Diário de evolução: `PROGRESSO.md`.
 > **Uma tarefa por vez.** Ao concluir: marcar o checkbox, registrar em `PROGRESSO.md`, revisar o diff e commitar (o agente não commita).
 
 ## Como usar
@@ -78,7 +78,7 @@ Edita **apenas** `src/data/*.json` (campos `name`, `description`, `fact`) e `doc
 ## SETUP — Fundação
 
 - [x] `SETUP-01` Criar repositório no GitHub com `CLAUDE.md`, `PLANO.md`, `PROGRESSO.md`, `.gitignore`, `LICENSE` — **P**
-- [ ] `SETUP-02` Scaffold Vite `vanilla-ts` + `strict: true` no `tsconfig` — **P** — aceite: `npm run dev` abre no navegador
+- [x] `SETUP-02` Scaffold Vite `vanilla-ts` + `strict: true` no `tsconfig` — **P** — aceite: `npm run dev` abre no navegador
 - [ ] `SETUP-03` Vitest, ESLint e Prettier + scripts `typecheck` / `test` / `lint` / `build` — **P** — aceite: os 4 scripts rodam limpos
 - [ ] `SETUP-04` GitHub Actions: typecheck + test + build em PR, deploy Pages na `main` — **M** — aceite: URL pública abre
 - [ ] `SETUP-05` Criar a estrutura de pastas do `CLAUDE.md §3` com arquivos vazios — **P**
@@ -120,7 +120,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 - [ ] `P3-03` Curva de dificuldade e Teoria do Fluxo: mapear a tensão década a década — **M**
 - [ ] `P3-04` Economia de PAC: quanto entra por ano vs custo total da árvore — **M** — aceite: falta ~35% para comprar tudo (a escolha precisa doer)
 - [ ] `P3-05` Especificação da Inércia: gatilhos, ações, contra-ataques — **M**
-- [ ] `P3-06` Decidir e registrar o tratamento do tsunami (`CLAUDE.md §6.5`) — **P**
+- [ ] `P3-06` Decidir e registrar o tratamento do tsunami (`docs/GDD.md §2.5`) — **P**
 
 ---
 

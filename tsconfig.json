@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "useDefineForClassFields": true,
+    "skipLibCheck": true,
+
+    /* Modo bundler — quem transpila é o Vite; o tsc só confere tipos. */
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    /* Necessário para ler src/data/*.json (CLAUDE.md §3). */
+    "resolveJsonModule": true,
+
+    /* Rigor. A regra 6 do CLAUDE.md proíbe `any` e `@ts-ignore` —
+       estas flags fazem o compilador cobrar isso em vez de confiar na memória. */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* Proíbe sintaxe que não é apagável (enum, namespace, parameter properties).
+       Combina com o §4: união discriminada em vez de flags, dados + funções
+       em vez de herança de classes. */
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src", "tests", "vite.config.ts"]
+}
