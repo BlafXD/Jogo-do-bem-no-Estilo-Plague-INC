@@ -28,6 +28,33 @@ Regras curtas:
 
 ---
 
+## 2026-08-07 — Esqueleto de pastas do projeto
+
+- **Parte / tarefa:** `SETUP-05` ✔
+- **O que mudou:** criada a estrutura do `FORMA-DE-TRABALHO.md §3`, toda vazia.
+  - `src/engine/` — `rng.ts`, `state.ts`, `climate.ts`, `tick.ts`, `skills.ts`, `events.ts`, `inertia.ts`
+  - `src/data/` — `regions.json`, `skills.json`, `events.json`, `balance.json`
+  - `src/ui/` — só um `.gitkeep`
+  - `docs/` — `CIENCIA.md`, `CREDITOS.md`, `BALANCEAMENTO.md`
+- **"Vazio" aqui não quer dizer arquivo em branco.** Cada `.ts` carrega um comentário com o que o módulo faz, onde está a especificação no `docs/GDD.md` e **qual tarefa do `PLANO.md` vai implementá-lo**. Isso atende o item do Definition of Done que proíbe `TODO` sem dono: todo arquivo em aberto tem um responsável escrito dentro dele. Sem isso, daqui a três semanas ninguém lembra se `inertia.ts` está vazio de propósito ou se foi esquecido.
+- **Decisões pequenas que valem registro:**
+  - Os `.json` levam `[]` e `{}` em vez de nada. Arquivo `.json` vazio é JSON inválido — o `npm run format:check` quebraria na hora.
+  - `src/ui/.gitkeep` existe porque o git não versiona pasta vazia. Ele some quando o primeiro módulo de interface chegar (Parte 5).
+  - **`balance.json` ficou como `{}` de propósito.** Os valores estão escritos no `docs/GDD.md §4`, mas preenchê-los é escopo de `P6-01`/`P6-02`, não deste `SETUP-05` — a tarefa pede estrutura, não conteúdo.
+  - Os três documentos de `docs/` receberam **o formato de entrada**, não entradas. Cada um explica o que registrar e qual tarefa é dona dele (`P3-01` para o `CIENCIA.md`, `P3-02` e `P8-02` para o `BALANCEAMENTO.md`).
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  Os arquivos só de comentário passam no `tsc` porque o `tsconfig.json` usa `moduleDetection: "force"` — sem isso, arquivo sem `import`/`export` não conta como módulo e o `isolatedModules` reclamaria.
+- **Efeito colateral conferido: nenhum.** O bundle continua com 818 bytes e o mesmo hash de antes (`index-BJNT7GbZ.js`) — nada importa os arquivos novos ainda, então eles não entram no build.
+- **Pendente:**
+  - Nenhum dos arquivos criados tem implementação. Os primeiros a sair do zero são `rng.ts` (`SETUP-06`, próximo) e `state.ts` (`P6-01`).
+  - `docs/CIENCIA.md` está com a seção do tsunami marcada como pendente, apontando para `P3-06`.
+- **Evidência:** —
+
+---
+
 ## 2026-08-07 — GitHub Actions: verificação em PR e deploy no Pages
 
 - **Parte / tarefa:** `SETUP-04` (em andamento — **o aceite depende de um passo manual meu**, ver abaixo)

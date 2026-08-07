@@ -81,7 +81,7 @@ Edita **apenas** `src/data/*.json` (campos `name`, `description`, `fact`) e `doc
 - [x] `SETUP-02` Scaffold Vite `vanilla-ts` + `strict: true` no `tsconfig` — **P** — aceite: `npm run dev` abre no navegador
 - [x] `SETUP-03` Vitest, ESLint e Prettier + scripts `typecheck` / `test` / `lint` / `build` — **P** — aceite: os 4 scripts rodam limpos
 - [~] `SETUP-04` GitHub Actions: typecheck + test + build em PR, deploy Pages na `main` — **M** — aceite: URL pública abre
-- [ ] `SETUP-05` Criar a estrutura de pastas do `FORMA-DE-TRABALHO.md §3` com arquivos vazios — **P**
+- [x] `SETUP-05` Criar a estrutura de pastas do `FORMA-DE-TRABALHO.md §3` com arquivos vazios — **P**
 - [ ] `SETUP-06` `engine/rng.ts` (mulberry32) + teste de determinismo — **P** — aceite: mesma seed → mesma sequência
 - [ ] `SETUP-07` Guardrails de git (`FORMA-DE-TRABALHO.md §4.1`): `.claude/settings.json` com `includeCoAuthoredBy` e lista de `deny`, `.githooks/commit-msg` e `core.hooksPath` — **P** — aceite: o agente recusa `git commit` e um commit de teste sai sem trailer de IA
 
