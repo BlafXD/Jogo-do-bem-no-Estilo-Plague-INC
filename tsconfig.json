@@ -13,10 +13,10 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
-    /* Necessário para ler src/data/*.json (CLAUDE.md §3). */
+    /* Necessário para ler src/data/*.json (FORMA-DE-TRABALHO.md §3). */
     "resolveJsonModule": true,
 
-    /* Rigor. A regra 6 do CLAUDE.md proíbe `any` e `@ts-ignore` —
+    /* Rigor. A regra 6 da FORMA-DE-TRABALHO.md proíbe `any` e `@ts-ignore` —
        estas flags fazem o compilador cobrar isso em vez de confiar na memória. */
     "strict": true,
     "noUnusedLocals": true,

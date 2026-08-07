@@ -1,7 +1,7 @@
 # PLANO.md — Backlog do projeto
 
 > **Modo atual: solo.** O projeto é executado por uma pessoa + Claude Code.
-> Design do jogo: `docs/GDD.md`. Regras de trabalho: `CLAUDE.md`. Diário de evolução: `PROGRESSO.md`.
+> Design do jogo: `docs/GDD.md`. Regras de trabalho: `FORMA-DE-TRABALHO.md`. Diário de evolução: `PROGRESSO.md`.
 > **Uma tarefa por vez.** Ao concluir: marcar o checkbox, registrar em `PROGRESSO.md`, revisar o diff e commitar (o agente não commita).
 
 ## Como usar
@@ -79,11 +79,11 @@ Edita **apenas** `src/data/*.json` (campos `name`, `description`, `fact`) e `doc
 
 - [x] `SETUP-01` Criar repositório no GitHub com `CLAUDE.md`, `PLANO.md`, `PROGRESSO.md`, `.gitignore`, `LICENSE` — **P**
 - [x] `SETUP-02` Scaffold Vite `vanilla-ts` + `strict: true` no `tsconfig` — **P** — aceite: `npm run dev` abre no navegador
-- [ ] `SETUP-03` Vitest, ESLint e Prettier + scripts `typecheck` / `test` / `lint` / `build` — **P** — aceite: os 4 scripts rodam limpos
+- [x] `SETUP-03` Vitest, ESLint e Prettier + scripts `typecheck` / `test` / `lint` / `build` — **P** — aceite: os 4 scripts rodam limpos
 - [ ] `SETUP-04` GitHub Actions: typecheck + test + build em PR, deploy Pages na `main` — **M** — aceite: URL pública abre
-- [ ] `SETUP-05` Criar a estrutura de pastas do `CLAUDE.md §3` com arquivos vazios — **P**
+- [ ] `SETUP-05` Criar a estrutura de pastas do `FORMA-DE-TRABALHO.md §3` com arquivos vazios — **P**
 - [ ] `SETUP-06` `engine/rng.ts` (mulberry32) + teste de determinismo — **P** — aceite: mesma seed → mesma sequência
-- [ ] `SETUP-07` Guardrails de git (`CLAUDE.md §4.1`): `.claude/settings.json` com `includeCoAuthoredBy` e lista de `deny`, `.githooks/commit-msg` e `core.hooksPath` — **P** — aceite: o agente recusa `git commit` e um commit de teste sai sem trailer de IA
+- [ ] `SETUP-07` Guardrails de git (`FORMA-DE-TRABALHO.md §4.1`): `.claude/settings.json` com `includeCoAuthoredBy` e lista de `deny`, `.githooks/commit-msg` e `core.hooksPath` — **P** — aceite: o agente recusa `git commit` e um commit de teste sai sem trailer de IA
 
 ---
 

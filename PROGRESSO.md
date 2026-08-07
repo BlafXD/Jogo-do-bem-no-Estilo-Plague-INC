@@ -4,11 +4,11 @@
 > semanas depois. Aqui fica o registro datado do que entrou no projeto, como conferir e o
 > que ficou aberto. É a matéria-prima do relatório final e da apresentação.
 >
-> Design do jogo: `docs/GDD.md`. Regras de trabalho: `CLAUDE.md`. Backlog: `PLANO.md`.
+> Design do jogo: `docs/GDD.md`. Regras de trabalho: `FORMA-DE-TRABALHO.md`. Backlog: `PLANO.md`.
 
 ## Como escrever uma entrada
 
-Uma entrada por sessão de trabalho, **mais recente no topo**. Formato de `CLAUDE.md §5`:
+Uma entrada por sessão de trabalho, **mais recente no topo**. Formato de `FORMA-DE-TRABALHO.md §5`:
 
 ```markdown
 ## AAAA-MM-DD — <o que mudou>
@@ -28,24 +28,59 @@ Regras curtas:
 
 ---
 
-## 2026-08-07 — Separação: design do jogo vira `docs/GDD.md`
+## 2026-08-07 — Vitest, ESLint e Prettier; TypeScript rebaixado para 6.0.3
+
+- **Parte / tarefa:** `SETUP-03` ✔
+- **O risco do TypeScript 7 se materializou, e a saída registrada ontem foi usada.** O `typescript-eslint@8.66.0` declara `typescript: ">=4.8.4 <6.1.0"`; o projeto estava em `7.0.2`, fora da faixa. TypeScript rebaixado para **`~6.0.3`** (a última estável abaixo do teto). O `~` é deliberado: com `^`, o npm subiria para 6.1 e quebraria o par de novo.
+  - **O que se perdeu:** o compilador nativo em Go do TS 7, que é bem mais rápido. Num projeto deste tamanho a diferença é irrelevante; lint com conhecimento de tipos vale mais.
+  - **Quando revisitar:** quando o `typescript-eslint` anunciar suporte a TS 7. Aí é só soltar o pino.
+  - `npm run typecheck` passou no TS 6.0.3 **sem uma única alteração de código** — todas as flags estritas do `tsconfig.json` (`erasableSyntaxOnly`, `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`) já existem na 6.0.
+- **Instalado:** `vitest@4.1.10`, `eslint@10.8.0`, `typescript-eslint@8.66.0`, `prettier@3.9.6`, `eslint-config-prettier@10.1.8`, `@eslint/js`. Tudo já estava na lista permitida da `FORMA-DE-TRABALHO.md §2` — nenhuma dependência nova precisou de aprovação. 0 vulnerabilidades.
+- **O que mudou:**
+  - `eslint.config.js` — flat config. **O lint agora cobra as regras do projeto em vez de confiar na memória de quem revisa:** `no-console` (regra 6), `Math.random()` proibido com mensagem apontando para o RNG semeado (regra 7), `type` em vez de `interface` (§4), `@ts-ignore` barrado (regra 6) e — a mais importante — `no-restricted-imports` impedindo que `src/engine/**` importe de `ui/` (regra de ouro da arquitetura, §3).
+  - `.prettierrc.json` — aspas simples, ponto e vírgula, vírgula final, 100 colunas, `endOfLine: lf` (casa com a normalização do `.gitattributes`).
+  - `.prettierignore` — **ignora `*.md` de propósito.** Os documentos do projeto são formatados à mão, com tabelas alinhadas; uma passada do Prettier reflui tudo e gera um diff enorme sem ganho de legibilidade.
+  - `vite.config.ts` — passa a importar `defineConfig` de `vitest/config` e ganha o bloco `test`. `environment: 'node'` de propósito: o engine é TS puro e não pode depender de DOM. Se a UI precisar de teste um dia, aí entra `jsdom` — e aí é dependência nova, com aprovação.
+  - `tests/toolchain.test.ts` — teste de fumaça, 2 asserções.
+  - `package.json` — scripts `test`, `test:watch`, `lint`, `lint:fix`, `format`, `format:check`.
+- **Verificação do lint (o passo que costuma ser pulado):** regra que nunca dispara é regra que não existe. Criei um arquivo temporário em `src/engine/` violando as 5 regras de propósito e conferi que **todas as 5 dispararam**, com as mensagens certas. Arquivo apagado em seguida.
+- **Como verificar:**
+  ```bash
+  npm run typecheck        # limpo
+  npm run test             # 1 arquivo, 2 testes passando
+  npm run lint             # limpo, exit 0
+  npm run build            # gera dist/
+  npm run format:check     # "All matched files use Prettier code style!"
+  ```
+- **Pendente:**
+  - **`tests/toolchain.test.ts` tem dono e data de morte:** sai no `SETUP-06`, quando entrar o teste de determinismo do RNG. Está escrito dentro do próprio arquivo. Se sobreviver ao `SETUP-06`, foi esquecimento.
+  - **Lint com conhecimento de tipos não foi ligado.** O `typescript-eslint` tem `recommendedTypeChecked`, que pega coisas que a versão sintática não pega (promessa não aguardada, comparação sempre falsa). Exige `parserOptions.projectService` e deixa o lint mais lento. Ficou de fora para não virar um buraco no meio do `SETUP-03`; vale uma tarefa própria depois do M1.
+  - A regra 5 da `FORMA-DE-TRABALHO.md` (`typecheck && test && build`) agora pode ser cumprida **inteira** — era meia até hoje.
+  - `SETUP-04` está destravado: a CI já tem os 4 comandos para rodar.
+- **Evidência:** —
+
+---
+
+## 2026-08-07 — Regras divididas em `docs/GDD.md` e `FORMA-DE-TRABALHO.md`
 
 - **Parte / tarefa:** nenhuma do `PLANO.md` — reorganização documental, decidida no chat
 - **Motivo:** o `CLAUDE.md` acumulava duas coisas diferentes: *o que o jogo é* e *como se trabalha no repositório*. Quem entrasse no projeto para escrever narrativa ou desenhar ícone precisava atravessar regras de git para achar a descrição da árvore de habilidades. Separar também deixa o repositório com cara de projeto acadêmico — um GDD é um artefato reconhecível da disciplina.
 - **O que mudou:**
   - `docs/GDD.md` **criado** — recebe §0 (Contexto), §6 (Design do jogo), §7 (Contratos de dados), §8 (Balanceamento), §9 (Acessibilidade), §10 (Roadmap), §13 (Entregas acadêmicas) e §14 (Decisões pendentes). **Conteúdo movido na íntegra, sem reescrita** — só mudou de arquivo e de número de seção.
-  - `CLAUDE.md` **enxugado** — fica com §1 a §5, §11 e §12: regras do agente, stack, estrutura de pastas, convenções, git, fluxo e Definition of Done. Ganhou no topo a leitura obrigatória do GDD.
-  - `PLANO.md` — cabeçalho aponta para os dois arquivos; `P3-06` passa a referenciar `docs/GDD.md §2.5` (era `CLAUDE.md §6.5`).
-- **Decisão registrada — a numeração do `CLAUDE.md` não foi refeita.** As seções que ficaram mantiveram os números originais, com lacunas (§1–5, depois §11–12). Há referências a `§2`, `§3`, `§4.1` e `§5` em `PLANO.md`, `.gitignore`, `tsconfig.json` e `index.html`; renumerar quebraria todas por ganho estético. Com isso, **uma única referência** no projeto inteiro precisou de conserto.
-- **Entradas antigas deste diário não foram editadas**, mesmo citando seções que se moveram (ex.: `CLAUDE.md §14` na entrada de 2026-08-06). Elas descrevem o que era verdade naquela data — reescrever histórico é o que a regra "entrada reconstruída de memória vira ficção" tenta evitar. A tabela de equivalência no topo do `GDD.md` resolve a leitura.
+  - `FORMA-DE-TRABALHO.md` **criado** — recebe §1 a §5, §11 e §12: regras do agente, stack, estrutura de pastas, convenções, git, fluxo e Definition of Done.
+  - `CLAUDE.md` **reduzido a um ponteiro de 10 linhas** para os dois arquivos acima.
+  - `PLANO.md`, `.gitignore`, `tsconfig.json`, `index.html` — referências atualizadas para os nomes novos.
+- **Por que o `CLAUDE.md` não foi apagado:** é o nome que a ferramenta de agente carrega automaticamente no início de cada sessão. Um arquivo chamado `FORMA-DE-TRABALHO.md` não é lido sozinho. O ponteiro custa 10 linhas e evita ter que lembrar de mandar ler os dois arquivos toda vez. Se um dia for apagado, essa é a consequência a aceitar.
+- **Decisão registrada — a numeração não foi refeita.** As seções que foram para a `FORMA-DE-TRABALHO.md` mantiveram os números originais, com lacunas (§1–5, depois §11–12). Havia referências a `§2`, `§3`, `§4.1` e `§5` em `PLANO.md`, `.gitignore`, `tsconfig.json` e `index.html`; renumerar quebraria todas por ganho estético. Com isso, só **uma** referência de seção precisou de conserto no projeto inteiro (`P3-06`, que virou `docs/GDD.md §2.5`).
+- **Entradas antigas deste diário não foram editadas**, mesmo citando arquivos e seções que se moveram (ex.: `CLAUDE.md §14` na entrada de 2026-08-06). Elas descrevem o que era verdade naquela data — reescrever histórico é o que a regra "entrada reconstruída de memória vira ficção" tenta evitar. A tabela de equivalência no topo do `GDD.md` resolve a leitura. Pela mesma razão, `SETUP-01` no `PLANO.md` continua citando o `CLAUDE.md`: descreve uma tarefa já concluída.
 - **Como verificar:**
   ```bash
-  git diff --stat                        # CLAUDE.md encolhe, docs/GDD.md aparece
-  grep -rn "CLAUDE.md §" --include="*.md" --include="*.json" --include="*.html" .
-  # as seções citadas (§2, §3, §4.1, §5) precisam existir no CLAUDE.md enxuto
+  npm run typecheck && npm run build      # nenhum arquivo de código mudou de comportamento
+  grep -rn "CLAUDE.md" --include="*.md" --include="*.json" --include="*.html" . | grep -v node_modules
+  # só devem sobrar: o ponteiro, a tabela de equivalência do GDD, o diário e o SETUP-01
   ```
 - **Pendente:**
-  - `CLAUDE.md` continua no repositório e no histórico do GitHub — a mudança foi de conteúdo, não de visibilidade. Se um dia a decisão for tirar o arquivo de vez, o custo cresce com o número de commits.
+  - `CLAUDE.md` continua no repositório e no histórico do GitHub — a mudança foi de conteúdo e nome, não de visibilidade.
   - `README.md` (`P4-04`) ainda não existe; quando existir, é ele que deve ser a porta de entrada do repositório, com o GDD logo atrás.
 - **Evidência:** —
 
@@ -72,7 +107,7 @@ Regras curtas:
   npm run dev              # http://localhost:5173 — no DevTools, #app tem data-status="pronto"
   ```
 - **Pendente:**
-  - `SETUP-03`: sem Vitest, ESLint e Prettier. Os scripts `test` e `lint` **não existem** — ou seja, a regra 5 do `CLAUDE.md` (`typecheck && test && build`) só pode ser cumprida pela metade até isso entrar.
+  - `SETUP-03`: sem Vitest, ESLint e Prettier. Os scripts `test` e `lint` **não existem** — ou seja, a regra 5 da `FORMA-DE-TRABALHO.md` (`typecheck && test && build`) só pode ser cumprida pela metade até isso entrar.
   - `SETUP-04` (CI e Pages), `SETUP-05` (estrutura de pastas), `SETUP-06` (`rng.ts`), `SETUP-07` (guardrails de git) — abertos. `.githooks/` e `.claude/settings.json` versionado ainda não existem; `core.hooksPath` não está configurado.
   - As Partes 1, 2 e 3 do backlog seguem intactas — inclusive o protótipo de papel (`P1-02/03`) e a planilha de balanceamento (`P3-02`).
   - O `package.json` ainda usa o codinome `ponto-de-virada` (`P1-04`).

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+
+# Os .md do projeto são formatados à mão — tabelas alinhadas, quebras de linha
+# escolhidas. Uma passada do Prettier reflui tudo e gera um diff gigante sem
+# ganho nenhum de legibilidade. O Prettier aqui cuida do código.
+*.md

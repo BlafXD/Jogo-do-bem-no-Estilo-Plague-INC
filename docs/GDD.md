@@ -6,14 +6,16 @@
 > | Arquivo | Para quê |
 > |---|---|
 > | `docs/GDD.md` (este) | O jogo: mecânicas, dados, balanceamento, escopo |
-> | `CLAUDE.md` | Como se trabalha neste repositório: stack, convenções, git |
+> | `FORMA-DE-TRABALHO.md` | Como se trabalha neste repositório: stack, convenções, git |
 > | `PLANO.md` | Backlog por aula, com checkboxes |
 > | `PROGRESSO.md` | Diário datado — evidência de evolução |
 
 <details>
 <summary>Equivalência com a numeração antiga do <code>CLAUDE.md</code></summary>
 
-Este documento nasceu de dentro do `CLAUDE.md`, que acumulava design e regras de trabalho no mesmo lugar. As seções foram movidas sem alteração de conteúdo:
+Até 2026-08-07 o projeto tinha um único arquivo de regras, o `CLAUDE.md`, que acumulava duas coisas: o design do jogo e as regras de trabalho. Ele foi dividido em dois, **sem alteração de conteúdo** — só mudou de arquivo e de número de seção.
+
+O design veio para cá:
 
 | Antes | Agora |
 |---|---|
@@ -26,7 +28,9 @@ Este documento nasceu de dentro do `CLAUDE.md`, que acumulava design e regras de
 | `CLAUDE.md §13` Entregas acadêmicas | `GDD §7` |
 | `CLAUDE.md §14` Decisões pendentes | `GDD §8` |
 
-O `CLAUDE.md` **manteve** a numeração original das seções que ficaram (§1 a §5, §11, §12), de propósito: existem referências a `§3`, `§4.1` e `§5` espalhadas por `PLANO.md`, `PROGRESSO.md` e comentários de código. Preservar os números custa uma lacuna estética e economiza uma caça a referências quebradas.
+As regras de trabalho foram para `FORMA-DE-TRABALHO.md`, que **manteve a numeração original** das seções (§1 a §5, §11, §12), de propósito: existem referências a `§3`, `§4.1` e `§5` espalhadas por `PLANO.md`, `.gitignore`, `tsconfig.json` e comentários de código. Preservar os números custa uma lacuna estética e economiza uma caça a referências quebradas.
+
+O `CLAUDE.md` continua na raiz como um ponteiro de poucas linhas para estes dois arquivos — é o nome que a ferramenta de agente carrega sozinha no início de cada sessão.
 
 </details>
 

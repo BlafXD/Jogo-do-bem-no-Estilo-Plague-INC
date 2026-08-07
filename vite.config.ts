@@ -1,4 +1,6 @@
-import { defineConfig } from 'vite';
+// Vem de 'vitest/config' e não de 'vite': é a mesma defineConfig, com o bloco
+// `test` tipado junto. Evita ter um vitest.config.ts separado repetindo aliases.
+import { defineConfig } from 'vitest/config';
 
 // `base: './'` gera caminhos relativos para os assets. Isso resolve duas coisas
 // de uma vez só:
@@ -12,5 +14,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     target: 'es2022',
+  },
+  test: {
+    // 'node' de propósito: o engine é TS puro e não pode depender de DOM (§3).
+    // Se um dia a UI precisar de teste, aí sim entra jsdom — e é dependência
+    // nova, então passa por aprovação (§2).
+    environment: 'node',
+    include: ['tests/**/*.test.ts'],
   },
 });
