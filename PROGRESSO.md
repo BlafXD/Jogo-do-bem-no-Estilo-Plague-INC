@@ -28,6 +28,36 @@ Regras curtas:
 
 ---
 
+## 2026-08-07 — GitHub Actions: verificação em PR e deploy no Pages
+
+- **Parte / tarefa:** `SETUP-04` (em andamento — **o aceite depende de um passo manual meu**, ver abaixo)
+- **O que mudou:**
+  - `.github/workflows/ci.yml` **criado** — um workflow, dois jobs.
+    - **`verificar`** roda em *pull request* e em push na `main`: `npm ci`, depois `typecheck`, `test`, `lint`, `build` e `format:check`, nessa ordem. Ao final sobe `dist/` como artefato do Pages.
+    - **`publicar`** roda só quando `verificar` passa (`needs: verificar`) **e** só na `main`. É o `needs` que impede a `main` de publicar código quebrado.
+- **Decisões registradas:**
+  - **Um arquivo, dois jobs** em vez de dois workflows. Evita buildar duas vezes: o artefato do Pages sai do mesmo job que já rodou os testes.
+  - **`npm ci`, não `npm install`.** O `ci` instala exatamente o que está no `package-lock.json` e falha se o lock estiver desatualizado. É o que garante que a máquina da feira receba as versões testadas aqui.
+  - **`node-version: '22'`** — casa com o `engines.node: ">=22.12.0"` do `package.json`. A máquina local está no 26, mas fixar o mínimo suportado é o que faz a CI pegar incompatibilidade cedo.
+  - **A condição do `publicar` checa o ref, não só o tipo de evento.** Sem isso, o `workflow_dispatch` deixaria publicar a partir de qualquer branch pelo botão.
+  - **`concurrency` com `cancel-in-progress`** — dois pushes seguidos não geram fila, e um deploy velho não sobrescreve um novo.
+- **O que deu errado (fica registrado para não repetir):** rodei `npm ci` localmente para validar o lockfile e ele **falhou e apagou o `node_modules` no meio do caminho**. Não foi o lock: o Windows recusou a remoção de um binário nativo (`@rolldown/binding-win32-x64-msvc`) que ainda estava travado pelo build que havia acabado de rodar. Restaurei com `npm install` (109 pacotes, lockfile inalterado, todos os scripts verdes de novo).
+  - **A lição:** para validar o lock no Windows, usar **`npm ci --dry-run`** — ele confere a sincronia entre `package.json` e `package-lock.json` sem encostar no disco. Rodou limpo (`up to date`), que é a prova que faltava de que a CI vai instalar sem erro.
+- **Como verificar:**
+  ```bash
+  npx --yes js-yaml .github/workflows/ci.yml   # o YAML parseia e a estrutura confere
+  npm ci --dry-run                             # lock em sincronia; NÃO usar `npm ci` puro aqui
+  npm run typecheck && npm run test && npm run lint && npm run build
+  ```
+- **Pendente — o aceite ("URL pública abre") ainda não foi verificado, e não dá para verificar daqui:**
+  1. **Passo manual, uma vez:** no GitHub, `Settings → Pages → Build and deployment → Source: GitHub Actions`. Enquanto isso não for feito, o job `publicar` falha com erro de ambiente.
+  2. Depois: commitar e dar push na `main`, acompanhar a aba `Actions` e abrir a URL que o job `publicar` imprime.
+  3. Só então `SETUP-04` vira `[x]`. Fica `[~]` até lá — mesmo critério usado no `SETUP-02`.
+  - As versões das actions (`checkout@v4`, `setup-node@v4`, `upload-pages-artifact@v3`, `deploy-pages@v4`) foram escolhidas por serem majors estáveis, mas **não foram executadas de verdade nenhuma vez**. A primeira execução é o teste real.
+- **Evidência:** —
+
+---
+
 ## 2026-08-07 — Vitest, ESLint e Prettier; TypeScript rebaixado para 6.0.3
 
 - **Parte / tarefa:** `SETUP-03` ✔

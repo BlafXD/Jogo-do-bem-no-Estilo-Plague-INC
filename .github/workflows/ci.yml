@@ -1,0 +1,72 @@
+name: CI
+
+# Em pull request: só verifica.
+# Em push na main: verifica e, se passar, publica no GitHub Pages.
+# workflow_dispatch permite republicar pelo botão, sem precisar de commit novo —
+# útil na véspera da feira.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissão mínima por padrão; o job de publicação pede o que precisa a mais.
+permissions:
+  contents: read
+
+# Se chegarem dois pushes seguidos, cancela a execução antiga. Evita fila e
+# evita que um deploy velho sobrescreva um novo.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Casa com "engines.node": ">=22.12.0" do package.json.
+          node-version: '22'
+          cache: 'npm'
+
+      # `ci` e não `install`: instala exatamente o que está no package-lock.json
+      # e falha se o lock estiver desatualizado. É o que garante que a máquina da
+      # feira receba as mesmas versões testadas aqui.
+      - run: npm ci
+
+      # Os quatro do aceite do SETUP-03, na mesma ordem da regra 5.
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run lint
+      - run: npm run build
+
+      - run: npm run format:check
+
+      # O artefato do Pages tem que sair deste job para não ter que buildar duas
+      # vezes. Sobe sempre; só a main chega a usar.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publicar:
+    # `needs` é o que impede a main de publicar algo que não passou nos testes.
+    needs: verificar
+    # A checagem de ref também vale para o workflow_dispatch: sem ela, dava para
+    # publicar a partir de qualquer branch pelo botão. Só a main vai ao ar.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
