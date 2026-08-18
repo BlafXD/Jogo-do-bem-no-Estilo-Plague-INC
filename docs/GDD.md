@@ -154,7 +154,8 @@ type GameState = {
   unlockedSkills: SkillId[];
   activeEvents: ActiveEvent[];
   inertia: number;           // 0..100
-  seed: number;
+  seed: number;              // identidade da partida — nunca muda
+  rngState: number;          // posição do gerador — anda a cada sorteio
   history: Snapshot[];       // para o gráfico final
 };
 
@@ -189,7 +190,7 @@ type ClimateEvent = {
 ```
 
 **Toda função do engine tem esta forma:** `(state: GameState, ...args) => GameState`.
-**RNG:** `mulberry32(seed)` — mesma seed, mesma partida. Isso torna bugs reproduzíveis e o playtest confiável.
+**RNG:** `mulberry32(seed)` — mesma seed, mesma partida. Isso torna bugs reproduzíveis e o playtest confiável. A posição do gerador é guardada à parte, em `rngState`: sem ela, carregar um save recomeçaria a sequência de sorteios do zero, e a partida deixaria de ser reprodutível justamente onde isso importa.
 
 ---
 

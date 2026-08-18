@@ -28,6 +28,25 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — `rngState` confirmado no contrato do GDD
+
+- **Parte / tarefa:** `P6-01` — pendência fechada
+- **O que mudou:**
+  - `docs/GDD.md §3` — `rngState: number` entrou no `GameState`, ao lado de `seed`, cada um com o seu papel escrito na própria linha. A nota do RNG no fim da seção passou a dizer **por que** são dois campos e não um.
+  - `src/engine/state.ts` — só comentário: o campo deixou de ser "um campo a mais em relação ao GDD" e passou a apontar para o contrato que agora o prevê.
+- **O que a confirmação destrava:** o `P6-07` (save e load em `localStorage`) pode ser escrito sem decidir nada antes. Com um campo só, ou o save perderia a identidade da partida, ou recarregar reiniciaria o sorteio do zero — que é exatamente o bug que o RNG semeado existe para evitar.
+- **Nenhuma linha de código mudou.** `RngState` já era `number` no `rng.ts` e o campo já existia no `GameState` desde o `P6-01`. O que faltava era o contrato reconhecer o que a implementação já fazia — e é essa distância entre documento e código que apodrece calada.
+- **Como verificar:**
+  ```bash
+  grep -n "rngState" docs/GDD.md src/engine/state.ts
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  O `GameState` do `docs/GDD.md §3` e o do `src/engine/state.ts` voltaram a ter exatamente os mesmos 12 campos.
+- **Pendente:** nada desta decisão.
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — Dados climáticos com fonte: as 8 regiões saíram do zero
 
 - **Parte / tarefa:** `P3-01` ✔
@@ -58,7 +77,7 @@ Regras curtas:
   ```
 - **Pendente:**
   - **`P6-02` está destravado, mas com um requisito novo:** decidir como as emissões crescem na linha de base. Não dá para escrever `climate.ts` fingindo que essa decisão não existe.
-  - **A decisão do `rngState` continua aberta** — vem do `P6-01`, não é desta tarefa, e segue sendo a única coisa do `GameState` sem confirmação no GDD.
+  - ~~A decisão do `rngState` continua aberta.~~ **Resolvida na mesma sessão, logo depois desta tarefa** — está na entrada acima.
   - **Dado de 2023 num jogo que começa em 2025.** É o último ano com quebra por país. Quando o Global Carbon Budget publicar 2025 por país, é refazer a agregação — o procedimento está escrito.
   - **Aviação e navegação internacionais (1,117 Gt) ficaram de fora** por não serem atribuídas a país nenhum. O jogo emite 2,4% a menos que o mundo real de 2023.
   - `docs/BALANCEAMENTO.md` continua vazio. A primeira linha dele nasce quando o `P6-02` decidir o crescimento da linha de base.

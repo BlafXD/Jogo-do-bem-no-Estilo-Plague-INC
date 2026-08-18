@@ -122,11 +122,10 @@ export type GameState = {
   /**
    * Posição atual do gerador. Anda a cada sorteio.
    *
-   * É um campo a mais em relação ao `docs/GDD.md §3`, que só previa `seed`.
-   * Separar os dois é o que faz o save/load do P6-07 funcionar: recarregar
+   * Separar de `seed` é o que faz o save/load do P6-07 funcionar: recarregar
    * precisa continuar a sequência de onde parou, e não recomeçá-la — se
    * `seed` fizesse os dois papéis, ou se perderia a identidade da partida, ou
-   * se perderia a posição. Confirmar no GDD antes de considerar fechado.
+   * se perderia a posição. Confirmado no `docs/GDD.md §3` em 2026-08-18.
    */
   readonly rngState: RngState;
   readonly history: readonly Snapshot[];
