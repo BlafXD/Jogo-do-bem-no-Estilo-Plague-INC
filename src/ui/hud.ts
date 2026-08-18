@@ -69,6 +69,8 @@ export function hudView(state: GameState): HudView {
  * e tudo que tem número tem dica.
  */
 export function mountHud(root: Element): void {
+  root.setAttribute('aria-label', ui.hudLabel);
+
   root.replaceChildren(
     ...HUD_FIELDS.map((field) => {
       const item = document.createElement('div');

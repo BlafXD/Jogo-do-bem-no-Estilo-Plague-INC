@@ -28,6 +28,41 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — Pausa e velocidade: o jogador ganha controle do relógio
+
+- **Parte / tarefa:** `P5-05` ✔
+- **O que mudou:**
+  - `src/ui/controls.ts` e `src/ui/controls.css` **criados** — o núcleo puro do controle de tempo mais a barra de quatro botões.
+  - `src/main.ts` — passa `effectiveSpeed(control)` ao `advanceRealTime` e escuta o teclado.
+  - `src/data/i18n.ts`, `index.html`, `src/ui/hud.ts` — rótulos novos e o `aria-label` do HUD saindo da marcação para o i18n.
+  - `tests/controls.test.ts` **criado**, 11 testes. Suíte total: **129**.
+- **A decisão da tarefa: o engine é chamado mesmo em pausa, com velocidade zero.** O comentário do `P6-04` dizia "quem está em pausa simplesmente não chama", e eu fiz o contrário de propósito. Não chamar obriga a lembrar de **ainda assim** atualizar o `previousFrame` a cada quadro; quem esquecer faz o primeiro quadro depois da pausa entregar o intervalo inteiro de uma vez, e a trava do `P6-04` converte isso num **ano de jogo saltado**. Com velocidade 0, `elapsed × 0` não acumula nada, o resto parcial do mês fica intacto, e a armadilha deixa de existir. **De quebra, virou testável:** tem teste que roda 600 quadros em pausa e exige estado idêntico e resto preservado — e depois retoma com os 600 ms que faltavam e exige o mês virar.
+- **A guarda que só uma tecla de verdade conseguiu testar.** Com o foco num botão, o navegador já transforma `Espaço` em clique. Se o atalho do documento também tratasse a tecla, a pausa alternaria **duas vezes** e pareceria não funcionar — que é o jeito mais irritante de um atalho quebrar. O handler ignora a tecla quando `event.target` é um `<button>`. Isso é impossível de verificar despachando `KeyboardEvent` por script, porque o despacho sintético não dispara o comportamento nativo do botão: **precisei clicar no botão e apertar a barra de espaço de verdade.** Resultado: "Pausar" → "Retomar", **um** toggle, como devia.
+- **Verificado no navegador, ponta a ponta:**
+  - `Espaço` alterna: Pausar → Retomar → Pausar, com o `aria-pressed` acompanhando.
+  - Teclas `1`, `2` e `4` trocam a velocidade; `3`, `0`, `5` e letras são ignoradas.
+  - `Espaço` em 4x pausa **sem** desmarcar o 4x — velocidade é escolha do jogador, não afirmação de que o tempo corre.
+  - **Seis segundos em pausa: o HUD não se moveu um dígito.** Retomado a 4x, sete segundos levaram a partida de 2025 a 2026 e o PAC de 0 a 12 — quatorze meses, contra os cinco que 1x tinha dado em oito segundos na tarefa anterior.
+  - Console sem erro nenhum.
+- **Acessibilidade do `§5`, ponto a ponto:** são `<button>` nativos (foco por Tab, Enter e Espaço de graça); o botão de pausa **troca o rótulo** entre "Pausar" e "Retomar", que é texto e não cor; a velocidade escolhida é marcada por **três** coisas ao mesmo tempo, das quais duas não são cor — marcador ● visível, negrito e borda mais grossa; há anel de foco explícito, sem o qual a navegação por teclado existe mas é invisível; e a altura mínima é de 44px, porque o dedo de quem passa num estande não mira bem.
+- **Conferi que os testes pegam.** Cinco defeitos plantados: `effectiveSpeed` ignorando a pausa → **2** testes; escolher velocidade tirando da pausa → **1**; qualquer dígito virando velocidade → **1**; `togglePause` que só pausa e nunca retoma → **2**; a barra de espaço deixando de ser atalho → **1**. Todos revertidos.
+- **Uma correção de regra 8 que veio junto.** O `aria-label` do HUD estava escrito no `index.html` desde o `P5-03` — texto de UI no lugar que a regra 8 proíbe. Agora os dois painéis pegam o rótulo do `i18n.ts`, pelo mesmo caminho.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npm run dev    # Espaço pausa e retoma; 1, 2 e 4 mudam a velocidade
+  ```
+  129 testes em 7 arquivos. O aceite é o teste `ACEITE: Espaço pausa e retoma`, mais a conferência no navegador acima.
+- **Pendente:**
+  - **`mountControls` e `renderControls` continuam sem teste**, pelo mesmo motivo do HUD: exigiriam jsdom. **Mas agora a conta mudou** — existe interação de verdade (clique, foco, tecla), e foi só no navegador que a guarda do foco pôde ser verificada. Se o `P5-04` ou o `P6-06` trouxerem mais interação, é hora de pedir a dependência em vez de conferir à mão toda vez.
+  - **Trocar de aba ainda congela a partida**, e agora que existe pausa de verdade vale decidir de propósito: hoje o jogo perde o tempo em que ficou escondido, em silêncio. O honesto seria **pausar sozinho ao esconder a aba**, e o jogador voltar e ver "Retomar". Fica para o `P5-06` ou o `P7-08`.
+  - **Os atalhos não aparecem na tela.** Estão no `title` de cada botão, o que só ajuda quem passa o mouse por cima e não ajuda ninguém no teclado. O tutorial de quatro passos é o `P7-08`.
+  - **Não há sinal de pausa fora da barra.** Com o mapa (`P5-01`) na tela, o jogo parado vai precisar de algo mais visível que o rótulo de um botão.
+  - O `theme.css` do `P5-02` continua sem existir; as duas folhas seguem nos valores de reserva.
+- **Evidência:** `docs/evidencias/2026-08-18-p5-05-controle-de-tempo.jpg`
+
+---
+
 ## 2026-08-18 — O HUD: a primeira tela que mostra a partida acontecendo
 
 - **Parte / tarefa:** `P5-03` ✔ — a primeira tarefa de UI do projeto.

@@ -1,0 +1,73 @@
+/* Barra de controle de tempo (P5-05).
+
+   Mesmo contrato do hud.css: tudo lido de custom properties com valor de
+   reserva dentro do próprio var(), para o theme.css do P5-02 assumir sem
+   encostar aqui.
+
+   O §5 proíbe comunicar estado só por cor. A velocidade ativa é marcada por
+   três coisas ao mesmo tempo, e duas delas não são cor: o marcador ● fica
+   visível, o peso da fonte sobe e a borda engrossa. O botão de pausa nem
+   depende disso — ele troca o próprio rótulo entre "Pausar" e "Retomar". */
+
+.ctl {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.ctl__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  /* 16px é o piso do §5 e vale para botão também — numa feira o jogo é visto
+     de pé e de longe, e um controle que não dá para ler não dá para usar. */
+  font-size: 1rem;
+  /* Alvo de toque confortável: o dedo de quem passa no estande não mira bem. */
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  cursor: pointer;
+}
+
+.ctl__button:hover {
+  border-color: var(--cor-destaque, #7fd1a8);
+}
+
+/* Anel de foco explícito: sem ele a navegação por teclado que o §5 exige
+   existe, mas é invisível — o que na prática é o mesmo que não existir. */
+.ctl__button:focus-visible {
+  outline: 3px solid var(--cor-destaque, #7fd1a8);
+  outline-offset: 2px;
+}
+
+.ctl__pause {
+  /* Largura fixa para a barra não pular quando o rótulo vai de "Pausar" (6
+     letras) para "Retomar" (7). */
+  min-width: 8.5rem;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.ctl__marker {
+  /* Sempre no DOM, só invisível: reservar o espaço evita que o botão mude de
+     largura ao ser escolhido. */
+  visibility: hidden;
+  color: var(--cor-destaque, #7fd1a8);
+  font-size: 0.75em;
+}
+
+.ctl__button.is-active {
+  border-width: 3px;
+  border-color: var(--cor-destaque, #7fd1a8);
+  font-weight: 700;
+}
+
+.ctl__button.is-active .ctl__marker {
+  visibility: visible;
+}

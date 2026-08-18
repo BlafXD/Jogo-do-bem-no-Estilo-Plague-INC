@@ -36,6 +36,16 @@ export const ui = {
     },
   },
 
+  controls: {
+    label: 'Controle de tempo',
+    pause: 'Pausar',
+    resume: 'Retomar',
+    pauseHint: 'Pausa e retoma a passagem do tempo. Atalho: barra de espaço.',
+    speedHint: 'Velocidade da simulação. Atalhos: as teclas 1, 2 e 4.',
+  },
+
+  hudLabel: 'Indicadores da partida',
+
   units: {
     celsius: '°C',
     emissionsPerYear: 'Gt/ano',
