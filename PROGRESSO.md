@@ -36,7 +36,8 @@ Regras curtas:
   1. **"Um commit de teste sai sem trailer de IA."** Desde que o hook entrou (`7c1fe05`), saíram **4 commits**: `44e699c`, `8011fbd`, `50168af` e `f6b65af`. Nenhum tem trailer. Varri também o histórico inteiro procurando `Co-Authored-By: Claude`, `Generated with [Claude Code]` e o emoji de robô: **zero ocorrências em todo o repositório.**
   2. **"O agente recusa `git commit`."** As três camadas estão ativas: `includeCoAuthoredBy: false` e **14 regras de `deny`** no `.claude/settings.json`, o `.githooks/commit-msg` executável (`-rwxr-xr-x`) e o `core.hooksPath` apontando para `.githooks`. Não testei rodando `git commit` — tentar já é proibido pelo `§12`, e a prova pedida é o resultado dos commits acima, não uma simulação.
 - **O que o M1 entrega, de fato:** repositório com regras escritas, CI que roda os 5 comandos em todo push, deploy automático e **uma tela pública no ar** em <https://blafxd.github.io/Jogo-do-bem-no-Estilo-Plague-INC/>. O engine já tem RNG semeado, tipos do domínio, estado inicial e dados climáticos com fonte. 25 testes.
-- **Definition of Done do `§11`, item a item, sem maquiar:** typecheck, test e build passando ✔ · deploy no Pages atualizado ✔ · entrada no `PROGRESSO.md` ✔ · nenhum `TODO` sem dono ✔ · **print ou GIF em `docs/evidencias/` — falta.** É o único item aberto do marco.
+- **Definition of Done do `§11`, item a item, sem maquiar:** typecheck, test e build passando ✔ · deploy no Pages atualizado ✔ · entrada no `PROGRESSO.md` ✔ · nenhum `TODO` sem dono ✔ · print em `docs/evidencias/` ✔. **Marco fechado com o DoD inteiro cumprido.**
+- **O print quase entrou errado, e isso vale mais registrado do que escondido.** A primeira captura foi da própria página no ar — e saiu **byte a byte idêntica** à evidência do `SETUP-02` de 2026-08-07: mesmo SHA-256, mesmos 12.986 bytes. Faz sentido, é o mesmo HTML estático no mesmo viewport, e a ferramenta captura só o conteúdo da página, sem barra de endereço. **Só que isso a torna inútil como prova de deploy: um print do `localhost` sairia igualzinho.** Troquei pela tela de _Deployments_ do GitHub, que mostra o ambiente `github-pages` ativo, a URL pública escrita na página e o histórico das execuções que falhavam virando sucesso.
 - **Detalhe cosmético, para não virar mistério depois:** o commit `50168af` ficou com um espaço sobrando no começo da mensagem. Não é o hook — ele só remove linhas, não mexe em espaço. Foi a mensagem que entrou assim. Fica como está: consertar exigiria reescrever histórico já publicado, o que é bem pior que a falha.
 - **Como verificar:**
   ```bash
@@ -45,10 +46,9 @@ Regras curtas:
   git config core.hooksPath                                # .githooks
   ```
 - **Pendente:**
-  - **O print da tela no ar**, para fechar o DoD do marco.
   - **A próxima tarefa é `P6-02`, e ela já nasce com um requisito herdado:** decidir como as emissões crescem na linha de base. Está escrito em `docs/CIENCIA.md`, na seção do achado — sem isso, não fazer nada não perde o jogo.
   - As actions do `ci.yml` seguem com aviso de Node 20 depreciado. Aviso hoje, quebra amanhã.
-- **Evidência:** —
+- **Evidência:** `docs/evidencias/2026-08-18-m1-pages-no-ar.jpg` — tela de _Deployments_ do repositório, com a URL pública e o deploy ativo.
 
 ---
 
