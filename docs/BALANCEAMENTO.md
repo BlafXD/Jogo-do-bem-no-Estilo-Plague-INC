@@ -62,6 +62,28 @@ implementação — subir os limiares do `§2.7`, engordar o corte total da árv
 Ouro dependa de algo que a Parte 7 ainda vai trazer. É decisão do `P3-03` (curva de dificuldade)
 com o `P3-04`.
 
+### O Bronze sai por cinco milésimos
+
+Medido depois de a árvore ser ligada à simulação (`P6-05`, leva C). Um jogador de referência —
+compra sempre que pode, paga primeiro o que gera PAC, depois o mais barato — termina a partida
+em **2,495 °C**, contra o limiar de Bronze de 2,5.
+
+**Cinco milésimos não são margem de desenho, são coincidência.** Qualquer mexida em custo de nó,
+em `basePointsPerYear` ou no corte de uma habilidade joga a jogada de referência para o outro
+lado da medalha. Duas leituras possíveis, e o playtest decide qual:
+
+- se o Bronze *deve* ser o piso de quem joga razoavelmente, a folga precisa ser maior — sobe o
+  corte total da árvore ou barateia os nós;
+- se o Bronze *deve* ser conquistado, a jogada de referência deveria ficar logo **acima** de 2,5,
+  e a medalha viria de jogar melhor que ela.
+
+Hoje o jogo não escolheu nenhuma das duas — caiu em cima da linha por acaso.
+
+Dois sintomas para observar junto: **a última compra da partida acontece em 2099** e não muda
+nada, e o apoio médio termina exatamente no `supportFloor`. O primeiro diz que a economia de PAC
+tardia não tem para onde ir; o segundo, que a folga de apoio some assim que os eventos (`P7-01`)
+começarem a furar o piso.
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz

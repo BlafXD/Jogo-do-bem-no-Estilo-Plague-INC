@@ -154,7 +154,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P6-02` `engine/climate.ts`: emissões → CO₂ acumulado → temperatura, com testes — **M** — aceite: sem nenhuma habilidade, a partida termina acima de 3 °C
 - [x] `P6-03` `engine/tick.ts`: passo fixo de 1 mês, função pura, com testes — **M**
 - [x] `P6-04` Relógio de tempo real com acumulador de passo fixo — **M** — aceite: a simulação avança igual a 30 e a 144 FPS
-- [ ] `P6-05` `engine/skills.ts` + `data/skills.json` com 20 nós — **G**
+- [x] `P6-05` `engine/skills.ts` + `data/skills.json` com 20 nós — **G**
 - [ ] `P6-06` UI da árvore: pré-requisitos, custo, estado bloqueado/disponível/comprado — **G**
 - [ ] `P6-07` Save, load e reset em `localStorage` — **M**
 - [ ] `P6-08` **M2** — engine ligado à UI: o HUD reage ao tick e a compra muda a curva — **marco**

@@ -2,9 +2,9 @@
 // Função pura: recebe GameState, devolve GameState novo, nunca muta o recebido (§4).
 // Implementado em P6-03; o relógio de tempo real veio em P6-04.
 //
-// Este é o orquestrador do loop do docs/GDD.md §2.1. Hoje ele avança o clima e
-// desgasta o apoio público. Conforme os outros módulos chegarem, é aqui que
-// entram: eventos (P7-01), A Inércia (P7-03) e o efeito das habilidades (P6-05).
+// Este é o orquestrador do loop do docs/GDD.md §2.1. Hoje ele avança o clima,
+// desgasta o apoio público e acumula PAC à taxa que a árvore de habilidades
+// determina. Faltam os eventos (P7-01) e A Inércia (P7-03).
 //
 // Duas metades, e a divisão importa:
 //   1. `advanceTick` — o passo fixo. Um mês acontece, sempre igual.
@@ -13,13 +13,11 @@
 //      que passa o resultado para cá. O engine não sabe que existe uma tela (§3).
 
 import { advanceClimate } from './climate';
+import { pointsPerYear } from './skills';
 import { balance, REGION_IDS, type GameState, type Region, type RegionId } from './state';
 
 /** Ticks de uma partida inteira: 75 anos × 12 meses. */
 export const TOTAL_TICKS = (balance.endYear - balance.startYear) * balance.ticksPerYear;
-
-/** PAC que entra por mês, derivado da entrada anual. */
-const POINTS_PER_TICK = balance.basePointsPerYear / balance.ticksPerYear;
 
 /**
  * Apoio que cada região perde por mês, derivado da perda anual.
@@ -102,7 +100,9 @@ export function advanceTick(state: GameState): GameState {
     ...afterClimate,
     tick: nextTick,
     year: yearForTick(nextTick),
-    actionPoints: state.actionPoints + POINTS_PER_TICK,
+    // A entrada de PAC não é mais constante: o ramo Sociedade a aumenta, e por
+    // isso ela é lida do estado a cada mês em vez de ser uma constante do módulo.
+    actionPoints: state.actionPoints + pointsPerYear(state) / balance.ticksPerYear,
     regions: decaySupport(afterClimate.regions),
   };
 }

@@ -16,6 +16,7 @@ import {
   type GameState,
   type RawSkill,
 } from '../src/engine/state';
+import { advanceTick, TOTAL_TICKS } from '../src/engine/tick';
 
 /** Um nó cru válido, para os testes de validação estragarem um campo por vez. */
 function validSkill(id: string): RawSkill {
@@ -316,5 +317,142 @@ describe('os efeitos contínuos', () => {
 
     expect(emissionCutFor(comLixo, 'na')).toBeCloseTo(0.005, 10);
     expect(pointsPerYear(comLixo)).toBe(balance.basePointsPerYear);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+/** O custo somado das habilidades já compradas. */
+function spentOn(state: GameState): number {
+  return state.unlockedSkills.reduce(
+    (total, id) => total + (skills.find((skill) => skill.id === id)?.cost ?? 0),
+    0,
+  );
+}
+
+/**
+ * Uma partida inteira jogada por um comprador guloso: a cada mês compra tudo o
+ * que consegue, pagando primeiro o que gera PAC e depois o mais barato.
+ *
+ * Não é a jogada ótima — é a jogada de referência. Serve para medir o orçamento
+ * da árvore sem depender de uma estratégia esperta.
+ */
+function playGreedy(): GameState {
+  let state = createInitialState(2025);
+
+  for (let tick = 0; tick < TOTAL_TICKS; tick++) {
+    state = advanceTick(state);
+
+    for (;;) {
+      const affordable = skills
+        .filter((skill) => canUnlock(state, skill.id).ok)
+        .sort((a, b) => rank(a) - rank(b) || a.cost - b.cost);
+
+      const next = affordable[0];
+      if (next === undefined) break;
+      state = unlockSkill(state, next.id);
+    }
+  }
+
+  return state;
+}
+
+function rank(skill: (typeof skills)[number]): number {
+  return skill.effects.some((effect) => effect.kind === 'pointsPerYear') ? 0 : 1;
+}
+
+/** Sonda do modelo: a árvore inteira ativada de graça num ano, para medir a curva. */
+function treeFrom(year: number): GameState {
+  const startTick = (year - balance.startYear) * balance.ticksPerYear;
+  let state = createInitialState(2025);
+
+  for (let tick = 0; tick < TOTAL_TICKS; tick++) {
+    if (tick === startTick) {
+      state = { ...state, unlockedSkills: skills.map((skill) => skill.id) };
+    }
+    state = advanceTick(state);
+  }
+
+  return state;
+}
+
+describe('a árvore ligada à simulação', () => {
+  it('ACEITE: um jogador que compra sempre que pode termina abaixo dos 3 °C', () => {
+    // O espelho do aceite do P6-02, que exige o contrário: sem comprar nada, a
+    // partida passa dos 3 °C. Os dois juntos são a prova de que a árvore importa.
+    const end = playGreedy();
+
+    expect(end.temperature).toBeLessThan(balance.loseTemperature);
+    expect(end.year).toBe(balance.endYear);
+  });
+
+  it('o orçamento do P3-04: sobra para 16 dos 20 nós, 65% do custo', () => {
+    // O número que docs/BALANCEAMENTO.md registra. Se mexer no custo de um nó ou
+    // no basePointsPerYear, é aqui que a mudança aparece — e vira linha lá.
+    const end = playGreedy();
+
+    expect(end.unlockedSkills).toHaveLength(16);
+    expect(Math.round((spentOn(end) / 1600) * 100)).toBe(65);
+  });
+
+  it('comprar cedo vale mais que comprar tarde', () => {
+    // A mensagem do ODS 13 virando mecânica: o corte é uma taxa que compõe, e
+    // trinta anos de composição não se recuperam depois.
+    const early = treeFrom(2030);
+    const late = treeFrom(2060);
+
+    expect(early.temperature).toBeLessThan(late.temperature);
+    expect(late.temperature).toBeLessThan(3.3548);
+  });
+
+  it('a árvore inteira leva as emissões perto de zero, que é a vitória do §2.7', () => {
+    const early = treeFrom(2030);
+    const emissions = REGION_IDS.reduce((total, id) => total + early.regions[id].emissions, 0);
+
+    expect(emissions).toBeLessThan(balance.startEmissions * 0.05);
+  });
+
+  it('doze ticks de corte compõem exatamente a taxa anual', () => {
+    // Espelho do teste de crescimento do climate.test.ts, do outro lado da conta.
+    // Se o corte mensal fosse `taxa / 12` em vez da raiz de ordem 12, os doze
+    // meses somariam um pouco menos que o ano — e o resto se acumularia por 900
+    // ticks. A razão entre as duas partidas isola o corte do crescimento, que é
+    // igual nas duas.
+    let cut: GameState = { ...createInitialState(1), unlockedSkills: ['solar'] };
+    let plain: GameState = createInitialState(1);
+
+    for (let tick = 0; tick < balance.ticksPerYear; tick++) {
+      cut = advanceTick(cut);
+      plain = advanceTick(plain);
+    }
+
+    const total = (state: GameState) =>
+      REGION_IDS.reduce((sum, id) => sum + state.regions[id].emissions, 0);
+
+    // solar corta 0,5% ao ano — nem um milésimo a mais, nem a menos.
+    expect(total(cut) / total(plain)).toBeCloseTo(0.995, 9);
+  });
+
+  it('a habilidade comprada só aparece na emissão do mês seguinte', () => {
+    // Mesma ordem do P6-02: a emissão do mês entra com a taxa vigente antes de
+    // a taxa mudar. Comprar em janeiro não apaga o CO₂ de janeiro.
+    const nothing = advanceTick(createInitialState(1));
+    const withSolar = advanceTick({ ...createInitialState(1), unlockedSkills: ['solar'] });
+
+    expect(withSolar.cumulativeCO2).toBe(nothing.cumulativeCO2);
+    expect(withSolar.regions.na.emissions).toBeLessThan(nothing.regions.na.emissions);
+  });
+
+  it('a educação climática acelera a entrada de PAC', () => {
+    let plain = createInitialState(1);
+    let taught: GameState = { ...createInitialState(1), unlockedSkills: ['climate-education'] };
+
+    for (let tick = 0; tick < balance.ticksPerYear; tick++) {
+      plain = advanceTick(plain);
+      taught = advanceTick(taught);
+    }
+
+    expect(plain.actionPoints).toBeCloseTo(balance.basePointsPerYear, 6);
+    expect(taught.actionPoints).toBeCloseTo(balance.basePointsPerYear + 2, 6);
   });
 });

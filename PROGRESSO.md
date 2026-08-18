@@ -28,6 +28,51 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — A árvore de habilidades: o jogo passou a ser vencível
+
+- **Parte / tarefa:** `P6-05` ✔ — a tarefa **G** da Parte 6.
+- **Três commits, na ordem em que dependem um do outro:**
+  1. `feat(data)` — os 20 nós em `src/data/skills.json` e as 19 fontes novas no `docs/CIENCIA.md`.
+  2. `feat(engine)` — `parseSkills` no `state.ts` e o `skills.ts` inteiro, com 34 testes.
+  3. `feat(engine)` — os efeitos ligados no `climate.ts` e no `tick.ts`. Suíte: 68 → **109**.
+- **A tarefa começou com uma ambiguidade que decidia o jogo inteiro.** O `docs/GDD.md §3` descreve o `emissionCut` só como `// % ao ano`, o que admite duas leituras: taxa anual de queda, ou corte único aplicado à emissão anual. Rodei as duas com as constantes reais, e o que decidiu não foi a temperatura — foi a **emissão final**. Na leitura de corte único, a emissão volta a crescer 0,93% ao ano logo depois da compra, e nem um corte de 99% chega perto de zero em 2100. Como o `§2.7` dá vitória por "emissões líquidas ≈ 0", **a vitória que o próprio GDD define só existe na leitura de taxa.** É também a leitura em que comprar cedo vale mais que comprar tarde, que é a mensagem do ODS 13 virando mecânica em vez de texto de tutorial.
+- **O que a partida virou.** Um jogador de referência — compra sempre que pode, paga primeiro o que gera PAC, depois o mais barato:
+
+  ```
+  temperatura em 2100 .... 2,495 °C   (sem comprar nada: 3,355)
+  emissões em 2100 ....... 13,58 Gt/ano   (começou em 40,753)
+  CO₂ acumulado .......... 2500 Gt   (sem comprar nada: 4411)
+  nós comprados .......... 16/20, com 8 PAC sobrando
+  ```
+
+  A primeira compra sai em 2029 e a última em 2099. Os quatro nós que ficam de fora são exatamente os capstones caros de Transporte, Natureza, Indústria e Sociedade — o corte de escopo dói no lugar certo.
+- **O orçamento caiu no alvo do `P3-04` sem eu forçar.** Custos de 40 / 70 / 140 PAC por nível dão 1600 PAC de árvore contra os 750 que a partida entrega de base; com o PAC extra do ramo Sociedade, o jogador fecha em **65% da árvore — faltando 35%**, que é exatamente o aceite escrito no `PLANO.md`. Tem teste travando os dois números.
+- **A validação ficou dividida entre dois lugares, de propósito.** O `parseSkills` recusa só o que torna o arquivo **inutilizável**: id repetido, ramo desconhecido, efeito malformado, pré-requisito inexistente, ciclo. As invariantes de **desenho** — 20 nós, 4 por ramo, custo total, corte total — foram para o `skills.test.ts`. Se o `[D-Historia]` acrescentar um nó, o jogo tem que carregar; o que deve falhar é o teste, avisando que uma decisão de escopo acabou de acontecer. Um parser rigoroso demais quebraria o jogo na feira por causa de uma vírgula de escopo.
+- **Os cinco `Effect` se dividem em dois grupos, e essa é a decisão central do `skills.ts`.** `support`, `resilience` e `inertiaCut` valem **na hora da compra** — empurrão único que entra no estado. `emissionCut` e `pointsPerYear` são **contínuos** e não são gravados em lugar nenhum: saem de `unlockedSkills` a cada tick. Guardá-los duplicaria informação que já está na lista de compras, e o save/load do `P6-07` teria dois lugares para errar.
+- **Conferi que os testes pegam — quatorze defeitos plantados nas três levas.** Os que interessam:
+  - Bastar **um** pré-requisito em vez de todos → 1 teste. Checar dinheiro antes de pré-requisito → 1. Compra sem cobrar PAC → 1, que virou **2** depois de eu acrescentar `compras sucessivas drenam o PAC até travar`: cobrar o custo uma vez é fácil de acertar por acidente, e o que prova a cobrança é a terceira compra não acontecer.
+  - Crescimento ignorando o corte → 4. Corte aplicado antes de o mês emitir → 4. PAC de volta à taxa fixa → 2.
+  - **Um defeito passou em todos os 108 testes:** corte mensal como `taxa / 12` em vez da raiz de ordem 12. É exatamente o erro que o `P6-02` cobriu do lado do *crescimento* e que eu deixei descoberto do lado do *corte* — o mesmo bug, na função irmã, invisível. Acrescentei `doze ticks de corte compõem exatamente a taxa anual`, que compara duas partidas idênticas com e sem uma habilidade para isolar o corte do crescimento. Com ele, o defeito cai.
+- **Os 20 fatos têm fonte de verdade, cada uma verificada antes de eu escrever a frase.** IRENA (solar, eólica), BloombergNEF (bateria), IEA (rede, carros elétricos, prédios, aço, cimento, eficiência), FAO (floresta), Donato *et al.* 2011 na Nature Geoscience (manguezal), IPCC SRCCL (alimentos), UNEP/IRP (economia circular), UNESCO (educação), NOAA (Protocolo de Montreal), WMO (alerta precoce), Reimann *et al.* 2021 na ESSD (costa), Brand *et al.* 2021 via Oxford (bicicleta). O oceano reaproveita o `[GCB25]` que já estava na tabela primária.
+  - **A tabela de fatos do `CIENCIA.md` é gerada a partir do `skills.json`**, não digitada — os dois não têm como divergir em silêncio.
+  - **Separei fonte de balanceamento com todas as letras.** Nenhum fato alimenta número da simulação: o corte de 0,5% ao ano da solar **não** sai do IRENA, é número de desenho. Misturar os dois daria aparência de ciência a uma escolha de jogo, que é o oposto do que a regra 9 quer.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  109 testes em 5 arquivos. O aceite é `ACEITE: um jogador que compra sempre que pode termina abaixo dos 3 °C` — o espelho exato do aceite do `P6-02`, que exige o contrário para quem não compra nada. Os dois juntos são a prova de que a árvore importa.
+- **Pendente:**
+  - **A medalha de Ouro é inalcançável, e não consertei.** Com `startTemperature` em 1,37 °C sobram 0,13 °C até o limiar de 1,5 do `§2.7` — 289 GtCO₂ para 75 anos, contra as 40,8 Gt/ano de onde a partida começa. Nem a árvore inteira comprada no primeiro mês chega lá: o melhor caso do modelo é 1,79 °C. As saídas são todas de desenho (`P3-03` com `P3-04`) e estão escritas no `docs/BALANCEAMENTO.md`.
+  - **O Bronze sai por cinco milésimos.** 2,495 °C contra o limiar de 2,5. Isso não é margem desenhada, é coincidência: qualquer ajuste de custo ou de corte joga a jogada de referência para o outro lado. Vale saber antes do primeiro playtest.
+  - **A última compra acontece em 2099** e não muda nada — o PAC continua entrando depois de a árvore não caber mais no tempo restante. É sintoma de que a economia tardia não tem para onde ir; é assunto do `P3-04`.
+  - **O apoio termina no piso, em 25.** O ramo Sociedade empurra para cima e o desgaste do tempo puxa de volta. Hoje isso é inofensivo; quando os eventos (`P7-01`) e A Inércia (`P7-03`) começarem a furar o piso, essa folga some.
+  - **O alvo regional do `Effect` não tem teste.** O tipo permite `target: RegionId | 'global'`, os 20 nós usam só `global`, e os ramos regionais do `emissionCutFor` e do empurrão de apoio compilam sem nenhum teste passar por eles. Não há como injetar uma habilidade regional sem abrir uma costura artificial no módulo. Quando o primeiro nó regional aparecer — `P7-04` é o candidato — é ali que esses caminhos ganham cobertura.
+  - **O `P3-04` continua aberto.** Só o orçamento foi medido; a economia de PAC inteira (curva de entrada, custo por década, o que fazer com a sobra) é a tarefa.
+  - **A Parte 5 está em zero e agora é o caminho crítico.** Não existe uma linha em `src/ui/`. O engine roda uma partida completa e vencível, e ninguém consegue jogá-la: sem HUD, sem mapa, sem botão de comprar. O marco `M2` (`P6-08`) pede "engine ligado à UI" — o que falta para o marco não é engine.
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — Três pendências fechadas: GDD em dia, piso de apatia e nomes em inglês
 
 - **Parte / tarefa:** nenhuma nova do `PLANO.md` — são as três pendências que o `P6-02`, o `P6-03` e o `P6-04` deixaram anotadas, cobradas antes de abrir o `P6-05`.
