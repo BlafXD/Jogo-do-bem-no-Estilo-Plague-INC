@@ -28,6 +28,31 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — Pages no ar: o repositório virou público e o deploy passou
+
+- **Parte / tarefa:** `SETUP-04` ✔
+- **O que mudou:** nada no código. As mudanças foram na configuração do repositório no GitHub.
+  - **Repositório de privado para público**, com sua autorização.
+  - **GitHub Pages habilitado** com `build_type: workflow` (a fonte é o Actions, não uma branch `gh-pages`) e HTTPS obrigatório.
+  - Execução do `ci.yml` disparada pelo botão (`workflow_dispatch`) para republicar sem precisar de commit novo.
+  - `PLANO.md` — `SETUP-04` marcado.
+- **A causa real da falha não era o workflow, e vale registrar para não caçar no lugar errado de novo.** Por 5 execuções o job `publicar` falhou com `404 — Ensure GitHub Pages has been enabled`, o que parece configuração faltando. Ao tentar habilitar pela API, a resposta foi outra: `Your current plan does not support GitHub Pages for this repository` (HTTP 422). **No plano gratuito do GitHub, o Pages só funciona em repositório público.** O 404 era sintoma; a causa era o repositório ser privado. Nenhuma linha do `ci.yml` precisou mudar.
+- **Varredura antes de tornar público.** Tornar público é irreversível na prática — o que sai, sai. Antes disso conferi: nenhum arquivo `.env`, nenhuma chave, nenhum token no conteúdo versionado, licença MIT já no lugar. O único dado pessoal exposto é o e-mail dos commits, que é o mesmo que já aparecia no perfil. **Se incomodar, dá para trocar por um endereço `noreply` do GitHub nos commits futuros.**
+- **O aceite foi verificado de verdade, não de olho na aba verde.** A página responde `200`, entrega o HTML certo (`<title>Ponto de Virada</title>`) e o bundle referenciado carrega: `assets/index-BJNT7GbZ.js`, `200`, 818 bytes — o mesmo hash e o mesmo tamanho do build local. Isso prova de quebra que o `base: './'` do `vite.config.ts` resolve certo no subcaminho do Pages, que era a aposta feita lá no `SETUP-02`.
+- **URL pública:** <https://blafxd.github.io/Jogo-do-bem-no-Estilo-Plague-INC/>
+- **Como verificar:**
+  ```bash
+  gh run list --workflow=ci.yml --limit 1          # verificar e publicar, os dois verdes
+  curl -sS -o /dev/null -w "%{http_code}\n" https://blafxd.github.io/Jogo-do-bem-no-Estilo-Plague-INC/
+  ```
+- **Pendente:**
+  - **As actions do `ci.yml` estão ficando velhas.** O GitHub avisa em toda execução que `checkout@v4`, `setup-node@v4` e `upload-pages-artifact@v3` miram Node 20 e estão sendo forçadas a rodar no Node 24. Hoje é só aviso; quando virar erro, quebra o deploy. Subir os majors é tarefa de meia hora que não vale a pena fazer na véspera da feira.
+  - **`SETUP-07` é a única coisa entre aqui e o marco M1** (`P4-06`). O aceite dele já está cumprido: os três últimos commits saíram sem trailer de IA, com `core.hooksPath` ativo. Falta só trocar o `[~]` por `[x]`.
+  - Repositório público significa que `PLANO.md`, `PROGRESSO.md` e o `docs/GDD.md` estão legíveis por qualquer pessoa. É bom para a defesa do projeto e para o QR code do estande (`P8-06`), mas convém lembrar disso antes de escrever qualquer coisa aqui.
+- **Evidência:** — (a URL pública é a própria evidência; um print dela cabe no `docs/evidencias/`)
+
+---
+
 ## 2026-08-18 — `rngState` confirmado no contrato do GDD
 
 - **Parte / tarefa:** `P6-01` — pendência fechada
