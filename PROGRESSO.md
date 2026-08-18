@@ -28,6 +28,38 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — O tempo passa: o tick de um mês
+
+- **Parte / tarefa:** `P6-03` ✔
+- **O que mudou:**
+  - `src/engine/tick.ts` — implementado. `advanceTick` (o passo de um mês), mais `yearForTick`, `isOver` e a constante `TOTAL_TICKS`.
+  - `tests/tick.test.ts` — 14 testes novos. Suíte total: **51**.
+  - Nenhuma constante nova, nenhum dado novo, nenhuma edição no GDD. A tarefa é de orquestração.
+- **O que um tick faz hoje:** avança `tick` e `year`, chama o `advanceClimate` do `P6-02` e acumula PAC (`basePointsPerYear` dividido por 12). É o loop do `docs/GDD.md §2.1` com as peças que já existem. Eventos (`P7-01`), Inércia (`P7-03`) e efeito de habilidade (`P6-05`) entram aqui quando chegarem — o arquivo diz isso no cabeçalho, para ninguém procurar noutro lugar.
+- **A trava do fim da partida não é preciosismo.** Depois do tick 900, `advanceTick` devolve o estado recebido intacto. O motivo é o `P6-04`: o relógio de tempo real entrega vários ticks de uma vez quando um quadro demora, e sem a trava um engasgo de meio segundo empurraria a partida para além de 2100. Tem teste que roda 20 ticks depois do fim e exige estado idêntico.
+- **Deixei duas coisas de fora de propósito:**
+  - **O decaimento do apoio público.** A constante `supportDecayPerYear: 1.5` existe, mas o GDD não diz como ela se aplica — e a conta assusta: **apoio começa em 50, cai 1,5 por ano, zera em 2058.** Como o `§2.7` define derrota por apoio médio zero, aplicar isso sem mais nada faria toda partida ser perdida em 2058, faça o jogador o que fizer. Isso é decisão de desenho, não detalhe de implementação — é do `P3-05` com o `P3-04`, e não cabia eu resolver dentro de uma tarefa de orquestração de tempo.
+  - **O `history`.** O `P6-01` deixou o `Snapshot` na forma mínima de propósito, escrito que quem define o que o gráfico final precisa é o `P7-06`. Preencher agora travaria um formato que pertence a outra tarefa.
+- **Conferi que os testes pegam — e o exercício achou um furo meu.** Plantei quatro defeitos:
+  1. Sem a trava do fim → **1 teste** falhou.
+  2. Ano calculado a partir do tick antigo → **1 teste** falhou.
+  3. PAC entrando à taxa anual a cada mês → **2 falharam**.
+  4. Tick que esquece de avançar o clima → **2 falharam**.
+  **O defeito 2 me incomodou por derrubar pouco**, e o motivo era meu: eu testava o ano no tick 25, que é meio de ano — e no meio do ano calcular a partir do tick antigo dá o mesmo resultado, então o erro de um tick passava batido. Acrescentei um teste na virada do ano (tick 11 e tick 12), que é o único lugar onde ele aparece. **Com ele, o defeito 2 passou a derrubar 2 testes.** É exatamente para isso que plantar defeito serve: não para confirmar que os testes passam, mas para descobrir o que eles não veem.
+- **Amarração entre os dois módulos:** o `tick.test.ts` roda a partida inteira pelo `advanceTick` e exige chegar nos mesmos 3,3548 °C que o `climate.test.ts` trava rodando pelo `advanceClimate`. Se um dia os dois caminhos divergirem, alguém quebrou a ligação entre eles.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  51 testes em 4 arquivos.
+- **Pendente:**
+  - **Decisão sua, quando chegar no `P3-05`:** o que fazer com o `supportDecayPerYear`. Do jeito que a constante está, ela sozinha decide a partida em 2058.
+  - **PAC entra fracionado** (0,833 por mês). É de propósito, para a barra encher continuamente em vez de saltar de ano em ano, mas quem for fazer o HUD (`P5-03`) precisa arredondar na exibição.
+  - O `advanceTick` ainda não tem quem o chame: o relógio de tempo real é o `P6-04`, a próxima da fila.
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — O clima roda: não fazer nada agora perde o jogo
 
 - **Parte / tarefa:** `P6-02` ✔
