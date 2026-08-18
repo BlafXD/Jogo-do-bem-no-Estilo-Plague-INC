@@ -28,6 +28,33 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — Relógio de tempo real: a partida anda igual em qualquer FPS
+
+- **Parte / tarefa:** `P6-04` ✔
+- **O que mudou:**
+  - `src/engine/tick.ts` — ganhou a segunda metade: `Clock`, `createClock`, `stepsForElapsed` e `advanceRealTime`.
+  - `tests/tick.test.ts` — 10 testes novos. Suíte total: **61**.
+  - `src/data/balance.json` — constante nova: `realSecondsPerTick: 1.5`. O tipo `Balance` acompanhou.
+- **Onde o relógio mora, e por quê não é um arquivo novo.** O `FORMA-DE-TRABALHO.md §3` lista os arquivos do `engine/` e não prevê um `clock.ts`; criar arquivo fora da estrutura documentada é coisa de pedir antes. O `tick.ts` já se chama "avanço de tempo", que é exatamente o que um acumulador faz, então as duas metades ficaram juntas com uma divisória no cabeçalho. **Se crescer, extrair um `clock.ts` é o movimento natural — mas aí com o `§3` atualizado junto.**
+- **O engine continua sem saber que existe uma tela.** Nem `stepsForElapsed` nem `advanceRealTime` conhecem `requestAnimationFrame`: quem mede o tempo do quadro é a UI, que passa o número para cá. É a regra de ouro da arquitetura do `§3` mantida no módulo que mais tentaria quebrá-la.
+- **O ritmo: 1,5 segundo por mês de jogo.** Não foi escolha estética — é o ponto onde os dois alvos do `PLANO.md` se encontram: **22,5 min a 1x** (dentro da faixa de 20–30) e **5,6 min a 4x**, que entrega o Modo Feira (`P7-07`) quase de graça, sem precisar de um modo separado com regras próprias. Tem teste que trava as duas contas.
+- **Teto de 12 passos por chamada, contra a espiral da morte.** Se a aba ficar dez minutos em segundo plano, o navegador entrega um quadro com 600 000 ms de uma vez. Sem teto, a simulação tentaria 400 ticks num quadro, travaria a página, e o quadro seguinte viria ainda mais atrasado. Com teto, ela descarta o atraso — a partida fica atrás do relógio de parede, que é o comportamento certo: voltar para a aba não deve adiantar vinte anos de jogo.
+- **O aceite falhou na primeira tentativa, e o errado era o teste, não o código.** Eu tinha fixado o alvo em 60 000 ms de tempo real — que cai **exatamente** na fronteira do 40º tick. Ali um erro de ponto flutuante de 1,5 nanossegundo decide entre 39 e 40 ticks, e o teste vira refém do arredondamento em vez de medir o que interessa. Medi antes de mexer: **a 30 e a 144 FPS os dois davam 39**, ou seja, o aceite já passava; era a minha expectativa de 40 que estava errada. Refiz com 61 000 ms, fora de fronteira, e acrescentei um teste que declara a garantia honesta do acumulador — **o erro nunca passa de um tick**, e um mês de atraso num jogo de 1,5 s por mês é invisível.
+  - O teste de velocidade tinha o mesmo tipo de erro meu: eu esperava `4x == 1x × 4`, o que é falso porque o `floor` de 1x descarta um resto que a corrida a 4x aproveita. O certo é comparar **4x por 10 s com 1x por 40 s**, que é o que ele faz agora.
+- **Conferi que os testes pegam.** Três defeitos plantados: descartar o resto em vez de carregá-lo para o quadro seguinte derrubou **5 testes**, incluindo o aceite — que é o esperado, já que carregar o resto *é* o passo fixo; tirar o teto derrubou **1**; ignorar o multiplicador de velocidade derrubou **1**. Todos revertidos.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  61 testes em 4 arquivos. O aceite é o teste `ACEITE: a simulação avança igual a 30 e a 144 FPS`, que roda 1830 e 8784 quadros e exige estado final idêntico.
+- **Pendente:**
+  - **O `docs/GDD.md §4` não lista o `realSecondsPerTick`.** Mesma situação da constante anterior: o `§12` exige autorização e eu não a tinha para esta. É uma linha, e fica junto do resto quando você voltar.
+  - **Ninguém chama o `advanceRealTime` ainda.** O laço de `requestAnimationFrame` é da UI, e a UI começa na Parte 5. Hoje o relógio existe, está testado, e está sem motorista.
+  - Pausa e as velocidades 1x/2x/4x são o `P5-05`. O `speed` já é parâmetro; pausa é simplesmente não chamar.
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — O tempo passa: o tick de um mês
 
 - **Parte / tarefa:** `P6-03` ✔

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { advanceTick, isOver, TOTAL_TICKS, yearForTick } from '../src/engine/tick';
+import {
+  advanceRealTime,
+  advanceTick,
+  createClock,
+  isOver,
+  stepsForElapsed,
+  TOTAL_TICKS,
+  yearForTick,
+} from '../src/engine/tick';
 import { balance, createInitialState, type GameState } from '../src/engine/state';
 
 /** Roda N ticks a partir do começo da partida. */
@@ -109,5 +117,124 @@ describe('o fim da partida', () => {
 
   it('entrega 750 PAC ao longo da partida inteira', () => {
     expect(fim.actionPoints).toBeCloseTo(balance.basePointsPerYear * 75, 6);
+  });
+});
+
+describe('o relógio de tempo real', () => {
+  /** Roda `frames` quadros de uma taxa fixa, como a UI faria. */
+  function rodarEmFps(fps: number, frames: number, speed = 1) {
+    const deltaMs = 1000 / fps;
+    let estado = createInitialState(2025);
+    let relogio = createClock();
+
+    for (let i = 0; i < frames; i++) {
+      const passo = advanceRealTime(estado, relogio, deltaMs, speed);
+      estado = passo.state;
+      relogio = passo.clock;
+    }
+
+    return estado;
+  }
+
+  it('começa sem resto acumulado', () => {
+    expect(createClock().leftoverMs).toBe(0);
+  });
+
+  it('tempo menor que um mês não avança nada, mas não se perde', () => {
+    const { steps, clock } = stepsForElapsed(createClock(), 500);
+
+    expect(steps).toBe(0);
+    expect(clock.leftoverMs).toBe(500);
+  });
+
+  it('o resto de um quadro entra no próximo — é isso que faz o passo ser fixo', () => {
+    const primeiro = stepsForElapsed(createClock(), 900);
+    const segundo = stepsForElapsed(primeiro.clock, 900);
+
+    expect(primeiro.steps).toBe(0);
+    expect(segundo.steps).toBe(1);
+    expect(segundo.clock.leftoverMs).toBeCloseTo(300, 6);
+  });
+
+  it('ACEITE: a simulação avança igual a 30 e a 144 FPS', () => {
+    // 61 segundos de tempo real, entregues em 1830 quadros ou em 8784. O que
+    // manda é o tempo acumulado, não o número de chamadas.
+    //
+    // O total é de propósito 61 s e não 60 s: 60 000 ms cai exatamente na
+    // fronteira do 40º tick, e ali um erro de ponto flutuante de 1,5
+    // nanossegundo decide entre 39 e 40. As duas taxas continuariam de acordo
+    // uma com a outra, mas o teste ficaria refém do arredondamento em vez de
+    // medir o que interessa.
+    const a30 = rodarEmFps(30, 1830);
+    const a144 = rodarEmFps(144, 8784);
+
+    expect(a30.tick).toBe(40);
+    expect(a144.tick).toBe(40);
+    expect(a30).toEqual(a144);
+  });
+
+  it('continua igual em corrida longa, sem o resto acumular erro', () => {
+    // 601 segundos de tempo real: se o acumulador tivesse deriva, ela
+    // apareceria aqui, com 86 544 somas de ponto flutuante.
+    const a30 = rodarEmFps(30, 18030);
+    const a144 = rodarEmFps(144, 86544);
+
+    expect(a30.tick).toBe(400);
+    expect(a144).toEqual(a30);
+  });
+
+  it('o erro nunca passa de um tick, mesmo na fronteira', () => {
+    // A garantia honesta do acumulador não é "sempre o mesmo número", é "nunca
+    // mais de um tick de diferença do ideal". Em cima da fronteira exata, o
+    // ponto flutuante escolhe o lado — e um mês de atraso num jogo de 1,5 s
+    // por mês é invisível.
+    const ideal = 60_000 / (balance.realSecondsPerTick * 1000);
+
+    for (const [fps, quadros] of [
+      [30, 1800],
+      [60, 3600],
+      [144, 8640],
+    ] as const) {
+      expect(Math.abs(rodarEmFps(fps, quadros).tick - ideal)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('a velocidade multiplica o tempo, não o número de quadros', () => {
+    // 10 s a 4x tem que dar o mesmo que 40 s a 1x. Comparar com `1x × 4` seria
+    // errado: o floor de 1x descarta um resto que a corrida a 4x aproveita.
+    const rapido = rodarEmFps(60, 600, 4);
+    const longo = rodarEmFps(60, 2400, 1);
+
+    expect(rapido.tick).toBe(longo.tick);
+    expect(rapido).toEqual(longo);
+  });
+
+  it('trava a espiral da morte quando a aba volta do segundo plano', () => {
+    // Dez minutos entregues num quadro só. Sem teto, seriam 400 ticks de uma
+    // vez, a página travaria e o quadro seguinte viria ainda mais atrasado.
+    const { steps, clock } = stepsForElapsed(createClock(), 600_000);
+
+    expect(steps).toBe(12);
+    expect(clock.leftoverMs).toBe(0);
+  });
+
+  it('não muta o estado nem o relógio recebidos', () => {
+    const estado = createInitialState(9);
+    const relogio = createClock();
+
+    advanceRealTime(estado, relogio, 5000);
+
+    expect(estado.tick).toBe(0);
+    expect(relogio.leftoverMs).toBe(0);
+  });
+
+  it('a partida inteira a 1x leva os 22,5 minutos que o PLANO.md pede', () => {
+    const minutos = (TOTAL_TICKS * balance.realSecondsPerTick) / 60;
+
+    expect(minutos).toBeCloseTo(22.5, 1);
+    expect(minutos).toBeGreaterThanOrEqual(20);
+    expect(minutos).toBeLessThanOrEqual(30);
+    // E o Modo Feira (P7-07) sai quase de graça: a 4x são ~5,6 minutos.
+    expect(minutos / 4).toBeLessThan(6);
   });
 });

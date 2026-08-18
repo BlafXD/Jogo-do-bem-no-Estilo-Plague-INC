@@ -137,6 +137,8 @@ export type Balance = {
   readonly startYear: number;
   readonly endYear: number;
   readonly ticksPerYear: number;
+  /** Segundos de tempo real por tick na velocidade 1x. */
+  readonly realSecondsPerTick: number;
   readonly startTemperature: number;
   readonly startEmissions: number;
   /** °C por GtCO₂ acumulado (TCRE). Fonte em docs/CIENCIA.md. */
