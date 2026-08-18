@@ -56,7 +56,7 @@ Regras curtas:
   ```
   37 testes em 3 arquivos. O aceite da tarefa é o bloco `a partida inteira sem nenhuma habilidade`, que roda os 900 ticks e exige terminar acima de 3 °C.
 - **Pendente:**
-  - **O `docs/GDD.md §4` não lista o `baselineGrowthPerYear`.** O bloco JSON de lá está com 11 chaves e o `balance.json` com 12. Não editei porque o `§12` exige autorização e a desta sessão cobria outros pontos. É uma linha.
+  - ~~O `docs/GDD.md §4` não lista o `baselineGrowthPerYear`.~~ **Resolvido logo depois, na mesma sessão, com autorização.** A chave entrou no bloco do `§4` e ganhou um parágrafo explicando que a linha de base é o SSP3-7.0 e que A Inércia age por cima dela. Conferido por script: os dois lados têm as mesmas 12 chaves, na mesma ordem, com os mesmos valores.
   - **`climate.ts` não mexe em `tick`, `year` nem `history`.** É de propósito: quem orquestra a passagem do mês é o `P6-03`, e quem alimenta o gráfico final é o `P7-06`. O `advanceClimate` faz só a parte de carbono.
   - **Nenhuma habilidade abate emissões ainda**, porque `skills.ts` é `P6-05`. Hoje o `emissionCut` existe como tipo e não como efeito — a curva de 3,35 °C é, por enquanto, a única curva possível.
   - **Convenção de nomes divergindo:** o `§11` manda nomes de variáveis em inglês, mas o `state.ts` do `P6-01` usa português nos locais (`porId`, `faltando`, `regiao`). Escrevi o `climate.ts` seguindo a regra escrita. **Vale decidir qual das duas vale antes que o terceiro módulo entre e a mistura fique cara.**

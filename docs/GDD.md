@@ -203,19 +203,25 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "startYear": 2025,
   "endYear": 2100,
   "ticksPerYear": 12,
-  "startTemperature": 1.37,       // °C acima do pré-industrial
-  "startEmissions": 40.753,       // GtCO₂/ano global
-  "tcre": 0.00045,                // °C por GtCO₂ acumulado
+  "startTemperature": 1.37,        // °C acima do pré-industrial
+  "startEmissions": 40.753,        // GtCO₂/ano global
+  "tcre": 0.00045,                 // °C por GtCO₂ acumulado
+  "baselineGrowthPerYear": 0.0093, // crescimento anual das emissões sem ação
   "basePointsPerYear": 10,
   "supportDecayPerYear": 1.5,
   "inertiaGrowthPerYear": 2,
-  "eventWeightPerDegree": 1.8,    // multiplicador de frequência por °C
+  "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
   "loseTemperature": 3.0
 }
 ```
 
 Fórmula da temperatura: `temperature = startTemperature + tcre * cumulativeCO2`.
 Peso de um evento: `baseWeight * (1 + eventWeightPerDegree * max(0, T - tempThreshold))`.
+
+Enquanto o jogador não age, as emissões de cada região crescem `baselineGrowthPerYear` ao ano.
+É a linha de base do cenário **SSP3-7.0** do IPCC — o mundo sem política climática nova, em que
+as emissões dobram até 2100. Fonte em `docs/CIENCIA.md`. **A Inércia age por cima dessa linha,
+não no lugar dela.**
 
 Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor antigo → novo → por quê → o que mudou no playtest.**
 
