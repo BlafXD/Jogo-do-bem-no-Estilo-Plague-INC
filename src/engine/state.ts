@@ -5,6 +5,7 @@
 
 import balanceData from '../data/balance.json';
 import regionsData from '../data/regions.json';
+import skillsData from '../data/skills.json';
 import { createRngState, type RngState } from './rng';
 
 // ---------------------------------------------------------------- regiões ---
@@ -38,7 +39,20 @@ export type Region = {
 
 export type SkillId = string;
 
-export type SkillBranch = 'energy' | 'transport' | 'nature' | 'industry' | 'society';
+/**
+ * Os 5 ramos do docs/GDD.md §2.4. O tipo sai daqui, como o RegionId sai de
+ * REGION_IDS: acrescentar um ramo é mexer em um lugar só, e a validação de
+ * skills.json usa a mesma lista.
+ */
+export const SKILL_BRANCHES = ['energy', 'transport', 'nature', 'industry', 'society'] as const;
+
+export type SkillBranch = (typeof SKILL_BRANCHES)[number];
+
+/** Kinds de Effect que apontam para uma região ou para 'global'. */
+export const TARGETED_EFFECTS = ['emissionCut', 'resilience', 'support'] as const;
+
+/** Kinds de Effect que valem para a partida inteira e não levam alvo. */
+export const UNTARGETED_EFFECTS = ['pointsPerYear', 'inertiaCut'] as const;
 
 export type Effect =
   | { readonly kind: 'emissionCut'; readonly target: RegionId | 'global'; readonly value: number }
@@ -214,6 +228,147 @@ export function parseRegions(raw: readonly RawRegion[]): Readonly<Record<RegionI
 
   return byId as Record<RegionId, Region>;
 }
+
+// ------------------------------------------------------------ habilidades ---
+
+/** Um efeito como ele sai do JSON: `kind` e `target` ainda são string solta. */
+export type RawEffect = {
+  readonly kind: string;
+  readonly value: number;
+  readonly target?: string;
+};
+
+/** Um nó como ele sai do JSON, antes de `parseSkills` provar que ele é um Skill. */
+export type RawSkill = {
+  readonly id: string;
+  readonly branch: string;
+  readonly name: string;
+  readonly description: string;
+  readonly fact: string;
+  readonly cost: number;
+  readonly requires: readonly string[];
+  readonly effects: readonly RawEffect[];
+};
+
+function parseEffect(raw: RawEffect, skillId: string): Effect {
+  const untargeted = (UNTARGETED_EFFECTS as readonly string[]).includes(raw.kind);
+  const targeted = (TARGETED_EFFECTS as readonly string[]).includes(raw.kind);
+
+  if (!untargeted && !targeted) {
+    throw new Error(`skills.json: "${skillId}" tem efeito de tipo desconhecido "${raw.kind}".`);
+  }
+  if (!Number.isFinite(raw.value) || raw.value <= 0) {
+    throw new Error(`skills.json: "${skillId}" tem efeito ${raw.kind} com valor ${raw.value}.`);
+  }
+
+  if (untargeted) {
+    if (raw.target !== undefined) {
+      throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" não leva target.`);
+    }
+    return { kind: raw.kind as 'pointsPerYear' | 'inertiaCut', value: raw.value };
+  }
+
+  const target = raw.target;
+  if (target === undefined) {
+    throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" precisa de target.`);
+  }
+  if (target !== 'global' && !(REGION_IDS as readonly string[]).includes(target)) {
+    throw new Error(`skills.json: "${skillId}" aponta para o alvo desconhecido "${target}".`);
+  }
+
+  return {
+    kind: raw.kind as 'emissionCut' | 'resilience' | 'support',
+    target: target as RegionId | 'global',
+    value: raw.value,
+  };
+}
+
+/**
+ * Converte a lista crua de `skills.json` na árvore tipada.
+ *
+ * Valida só o que é **estrutura**: id único, ramo conhecido, efeito bem
+ * formado, pré-requisito que existe e grafo sem ciclo. O que é **desenho** —
+ * 20 nós, 4 por ramo, custo total — fica no tests/skills.test.ts, porque
+ * aumentar a árvore é uma decisão legítima (o docs/GDD.md §2.4 prevê 40 nós) e
+ * não pode explodir na carga do jogo.
+ *
+ * Existe pelo mesmo motivo do parseRegions: `src/data/*.json` é o arquivo que o
+ * pacote [D-Historia] edita à mão, sem abrir um .ts. O erro precisa dizer o que
+ * está errado, e não quebrar em algum lugar distante depois.
+ */
+export function parseSkills(raw: readonly RawSkill[]): readonly Skill[] {
+  const byId = new Map<string, Skill>();
+
+  for (const node of raw) {
+    if (!node.id.trim()) {
+      throw new Error('skills.json: há um nó sem id.');
+    }
+    if (byId.has(node.id)) {
+      throw new Error(`skills.json: a habilidade "${node.id}" aparece mais de uma vez.`);
+    }
+    if (!(SKILL_BRANCHES as readonly string[]).includes(node.branch)) {
+      throw new Error(`skills.json: "${node.id}" está no ramo desconhecido "${node.branch}".`);
+    }
+    for (const field of ['name', 'description', 'fact'] as const) {
+      if (!node[field].trim()) {
+        throw new Error(`skills.json: "${node.id}" está sem ${field}.`);
+      }
+    }
+    if (!Number.isFinite(node.cost) || node.cost <= 0) {
+      throw new Error(`skills.json: "${node.id}" tem custo ${node.cost}.`);
+    }
+    if (node.effects.length === 0) {
+      throw new Error(`skills.json: "${node.id}" não tem efeito nenhum.`);
+    }
+
+    byId.set(node.id, {
+      ...node,
+      branch: node.branch as SkillBranch,
+      requires: node.requires,
+      effects: node.effects.map((effect) => parseEffect(effect, node.id)),
+    });
+  }
+
+  for (const node of byId.values()) {
+    for (const required of node.requires) {
+      if (!byId.has(required)) {
+        throw new Error(`skills.json: "${node.id}" exige "${required}", que não existe.`);
+      }
+    }
+  }
+
+  assertNoCycle(byId);
+
+  return [...byId.values()];
+}
+
+/**
+ * Recusa pré-requisito circular.
+ *
+ * Sem isto, um ciclo não daria erro na carga: daria uma habilidade que nunca
+ * fica disponível, porque o pré-requisito dela depende dela mesma. O jogador
+ * veria um nó permanentemente bloqueado e ninguém saberia por quê.
+ */
+function assertNoCycle(byId: ReadonlyMap<string, Skill>): void {
+  const done = new Set<string>();
+  const open = new Set<string>();
+
+  const walk = (id: string): void => {
+    if (done.has(id)) return;
+    if (open.has(id)) {
+      throw new Error(`skills.json: pré-requisito circular em "${id}".`);
+    }
+    open.add(id);
+    for (const required of byId.get(id)?.requires ?? []) walk(required);
+    open.delete(id);
+    done.add(id);
+  };
+
+  for (const id of byId.keys()) walk(id);
+}
+
+/** A árvore inteira, validada na carga. Ordem igual à do skills.json. */
+export const skills: readonly Skill[] = parseSkills(skillsData);
 
 /**
  * Monta o estado do começo da partida.
