@@ -203,12 +203,14 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "startYear": 2025,
   "endYear": 2100,
   "ticksPerYear": 12,
+  "realSecondsPerTick": 1.5,       // segundos de tempo real por mês, a 1x
   "startTemperature": 1.37,        // °C acima do pré-industrial
   "startEmissions": 40.753,        // GtCO₂/ano global
   "tcre": 0.00045,                 // °C por GtCO₂ acumulado
   "baselineGrowthPerYear": 0.0093, // crescimento anual das emissões sem ação
   "basePointsPerYear": 10,
-  "supportDecayPerYear": 1.5,
+  "supportDecayPerYear": 1.5,      // pontos de apoio perdidos por ano, por região
+  "supportFloor": 25,              // piso de apatia: o decaimento para aqui
   "inertiaGrowthPerYear": 2,
   "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
   "loseTemperature": 3.0
@@ -222,6 +224,18 @@ Enquanto o jogador não age, as emissões de cada região crescem `baselineGrowt
 É a linha de base do cenário **SSP3-7.0** do IPCC — o mundo sem política climática nova, em que
 as emissões dobram até 2100. Fonte em `docs/CIENCIA.md`. **A Inércia age por cima dessa linha,
 não no lugar dela.**
+
+**Ritmo (`realSecondsPerTick`).** Um mês de jogo leva 1,5 segundo de tempo real na velocidade
+1x. É o número que faz as duas metas de duração do `PLANO.md` caberem na mesma partida:
+**22,5 min a 1x** (dentro da faixa de 20–30) e **5,6 min a 4x**, que é o Modo Feira — sem
+precisar de um modo à parte com regras próprias.
+
+**Apoio (`supportDecayPerYear` e `supportFloor`).** O apoio de cada região perde 1,5 ponto por
+ano e **para no piso de apatia**; sozinho, o decaimento nunca desce abaixo dele. O piso existe
+porque sem ele a constante decidiria toda partida: 50 pontos caindo 1,5 ao ano zeram em 2058, e
+o §2.7 dá derrota por apoio médio zero — o jogador perderia em 2058 fizesse o que fizesse.
+**Furar o piso para baixo é trabalho de evento (§2.5) e da Inércia (§2.6)**, que agem por cima
+dele; o ramo Sociedade (§2.4) é o que empurra de volta para cima.
 
 Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor antigo → novo → por quê → o que mudou no playtest.**
 
