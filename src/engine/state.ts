@@ -22,9 +22,9 @@ export type Region = {
   readonly name: string;
   /** Milhões de habitantes. */
   readonly population: number;
-  /** GtCO₂e por ano. */
+  /** GtCO₂ por ano: fóssil mais uso da terra. Fonte em docs/CIENCIA.md. */
   readonly emissions: number;
-  /** Fatia limpa da matriz energética, de 0 a 1. */
+  /** Fatia limpa da matriz elétrica, de 0 a 1. Fonte em docs/CIENCIA.md. */
   readonly cleanShare: number;
   /** Apoio público, de 0 a 100. */
   readonly support: number;
@@ -140,7 +140,7 @@ export type Balance = {
   readonly ticksPerYear: number;
   readonly startTemperature: number;
   readonly startEmissions: number;
-  /** °C por GtCO₂ acumulado. */
+  /** °C por GtCO₂ acumulado (TCRE). Fonte em docs/CIENCIA.md. */
   readonly tcre: number;
   readonly basePointsPerYear: number;
   readonly supportDecayPerYear: number;

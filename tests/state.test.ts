@@ -111,3 +111,25 @@ describe('parseRegions', () => {
     expect(() => parseRegions(lista)).toThrow(/resilience/);
   });
 });
+
+describe('dados reais de src/data', () => {
+  // O P3-01 preencheu regions.json com dado de fonte (docs/CIENCIA.md). Estes
+  // dois testes existem para o zero não voltar em silêncio e para a soma das
+  // regiões não descolar do startEmissions. As duas coisas quebram a simulação
+  // de clima sem fazer nenhum outro teste ficar vermelho.
+  const estado = createInitialState(1);
+  const regioes = REGION_IDS.map((id) => estado.regions[id]);
+
+  it('nenhuma região ficou com dado zerado', () => {
+    for (const regiao of regioes) {
+      expect(regiao.population).toBeGreaterThan(0);
+      expect(regiao.emissions).toBeGreaterThan(0);
+      expect(regiao.cleanShare).toBeGreaterThan(0);
+    }
+  });
+
+  it('a soma das emissões das regiões é o startEmissions do balance.json', () => {
+    const soma = regioes.reduce((total, regiao) => total + regiao.emissions, 0);
+    expect(soma).toBeCloseTo(balance.startEmissions, 6);
+  });
+});

@@ -28,6 +28,44 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — Dados climáticos com fonte: as 8 regiões saíram do zero
+
+- **Parte / tarefa:** `P3-01` ✔
+- **O que mudou:**
+  - `docs/CIENCIA.md` — reescrito. Tabela de fontes primárias, as constantes de `balance.json` com origem, os dados das 8 regiões, o mapa de agregação país a país, três conferências e sete limites assumidos.
+  - `src/data/regions.json` — `population`, `emissions` e `cleanShare` preenchidos nas 8 regiões. Eram zero desde o `P6-01`.
+  - `src/data/balance.json` — `startTemperature` 1,3 → **1,37**; `startEmissions` 41 → **40,753**. `tcre` ficou em 0,00045: era o único valor que já estava certo.
+  - `docs/GDD.md` — 4 linhas, **com autorização no chat** (o `§12` proíbe sem pedir): os dois valores do `§4` e, no `§3`, a unidade de `emissions` e a definição de `cleanShare`.
+  - `src/engine/state.ts` — só comentário: as mesmas duas unidades, mais um ponteiro para o `CIENCIA.md` em cada uma.
+  - `tests/state.test.ts` — 2 testes novos. Suíte total: 25.
+- **De onde vieram os números.** TCRE do IPCC AR6 (0,45 °C por 1000 GtCO₂); aquecimento de origem humana em 2025 do Indicators of Global Climate Change 2025 (1,37 °C); emissões e população por país do Global Carbon Budget e da ONU, energia do Ember e do Energy Institute, ambos via Our World in Data. Todos com link e data de consulta no `CIENCIA.md`.
+- **As 8 macrorregiões não existem em fonte nenhuma — precisei montá-las.** Agreguei 197 países usando as sub-regiões da ONU (M49) como recorte, com 4 exceções que mudam número e estão todas escritas: Sudeste Asiático entra na Ásia Oriental, Ásia Central entra no Oriente Médio, o Irã sai da Ásia Meridional para o Oriente Médio, e Taiwan (que o M49 não lista) entra na Ásia Oriental. O `CIENCIA.md` traz o procedimento inteiro — **qualquer pessoa com os mesmos CSVs chega nos mesmos números.** Isso importa: é o que faz a tabela ser defensável se alguém perguntar na apresentação.
+- **Troquei a definição de `cleanShare`, e essa foi a decisão mais importante do dia.** O `GDD §3` dizia "fração da matriz energética". Fui atrás e a série de energia primária limpa por país só existe para **4 dos 56 países africanos** — somar dá 0,028 para a África, quando a própria fonte publica 0,095 para o continente. Errado por mais de 3x, justamente na região que o jogo quer mostrar. A série de **eletricidade** cobre 44 países africanos e fecha com o total mundial. Com sua autorização, `cleanShare` passou a ser a fatia limpa da **matriz elétrica**. De quebra casa melhor com o ramo Energia da árvore, que é todo intervenção em eletricidade (solar, eólica, bateria, rede).
+- **Três conferências, porque erro de agregação vira mecânica errada e ninguém percebe:**
+  1. A fatia limpa de eletricidade somando os 197 países dá **39,4%** — idêntico ao total mundial publicado. Se estivesse perdendo país, cairia.
+  2. Soma nacional de CO₂ fóssil (36,667 Gt) + aviação e navegação internacionais (1,125 Gt) = 37,792 Gt, **exatamente** a linha `World` da fonte.
+  3. A fórmula do `§4` com emissão constante dá **2,75 °C em 2100**; o UNEP projeta **2,8 °C** para o cenário de políticas atuais. Um modelo de uma linha errar por 0,05 °C é a evidência mais forte de que `tcre` e as emissões estão certos.
+- **O achado que muda o `P6-02`: com os números certos, não fazer nada não perde o jogo.** 2,75 °C em 2100 está **abaixo** dos 3,0 °C de `loseTemperature` — dá para deixar o tempo correr até o fim sem comprar nada e sobreviver. Não é bug do modelo, é o modelo acertando: catástrofe depende de as emissões **crescerem**, e quem faz isso no jogo é A Inércia. **Consequência prática: a linha de base do `P6-02` não pode ser emissão constante, ou o antagonista deixa de ser tempero e vira requisito da condição de derrota.** Para referência: chegar a 3,0 °C exige média de 48,3 GtCO₂/ano, ~19% acima do valor de partida. Está escrito no `CIENCIA.md`, endereçado a `P6-02` e `P3-05`.
+- **`startEmissions` agora é a soma das 8 regiões, por construção.** Não é coincidência nem arredondamento: se alguém editar uma região sem refazer a soma, o global e o regional passam a discordar e a simulação de clima fica errada em silêncio. É por isso que um dos testes novos trava exatamente essa igualdade.
+- **Conferi que os testes novos pegam.** Plantei os dois defeitos que eles existem para impedir — zerei o `emissions` da Oceania e voltei o `startEmissions` para 41. **Os 2 falharam e os outros 23 continuaram verdes.** Defeitos revertidos.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  25 testes em 2 arquivos. Para conferir a conta central sem abrir o código:
+  ```bash
+  node -e "const b=require('./src/data/balance.json'),r=require('./src/data/regions.json');const s=r.reduce((a,x)=>a+x.emissions,0);console.log('soma das regioes:',s.toFixed(3),'| 2100 sem habilidade:',(b.startTemperature+b.tcre*s*75).toFixed(2),'C')"
+  ```
+- **Pendente:**
+  - **`P6-02` está destravado, mas com um requisito novo:** decidir como as emissões crescem na linha de base. Não dá para escrever `climate.ts` fingindo que essa decisão não existe.
+  - **A decisão do `rngState` continua aberta** — vem do `P6-01`, não é desta tarefa, e segue sendo a única coisa do `GameState` sem confirmação no GDD.
+  - **Dado de 2023 num jogo que começa em 2025.** É o último ano com quebra por país. Quando o Global Carbon Budget publicar 2025 por país, é refazer a agregação — o procedimento está escrito.
+  - **Aviação e navegação internacionais (1,117 Gt) ficaram de fora** por não serem atribuídas a país nenhum. O jogo emite 2,4% a menos que o mundo real de 2023.
+  - `docs/BALANCEAMENTO.md` continua vazio. A primeira linha dele nasce quando o `P6-02` decidir o crescimento da linha de base.
+- **Evidência:** —
+
+---
+
 ## 2026-08-07 — Tipos do domínio e estado inicial da partida
 
 - **Parte / tarefa:** `P6-01` ✔

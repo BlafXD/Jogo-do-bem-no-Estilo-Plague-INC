@@ -2,9 +2,9 @@
   {
     "id": "na",
     "name": "América do Norte",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 382.9,
+    "emissions": 5.682,
+    "cleanShare": 0.46,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -12,9 +12,9 @@
   {
     "id": "la",
     "name": "América Latina",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 654.4,
+    "emissions": 3.342,
+    "cleanShare": 0.646,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -22,9 +22,9 @@
   {
     "id": "eu",
     "name": "Europa",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 743.6,
+    "emissions": 5.249,
+    "cleanShare": 0.603,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -32,9 +32,9 @@
   {
     "id": "af",
     "name": "África",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 1479,
+    "emissions": 2.707,
+    "cleanShare": 0.25,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -42,9 +42,9 @@
   {
     "id": "me",
     "name": "Oriente Médio",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 475.4,
+    "emissions": 3.377,
+    "cleanShare": 0.148,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -52,9 +52,9 @@
   {
     "id": "ea",
     "name": "Ásia Oriental",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 2350.1,
+    "emissions": 16.367,
+    "cleanShare": 0.334,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -62,9 +62,9 @@
   {
     "id": "sa",
     "name": "Ásia Meridional",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 1952.5,
+    "emissions": 3.469,
+    "cleanShare": 0.232,
     "support": 50,
     "resilience": 50,
     "economy": 100
@@ -72,9 +72,9 @@
   {
     "id": "oc",
     "name": "Oceania",
-    "population": 0,
-    "emissions": 0,
-    "cleanShare": 0,
+    "population": 45.3,
+    "emissions": 0.56,
+    "cleanShare": 0.419,
     "support": 50,
     "resilience": 50,
     "economy": 100

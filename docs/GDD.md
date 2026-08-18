@@ -137,8 +137,8 @@ type Region = {
   id: RegionId;
   name: string;
   population: number;        // milhões
-  emissions: number;         // GtCO₂e/ano
-  cleanShare: number;        // 0..1 da matriz energética
+  emissions: number;         // GtCO₂/ano (fóssil + uso da terra)
+  cleanShare: number;        // 0..1 da matriz elétrica
   support: number;           // 0..100
   resilience: number;        // 0..100
   economy: number;           // índice relativo, base 100
@@ -202,8 +202,8 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "startYear": 2025,
   "endYear": 2100,
   "ticksPerYear": 12,
-  "startTemperature": 1.3,        // °C acima do pré-industrial
-  "startEmissions": 41,           // GtCO₂/ano global
+  "startTemperature": 1.37,       // °C acima do pré-industrial
+  "startEmissions": 40.753,       // GtCO₂/ano global
   "tcre": 0.00045,                // °C por GtCO₂ acumulado
   "basePointsPerYear": 10,
   "supportDecayPerYear": 1.5,
