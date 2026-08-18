@@ -28,6 +28,30 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — Marco M1 fechado
+
+- **Parte / tarefa:** `SETUP-07` ✔ · `P4-06` **M1** ✔
+- **O que mudou:** só os checkboxes do `PLANO.md`. Nenhum arquivo do projeto foi tocado — o trabalho dessas duas linhas já estava feito; faltava a verificação.
+- **O aceite do `SETUP-07` era observação, não trabalho, e agora tem evidência.** Ele pedia duas coisas que só o tempo podia provar:
+  1. **"Um commit de teste sai sem trailer de IA."** Desde que o hook entrou (`7c1fe05`), saíram **4 commits**: `44e699c`, `8011fbd`, `50168af` e `f6b65af`. Nenhum tem trailer. Varri também o histórico inteiro procurando `Co-Authored-By: Claude`, `Generated with [Claude Code]` e o emoji de robô: **zero ocorrências em todo o repositório.**
+  2. **"O agente recusa `git commit`."** As três camadas estão ativas: `includeCoAuthoredBy: false` e **14 regras de `deny`** no `.claude/settings.json`, o `.githooks/commit-msg` executável (`-rwxr-xr-x`) e o `core.hooksPath` apontando para `.githooks`. Não testei rodando `git commit` — tentar já é proibido pelo `§12`, e a prova pedida é o resultado dos commits acima, não uma simulação.
+- **O que o M1 entrega, de fato:** repositório com regras escritas, CI que roda os 5 comandos em todo push, deploy automático e **uma tela pública no ar** em <https://blafxd.github.io/Jogo-do-bem-no-Estilo-Plague-INC/>. O engine já tem RNG semeado, tipos do domínio, estado inicial e dados climáticos com fonte. 25 testes.
+- **Definition of Done do `§11`, item a item, sem maquiar:** typecheck, test e build passando ✔ · deploy no Pages atualizado ✔ · entrada no `PROGRESSO.md` ✔ · nenhum `TODO` sem dono ✔ · **print ou GIF em `docs/evidencias/` — falta.** É o único item aberto do marco.
+- **Detalhe cosmético, para não virar mistério depois:** o commit `50168af` ficou com um espaço sobrando no começo da mensagem. Não é o hook — ele só remove linhas, não mexe em espaço. Foi a mensagem que entrou assim. Fica como está: consertar exigiria reescrever histórico já publicado, o que é bem pior que a falha.
+- **Como verificar:**
+  ```bash
+  grep -nE "^- \[.\] \`(SETUP-0[1-7]|P4-06)\`" PLANO.md    # os 8 com [x]
+  git log --all --format='%B' | grep -icE "co-authored-by: claude|generated with \[claude"   # 0
+  git config core.hooksPath                                # .githooks
+  ```
+- **Pendente:**
+  - **O print da tela no ar**, para fechar o DoD do marco.
+  - **A próxima tarefa é `P6-02`, e ela já nasce com um requisito herdado:** decidir como as emissões crescem na linha de base. Está escrito em `docs/CIENCIA.md`, na seção do achado — sem isso, não fazer nada não perde o jogo.
+  - As actions do `ci.yml` seguem com aviso de Node 20 depreciado. Aviso hoje, quebra amanhã.
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — Pages no ar: o repositório virou público e o deploy passou
 
 - **Parte / tarefa:** `SETUP-04` ✔
