@@ -28,6 +28,45 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — O HUD: a primeira tela que mostra a partida acontecendo
+
+- **Parte / tarefa:** `P5-03` ✔ — a primeira tarefa de UI do projeto.
+- **O que mudou:**
+  - `src/data/i18n.ts` **criado** — os rótulos e as dicas dos cinco indicadores. Não existia, e a regra 8 proíbe texto de UI no código.
+  - `src/ui/hud.ts` **criado** — `hudView` (puro) mais `mountHud` e `renderHud` (DOM).
+  - `src/ui/hud.css` **criado** e `index.html` reescrito — a marcação provisória do `SETUP-02` saiu.
+  - `src/main.ts` reescrito: agora tem o laço de `requestAnimationFrame`.
+  - `src/engine/state.ts` — `averageSupport`, três linhas.
+  - `tests/hud.test.ts` **criado**, 10 testes. Suíte total: **118**.
+- **O engine finalmente ganhou motorista.** O `advanceRealTime` estava escrito, testado e parado desde o `P6-04` — o diário daquela tarefa registrou que ele estava "sem motorista" porque o laço de quadro pertence à UI. Hoje o `main.ts` é esse motorista, e é o **único** arquivo do projeto que sabe ao mesmo tempo o que é um `GameState` e o que é um quadro de vídeo.
+- **O `hud.ts` foi partido em dois para não precisar de dependência nova.** O `vite.config.ts` já dizia, desde o `SETUP-03`, que testar UI exigiria jsdom e que jsdom passa por aprovação (`§2`). Em vez de pedir, dividi: `hudView` é **puro** — entra `GameState`, saem cinco strings — e concentra tudo onde cabe bug (arredondamento, unidade, média); `mountHud` e `renderHud` só escrevem `textContent` e são burros demais para errar. O `document` nunca aparece no topo do módulo, só dentro do corpo dessas duas funções — é isso que deixa o arquivo ser importado por um teste que roda em node.
+- **Duas decisões de arredondamento que não são cosméticas:**
+  - **O PAC é arredondado para baixo.** Ele entra fracionado (o `P6-03` divide a entrada anual por 12), e mostrar 40 com 39,9 no bolso faria o jogador achar que um nó de 40 está ao alcance. O número na tela não pode prometer o que a compra vai negar.
+  - **O ano não passa pelo `Intl`.** Em pt-BR o formatador de número põe separador de milhar, e 2100 viraria "2.100". Tem teste para os dois.
+- **O `averageSupport` foi para o engine, não para a UI.** É regra de jogo: o `§2.7` dissolve a agência quando esse número zera. Ele estava duplicado dentro do `tick.test.ts`; agora é um só, e o teste do tick passou a usar o do engine — os 118 continuarem verdes depois da troca é a prova de que as duas contas concordavam.
+- **Conferi no navegador, e foi o navegador que achou o defeito que os testes não podiam achar.** O probe leu o CSS computado e devolveu **rótulo em 14px** — abaixo do piso de 16px que o `docs/GDD.md §5` fixa para *todo* texto. Nenhum teste pegaria isso: é regra de acessibilidade, mora no CSS, e o `hudView` não sabe que existe fonte. Corrigido para 16px. **O rótulo é justamente o que diz o que o número significa; encolher ele seria comunicar o indicador só pelo valor.**
+- **Um susto que não era bug.** Na primeira medição o HUD ficou **congelado por 6 segundos**. O diagnóstico: `document.visibilityState === "hidden"` e **zero** quadros de `requestAnimationFrame` em 2 segundos — o Chrome congela o `rAF` em aba de segundo plano, e a aba da automação está sempre em segundo plano. Com a aba desenhando, os cinco indicadores andam: em ~20 s a partida foi de 2025 a **2027**, com PAC de 0 a 20 e apoio de 50 a 47.
+  - **Isso tem consequência de desenho, e vale registrar:** ao voltar de uma aba parada, o primeiro quadro entrega o atraso inteiro de uma vez. A trava `MAX_STEPS_PER_CALL` do `P6-04` — 12 passos, um ano de jogo — deixou de ser hipótese e passou a ser exercitada em toda troca de aba. Ela faz o certo: descarta o atraso em vez de adiantar vinte anos.
+- **Conferi que os testes pegam.** Cinco defeitos plantados no `hudView`: PAC arredondado normalmente → **1** teste; ano passando pelo formatador → **3**; temperatura sem mínimo de casas → **1**; apoio lendo uma região em vez da média → **1**; emissões de uma região em vez do global → **2**. Todos revertidos.
+- **Contraste conferido por conta, não por impressão.** Contra o fundo `#0F1C17`: valor 16,17:1, rótulo 9,04:1, título 9,67:1 — todos muito acima dos 4,5:1 que o `§5` exige. A borda ficou em 3,84:1, acima dos 3:1 que a regra pede para elemento que não é texto. Os números estão em comentário no topo do `hud.css`.
+- **O contrato do `[D-Design]` já está de pé.** O `hud.css` lê cor, fonte e espaçamento de custom properties **com valor de reserva dentro do próprio `var()`**. Quando o `P5-02` entregar o `theme.css`, basta ele definir as variáveis no `:root` — o `hud.css` não muda uma linha. É o contrato de pacote do `PLANO.md` funcionando na prática pela primeira vez.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npm run dev    # http://localhost:5173 — o ano precisa virar sozinho a cada ~18 s
+  ```
+  118 testes em 6 arquivos.
+- **Pendente:**
+  - **`mountHud` e `renderHud` não têm teste.** É a consequência aceita de não trazer jsdom. Quando o `P5-05` trouxer botão e tecla — coisa que dá para clicar errado — aí o pedido de aprovação de dependência se justifica.
+  - **O `theme.css` do `P5-02` ainda não existe.** Enquanto isso as variáveis vivem dos valores de reserva, e a paleta de verdade é decisão do `[D-Design]`.
+  - **Não há pausa nem velocidade.** É o `P5-05`. O `speed` já é parâmetro do `advanceRealTime` e pausar é simplesmente não chamar.
+  - **Trocar de aba congela a partida.** Quando o `P5-05` entrar, vale decidir de propósito o que acontece ao voltar: hoje o jogo perde o tempo em que ficou escondido, o que é defensável, mas ninguém escolheu isso — foi herdado da trava do `P6-04`.
+  - **O nome do jogo está duplicado** entre o `<title>` e o `<h1>` do `index.html`. Deliberado enquanto o `P1-04` não decide o nome definitivo: os dois precisam casar e estão lado a lado no mesmo arquivo.
+  - **O `#app` tem uma frase e mais nada.** O mapa das 8 regiões é o `P5-01` e a árvore é o `P6-06`.
+- **Evidência:** `docs/evidencias/2026-08-18-p5-03-hud-no-ar.jpg`
+
+---
+
 ## 2026-08-18 — A árvore de habilidades: o jogo passou a ser vencível
 
 - **Parte / tarefa:** `P6-05` ✔ — a tarefa **G** da Parte 6.

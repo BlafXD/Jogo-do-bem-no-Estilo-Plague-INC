@@ -8,7 +8,13 @@ import {
   TOTAL_TICKS,
   yearForTick,
 } from '../src/engine/tick';
-import { balance, createInitialState, REGION_IDS, type GameState } from '../src/engine/state';
+import {
+  averageSupport,
+  balance,
+  createInitialState,
+  REGION_IDS,
+  type GameState,
+} from '../src/engine/state';
 
 /** Roda N ticks a partir do começo da partida. */
 function run(ticks: number, seed = 2025): GameState {
@@ -92,12 +98,6 @@ describe('advanceTick', () => {
 });
 
 describe('o apoio público', () => {
-  /** O apoio médio global — é o número que o §2.7 usa para dar a partida por perdida. */
-  function averageSupport(state: GameState): number {
-    const sum = REGION_IDS.reduce((total, id) => total + state.regions[id].support, 0);
-    return sum / REGION_IDS.length;
-  }
-
   /** O apoio com que toda região começa, lido do regions.json e não chutado aqui. */
   const initial = createInitialState(1).regions.na.support;
 

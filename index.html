@@ -10,13 +10,20 @@
     <title>Ponto de Virada</title>
   </head>
   <body>
-    <!-- Marcação provisória, só para o SETUP-02 ter o que mostrar na tela.
-         A interface de verdade começa na Parte 5 (P5-02 e P5-03) e o texto
-         migra para src/data/i18n.ts, conforme a regra 8 da FORMA-DE-TRABALHO.md. -->
-    <div id="app">
-      <h1>Ponto de Virada</h1>
-      <p>Scaffold no ar. A interface começa na Parte 5.</p>
-    </div>
+    <!-- Só a estrutura. O conteúdo do HUD é montado pelo src/ui/hud.ts a partir
+         do src/data/i18n.ts — rótulo de indicador é texto de UI, e a regra 8
+         não deixa ele morar aqui.
+
+         O nome do jogo é a exceção deliberada: ele precisa estar no <title> de
+         qualquer jeito, e manter o <h1> ao lado é menos duplicação do que
+         separar os dois. Muda quando o P1-04 decidir o nome definitivo. -->
+    <header class="topo">
+      <h1 class="topo__titulo">Ponto de Virada</h1>
+      <div id="hud" class="hud" aria-label="Indicadores da partida"></div>
+    </header>
+
+    <main id="app" class="conteudo"></main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -371,6 +371,19 @@ function assertNoCycle(byId: ReadonlyMap<string, Skill>): void {
 export const skills: readonly Skill[] = parseSkills(skillsData);
 
 /**
+ * O apoio público médio das 8 regiões.
+ *
+ * Mora no engine, e não na UI, porque é **regra de jogo**: é este número que o
+ * docs/GDD.md §2.7 usa para dissolver a agência quando chega a zero. O HUD
+ * (P5-03) só o exibe; quem verificar a derrota (P6-08) precisa da mesma conta,
+ * e duas implementações da mesma média é como as duas discordam em silêncio.
+ */
+export function averageSupport(state: GameState): number {
+  const total = REGION_IDS.reduce((sum, id) => sum + state.regions[id].support, 0);
+  return total / REGION_IDS.length;
+}
+
+/**
  * Monta o estado do começo da partida.
  *
  * `actionPoints` e `inertia` começam em zero por serem "nada ainda", não por

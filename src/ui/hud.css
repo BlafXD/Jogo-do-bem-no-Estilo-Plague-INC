@@ -1,0 +1,81 @@
+/* Estilo do HUD (P5-03).
+
+   As cores e as medidas são lidas de custom properties **com valor de reserva
+   no próprio var()**. O theme.css do P5-02 — o arquivo que o pacote
+   [D-Design] vai entregar — só precisa definir as variáveis no :root para
+   assumir o controle: este arquivo não muda quando isso acontecer.
+
+   Contraste conferido contra o fundo #0F1C17 (docs/GDD.md §5 exige AA):
+     valor   #F2F7F4  16,17:1     rótulo  #A7C0B4  9,04:1
+     título  #7FD1A8   9,67:1     borda   #4C8069  3,84:1 (não-texto, exige 3:1)
+
+   Nenhum estado do jogo é comunicado por cor aqui: todo indicador tem rótulo
+   escrito. Quando o HUD ganhar alerta (P7-04), o alerta precisa de ícone e
+   texto, não de ficar vermelho. */
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo, #0f1c17);
+  color: var(--cor-valor, #f2f7f4);
+  font-family: var(--fonte-base, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  /* 16px é o mínimo do §5: o jogo é visto de pé, de longe, numa feira. */
+  font-size: var(--tamanho-base, 1rem);
+  line-height: 1.5;
+}
+
+.topo {
+  border-bottom: 1px solid var(--cor-borda, #4c8069);
+  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+}
+
+.topo__titulo {
+  margin: 0 0 0.75rem;
+  color: var(--cor-destaque, #7fd1a8);
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  letter-spacing: 0.02em;
+}
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(1rem, 3vw, 2.5rem);
+}
+
+.hud__item {
+  display: flex;
+  flex-direction: column;
+  /* O valor pode encolher e crescer (2025 → 2100, 0 → 750); a largura mínima
+     evita que as cinco caixas dancem de posição a cada tick. */
+  min-width: 7ch;
+}
+
+.hud__label {
+  color: var(--cor-rotulo, #a7c0b4);
+  /* 1rem e não 0,875: o §5 fixa 16px como piso para TODO texto, e o rótulo é o
+     que diz o que o número significa. Encolher justamente ele seria comunicar
+     o indicador só pelo valor. */
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hud__value {
+  /* Tabular: os dígitos têm todos a mesma largura, então o número não treme
+     enquanto o tempo corre. */
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1.25rem, 2.5vw, 1.625rem);
+  font-weight: 600;
+}
+
+.conteudo {
+  padding: clamp(1rem, 4vw, 2.5rem);
+}
+
+.conteudo__pendente {
+  color: var(--cor-rotulo, #a7c0b4);
+  max-width: 60ch;
+}
