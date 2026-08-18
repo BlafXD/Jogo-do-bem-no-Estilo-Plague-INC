@@ -8,7 +8,7 @@ import {
   TOTAL_TICKS,
   yearForTick,
 } from '../src/engine/tick';
-import { balance, createInitialState, type GameState } from '../src/engine/state';
+import { balance, createInitialState, REGION_IDS, type GameState } from '../src/engine/state';
 
 /** Roda N ticks a partir do começo da partida. */
 function rodar(ticks: number, seed = 2025): GameState {
@@ -88,6 +88,105 @@ describe('advanceTick', () => {
 
   it('a mesma seed produz exatamente a mesma partida', () => {
     expect(rodar(120, 42)).toEqual(rodar(120, 42));
+  });
+});
+
+describe('o apoio público', () => {
+  /** O apoio médio global — é o número que o §2.7 usa para dar a partida por perdida. */
+  function apoioMedio(estado: GameState): number {
+    const soma = REGION_IDS.reduce((total, id) => total + estado.regions[id].support, 0);
+    return soma / REGION_IDS.length;
+  }
+
+  /** O apoio com que toda região começa, lido do regions.json e não chutado aqui. */
+  const inicial = createInitialState(1).regions.na.support;
+
+  it('desgasta por mês, à fração da taxa anual', () => {
+    const porMes = balance.supportDecayPerYear / balance.ticksPerYear;
+
+    expect(rodar(1).regions.na.support).toBeCloseTo(inicial - porMes, 6);
+    expect(rodar(balance.ticksPerYear).regions.na.support).toBeCloseTo(
+      inicial - balance.supportDecayPerYear,
+      6,
+    );
+  });
+
+  it('para no piso de apatia e não desce mais', () => {
+    // Do valor inicial até o piso são 200 ticks exatos — ano de 2041.
+    const noPiso = rodar((inicial - balance.supportFloor) / (balance.supportDecayPerYear / 12));
+    const muitoDepois = rodar(TOTAL_TICKS);
+
+    expect(noPiso.regions.na.support).toBeCloseTo(balance.supportFloor, 6);
+    for (const id of REGION_IDS) {
+      expect(muitoDepois.regions[id].support).toBe(balance.supportFloor);
+    }
+  });
+
+  it('encosta no piso em 2041', () => {
+    // O ano é fato de balanceamento, não conta derivada das constantes: se eu
+    // escrever a taxa errada, os testes acima continuam coerentes consigo
+    // mesmos — o piso absorve o erro — e só este aqui percebe.
+    let estado = createInitialState(1);
+    let tickDoPiso = 0;
+    while (estado.regions.na.support > balance.supportFloor) {
+      estado = advanceTick(estado);
+      tickDoPiso++;
+    }
+
+    expect(tickDoPiso).toBe(200);
+    expect(yearForTick(tickDoPiso)).toBe(2041);
+  });
+
+  it('ACEITE: 2058 deixa de decidir a partida sozinho', () => {
+    // Sem o piso, este é o tick exato em que o apoio das 8 regiões chegaria a
+    // zero. Como o §2.7 dá derrota por apoio médio zero, toda partida se
+    // perderia em 2058 — fizesse o jogador o que fizesse.
+    const tickDoZero = inicial / (balance.supportDecayPerYear / balance.ticksPerYear);
+
+    expect(yearForTick(tickDoZero)).toBe(2058);
+    expect(apoioMedio(rodar(tickDoZero))).toBeGreaterThan(0);
+    expect(apoioMedio(rodar(TOTAL_TICKS))).toBe(balance.supportFloor);
+  });
+
+  it('não puxa de volta para cima quem já está abaixo do piso', () => {
+    // Cenário do P7-01: um evento derruba uma região a 10. O desgaste do tempo
+    // não pode "consertar" isso subindo o apoio de volta até o piso — o piso
+    // trava o decaimento, não é um valor de repouso para onde tudo converge.
+    const inicio = createInitialState(1);
+    const ferida = {
+      ...inicio,
+      regions: {
+        ...inicio.regions,
+        af: { ...inicio.regions.af, support: 10 },
+        oc: { ...inicio.regions.oc, support: balance.supportFloor },
+      },
+    };
+
+    const depois = advanceTick(ferida);
+
+    expect(depois.regions.af.support).toBe(10);
+    expect(depois.regions.oc.support).toBe(balance.supportFloor);
+  });
+
+  it('o desgaste do apoio não atropela o crescimento das emissões', () => {
+    // As duas coisas reescrevem o mesmo mapa de regiões, uma depois da outra.
+    // Se o tick devolvesse o mapa errado, um dos dois efeitos sumiria em
+    // silêncio e só apareceria no fim da partida.
+    const antes = createInitialState(1);
+    const depois = advanceTick(antes);
+
+    expect(depois.regions.ea.emissions).toBeGreaterThan(antes.regions.ea.emissions);
+    expect(depois.regions.ea.support).toBeLessThan(antes.regions.ea.support);
+    expect(depois.regions.ea.resilience).toBe(antes.regions.ea.resilience);
+    expect(depois.regions.ea.population).toBe(antes.regions.ea.population);
+  });
+
+  it('não muta o apoio do estado recebido', () => {
+    const antes = createInitialState(3);
+
+    advanceTick(antes);
+
+    expect(antes.regions.na.support).toBe(inicial);
   });
 });
 

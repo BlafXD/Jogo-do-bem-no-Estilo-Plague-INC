@@ -2,8 +2,8 @@
 // Função pura: recebe GameState, devolve GameState novo, nunca muta o recebido (§4).
 // Implementado em P6-03; o relógio de tempo real veio em P6-04.
 //
-// Este é o orquestrador do loop do docs/GDD.md §2.1. Hoje ele chama só o clima,
-// porque é o único módulo que existe. Conforme os outros chegarem, é aqui que
+// Este é o orquestrador do loop do docs/GDD.md §2.1. Hoje ele avança o clima e
+// desgasta o apoio público. Conforme os outros módulos chegarem, é aqui que
 // entram: eventos (P7-01), A Inércia (P7-03) e o efeito das habilidades (P6-05).
 //
 // Duas metades, e a divisão importa:
@@ -13,13 +13,22 @@
 //      que passa o resultado para cá. O engine não sabe que existe uma tela (§3).
 
 import { advanceClimate } from './climate';
-import { balance, type GameState } from './state';
+import { balance, REGION_IDS, type GameState, type Region, type RegionId } from './state';
 
 /** Ticks de uma partida inteira: 75 anos × 12 meses. */
 export const TOTAL_TICKS = (balance.endYear - balance.startYear) * balance.ticksPerYear;
 
 /** PAC que entra por mês, derivado da entrada anual. */
 const POINTS_PER_TICK = balance.basePointsPerYear / balance.ticksPerYear;
+
+/**
+ * Apoio que cada região perde por mês, derivado da perda anual.
+ *
+ * Divisão simples, e não a raiz de ordem 12 que o climate.ts usa: aquele
+ * crescimento é multiplicativo, este desgaste é aditivo. Doze parcelas de
+ * `taxa / 12` somam exatamente a taxa anual, sem resto para acumular.
+ */
+const SUPPORT_DECAY_PER_TICK = balance.supportDecayPerYear / balance.ticksPerYear;
 
 /**
  * O ano em que um tick acontece. O tick 0 é o primeiro mês de `startYear`, e o
@@ -33,6 +42,42 @@ export function yearForTick(tick: number): number {
 /** A partida chegou ao fim do horizonte de simulação. */
 export function isOver(state: GameState): boolean {
   return state.tick >= TOTAL_TICKS;
+}
+
+// ---------------------------------------------------------- apoio público ---
+
+/**
+ * O apoio de uma região depois de um mês de desgaste.
+ *
+ * Cai `supportDecayPerYear` ao ano e **para no piso de apatia**. O piso não é
+ * detalhe: sem ele, os 50 pontos iniciais chegariam a zero no tick 400 — ano de
+ * 2058 — e como o docs/GDD.md §2.7 dá derrota por apoio médio zero, toda partida
+ * se perderia ali, fizesse o jogador o que fizesse.
+ *
+ * Quem já está no piso ou abaixo dele não se move. As duas metades importam: o
+ * desgaste do tempo não empurra mais para baixo, e **também não puxa de volta
+ * para cima** — uma região derrubada a 10 por um evento (P7-01) continua em 10.
+ * Furar o piso é trabalho de evento e da Inércia (P7-03), que agem por cima
+ * deste desgaste; recuperar é do ramo Sociedade (§2.4).
+ */
+function decayedSupport(support: number): number {
+  if (support <= balance.supportFloor) {
+    return support;
+  }
+
+  return Math.max(balance.supportFloor, support - SUPPORT_DECAY_PER_TICK);
+}
+
+/** Aplica um mês de desgaste ao apoio das 8 regiões. */
+function decaySupport(regions: GameState['regions']): GameState['regions'] {
+  const decayed: Partial<Record<RegionId, Region>> = {};
+
+  for (const id of REGION_IDS) {
+    const region = regions[id];
+    decayed[id] = { ...region, support: decayedSupport(region.support) };
+  }
+
+  return decayed as Record<RegionId, Region>;
 }
 
 /**
@@ -49,12 +94,16 @@ export function advanceTick(state: GameState): GameState {
   }
 
   const nextTick = state.tick + 1;
+  // O clima roda primeiro porque é ele que faz as regiões crescerem em emissão;
+  // o desgaste do apoio entra em cima do mapa que sai de lá, e não no lugar dele.
+  const afterClimate = advanceClimate(state);
 
   return {
-    ...advanceClimate(state),
+    ...afterClimate,
     tick: nextTick,
     year: yearForTick(nextTick),
     actionPoints: state.actionPoints + POINTS_PER_TICK,
+    regions: decaySupport(afterClimate.regions),
   };
 }
 

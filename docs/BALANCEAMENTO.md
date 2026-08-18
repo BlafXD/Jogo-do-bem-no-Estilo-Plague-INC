@@ -34,15 +34,16 @@ tabela abaixo; a primeira linha aqui é a primeira mudança em cima deles.
 ## Ajustes
 
 As rodadas de playtest ainda não aconteceram — saem de `P3-02` (a planilha) e de `P8-02`
-(o playtest com 5 pessoas). As três linhas abaixo são anteriores a isso: vieram de fonte
-científica (`P3-01`) e de um furo de desenho achado na conta (`P6-02`), não de partida
-jogada. Por isso todas estão com **resultado não testado**.
+(o playtest com 5 pessoas). As quatro linhas abaixo são anteriores a isso: vieram de fonte
+científica (`P3-01`) e de furos de desenho achados na conta (`P6-02` e `P6-03`), não de
+partida jogada. Por isso todas estão com **resultado não testado**.
 
 | Data | Constante | De → Para | Por quê | Resultado |
 |---|---|---|---|---|
 | 2026-08-18 | `startTemperature` | 1,3 → **1,37 °C** | O valor do GDD não tinha fonte. O `P3-01` fechou a fonte: aquecimento de origem humana em 2025, pelo IGCC 2025 | não testado |
 | 2026-08-18 | `startEmissions` | 41 → **40,753 GtCO₂/ano** | Passou a ser a soma das 8 regiões, por construção. Com valores diferentes, o global e o regional discordariam e a simulação erraria em silêncio | não testado |
 | 2026-08-18 | `baselineGrowthPerYear` | — → **0,0093 (0,93%/ano)** | **Constante nova.** Com emissão constante a partida terminava em 2,75 °C e não fazer nada não perdia o jogo. A taxa escolhida dobra as emissões até 2100, como o cenário SSP3-7.0 do IPCC | não testado |
+| 2026-08-18 | `supportFloor` | — → **25 pontos** | **Constante nova.** O `supportDecayPerYear` sozinho levava o apoio das 8 regiões a zero no tick 400 — ano de **2058** — e o `docs/GDD.md §2.7` dá derrota por apoio médio zero: toda partida se perderia ali, fizesse o jogador o que fizesse. O piso trava o desgaste do tempo. Furar para baixo passa a ser trabalho de evento (`P7-01`) e da Inércia (`P7-03`) | não testado |
 
 ### O que observar no primeiro playtest
 
@@ -50,6 +51,12 @@ O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador q
 nada cruza os 3 °C em **2089** — sobrevive a 85% da partida antes de perder. Se o playtest
 mostrar que a ameaça demora demais a aparecer, o caminho é **subir a taxa**, não baixar o
 `loseTemperature`: o limiar de 3 °C é o que dá sentido ao jogo, e a taxa é o que dá ritmo.
+
+O `supportFloor` é o segundo candidato. Ele decide **quanto espaço o apoio tem para cair**
+antes de a agência ser dissolvida: com 25, uma região absorve 25 pontos de dano de evento
+acumulado antes de zerar. Se o playtest mostrar que a derrota por apoio nunca chega perto de
+acontecer, o caminho é baixar o piso. Se acontecer cedo e sem o jogador entender por quê, o
+problema provavelmente está no dano dos eventos (`P7-01`), não aqui.
 
 Trocar essa constante muda a curva inteira da partida. O `tests/climate.test.ts` trava os
 valores de referência (4410,6 GtCO₂ e 3,3548 °C em 2100), então qualquer mudança aqui vai

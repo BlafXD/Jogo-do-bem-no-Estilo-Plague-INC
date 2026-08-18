@@ -9,6 +9,7 @@
   "baselineGrowthPerYear": 0.0093,
   "basePointsPerYear": 10,
   "supportDecayPerYear": 1.5,
+  "supportFloor": 25,
   "inertiaGrowthPerYear": 2,
   "eventWeightPerDegree": 1.8,
   "loseTemperature": 3

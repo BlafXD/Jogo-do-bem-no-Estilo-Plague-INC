@@ -146,7 +146,10 @@ export type Balance = {
   /** Crescimento anual das emissões sem ação do jogador. Fonte em docs/CIENCIA.md. */
   readonly baselineGrowthPerYear: number;
   readonly basePointsPerYear: number;
+  /** Pontos de apoio que cada região perde por ano, até o piso. */
   readonly supportDecayPerYear: number;
+  /** Piso de apatia: até onde o decaimento do apoio desce sozinho. */
+  readonly supportFloor: number;
   readonly inertiaGrowthPerYear: number;
   readonly eventWeightPerDegree: number;
   readonly loseTemperature: number;
