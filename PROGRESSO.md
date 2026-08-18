@@ -28,6 +28,37 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — Três pendências fechadas: GDD em dia, piso de apatia e nomes em inglês
+
+- **Parte / tarefa:** nenhuma nova do `PLANO.md` — são as três pendências que o `P6-02`, o `P6-03` e o `P6-04` deixaram anotadas, cobradas antes de abrir o `P6-05`.
+- **Três commits, não um.** Renomeação mecânica misturada com mecânica nova é o tipo de diff que ninguém revisa de verdade. A ordem também foi escolhida: o piso **antes** da renomeação, para que os nomes novos atravessassem uma suíte que já cobria o comportamento novo — assim, um teste que quebrasse na leva 3 seria prova de erro de renomeação, e não de mecânica.
+  1. `docs(gdd)` — o `§4` ganhou `realSecondsPerTick` e `supportFloor`.
+  2. `feat(engine)` — o piso de apatia, com 7 testes novos.
+  3. `refactor` — 365 identificadores para inglês, em 5 arquivos.
+- **O `§4` estava desatualizado desde o `P6-04`.** O `realSecondsPerTick` vivia só no `balance.json`. Agora os dois lados têm as mesmas **14 chaves, na mesma ordem, com os mesmos valores** — conferido por script que lê o bloco `jsonc` do GDD e o JSON de verdade. O `supportFloor` entrou junto, um commit antes de existir no código: o GDD é o documento de design, e design vir antes da implementação é a ordem certa.
+- **O piso de apatia, e a bomba-relógio que ele desarma.** O `supportDecayPerYear: 1.5` existia desde o primeiro dia **sem regra de aplicação**. Aplicá-lo do jeito óbvio dava isto: apoio começa em 50, cai 1,5 ao ano e **zera no tick 400 — ano de 2058**. Como o `§2.7` dá derrota por apoio médio zero, toda partida se perderia ali, fizesse o jogador o que fizesse. A saída escolhida foi um piso: o desgaste do tempo desce até `supportFloor: 25`, encosta nele em **2041** (tick 200) e para. Derrota por apoio deixa de ser automática e passa a exigir evento (`P7-01`) ou Inércia (`P7-03`).
+  - **As duas alternativas descartadas, e por quê.** Amarrar o decaimento à Inércia (`decay × inertia/100`) é o que o `§2.6` descreve, mas hoje `inertia` é 0 e nada aplica o `inertiaGrowthPerYear` — daria duas constantes paradas em vez de uma. Zerar o `supportDecayPerYear` era honesto e menor, mas deixava o apoio congelado até a Parte 7.
+- **O detalhe que quase virou bug.** A forma óbvia é `Math.max(piso, apoio - desgaste)` e pronto. Só que isso transforma o piso num **valor de repouso**: uma região derrubada a 10 por um evento seria *promovida* de volta a 25 no mês seguinte — o desgaste do tempo consertando o dano do evento. Por isso a guarda `if (support <= supportFloor) return support` vem antes do `Math.max`. Tem teste com uma região em 10 e outra exatamente em 25.
+- **Conferi que os testes pegam.** Quatro defeitos plantados, um de cada vez: sem piso nenhum → **3 testes**; piso como valor de repouso → **1**; taxa anual cobrada todo mês → **2**; desgaste aplicado ao mapa de regiões velho, antes do clima → **2**. Todos revertidos.
+  - **O terceiro derrubava só 1 na primeira rodada, e o motivo era estrutural:** o piso absorve o erro de taxa, então todos os outros testes seguiam coerentes consigo mesmos. Acrescentei o teste `encosta no piso em 2041` — o ano é fato de balanceamento, não conta derivada das constantes — e aí o defeito passou a derrubar 2. Mesmo tipo de furo que o `P6-03` achou, pela mesma razão.
+- **A renomeação foi feita pela AST, não por regex — e isso não é preciosismo.** O `§11` manda identificadores em inglês e prosa em pt-BR. Um `s/estado/state/g` acertaria as variáveis **e destruiria a prosa**, porque "estado" aparece em quase todo comentário e em vários nomes de teste. A ferramenta usa o `typescript` que já está instalado: monta a AST, reescreve **só** nós `Identifier` e não enxerga comentário nem string. Depois, uma segunda passada extrai toda a prosa dos dois lados — comentários pelo scanner, strings e templates pela AST — e compara. **Prosa idêntica nos 5 arquivos, medida contra o `HEAD`.** Sem essa prova, "só renomeei" é promessa, não fato.
+  - **Escopo:** no `src/`, o `state.ts` era o único arquivo fora da regra — `rng.ts`, `climate.ts` e `tick.ts` já estavam certos. Os 4 arquivos de teste estavam todos em pt-BR. Nomes de `describe`/`it`, comentários e mensagens de erro continuam em pt-BR, que é o que a regra manda.
+  - O Prettier reformatou uma coisa sozinho: a lista de parâmetros do `assertRange` (ex-`assertFaixa`) voltou para uma linha só, porque os nomes mais curtos passaram a caber na largura. Está no diff.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  68 testes em 4 arquivos. O aceite do piso é o teste `ACEITE: 2058 deixa de decidir a partida sozinho`.
+- **Pendente:**
+  - **O `P3-05` continua aberto.** Só a fatia do `supportDecayPerYear` foi decidida aqui. Gatilhos, ações e contra-ataques da Inércia seguem por fazer — e o `inertiaGrowthPerYear` continua **inerte**: nada no engine faz a Inércia crescer.
+  - **Ninguém verifica derrota.** O `§2.7` define derrota por temperatura acima de 3 °C **ou** apoio médio zero, e o engine não tem função que dê a partida por perdida — quem faz essa conta hoje são só os testes. É trabalho do `P6-08` com a Parte 7.
+  - **`supportFloor: 25` é decisão de desenho, não número com fonte.** Está no `docs/BALANCEAMENTO.md` com resultado "não testado", junto do que observar no primeiro playtest.
+  - **Entradas antigas deste diário citam `porId`, `faltando` e `regiao`**, nomes que não existem mais. Não foram editadas, pela regra de sempre: elas descrevem o que era verdade na data delas.
+  - O `P6-05` está destravado e é o próximo da fila: `skills.ts` mais os 20 nós da árvore.
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — Relógio de tempo real: a partida anda igual em qualquer FPS
 
 - **Parte / tarefa:** `P6-04` ✔

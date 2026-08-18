@@ -166,20 +166,14 @@ export const balance: Balance = balanceData;
  */
 export type RawRegion = Omit<Region, 'id'> & { readonly id: string };
 
-function isRegionId(valor: string): valor is RegionId {
-  return (REGION_IDS as readonly string[]).includes(valor);
+function isRegionId(value: string): value is RegionId {
+  return (REGION_IDS as readonly string[]).includes(value);
 }
 
-function assertFaixa(
-  valor: number,
-  minimo: number,
-  maximo: number,
-  campo: string,
-  id: string,
-): void {
-  if (!Number.isFinite(valor) || valor < minimo || valor > maximo) {
+function assertRange(value: number, min: number, max: number, field: string, id: string): void {
+  if (!Number.isFinite(value) || value < min || value > max) {
     throw new Error(
-      `regions.json: a região "${id}" tem ${campo} = ${valor}, fora da faixa de ${minimo} a ${maximo}.`,
+      `regions.json: a região "${id}" tem ${field} = ${value}, fora da faixa de ${min} a ${max}.`,
     );
   }
 }
@@ -193,32 +187,32 @@ function assertFaixa(
  * `[D-Historia]` vai editar à mão, sem abrir um `.ts` — então o erro precisa
  * dizer o que está errado, e não quebrar em algum lugar distante depois.
  */
-export function parseRegions(cru: readonly RawRegion[]): Readonly<Record<RegionId, Region>> {
-  const porId: Partial<Record<RegionId, Region>> = {};
+export function parseRegions(raw: readonly RawRegion[]): Readonly<Record<RegionId, Region>> {
+  const byId: Partial<Record<RegionId, Region>> = {};
 
-  for (const regiao of cru) {
-    const id = regiao.id;
+  for (const region of raw) {
+    const id = region.id;
 
     if (!isRegionId(id)) {
       throw new Error(`regions.json: id de região desconhecido "${id}".`);
     }
-    if (porId[id] !== undefined) {
+    if (byId[id] !== undefined) {
       throw new Error(`regions.json: a região "${id}" aparece mais de uma vez.`);
     }
 
-    assertFaixa(regiao.cleanShare, 0, 1, 'cleanShare', id);
-    assertFaixa(regiao.support, 0, 100, 'support', id);
-    assertFaixa(regiao.resilience, 0, 100, 'resilience', id);
+    assertRange(region.cleanShare, 0, 1, 'cleanShare', id);
+    assertRange(region.support, 0, 100, 'support', id);
+    assertRange(region.resilience, 0, 100, 'resilience', id);
 
-    porId[id] = { ...regiao, id };
+    byId[id] = { ...region, id };
   }
 
-  const faltando = REGION_IDS.filter((id) => porId[id] === undefined);
-  if (faltando.length > 0) {
-    throw new Error(`regions.json: faltam as regiões ${faltando.join(', ')}.`);
+  const missing = REGION_IDS.filter((id) => byId[id] === undefined);
+  if (missing.length > 0) {
+    throw new Error(`regions.json: faltam as regiões ${missing.join(', ')}.`);
   }
 
-  return porId as Record<RegionId, Region>;
+  return byId as Record<RegionId, Region>;
 }
 
 /**
