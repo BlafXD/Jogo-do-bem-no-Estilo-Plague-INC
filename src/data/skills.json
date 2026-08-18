@@ -1,1 +1,364 @@
-[]
+[
+  {
+    "id": "solar",
+    "branch": "energy",
+    "name": "Energia solar em escala",
+    "description": "Corta 0,5% ao ano das emissões globais.",
+    "fact": "O custo da eletricidade solar caiu 90% entre 2010 e 2023, de US$ 0,460 para US$ 0,044 por kWh.",
+    "cost": 40,
+    "requires": [],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.5
+      }
+    ]
+  },
+  {
+    "id": "wind",
+    "branch": "energy",
+    "name": "Energia eólica",
+    "description": "Corta 0,45% ao ano das emissões globais.",
+    "fact": "A eólica em terra ficou 70% mais barata entre 2010 e 2024, de US$ 0,089 para US$ 0,034 por kWh.",
+    "cost": 70,
+    "requires": ["solar"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.45
+      }
+    ]
+  },
+  {
+    "id": "storage",
+    "branch": "energy",
+    "name": "Armazenamento em bateria",
+    "description": "Corta 0,45% ao ano das emissões globais.",
+    "fact": "O pacote de baterias de íon-lítio caiu de mais de US$ 1.200 por kWh em 2010 para US$ 108 em 2025.",
+    "cost": 70,
+    "requires": ["solar"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.45
+      }
+    ]
+  },
+  {
+    "id": "smart-grid",
+    "branch": "energy",
+    "name": "Rede elétrica inteligente",
+    "description": "Corta 0,6% ao ano das emissões globais.",
+    "fact": "Até 2040 o mundo precisa somar ou trocar 80 milhões de quilômetros de linhas — o tamanho da rede elétrica que existe hoje.",
+    "cost": 140,
+    "requires": ["wind", "storage"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.6
+      }
+    ]
+  },
+  {
+    "id": "transit",
+    "branch": "transport",
+    "name": "Transporte público de massa",
+    "description": "Corta 0,3% ao ano das emissões globais e ganha 3 pontos de apoio.",
+    "fact": "Carros e vans sozinhos respondem por cerca de 10% das emissões mundiais de CO₂ ligadas à energia e por mais de um quarto do petróleo consumido.",
+    "cost": 40,
+    "requires": [],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      },
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": "ev-fleet",
+    "branch": "transport",
+    "name": "Eletrificação das frotas",
+    "description": "Corta 0,35% ao ano das emissões globais.",
+    "fact": "Em 2024 foram vendidos mais de 17 milhões de carros elétricos no mundo — mais de um a cada cinco carros novos.",
+    "cost": 70,
+    "requires": ["transit"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.35
+      }
+    ]
+  },
+  {
+    "id": "active-travel",
+    "branch": "transport",
+    "name": "Ciclovias e cidades caminháveis",
+    "description": "Corta 0,2% ao ano das emissões globais e ganha 4 pontos de apoio.",
+    "fact": "Trocar uma viagem de carro por dia pela bicicleta corta cerca de meia tonelada de CO₂ por ano, por pessoa.",
+    "cost": 70,
+    "requires": ["transit"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.2
+      },
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "id": "efficient-buildings",
+    "branch": "transport",
+    "name": "Prédios eficientes",
+    "description": "Corta 0,35% ao ano das emissões globais.",
+    "fact": "Só a operação dos prédios responde por 26% das emissões mundiais de CO₂ ligadas à energia.",
+    "cost": 140,
+    "requires": ["ev-fleet", "active-travel"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.35
+      }
+    ]
+  },
+  {
+    "id": "reforestation",
+    "branch": "nature",
+    "name": "Reflorestamento",
+    "description": "Corta 0,3% ao ano das emissões globais e ganha 5 pontos de resiliência.",
+    "fact": "O mundo ainda perde 4,1 milhões de hectares de floresta por ano — eram 10,7 milhões na década de 1990.",
+    "cost": 40,
+    "requires": [],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      },
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "id": "mangroves",
+    "branch": "nature",
+    "name": "Restauração de manguezais",
+    "description": "Corta 0,15% ao ano das emissões globais e ganha 10 pontos de resiliência.",
+    "fact": "O solo de um manguezal guarda em média cinco vezes mais carbono por hectare que o de florestas temperadas, boreais ou tropicais.",
+    "cost": 70,
+    "requires": ["reforestation"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.15
+      },
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": "regen-agriculture",
+    "branch": "nature",
+    "name": "Agricultura regenerativa",
+    "description": "Corta 0,3% ao ano das emissões globais e ganha 4 pontos de apoio.",
+    "fact": "Os sistemas alimentares respondem por algo entre 21% e 37% das emissões humanas de gases de efeito estufa.",
+    "cost": 70,
+    "requires": ["reforestation"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      },
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 4
+      }
+    ]
+  },
+  {
+    "id": "ocean-protection",
+    "branch": "nature",
+    "name": "Proteção oceânica",
+    "description": "Corta 0,25% ao ano das emissões globais e ganha 8 pontos de resiliência.",
+    "fact": "O oceano absorveu 29% de todo o CO₂ emitido por atividade humana na última década.",
+    "cost": 140,
+    "requires": ["mangroves", "regen-agriculture"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.25
+      },
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 8
+      }
+    ]
+  },
+  {
+    "id": "industrial-efficiency",
+    "branch": "industry",
+    "name": "Eficiência industrial",
+    "description": "Corta 0,4% ao ano das emissões globais.",
+    "fact": "Na COP28 os governos se comprometeram a dobrar o ritmo de ganho de eficiência energética até 2030, para mais de 4% ao ano; em 2024 o mundo entregou cerca de 1%.",
+    "cost": 40,
+    "requires": [],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.4
+      }
+    ]
+  },
+  {
+    "id": "circular-economy",
+    "branch": "industry",
+    "name": "Economia circular",
+    "description": "Corta 0,3% ao ano das emissões globais.",
+    "fact": "Extrair e processar materiais responde por mais de 60% das emissões que aquecem o planeta.",
+    "cost": 70,
+    "requires": ["industrial-efficiency"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      }
+    ]
+  },
+  {
+    "id": "green-steel",
+    "branch": "industry",
+    "name": "Aço verde",
+    "description": "Corta 0,3% ao ano das emissões globais.",
+    "fact": "A siderurgia emite 2,6 GtCO₂ por ano, cerca de 7% das emissões do sistema energético mundial.",
+    "cost": 70,
+    "requires": ["industrial-efficiency"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      }
+    ]
+  },
+  {
+    "id": "low-carbon-cement",
+    "branch": "industry",
+    "name": "Cimento de baixo carbono",
+    "description": "Corta 0,3% ao ano das emissões globais.",
+    "fact": "O cimento emitiu 2,4 GtCO₂ em 2023 — 6,5% de todo o CO₂ vindo de queima de combustível e de processos industriais.",
+    "cost": 140,
+    "requires": ["circular-economy", "green-steel"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      }
+    ]
+  },
+  {
+    "id": "climate-education",
+    "branch": "society",
+    "name": "Educação climática",
+    "description": "Ganha 8 pontos de apoio e mais 2 PAC por ano.",
+    "fact": "Só 53% dos currículos escolares nacionais do mundo mencionam mudança do clima em algum ponto.",
+    "cost": 40,
+    "requires": [],
+    "effects": [
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 8
+      },
+      {
+        "kind": "pointsPerYear",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "treaties",
+    "branch": "society",
+    "name": "Acordos internacionais",
+    "description": "Derruba 15 pontos da Inércia e ganha mais 3 PAC por ano.",
+    "fact": "O Protocolo de Montreal evitou entre 0,5 °C e 1 °C de aquecimento até meados deste século — é o tratado ambiental mais bem-sucedido já assinado.",
+    "cost": 70,
+    "requires": ["climate-education"],
+    "effects": [
+      {
+        "kind": "inertiaCut",
+        "value": 15
+      },
+      {
+        "kind": "pointsPerYear",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": "early-warning",
+    "branch": "society",
+    "name": "Alerta precoce",
+    "description": "Ganha 12 pontos de resiliência.",
+    "fact": "Vinte e quatro horas de aviso antes de um desastre reduzem o dano em 30%.",
+    "cost": 70,
+    "requires": ["climate-education"],
+    "effects": [
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 12
+      }
+    ]
+  },
+  {
+    "id": "coastal-defence",
+    "branch": "society",
+    "name": "Defesa costeira",
+    "description": "Ganha 15 pontos de resiliência e 5 de apoio.",
+    "fact": "Entre 750 milhões e 1,1 bilhão de pessoas vivem a menos de 10 metros acima do nível do mar.",
+    "cost": 140,
+    "requires": ["treaties", "early-warning"],
+    "effects": [
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 15
+      },
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 5
+      }
+    ]
+  }
+]

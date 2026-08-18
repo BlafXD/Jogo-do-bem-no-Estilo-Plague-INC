@@ -199,8 +199,71 @@ cenário de "rivalidade regional", sem política climática nova. A constante mo
 
 ## Fatos das habilidades
 
-Cada nó da árvore carrega um `fact` de uma frase (`docs/GDD.md §2.4`). A fonte de cada
-um entra aqui. Preenchimento: `P6-05`.
+Cada nó da árvore carrega um `fact` de uma frase (`docs/GDD.md §2.4`), e é ele que faz o jogo
+ensinar alguma coisa em vez de só entreter. Preenchido em `P6-05`, com os 20 nós de
+`src/data/skills.json`.
+
+**Estas fontes são setoriais, não primárias.** A tabela do topo deste arquivo é a que sustenta o
+*modelo* — IPCC, Global Carbon Budget, OWID. As de baixo sustentam as *frases* que o jogador lê,
+e vêm de agências setoriais (IEA, IRENA, FAO, UNESCO) e de artigos revisados por pares. Um número
+errado aqui não quebra a simulação, mas quebra a honestidade do jogo, que é pior.
+
+| Chave | Publicação | Link |
+|---|---|---|
+| **[IRENA24]** | IRENA, _Renewable Power Generation Costs in 2023_ (2024) | <https://www.irena.org/Publications/2024/Sep/Renewable-Power-Generation-Costs-in-2023> |
+| **[IRENA25]** | IRENA, _Renewable Power Generation Costs in 2024_ (2025) | <https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2025/Jul/IRENA_TEC_RPGC_in_2024_Summary_2025.pdf> |
+| **[BNEF25]** | BloombergNEF, levantamento anual de preço de bateria de íon-lítio (2025) | <https://about.bnef.com/insights/clean-transport/lithium-ion-battery-pack-prices-fall-to-108-per-kilowatt-hour-despite-rising-metal-prices-bloombergnef/> |
+| **[IEA-GRID]** | IEA, _Electricity Grids and Secure Energy Transitions_ (2023) | <https://www.iea.org/reports/electricity-grids-and-secure-energy-transitions> |
+| **[IEA-EV25]** | IEA, _Global EV Outlook 2025_ | <https://www.iea.org/reports/global-ev-outlook-2025> |
+| **[IEA-CARS]** | IEA, _Cars and Vans_ — página setorial | <https://www.iea.org/energy-system/transport/cars-and-vans> |
+| **[IEA-BLD]** | IEA, emissões de CO₂ dos prédios, incluindo as embutidas na construção, 2022 | <https://www.iea.org/data-and-statistics/charts/global-co2-emissions-from-buildings-including-embodied-emissions-from-new-construction-2022> |
+| **[IEA-STEEL]** | IEA, _Iron & Steel_ — página setorial | <https://www.iea.org/energy-system/industry/steel> |
+| **[IEA-CEM]** | IEA, _Cement_ — página setorial | <https://www.iea.org/energy-system/industry/cement> |
+| **[IEA-EFF]** | IEA, sobre a meta de dobrar a eficiência energética até 2030 (COP28) | <https://www.iea.org/news/much-faster-progress-on-energy-efficiency-is-needed-to-meet-global-2030-goal> |
+| **[FRA25]** | FAO, _Global Forest Resources Assessment 2025_ — principais achados | <https://openknowledge.fao.org/server/api/core/bitstreams/2dee6e93-1988-4659-aa89-30dd20b43b15/content/FRA-2025/key-findings.html> |
+| **[DONATO11]** | Donato et al., _Mangroves among the most carbon-rich forests in the tropics_, Nature Geoscience 4, 293–297 (2011) | <https://www.nature.com/articles/ngeo1123> |
+| **[SRCCL]** | IPCC, _Climate Change and Land_ — relatório especial (2019) | <https://www.ipcc.ch/srccl/> |
+| **[IRP24]** | UNEP / International Resource Panel, _Global Resources Outlook 2024_ | <https://www.unep.org/resources/Global-Resource-Outlook-2024> |
+| **[UNESCO21]** | UNESCO, sobre currículos nacionais e mudança do clima | <https://www.unesco.org/en/articles/only-half-national-curricula-world-have-reference-climate-change-unesco-warns> |
+| **[NOAA-MP]** | NOAA, _Montreal Protocol emerges as a powerful climate treaty_ | <https://www.noaa.gov/news-release/montreal-protocol-emerges-as-powerful-climate-treaty> |
+| **[WMO-EW]** | WMO, _Early Warning Systems_ — cita a Global Commission on Adaptation | <https://wmo.int/topics/early-warning-system> |
+| **[REIMANN21]** | Reimann et al., _Estimating population and urban areas at risk of coastal hazards_, ESSD 13, 5747–5773 (2021) | <https://essd.copernicus.org/articles/13/5747/2021/> |
+| **[BRAND21]** | Brand et al., Global Environmental Change (2021), via Universidade de Oxford | <https://www.ox.ac.uk/news/2021-02-02-get-your-bike-study-shows-walking-cycling-and-e-biking-make-significant-impact> |
+
+A chave **[GCB25]** não se repete nessa tabela: ela é uma das fontes primárias do topo deste
+arquivo, e é de lá que sai o fato do `ocean-protection`.
+
+**Consultadas em 2026-08-18.** A tabela abaixo é gerada a partir do próprio `skills.json` — se um
+`fact` mudar lá e não aqui, os dois deixam de bater e é para regerar, não para editar à mão.
+
+| Nó | Fato como o jogador lê | Fonte | Observação |
+|---|---|---|---|
+| `solar` | O custo da eletricidade solar caiu 90% entre 2010 e 2023, de US$ 0,460 para US$ 0,044 por kWh. | **[IRENA24]** | LCOE médio ponderado de solar fotovoltaica em escala de serviço público. Em 2023 ficou 56% abaixo da alternativa fóssil — em 2010 era 414% acima |
+| `wind` | A eólica em terra ficou 70% mais barata entre 2010 e 2024, de US$ 0,089 para US$ 0,034 por kWh. | **[IRENA25]** | LCOE médio ponderado de eólica em terra. O fator de capacidade subiu de 27% para 34% no período |
+| `storage` | O pacote de baterias de íon-lítio caiu de mais de US$ 1.200 por kWh em 2010 para US$ 108 em 2025. | **[BNEF25]** | Preço médio de pacote, em dólares nominais. Em termos reais a queda é de cerca de 93% |
+| `smart-grid` | Até 2040 o mundo precisa somar ou trocar 80 milhões de quilômetros de linhas — o tamanho da rede elétrica que existe hoje. | **[IEA-GRID]** | O relatório pede também dobrar o investimento anual em rede, para mais de US$ 600 bilhões até 2030 |
+| `transit` | Carros e vans sozinhos respondem por cerca de 10% das emissões mundiais de CO₂ ligadas à energia e por mais de um quarto do petróleo consumido. | **[IEA-CARS]** | Dado de 2023. Carros e vans são um recorte do transporte, que responde por cerca de um quarto das emissões de CO₂ ligadas à energia |
+| `ev-fleet` | Em 2024 foram vendidos mais de 17 milhões de carros elétricos no mundo — mais de um a cada cinco carros novos. | **[IEA-EV25]** | Vendas de 2024. A China sozinha vendeu mais de 11 milhões |
+| `active-travel` | Trocar uma viagem de carro por dia pela bicicleta corta cerca de meia tonelada de CO₂ por ano, por pessoa. | **[BRAND21]** | Painel longitudinal em sete cidades europeias. Quem já pedalava emitia 84% menos CO₂ no deslocamento diário |
+| `efficient-buildings` | Só a operação dos prédios responde por 26% das emissões mundiais de CO₂ ligadas à energia. | **[IEA-BLD]** | Só a operação: 8% diretas e 18% indiretas, em 2022. Com as emissões embutidas na construção o setor chega a cerca de um terço |
+| `reforestation` | O mundo ainda perde 4,1 milhões de hectares de floresta por ano — eram 10,7 milhões na década de 1990. | **[FRA25]** | Perda **líquida** — desmatamento menos recuperação. O desmatamento bruto segue perto de 10,9 milhões de hectares por ano |
+| `mangroves` | O solo de um manguezal guarda em média cinco vezes mais carbono por hectare que o de florestas temperadas, boreais ou tropicais. | **[DONATO11]** | Medição em 25 manguezais do Indo-Pacífico. A vantagem está sobretudo no solo, não na biomassa acima do chão |
+| `regen-agriculture` | Os sistemas alimentares respondem por algo entre 21% e 37% das emissões humanas de gases de efeito estufa. | **[SRCCL]** | Faixa do relatório especial do IPCC sobre terra. Estimativas posteriores convergem para cerca de um terço |
+| `ocean-protection` | O oceano absorveu 29% de todo o CO₂ emitido por atividade humana na última década. | **[GCB25]** | Média da década de 2015–2024. O sumidouro terrestre absorveu outros 21% no mesmo período |
+| `industrial-efficiency` | Na COP28 os governos se comprometeram a dobrar o ritmo de ganho de eficiência energética até 2030, para mais de 4% ao ano; em 2024 o mundo entregou cerca de 1%. | **[IEA-EFF]** | A meta da COP28 é dobrar o ritmo em relação aos cerca de 2% ao ano obtidos entre 2010 e 2020 |
+| `circular-economy` | Extrair e processar materiais responde por mais de 60% das emissões que aquecem o planeta. | **[IRP24]** | Inclui biomassa (um terço do total) mais fósseis, metais e minerais não metálicos (35%) |
+| `green-steel` | A siderurgia emite 2,6 GtCO₂ por ano, cerca de 7% das emissões do sistema energético mundial. | **[IEA-STEEL]** | Emissões diretas. Contando escopo 2 e 3 as estimativas publicadas chegam a 9% |
+| `low-carbon-cement` | O cimento emitiu 2,4 GtCO₂ em 2023 — 6,5% de todo o CO₂ vindo de queima de combustível e de processos industriais. | **[IEA-CEM]** | Dado de 2023. Boa parte é emissão de processo — sai da calcinação do calcário, não da queima de combustível |
+| `climate-education` | Só 53% dos currículos escolares nacionais do mundo mencionam mudança do clima em algum ponto. | **[UNESCO21]** | Levantamento em 100 países. Menos de 40% dos professores ouvidos se diziam seguros para ensinar a gravidade do tema |
+| `treaties` | O Protocolo de Montreal evitou entre 0,5 °C e 1 °C de aquecimento até meados deste século — é o tratado ambiental mais bem-sucedido já assinado. | **[NOAA-MP]** | Comparado a um cenário sem controle das substâncias que destroem a camada de ozônio. A Emenda de Kigali, sobre HFCs, deve evitar até 0,4 °C a mais até 2100 |
+| `early-warning` | Vinte e quatro horas de aviso antes de um desastre reduzem o dano em 30%. | **[WMO-EW]** | Número da Global Commission on Adaptation. A mortalidade por desastre é pelo menos seis vezes menor onde o sistema de alerta funciona |
+| `coastal-defence` | Entre 750 milhões e 1,1 bilhão de pessoas vivem a menos de 10 metros acima do nível do mar. | **[REIMANN21]** | Faixa para 2015. A largura vem de qual base de elevação e de população se usa — o artigo compara várias |
+
+**O que estes fatos deliberadamente não fazem:** nenhum deles alimenta número da simulação. O
+efeito mecânico de um nó (quanto ele corta de emissão, quanto custa em PAC) é **balanceamento**, e
+mora em `docs/BALANCEAMENTO.md`. Misturar as duas coisas seria dar aparência de ciência a uma
+escolha de jogo — o corte de 0,5% ao ano da solar não sai de lugar nenhum do IRENA, é número de
+desenho. O fato é verdade sobre o mundo; o efeito é verdade sobre o jogo.
 
 ## Fatos dos eventos
 
