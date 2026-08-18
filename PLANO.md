@@ -151,7 +151,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 Objetivo: **M2 — o jogo vira jogo.**
 
 - [x] `P6-01` `engine/state.ts`: tipos + estado inicial lido de `data/*.json` — **M**
-- [ ] `P6-02` `engine/climate.ts`: emissões → CO₂ acumulado → temperatura, com testes — **M** — aceite: sem nenhuma habilidade, a partida termina acima de 3 °C
+- [x] `P6-02` `engine/climate.ts`: emissões → CO₂ acumulado → temperatura, com testes — **M** — aceite: sem nenhuma habilidade, a partida termina acima de 3 °C
 - [ ] `P6-03` `engine/tick.ts`: passo fixo de 1 mês, função pura, com testes — **M**
 - [ ] `P6-04` Relógio de tempo real com acumulador de passo fixo — **M** — aceite: a simulação avança igual a 30 e a 144 FPS
 - [ ] `P6-05` `engine/skills.ts` + `data/skills.json` com 20 nós — **G**

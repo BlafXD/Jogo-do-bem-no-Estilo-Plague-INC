@@ -5,6 +5,7 @@
   "startTemperature": 1.37,
   "startEmissions": 40.753,
   "tcre": 0.00045,
+  "baselineGrowthPerYear": 0.0093,
   "basePointsPerYear": 10,
   "supportDecayPerYear": 1.5,
   "inertiaGrowthPerYear": 2,

@@ -28,6 +28,42 @@ Regras curtas:
 
 ---
 
+## 2026-08-18 — O clima roda: não fazer nada agora perde o jogo
+
+- **Parte / tarefa:** `P6-02` ✔
+- **O que mudou:**
+  - `src/engine/climate.ts` — implementado. Três exportações: `globalEmissions`, `temperatureFor` e `advanceClimate`, mais o `growEmissions` interno.
+  - `tests/climate.test.ts` — 12 testes novos. Suíte total: **37**.
+  - `src/data/balance.json` — constante nova: `baselineGrowthPerYear: 0.0093`. O tipo `Balance` em `state.ts` ganhou o campo.
+  - `docs/CIENCIA.md` — a constante com fonte, uma quarta conferência e a seção do achado do `P3-01` reescrita: de problema em aberto para decisão registrada.
+  - `docs/BALANCEAMENTO.md` — saiu do zero. As três primeiras linhas do histórico.
+- **A decisão que a tarefa exigia antes da primeira linha de código: como as emissões crescem sem o jogador.** O `P3-01` tinha achado o furo — emissão constante terminava em 2,75 °C, abaixo dos 3 °C de derrota, e dava para vencer o jogo dormindo. Escolhemos **0,93% ao ano**, que não é chute: é exatamente a taxa que **dobra** as emissões até 2100, que é como o IPCC AR6 descreve o **SSP3-7.0**, o cenário de mundo sem política climática nova. Resultado: **3,35 °C em 2100**, e o jogador passivo cruza os 3 °C em **2089**.
+- **A conferência que me deixou confortável com o número.** O AR6 dá **3,6 °C** de melhor estimativa para o SSP3-7.0. O jogo dá **3,35 °C** para a mesma trajetória de emissões. Os 0,25 °C de diferença apontam para o lado que o limite 4 do `CIENCIA.md` já previa — o jogo não simula metano nem os outros gases. **Um modelo que erra na direção certa, pelo motivo já documentado, é um modelo que se entende.** Se tivesse dado 3,9 °C, aí sim haveria algo errado.
+- **Duas coisas que a decisão deliberadamente não fez, e o porquê:**
+  - **Não usou a Inércia como motor da linha de base.** Ela age por cima do crescimento (`P7-03`), não no lugar dele. Se o antagonista fosse a única fonte de crescimento, o `climate.ts` dependeria de um módulo que ainda não existe e o aceite desta tarefa seria impossível de verificar hoje.
+  - **Não mexeu no `loseTemperature`.** Baixar o limiar até a conta fechar seria ajustar a ficção ao número.
+- **Detalhe de implementação que evita um erro que só apareceria no fim da partida:** o crescimento por tick é a **raiz de ordem 12** da taxa anual, não `taxa / 12`. As duas parecem iguais e não são — a segunda faz doze meses somarem um pouco mais que um ano, e o resto se acumula por 900 ticks. Tem teste só para isso.
+- **A ordem dentro do tick também é decisão, não acaso:** a emissão do mês entra com a taxa vigente **antes** de a taxa crescer. Inverter adiantaria um mês de crescimento e faria a partida terminar mais quente do que a fonte descreve. Também tem teste.
+- **Conferi que os testes pegam.** Plantei três defeitos, um de cada vez:
+  1. Crescimento `taxa / 12` em vez da raiz → **3 testes falharam**, incluindo o dos valores de referência.
+  2. Crescer antes de acumular → **2 falharam**.
+  3. `baselineGrowthPerYear` de volta a zero, que é o furo original → **4 falharam**, entre eles o do aceite.
+  Nenhum defeito derrubou a suíte inteira, que é o ponto: os testes discriminam, não estão só acoplados uns aos outros. Todos revertidos.
+- **Valores de referência travados**, no mesmo espírito dos do `rng.ts`: 4410,6 GtCO₂ acumulados e 3,3548 °C em 2100. Sem eles, uma refatoração muda a curva do jogo inteiro e todos os outros testes continuam verdes, porque cada um segue coerente consigo mesmo.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  ```
+  37 testes em 3 arquivos. O aceite da tarefa é o bloco `a partida inteira sem nenhuma habilidade`, que roda os 900 ticks e exige terminar acima de 3 °C.
+- **Pendente:**
+  - **O `docs/GDD.md §4` não lista o `baselineGrowthPerYear`.** O bloco JSON de lá está com 11 chaves e o `balance.json` com 12. Não editei porque o `§12` exige autorização e a desta sessão cobria outros pontos. É uma linha.
+  - **`climate.ts` não mexe em `tick`, `year` nem `history`.** É de propósito: quem orquestra a passagem do mês é o `P6-03`, e quem alimenta o gráfico final é o `P7-06`. O `advanceClimate` faz só a parte de carbono.
+  - **Nenhuma habilidade abate emissões ainda**, porque `skills.ts` é `P6-05`. Hoje o `emissionCut` existe como tipo e não como efeito — a curva de 3,35 °C é, por enquanto, a única curva possível.
+  - **Convenção de nomes divergindo:** o `§11` manda nomes de variáveis em inglês, mas o `state.ts` do `P6-01` usa português nos locais (`porId`, `faltando`, `regiao`). Escrevi o `climate.ts` seguindo a regra escrita. **Vale decidir qual das duas vale antes que o terceiro módulo entre e a mistura fique cara.**
+- **Evidência:** —
+
+---
+
 ## 2026-08-18 — Marco M1 fechado
 
 - **Parte / tarefa:** `SETUP-07` ✔ · `P4-06` **M1** ✔

@@ -141,6 +141,8 @@ export type Balance = {
   readonly startEmissions: number;
   /** °C por GtCO₂ acumulado (TCRE). Fonte em docs/CIENCIA.md. */
   readonly tcre: number;
+  /** Crescimento anual das emissões sem ação do jogador. Fonte em docs/CIENCIA.md. */
+  readonly baselineGrowthPerYear: number;
   readonly basePointsPerYear: number;
   readonly supportDecayPerYear: number;
   readonly inertiaGrowthPerYear: number;

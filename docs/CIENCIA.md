@@ -42,6 +42,7 @@ Todas consultadas em **2026-08-18**. As chaves entre colchetes são usadas no re
 | **1,37 °C** acima de 1850–1900 | `balance.json → startTemperature` | **[IGCC25]** | Aquecimento **de origem humana** no ano de 2025. O ano isolado observado oscila com El Niño; o número de origem humana é o que representa a linha de base de uma partida. Era 1,3 antes desta tarefa, sem fonte |
 | **40,753 GtCO₂/ano** | `balance.json → startEmissions` | **[OWID-CO2]**, ano de 2023 | **É a soma das 8 regiões, por construção** — não editar sem refazer a soma. Fica 0,66 Gt abaixo do total mundial, e a diferença é aviação e navegação internacionais, explicada nos limites |
 | **0,00045 °C por GtCO₂** | `balance.json → tcre` | **[AR6]** | TCRE — resposta transiente ao carbono acumulado. O AR6 dá 0,45 °C por 1000 GtCO₂, com faixa provável de 0,27 a 0,63. **O jogo usa a estimativa central e descarta a incerteza**: sortear dentro da faixa faria a partida ser ganha ou perdida pela constante, não pela decisão do jogador |
+| **0,0093 por ano (0,93%)** | `balance.json → baselineGrowthPerYear` | **[AR6]**, cenário SSP3-7.0 | Crescimento das emissões enquanto o jogador não age. É exatamente a taxa que **dobra** as emissões até 2100 — que é como o AR6 descreve o SSP3-7.0, o mundo sem política climática nova. Entrou em `P6-02`; sem ela, não fazer nada não perdia o jogo |
 | 2025 → 2100 | `balance.json → startYear` e `endYear` | não se aplica | Recorte da partida — decisão de jogo |
 | 3,0 °C | `balance.json → loseTemperature` | não se aplica | Limiar de derrota — decisão de jogo, não dado científico. **Ver o achado no fim deste arquivo** |
 | 12, 10, 1,5, 2, 1,8 | demais chaves de `balance.json` | não se aplica | Ritmo, economia de PAC e antagonista — balanceamento puro, ajustável via `docs/BALANCEAMENTO.md` |
@@ -127,6 +128,12 @@ Três checagens independentes, feitas para achar erro de agregação antes de el
    de que `tcre` e as emissões estão certos.
    - Pelo mesmo caminho, a partida cruza **1,5 °C em 2033**, coerente com o orçamento de carbono
      de 500 GtCO₂ a partir de 2020 do **[AR6]**.
+4. **A linha de base bate com o cenário que ela cita.** Com `baselineGrowthPerYear` em 0,93%, a
+   simulação dos 900 ticks termina em **3,35 °C**, com as emissões em **2,00×** as de hoje. O
+   **[AR6]** dá **3,6 °C** de melhor estimativa para o SSP3-7.0, que é o cenário com essa mesma
+   trajetória de emissões. **Os 0,25 °C de diferença apontam para o lado que o limite 4 previa** —
+   o jogo não simula metano nem os demais gases. Um modelo que erra na direção certa, pelo motivo
+   já documentado, é um modelo que se entende.
 
 ---
 
@@ -154,27 +161,39 @@ Três checagens independentes, feitas para achar erro de agregação antes de el
    mostrar. O `docs/GDD.md §3` foi atualizado junto com esta decisão.
 6. **Mistura de anos.** As regiões são de 2023, o aquecimento é de 2025 e a partida começa em
    2025. Não havia fonte com quebra por país para 2025 na data da consulta.
-7. **Nada aqui projeta o futuro.** A evolução das emissões dentro da partida é mecânica de jogo
-   (`P6-02`, `P3-05`), não previsão científica.
+7. **Nada aqui projeta o futuro.** A trajetória de emissões dentro da partida é uma escolha de
+   cenário, não previsão: o jogo roda o SSP3-7.0 como linha de base e deixa o jogador desviar
+   dela. Não é o que vai acontecer, é o que aconteceria sem ação nova.
+8. **A taxa de crescimento é uma só, global.** Na realidade as regiões divergem — a Europa cai
+   enquanto a África e a Ásia Meridional sobem. Aplicar uma taxa única às 8 é simplificação
+   assumida: as trajetórias regionais do SSP3-7.0 existem, mas cada uma exigiria fonte própria e
+   o ganho não paga o custo antes do primeiro playtest.
 
 ---
 
-## Achado que muda o desenho — para `P6-02` e `P3-05`
+## Como a linha de base foi resolvida (era o achado aberto do `P3-01`)
 
-**Com os números com fonte, não fazer nada não perde o jogo.** A conta está na conferência 3:
-emissão constante leva a 2,75 °C em 2100, abaixo dos 3,0 °C de `loseTemperature`. O jogador
-poderia deixar o tempo correr até 2100 sem comprar nada e sobreviver.
+**O problema:** com os números com fonte e emissão constante, a partida terminava em 2,75 °C —
+abaixo dos 3,0 °C de `loseTemperature`. O jogador podia deixar o tempo correr até 2100 sem
+comprar nada e sobreviver. Não era erro do modelo, era o modelo acertando: o mundo de políticas
+atuais chega a ~2,8 °C **[UNEP25]**, e a catástrofe depende de as emissões **crescerem**.
 
-Isso não é erro do modelo — é o modelo acertando. O mundo de políticas atuais chega a ~2,8 °C
-**[UNEP25]**, e o cenário de catástrofe depende de as emissões **crescerem**. Quem faz as
-emissões crescerem no jogo é A Inércia (`docs/GDD.md §2.6`: subsídios que aumentam emissões).
-Ou seja: **a linha de base do `P6-02` não pode ser emissão constante**, ou o antagonista deixa de
-ser tempero e vira requisito da condição de derrota.
+**A decisão, tomada em `P6-02`:** as emissões crescem **0,93% ao ano** enquanto o jogador não
+age, o que dobra a emissão global até 2100. Essa é a descrição do **SSP3-7.0** no **[AR6]** — o
+cenário de "rivalidade regional", sem política climática nova. A constante mora em
+`balance.json → baselineGrowthPerYear` e o registro do ajuste está em `docs/BALANCEAMENTO.md`.
 
-Referência para quem for implementar: chegar a 3,0 °C em 2100 exige média de **48,3 GtCO₂/ano** ao
-longo dos 75 anos, cerca de 19% acima do valor de partida. Como chegar lá — crescimento de linha
-de base, ação da Inércia, ou baixar o limiar de derrota — é decisão do `P6-02` junto com o
-`P3-05`, e vira uma linha em `docs/BALANCEAMENTO.md`.
+**O que isso produz:** 3,35 °C em 2100, e o jogador que não faz nada cruza os 3 °C em **2089**.
+
+**Duas coisas que essa decisão deliberadamente não faz:**
+
+- **Não usa a Inércia como motor da linha de base.** A Inércia (`docs/GDD.md §2.6`, tarefa
+  `P7-03`) age **por cima** desse crescimento, acelerando-o — não no lugar dele. Se o antagonista
+  fosse a única fonte de crescimento, o `climate.ts` dependeria de um módulo que ainda não existe
+  e o aceite do `P6-02` seria impossível de verificar.
+- **Não mexe no `loseTemperature`.** Baixar o limiar de derrota até a conta fechar seria ajustar
+  a ficção ao número. O limiar de 3 °C é o que dá sentido ao jogo; a taxa é o que dá ritmo, e é
+  ela que o playtest deve mexer.
 
 ---
 
@@ -199,4 +218,6 @@ com todas as letras, não escondida.
 - **Incerteza do TCRE descartada** — o jogo usa a estimativa central e ignora a faixa provável do
   **[AR6]**. Registrado na tabela de constantes.
 - **`cleanShare` mede eletricidade, não a matriz energética inteira** — limite 5.
-- **Emissão constante não é cenário de futuro** — ver o achado acima.
+- **A linha de base do jogo é um cenário escolhido, o SSP3-7.0** — não é previsão do que vai
+  acontecer, e sim do que aconteceria sem ação climática nova. Ver a seção anterior.
+- **A taxa de crescimento é única para as 8 regiões** — limite 8.
