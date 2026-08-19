@@ -80,6 +80,21 @@ export const ui = {
     requires: (names: readonly string[]) => `Exige: ${listOfNames.format(names)}`,
   },
 
+  session: {
+    label: 'Partida',
+    reset: 'Reiniciar partida',
+    resetHint: 'Apaga a partida salva e recomeça em 2025.',
+    // O rótulo do botão de confirmar diz o que vai acontecer, não "Sim" nem
+    // "OK": quem clica rápido precisa ler a consequência no próprio botão.
+    confirm: 'Apagar e recomeçar',
+    confirmHint: 'Confirma o reinício. Não dá para desfazer.',
+    cancel: 'Cancelar',
+    cancelHint: 'Mantém a partida como está.',
+    warning: 'A partida salva será apagada. Não dá para desfazer.',
+    autosave: 'A partida é salva sozinha a cada mês.',
+    restored: (year: string) => `Partida retomada em ${year}.`,
+  },
+
   hudLabel: 'Indicadores da partida',
 
   units: {

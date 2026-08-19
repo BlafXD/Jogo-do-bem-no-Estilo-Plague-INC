@@ -25,6 +25,18 @@ export default defineConfig({
     // Quem precisa de DOM pede por arquivo, com `// @vitest-environment jsdom`
     // na primeira linha. É explícito, e a lista de quem pediu é um `grep`.
     environment: 'node',
+    // Vale só para os arquivos que pedem jsdom; os de node ignoram. A URL não é
+    // enfeite: sem ela o jsdom sobe em `about:blank`, que tem **origem opaca**,
+    // e documento de origem opaca não tem `localStorage` — é a mesma regra que
+    // o navegador aplica de verdade. Sem isto, os testes do save (P6-07)
+    // falhariam por falta de armazenamento, e não pelo que eles medem.
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
+    // Roda antes de cada arquivo de teste, inclusive os de node — ele mesmo se
+    // desliga quando não há `window`. Devolve o nome `localStorage` a um Storage
+    // de verdade; o porquê está escrito no arquivo.
+    setupFiles: ['tests/setup-jsdom.ts'],
     include: ['tests/**/*.test.ts'],
   },
 });

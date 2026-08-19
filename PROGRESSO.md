@@ -28,6 +28,51 @@ Regras curtas:
 
 ---
 
+## 2026-08-19 — Save, load e reset: a partida deixou de morrer no F5
+
+- **Parte / tarefa:** `P6-07` ✔
+- **O que mudou:**
+  - `src/engine/save.ts` **criado** — o formato: versão, validação e reconstrução. Puro, roda em node.
+  - `src/ui/storage.ts` **criado** — a ponte com o `localStorage`. Fina, e **nada nela lança**.
+  - `src/ui/session.ts` e `src/ui/session.css` **criados** — a barra da partida, com o reinício em dois passos.
+  - `src/data/i18n.ts`, `index.html`, `src/main.ts` — a barra entrou e o `main.ts` passou a retomar, salvar e reiniciar.
+  - `vite.config.ts` e `tests/setup-jsdom.ts` **criado** — conserto de ambiente para o jsdom (abaixo).
+  - `tests/save.test.ts` (13) e `tests/storage.dom.test.ts` (20) **criados**. Suíte: 163 → **196**.
+- **O formato ficou no engine e o `localStorage` na UI.** O `engine/save.ts` não sabe que existe navegador — é o §3 ao pé da letra, e é o que permite testar versão, validação e campos derivados em node, sem DOM. O `ui/storage.ts` só lê e escreve uma string.
+- **Um save recusado nunca derruba o jogo, e essa é a diferença para o resto do projeto.** O `parseRegions` e o `parseSkills` **lançam**, porque leem arquivo do repositório e um erro ali é bug de quem editou, que precisa aparecer alto. Aqui a entrada vem do navegador do jogador: pode estar velha, cortada pela metade, ou editada no DevTools. Recusar e começar de 2025 é a única saída que não deixa alguém com um jogo permanentemente quebrado e sem botão para consertar. Todas as recusas viram um `console.warn` e nada mais — contar ao jogador que "o save era da versão errada" não lhe dá nada para fazer.
+- **O save guarda o `GameState` inteiro, mas `year` e `temperature` não são confiados de volta.** Os dois são derivados — o ano sai do tick, a temperatura sai do CO₂ acumulado — e recalcular na carga elimina de vez a chance de um save trazer um par que não combina. Tem teste que entrega um save dizendo `year: 2099, temperature: 42` e exige que os dois voltem certos.
+- **O `rngState` foi junto com o `seed`, e é para isso que ele existe.** O `docs/GDD.md §3` já registrava que sem a posição do gerador salva à parte, recarregar recomeçaria a sequência de sorteios do zero. Não havia como provar isso até hoje; agora há teste.
+- **As habilidades compradas são o único lugar de onde os efeitos contínuos voltam.** O `skills.ts` do `P6-05` decidiu não gravar `emissionCut` nem `pointsPerYear` em lugar nenhum — eles saem de `unlockedSkills` a cada tick. O comentário de lá dizia que era para o save ter "um lugar só para errar", e foi exatamente o que aconteceu: salvar a lista salva os efeitos junto. Tem teste que roda um ano em duas partidas — uma que nunca parou e uma que passou pelo JSON — e exige estado idêntico.
+- **Habilidade desconhecida no save recusa a partida inteira, em vez de ser filtrada.** É a decisão mais dura do arquivo. Filtrar deixaria o jogador com o PAC gasto e sem a habilidade, sem nunca saber que perdeu algo; recusar o faz recomeçar. O jeito de não chegar lá é **subir o `SAVE_VERSION` junto com qualquer mudança nos ids do `skills.json`** — a checagem é a rede para quando alguém esquecer.
+- **O reinício pede dois cliques.** É a única ação da tela que destrói vinte minutos de jogo, e não tem desfazer. `Reiniciar partida` troca a barra por `Apagar e recomeçar` + `Cancelar`, com a frase "A partida salva será apagada. Não dá para desfazer." ao lado. **Não usei `confirm()`**: ele resolveria em uma linha, mas trava a página, não é estilizável e some do fluxo de teclado de um jeito que não dá para testar.
+- **`Esc` fecha, e teve que passar na frente da guarda de teclado.** O `main.ts` ignora atalhos quando o alvo é um `<button>` — decisão do `P5-05`. Só que depois de clicar em "Reiniciar" o foco está justamente num botão, então tratar `Esc` depois da guarda faria o `§5` ("Esc sempre fecha") não valer exatamente onde ele mais importa.
+- **O jsdom não tinha `localStorage`, e a causa não era o jsdom.** O Node 22 expõe um `localStorage` global próprio, experimental, que fica `undefined` sem `--localstorage-file` — e ele chega antes e fica por cima do do jsdom. O `sessionStorage`, que o Node não tem, funcionava normalmente. Conserto no `tests/setup-jsdom.ts`: a propriedade é `configurable`, então o nome é devolvido ao `sessionStorage` **do próprio jsdom** — a mesma classe `Storage`, mesma implementação, não um dublê escrito à mão. O que isso **não** prova é persistência entre recarregamentos; isso é o navegador que provou, abaixo.
+- **Conferi que os testes pegam — doze defeitos plantados, doze pegos.** Os que interessam: aceitar save de qualquer versão → **2**; confiar no ano do save → 1; confiar na temperatura → 1; aceitar habilidade repetida → 1; aceitar habilidade que não existe mais → 1; `NaN` e `Infinity` passando por `typeof number` → 1; não validar as regiões → 1; deixar a exceção da escrita subir → 1; reiniciar apagando o domínio inteiro em vez da chave → 1; reinício no primeiro clique → 1; confirmação visível junto com o botão de reiniciar → 1; a barra continuar dizendo "retomada" depois do reinício → 1.
+  - **Dois achados do plantio, e o segundo é o que importa.** O primeiro foi plantio ruim meu, que não removia o `try/catch` de verdade; replantado, cai 1. O segundo é um teste que passava **pelo motivo errado**: eu espionava `Storage.prototype.getItem` para simular leitura que falha, mas o objeto do jsdom é um Proxy e a chamada não passava pelo espião — o teste passava porque a loja estava vazia e `loadGame` devolveria `null` de qualquer jeito. Agora o teste **troca o objeto de armazenamento inteiro**, que é o que de fato exercita o `try/catch`. Ganhou um irmão: armazenamento que **nem existe**, que é o cenário da build offline da feira (`P8-05`) e o da navegação privada.
+- **Verificado no navegador, com recarregamento de verdade:**
+  - Partida nova até 2029, 48 PAC, comprei **Educação climática**. O save foi escrito **na hora da compra**: `version 1`, `tick 58`, `["climate-education"]`, **1486 bytes**.
+  - **F5.** A página voltou com `Partida retomada em 2029.`, o nó como `✔ Comprado` com o fato na tela, e o apoio médio em 50 — os 8 pontos da compra estavam lá. A velocidade voltou para 1x, que é o certo: o `controls.ts` registra que velocidade e pausa são de quem assiste, não da simulação.
+  - `Reiniciar` → a confirmação apareceu. `Esc` → cancelou, e o save continuou intacto, com a compra dentro.
+  - `Reiniciar` → `Apagar e recomeçar` → 2025, PAC 0, apoio 50, o nó de volta a `PAC insuficiente` com o fato escondido, a linha de status de volta ao texto de partida nova, e a chave **apagada** do `localStorage`.
+  - Console sem erro nenhum.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npm run dev    # compre um nó, aperte F5 — a partida tem que voltar onde estava
+  ```
+  196 testes em 11 arquivos. O aceite é o teste `ACEITE: salvar no meio da partida e carregar devolve a mesma partida`, mais o F5 conferido acima.
+- **Pendente:**
+  - **A confirmação de reinício não pausa o jogo.** O tempo continua correndo atrás dela, e o jogador está lendo um aviso. Pausar sozinho ali seria mais honesto — fica junto com a decisão de auto-pausa que o `P7-02` vai precisar tomar de qualquer jeito.
+  - **Fechar a aba no meio do mês perde esse mês.** O save acontece na virada do tick e na compra; um `visibilitychange` cobriria o resto. A perda máxima hoje é 1,5 s de jogo a 1x, então não valeu o código — mas está anotado.
+  - **`SAVE_VERSION` é um combinado, não uma trava.** Nada obriga quem mexer no `skills.json` ou no `GameState` a subir o número. A checagem de habilidade desconhecida cobre o caso mais provável; o resto depende de lembrar. Um teste que congelasse o formato resolveria — vale pensar no `P8-02`.
+  - **`localStorage` e `sessionStorage` são o mesmo objeto dentro dos testes**, por causa do conserto de ambiente. Nenhum código do jogo usa `sessionStorage` hoje; no dia em que usar, os dois colidem e o `setup-jsdom.ts` precisa de outra saída.
+  - **A semente continua fixa em 2025 para partidas novas.** Uma partida retomada traz a própria, mas reiniciar sempre dá a mesma partida. Escolher semente é da tela de título (`P5-06`).
+  - **A vitória e a derrota continuam não existindo** — é o `P6-08`, e é a última coisa entre o projeto e o marco M2.
+  - `npm audit` segue acusando o `nanoid` de `vite → postcss`; nada a ver com esta tarefa.
+- **Evidência:** `docs/evidencias/2026-08-19-p6-07-partida-retomada.jpg`
+
+---
+
 ## 2026-08-19 — A árvore de habilidades na tela: o jogo virou jogo
 
 - **Parte / tarefa:** `P6-06` ✔ — a segunda tarefa **G** da Parte 6.

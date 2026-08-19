@@ -1,5 +1,5 @@
-// Ponto de entrada da aplicação: monta o HUD, a barra de tempo e a árvore, e
-// roda o relógio.
+// Ponto de entrada da aplicação: monta o HUD, a barra de tempo, a barra da
+// partida e a árvore, retoma o save e roda o relógio.
 //
 // Este arquivo é o **único motorista** do engine. Ele é quem finalmente chama o
 // `advanceRealTime`, que estava escrito e testado desde o P6-04 e sem ninguém
@@ -27,15 +27,28 @@ import {
   type TimeCommand,
 } from './ui/controls';
 import { hudView, mountHud, renderHud } from './ui/hud';
+import {
+  afterReset,
+  armReset,
+  cancelReset,
+  createSession,
+  mountSession,
+  renderSession,
+} from './ui/session';
+import { clearGame, loadGame, saveGame } from './ui/storage';
 import { mountTree, renderTree, treeView } from './ui/tree';
 import './ui/controls.css';
 import './ui/hud.css';
+import './ui/session.css';
 import './ui/tree.css';
 
 /**
- * Semente fixa por enquanto: a mesma partida a cada recarga, o que é o que se
- * quer enquanto se está desenvolvendo. Escolher semente é assunto da tela de
- * título (P5-06) e do save (P6-07).
+ * Semente das partidas novas. Continua fixa: a mesma partida a cada reinício é
+ * o que se quer enquanto se está desenvolvendo. Escolher semente é assunto da
+ * tela de título (P5-06).
+ *
+ * Uma partida **retomada** não passa por aqui — ela traz a própria semente, que
+ * é o que o docs/GDD.md §3 quer dizer com "identidade da partida".
  */
 const SEED = 2025;
 
@@ -58,6 +71,7 @@ function required<T extends Element>(selector: string): T {
 
 const hud = required('#hud');
 const controls = required('#controles');
+const partida = required('#partida');
 const tree = required('#arvore');
 const app = required<HTMLElement>('#app');
 
@@ -65,15 +79,57 @@ required('#pendente').textContent = ui.app.pending;
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
 
-let state = createInitialState(SEED);
+// A partida guardada tem prioridade sobre uma nova. Quando não há save, ou
+// quando ele é recusado, o `loadGame` devolve null e avisa no console — o jogo
+// começa em 2025 e nunca deixa de abrir por causa de um save ruim (P6-07).
+const restored = loadGame();
+
+let state = restored ?? createInitialState(SEED);
 let clock = createClock();
 let control = createTimeControl();
+let session = createSession(restored === null ? null : restored.year);
 let previousFrame = performance.now();
 let shownTick = state.tick;
 
 function handleCommand(command: TimeCommand | null): void {
   control = applyCommand(control, command);
   renderControls(controls, control);
+}
+
+/** Redesenha tudo que depende do estado da partida. */
+function renderGame(): void {
+  renderHud(hud, hudView(state));
+  renderTree(tree, treeView(state));
+}
+
+function renderSessionBar(): void {
+  renderSession(partida, session);
+}
+
+/**
+ * Reinício confirmado.
+ *
+ * Apaga o save **antes** de trocar o estado. Se a ordem fosse a outra e o
+ * `clearGame` falhasse, o jogo mostraria uma partida nova com a antiga ainda no
+ * disco, e o próximo recarregamento ressuscitaria o que o jogador mandou apagar.
+ *
+ * O relógio zera junto: o `leftoverMs` é o resto de mês da partida que acabou de
+ * ser descartada, e carregá-lo para a partida nova faria o primeiro mês dela
+ * chegar antes da hora.
+ *
+ * A velocidade e a pausa **não** zeram — o controls.ts registra que elas são de
+ * quem assiste, não da simulação.
+ */
+function handleReset(): void {
+  clearGame();
+
+  state = createInitialState(SEED);
+  clock = createClock();
+  session = afterReset();
+  shownTick = state.tick;
+
+  renderGame();
+  renderSessionBar();
 }
 
 /**
@@ -90,18 +146,46 @@ function handleUnlock(id: SkillId): void {
   if (next === state) return;
 
   state = next;
-  renderHud(hud, hudView(state));
-  renderTree(tree, treeView(state));
+  renderGame();
+  // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
+  // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá
+  // vontade de fechar a aba.
+  saveGame(state);
 }
 
 mountHud(hud);
 mountControls(controls, handleCommand);
+mountSession(partida, {
+  onArm: () => {
+    session = armReset(session);
+    renderSessionBar();
+  },
+  onCancel: () => {
+    session = cancelReset(session);
+    renderSessionBar();
+  },
+  onReset: handleReset,
+});
 mountTree(tree, treeView(state), handleUnlock);
 
-renderHud(hud, hudView(state));
+renderGame();
 renderControls(controls, control);
+renderSessionBar();
 
 document.addEventListener('keydown', (event) => {
+  // `Esc` vem antes da guarda de botão, e tem que vir: depois de clicar em
+  // "Reiniciar" o foco está justamente num botão, que é onde a guarda abaixo
+  // desiste. O §5 do GDD diz que Esc sempre fecha, e a confirmação de reinício
+  // é a primeira coisa da tela que precisa fechar.
+  if (event.key === 'Escape') {
+    if (!session.armed) return;
+
+    event.preventDefault();
+    session = cancelReset(session);
+    renderSessionBar();
+    return;
+  }
+
   // Com o foco num botão, o navegador já transforma Espaço e Enter em clique.
   // Tratar a tecla aqui também alternaria a pausa duas vezes, e ela pareceria
   // não funcionar — que é o jeito mais irritante de um atalho quebrar.
@@ -133,9 +217,13 @@ function frame(now: number): void {
   // A árvore entra aqui junto com o HUD porque o PAC sobe a cada tick: é a
   // virada do mês que faz um nó sair de "PAC insuficiente" para "Disponível".
   if (state.tick !== shownTick) {
-    renderHud(hud, hudView(state));
-    renderTree(tree, treeView(state));
+    renderGame();
     shownTick = state.tick;
+    // Salvar aqui, e não a cada quadro, sai de graça: é uma escrita por mês de
+    // jogo — no máximo 1,3 por segundo a 4x — e limita a perda de um fechamento
+    // de aba a um único mês. Salvar a cada quadro seriam 60 por segundo para
+    // gravar o mesmo estado.
+    saveGame(state);
   }
 
   requestAnimationFrame(frame);
