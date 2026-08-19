@@ -1,0 +1,157 @@
+/* A árvore de habilidades (P6-06).
+
+   Mesmo contrato do hud.css e do controls.css: cor e medida saem de custom
+   properties com valor de reserva dentro do próprio var(), para o theme.css do
+   P5-02 assumir o controle sem encostar aqui.
+
+   Nenhuma cor nova entrou. São as mesmas quatro já conferidas no hud.css contra
+   o mesmo fundo #0F1C17, então as razões de contraste continuam valendo:
+     valor    #F2F7F4  16,17:1     rótulo  #A7C0B4  9,04:1
+     destaque #7FD1A8   9,67:1     borda   #4C8069  3,84:1 (não-texto, exige 3:1)
+
+   O §5 do GDD proíbe comunicar estado só por cor, e aqui isso é o ponto
+   central da tela. Os quatro estados de um nó se distinguem primeiro por
+   **ícone mais rótulo escrito**, que é texto puro; a borda (contínua ou
+   tracejada, fina ou grossa) é reforço, não o recado.
+
+   E não há opacidade em nó bloqueado. Apagar o cartão para dizer "este não dá"
+   é o reflexo óbvio e derruba o contraste abaixo do AA que o §5 exige — um nó
+   bloqueado continua perfeitamente legível, ele só não é comprável. */
+
+.tree {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.5rem 1rem;
+  align-items: start;
+}
+
+.tree__intro {
+  grid-column: 1 / -1;
+  margin: 0;
+  max-width: 62ch;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+.tree__branch-name {
+  margin: 0 0 0.75rem;
+  color: var(--cor-destaque, #7fd1a8);
+  /* Acima do piso de 16px do §5, porque é título de seção. */
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tree__nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tree__node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px dashed var(--cor-borda, #4c8069);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  /* 16px é o piso do §5 e vale para o cartão inteiro: o jogo é visto de pé e de
+     longe numa feira, e um nó que não dá para ler não dá para escolher. */
+  font-size: 1rem;
+  text-align: start;
+  cursor: not-allowed;
+}
+
+/* Anel de foco explícito, igual ao do controls.css: sem ele a navegação por
+   teclado que o §5 exige existe, mas ninguém vê onde está. */
+.tree__node:focus-visible {
+  outline: 3px solid var(--cor-destaque, #7fd1a8);
+  outline-offset: 2px;
+}
+
+/* Disponível é o único estado clicável — e o único de borda contínua e grossa.
+   O 12% do fundo de hover é o próprio destaque diluído, não uma cor nova: sobre
+   o #0F1C17 ele resulta em algo perto de #182A23, contra o qual o texto
+   continua muito acima do AA. */
+.tree__node[data-status='available'] {
+  border-style: solid;
+  border-width: 3px;
+  border-color: var(--cor-destaque, #7fd1a8);
+  cursor: pointer;
+}
+
+.tree__node[data-status='available']:hover {
+  background: rgb(127 209 168 / 12%);
+}
+
+.tree__node[data-status='unlocked'] {
+  border-style: solid;
+  border-color: var(--cor-destaque, #7fd1a8);
+  cursor: default;
+}
+
+.tree__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tree__name {
+  font-weight: 600;
+}
+
+.tree__cost {
+  color: var(--cor-rotulo, #a7c0b4);
+  /* Tabular: 40, 70 e 140 alinham a vírgula do olho ao comparar dois nós. */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tree__status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+/* O ícone não encolhe. No controls.css o marcador ● é decoração pura e pôde ser
+   menor; aqui ele é metade do par que carrega o estado. O rótulo ao lado é que
+   garante a informação para quem lê, mas o ícone é o que se enxerga de longe
+   num estande — e o §5 fixa 16px justamente por causa dessa distância. */
+.tree__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.tree__node[data-status='available'] .tree__status,
+.tree__node[data-status='unlocked'] .tree__status {
+  color: var(--cor-destaque, #7fd1a8);
+  font-weight: 600;
+}
+
+.tree__description,
+.tree__detail,
+.tree__fact {
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+/* O motivo da recusa é a frase que decide o próximo clique do jogador — ela
+   pesa mais que a descrição do nó. */
+.tree__detail {
+  font-weight: 600;
+}
+
+/* O fato real só aparece depois da compra: ele é a recompensa de ter comprado,
+   e vinte fatos na tela ao mesmo tempo seriam exatamente a palestra que o
+   docs/GDD.md §2.4 quer evitar. Antes disso ele mora no tooltip do nó. */
+.tree__fact {
+  border-inline-start: 3px solid var(--cor-destaque, #7fd1a8);
+  padding-inline-start: 0.6rem;
+}

@@ -16,9 +16,14 @@ export default defineConfig({
     target: 'es2022',
   },
   test: {
-    // 'node' de propósito: o engine é TS puro e não pode depender de DOM (§3).
-    // Se um dia a UI precisar de teste, aí sim entra jsdom — e é dependência
-    // nova, então passa por aprovação (§2).
+    // 'node' continua sendo o padrão, mesmo depois de o jsdom entrar no P6-06
+    // (dependência aprovada no chat, §2). Trocar este valor para 'jsdom' faria
+    // TODO teste passar a enxergar um `document` — e aí a regra de ouro do §3
+    // deixaria de ser verificável: um `document` que vazasse para dentro do
+    // engine passaria despercebido, porque o teste teria um para oferecer.
+    //
+    // Quem precisa de DOM pede por arquivo, com `// @vitest-environment jsdom`
+    // na primeira linha. É explícito, e a lista de quem pediu é um `grep`.
     environment: 'node',
     include: ['tests/**/*.test.ts'],
   },

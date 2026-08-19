@@ -28,6 +28,68 @@ Regras curtas:
 
 ---
 
+## 2026-08-19 — A árvore de habilidades na tela: o jogo virou jogo
+
+- **Parte / tarefa:** `P6-06` ✔ — a segunda tarefa **G** da Parte 6.
+- **O que mudou:**
+  - `src/ui/tree.ts` e `src/ui/tree.css` **criados** — `treeView` puro mais `mountTree` e `renderTree`.
+  - `src/data/i18n.ts` — o bloco `tree` com os nomes dos 5 ramos, os 4 rótulos de estado e os textos de custo e recusa.
+  - `index.html`, `src/main.ts` — a árvore entrou no `#app` e ganhou o `handleUnlock`.
+  - `vite.config.ts`, `package.json` — **jsdom 30.0.1**, aprovado no chat (§2).
+  - `tests/tree.test.ts` (20) e `tests/tree.dom.test.ts` (14) **criados**. Suíte: 129 → **163**.
+- **O jsdom entrou por arquivo, não no `vite.config.ts` inteiro.** Trocar o `environment` global para `jsdom` faria *todo* teste passar a enxergar um `document` — e aí a regra de ouro do §3 deixaria de ser verificável, porque um `document` que vazasse para dentro do `engine/` teria um para encontrar e passaria despercebido. O padrão continua `node`; quem precisa de DOM pede na primeira linha do arquivo, com `// @vitest-environment jsdom`. A lista de quem pediu é um `grep`.
+- **A tarefa entregou quatro estados de nó, e não os três que o `PLANO.md` pede.** O plano escreve "bloqueado / disponível / comprado", mas o `canUnlock` do `P6-05` já separava `missingRequirement` de `notEnoughPoints` — e o comentário do `UnlockRefusal`, escrito naquela tarefa, dizia que era a UI do `P6-06` que ia usar isso. Dividi porque as duas situações pedem coisas **opostas** do jogador: `◌ PAC insuficiente` se resolve esperando o tempo correr, `✕ Bloqueado` só se resolve comprando outro nó antes. Chamar as duas de "bloqueado" esconderia justamente a informação que decide o próximo clique. É expansão do que o plano pediu, e está registrada aqui por isso.
+- **O fato real só aparece depois da compra.** O `§2.4` do GDD diz que o fato é o que faz o jogo conscientizar "sem virar palestra" — e vinte fatos na tela ao mesmo tempo *são* a palestra. Antes da compra ele fica no `title` do cartão, para quem quiser saber no que vai gastar antes de gastar; virar dono é o que traz a frase para a tela, com barra lateral. **A educação chega no momento em que o jogador está olhando para aquele nó, que é quando ela vale alguma coisa.**
+- **A UI não reimplementa nenhuma regra de jogo.** Quem decide se dá para comprar é o `canUnlock`; quem cobra o PAC é o `unlockSkill`. O `main.ts` nem pergunta: manda comprar e compara o estado por **identidade** — o `unlockSkill` devolve o mesmo objeto quando recusa. Isso é o que permite deixar o cartão bloqueado clicável sem a tela precisar saber por quê.
+- **`aria-disabled`, e não `disabled`.** Botão com `disabled` sai da ordem de tabulação — quem navega por teclado não conseguiria nem chegar no nó bloqueado para **ler por que** ele está bloqueado. Como o engine recusa a compra de qualquer jeito, deixar o clique acontecer não custa nada e devolve a informação a quem usa teclado.
+- **`renderTree` atualiza em vez de reconstruir, e isso não é otimização.** A árvore redesenha a cada mês de jogo — 1,5 s na velocidade 1x. Se o render recriasse os cartões, o foco de quem estivesse navegando por Tab seria arrancado a cada segundo e meio. Tem teste com 12 redesenhos seguidos exigindo o mesmo elemento e o mesmo `document.activeElement`.
+- **Conferi que os testes pegam — e um defeito passou em 161 de 161.** Plantei nove:
+
+  | defeito plantado | testes que caem |
+  |---|---|
+  | "falta PAC" e "bloqueado" viram o mesmo estado | 5 |
+  | a falta de PAC arredonda para baixo | 1 |
+  | o bloqueio lista todos os pais, inclusive os já comprados | 1 |
+  | a profundidade ignora os pré-requisitos | 1 |
+  | o nó bloqueado usa `disabled` em vez de `aria-disabled` | 4 |
+  | o fato real aparece antes da compra | 1 |
+  | redesenhar recria os cartões | 9 |
+  | o ícone perde o rótulo escrito ao lado | 3 |
+  | **os nós saem na ordem do arquivo, não por profundidade** | **0** |
+
+  **O último é o buraco de verdade.** O `skills.json` de hoje já está escrito em ordem de profundidade, então remover o `sort` não muda **nada** na tela agora — e o teste que eu tinha escrito confirmava que a lista *está* ordenada, não que a função *ordena*. Passou verde com a ordenação fora.
+
+  O conserto exigiu abrir o `treeView` a um segundo parâmetro (`tree`, com o arquivo como padrão) para o teste poder entregar os mesmos 20 nós **invertidos** e exigir a mesma ordem de saída. É API que só o teste usa, e está documentada como tal na função. **O caso não é hipotético:** o pacote `[D-Historia]` edita o `skills.json` à mão, e acrescentar um nó no fim do ramo é a coisa mais natural do mundo — é exatamente aí que o `sort` deixa de ser decoração.
+
+  Na primeira versão desse teste eu exigi demais: `toEqual` contra a view do arquivo. Falhou, e com razão — `sort` é **estável**, então inverter a entrada troca a ordem entre nós de *mesma* profundidade, e exigir a ordem do arquivo seria exigir do `sort` algo que ele não promete. O teste hoje afirma o que a função promete (profundidades crescentes) mais o que ordenar não pode fazer (perder ou duplicar nó).
+- **Verificado no navegador, com compra de verdade:**
+  - Nenhum texto abaixo de 16px — varri o `getComputedStyle` de todo elemento com texto dentro da árvore. É a mesma medição que pegou o rótulo de 14px no `P5-03`.
+  - Os 20 nós, os 5 `<h2>` de ramo e as 5 `<ol>` no lugar.
+  - Sem PAC: `◌ PAC insuficiente` · `Faltam 39 PAC`. Com o tempo correndo, o rodapé desceu sozinho para 24, 13 e **1** — e nesse ponto o HUD mostrava `PAC 39`. **As duas decisões de arredondamento concordam na tela:** o HUD trunca para baixo, a falta arredonda para cima, e o jogador nunca vê um nó prometer o que a compra vai negar.
+  - Em 40 PAC os cinco nós de raiz viraram `● Disponível`, borda contínua e grossa. **Cliquei no solar: virou `✔ Comprado`, o PAC caiu 40, o fato apareceu** e os outros quatro voltaram para `Faltam 10 PAC` na mesma tela.
+  - `wind` saiu de `✕ Bloqueado` para `◌ PAC insuficiente` sozinho — o pré-requisito caiu, o custo não.
+  - `smart-grid` continua `✕ Bloqueado`, com **`Exige: Energia eólica e Armazenamento em bateria`** — a conjunção do português saindo do `Intl.ListFormat`, e nomeando só o que falta.
+  - Foco por teclado num nó bloqueado: funciona (é `aria-disabled`, não `disabled`).
+  - Console sem erro nenhum.
+- **A trava do `P6-04` apareceu de novo, e agora dá para descrevê-la com precisão.** A aba da automação fica com `document.visibilityState === "hidden"` e o Chrome congela o `requestAnimationFrame`: a partida **parou** em 27 PAC por 20 segundos. Cada captura de tela devolve a aba ao primeiro plano por um instante, e o quadro seguinte entrega o atraso acumulado — limitado a 12 passos, **um ano de jogo por vez**. Ou seja: no ambiente de automação a partida anda em degraus de um ano, e é assim que cheguei aos 40 PAC. Não é regressão; é a mesma trava fazendo o certo, só que visível.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npm run dev    # espere o PAC chegar a 40 e clique num nó de raiz
+  ```
+  163 testes em 9 arquivos. O aceite é o teste `ACEITE: pré-requisito, custo e os estados bloqueado / disponível / comprado`, mais a compra conferida no navegador acima.
+- **Pendente:**
+  - **`Espaço` com o foco num nó da árvore recompra o nó em vez de pausar.** O `main.ts` ignora o atalho quando o alvo é um `<button>` — decisão do `P5-05`, correta — só que agora existem 20 botões a mais na tela e a chance de haver um em foco subiu muito. É inofensivo (o nó já é seu, o `unlockSkill` devolve o estado intacto), mas é surpresa. Vale decidir no `P7-08`.
+  - **A árvore não tem desenho de árvore.** São cinco colunas de cartões; o que liga pai e filho é a frase `Exige:`, não uma linha na tela. Foi decisão de escopo — traçar conectores é trabalho de SVG do tamanho do `P5-01`. Se o playtest do `P8-01` mostrar gente perdida, é aqui que se mexe.
+  - **Nenhuma auto-pausa ao desbloquear ramo.** Está nas decisões travadas do `PLANO.md`, mas não existe "ramo novo" no modelo de dados: os 5 ramos nascem com a raiz livre. Enquanto for assim, não há o que pausar.
+  - **`mountHud`, `renderHud`, `mountControls` e `renderControls` continuam sem teste.** O jsdom já está no projeto e a dívida ficou barata — foi opção sua manter o `P6-06` puro, e está registrado aqui para não se perder.
+  - **A vitória e a derrota não existem.** A compra muda a curva, mas o `§2.7` (emissões ≈ 0, ou 3 °C, ou apoio zero) não é verificado em lugar nenhum. É o `P6-08`.
+  - O `theme.css` do `P5-02` continua sem existir; as três folhas seguem nos valores de reserva.
+  - **`npm audit` acusa 1 vulnerabilidade alta em `nanoid`** (`vite → postcss → nanoid@3.3.17`). **Não veio do jsdom** — já estava lá. Merece uma tarefa própria.
+- **Evidência:** `docs/evidencias/2026-08-19-p6-06-arvore-de-habilidades.jpg`
+
+---
+
 ## 2026-08-18 — Pausa e velocidade: o jogador ganha controle do relógio
 
 - **Parte / tarefa:** `P5-05` ✔

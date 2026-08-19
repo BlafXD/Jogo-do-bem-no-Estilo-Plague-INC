@@ -10,9 +10,9 @@
     <title>Ponto de Virada</title>
   </head>
   <body>
-    <!-- Só a estrutura. O conteúdo do HUD é montado pelo src/ui/hud.ts a partir
-         do src/data/i18n.ts — rótulo de indicador é texto de UI, e a regra 8
-         não deixa ele morar aqui.
+    <!-- Só a estrutura. O conteúdo do HUD, da barra de tempo e da árvore é
+         montado pelos módulos de src/ui/ a partir do src/data/i18n.ts — rótulo
+         e nome de nó são texto de UI, e a regra 8 não deixa eles morarem aqui.
 
          O nome do jogo é a exceção deliberada: ele precisa estar no <title> de
          qualquer jeito, e manter o <h1> ao lado é menos duplicação do que
@@ -23,7 +23,10 @@
       <div id="controles" class="ctl"></div>
     </header>
 
-    <main id="app" class="conteudo"></main>
+    <main id="app" class="conteudo">
+      <p id="pendente" class="conteudo__pendente"></p>
+      <section id="arvore" class="tree"></section>
+    </main>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

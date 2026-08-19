@@ -12,6 +12,13 @@
 //
 // Chaves em inglês, conteúdo em pt-BR — é o §11 aplicado ao pé da letra.
 
+/**
+ * Junta nomes na forma que o português escreve: "a e b", "a, b e c". Mora aqui
+ * porque a conjunção é regra do idioma, não do jogo — quando entrar um segundo
+ * idioma (§12), é este arquivo que troca.
+ */
+const listOfNames = new Intl.ListFormat('pt-BR', { style: 'long', type: 'conjunction' });
+
 export const ui = {
   hud: {
     year: {
@@ -44,6 +51,35 @@ export const ui = {
     speedHint: 'Velocidade da simulação. Atalhos: as teclas 1, 2 e 4.',
   },
 
+  tree: {
+    label: 'Árvore de habilidades',
+    intro:
+      'Cada nó custa PAC e libera os que vêm abaixo dele. Nenhuma partida rende PAC para comprar tudo — a escolha é o jogo.',
+    branches: {
+      energy: 'Energia',
+      transport: 'Transporte e Cidades',
+      nature: 'Natureza',
+      industry: 'Indústria',
+      society: 'Sociedade',
+    },
+
+    // Cada estado é ícone **mais** rótulo escrito. O §5 do GDD proíbe comunicar
+    // estado só por cor, e é este par que carrega a informação — a borda do
+    // tree.css é reforço, não o recado. Os quatro rótulos são de propósito
+    // diferentes entre si: se "Bloqueado" e "PAC insuficiente" dissessem a mesma
+    // coisa, separar os dois estados não teria servido para nada.
+    status: {
+      unlocked: { icon: '✔', label: 'Comprado' },
+      available: { icon: '●', label: 'Disponível' },
+      unaffordable: { icon: '◌', label: 'PAC insuficiente' },
+      locked: { icon: '✕', label: 'Bloqueado' },
+    },
+
+    cost: (points: string) => `${points} PAC`,
+    missingPoints: (points: string) => `Faltam ${points} PAC`,
+    requires: (names: readonly string[]) => `Exige: ${listOfNames.format(names)}`,
+  },
+
   hudLabel: 'Indicadores da partida',
 
   units: {
@@ -52,7 +88,6 @@ export const ui = {
   },
 
   app: {
-    pending:
-      'O mapa das 8 regiões entra no P5-01 e a árvore de habilidades no P6-06. Por enquanto, o tempo corre.',
+    pending: 'O mapa das 8 regiões entra no P5-01. Por enquanto, o tempo corre e a árvore compra.',
   },
 } as const;
