@@ -132,6 +132,11 @@ assim, tensão só pode decair — e o teste `tests/tensao.test.ts` trava justam
 
 Em ordem do que resolve mais por menos:
 
+> **O `P3-05` fez o item 1 desta lista, em 2026-08-20.** A especificação está em
+> `docs/INERCIA.md`, verificada contra o engine: ela leva a trava da medalha de **2055 para 2080** e
+> cura a armadilha do ramo Sociedade, sem mexer em nenhuma constante do `balance.json`. Os itens 2 e
+> 3 saem de graça junto — a derrota por apoio passa a ser alcançável. O item 4 continua aberto.
+
 1. **A Inércia precisa poder desfazer, não só atrasar** (`P7-03`). O `GDD §2.6` já promete três
    ações: desinformação derruba apoio, subsídios aumentam emissões, recuos regulatórios encarecem
    habilidades. **Só a segunda cria tensão tardia** — as outras duas encarecem o futuro sem tocar no

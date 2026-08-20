@@ -102,6 +102,22 @@ export type TensionRow = {
   readonly purchasesThisYear: number;
 };
 
+/** Uma linha da verificação da Inércia (P3-05). */
+export type InertiaRow = {
+  readonly year: number;
+  readonly inertia: number;
+  readonly stakes: number;
+  readonly bestFromHere: number;
+  /** Quem compra tudo e nunca contém a Inércia. */
+  readonly worstFromHere: number;
+  /** Quem larga o controle aqui: nem compra, nem contém. */
+  readonly abandonedFromHere: number;
+  readonly medalBest: string | null;
+  readonly medalAbandoned: string | null;
+  readonly abandonedDefeated: boolean;
+  readonly support: number;
+};
+
 export const TREE_COST = skills.reduce((sum, s) => sum + s.cost, 0);
 
 /** Os nomes dos arquivos gerados, na ordem em que a página de curvas os cita. */
@@ -110,6 +126,7 @@ export const OUTPUT_FILES = [
   'economia-pac.csv',
   'economia-quando-comprar.csv',
   'tensao-por-ano.csv',
+  'inercia-verificacao.csv',
   'curvas.html',
   'tensao.html',
 ] as const;
@@ -437,6 +454,41 @@ export function writeCurvasHtml(runs: readonly Run[], seed: number): void {
 `;
   mkdirSync(OUT_DIR, { recursive: true });
   writeFileSync(`${OUT_DIR}/curvas.html`, html, 'utf8');
+}
+
+export function writeInerciaCsv(rows: readonly InertiaRow[]): void {
+  const lines = rows.map((r) =>
+    [
+      String(r.year),
+      num(r.inertia, 1),
+      num(r.stakes, 4),
+      num(r.bestFromHere, 4),
+      num(r.worstFromHere, 4),
+      num(r.abandonedFromHere, 4),
+      r.medalBest === null ? 'nenhuma' : medalTitle(r.medalBest),
+      r.abandonedDefeated
+        ? 'derrota'
+        : r.medalAbandoned === null
+          ? 'nenhuma'
+          : medalTitle(r.medalAbandoned),
+      num(r.support, 2),
+    ].join(';'),
+  );
+  writeCsv(
+    'inercia-verificacao.csv',
+    [
+      'ano',
+      'inercia',
+      'tensao_C',
+      'jogando_bem_daqui_C',
+      'comprando_sem_conter_daqui_C',
+      'largando_tudo_daqui_C',
+      'melhor_medalha_possivel',
+      'desfecho_de_quem_larga',
+      'apoio_medio',
+    ],
+    lines,
+  );
 }
 
 // ------------------------------------------- a curva de dificuldade (P3-03) ---

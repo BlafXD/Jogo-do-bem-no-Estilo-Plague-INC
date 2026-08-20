@@ -28,6 +28,105 @@ Regras curtas:
 
 ---
 
+## 2026-08-20 — A Inércia especificada e verificada: a Parte 3 fechou
+
+- **Parte / tarefa:** `P3-05` ✔ — **Parte 3 completa** (6 de 6)
+- **O que mudou:**
+  - `docs/INERCIA.md` **criado** — gatilho, ações, contra-ataque e os números, com o resultado da verificação.
+  - `tests/inercia-modelo.ts` **criado** — a regra proposta, aplicada **por fora** do engine.
+  - `tests/inercia.test.ts` **criado** — a verificação, com oito asserções.
+  - `tests/planilha-relatorio.ts` — o CSV da verificação.
+  - `docs/planilha/inercia-verificacao.csv` **novo**.
+  - `PLANO.md` — o checkbox.
+  - Suíte: 254 → **262**. **Nenhum arquivo de `src/` foi tocado, e nenhuma constante do `balance.json` mudou.**
+
+### O resultado
+
+| | Sem Inércia | Com a proposta |
+|---|---|---|
+| Medalha travada em | 2055 | **2080** |
+| Minutos mortos a 1x (de 22,5) | 13,8 | **6,3** |
+| Melhor jogada | 2,4400 °C · Bronze | 2,4938 °C · **Bronze** |
+| Quem pula o ramo Sociedade | melhor jogada | **derrota por apoio em 2089** |
+| Derrota por apoio | inalcançável | **alcançável** |
+
+A meta acordada no chat era segurar a disputa até ~2075. Chegou a **2080**, e o Bronze continua ao
+alcance com 0,006 °C de folga.
+
+### As duas medições que deram errado, e o que elas ensinaram
+
+**A primeira tentativa era doze vezes forte demais.** Com os números que eu tinha escolhido por
+intuição — e escrito no comentário como se fossem óbvios — a partida bem jogada terminava em
+**3,13 °C**, que é derrota. Foi a primeira coisa que a sonda disse. Uma varredura sobre
+`subsidyBite`, `disinformationBite`, o espelho e o custo da contenção achou a faixa que funciona.
+
+**A segunda foi mais interessante, porque o desenho estava errado, não o número.** Na primeira
+versão a contenção era um gasto de PAC solto, disponível desde 2025. A varredura mostrou que ela
+neutralizava a Inércia inteira **mais barato do que o ramo Sociedade** — ou seja, eu tinha
+**agravado** a armadilha do `P3-04` em vez de curá-la: agora o ramo não só não compensava como
+tinha um substituto melhor.
+
+O conserto foi condicionar a contenção a `climate-education`, com desconto por nó de Sociedade
+comprado. O ramo deixa de ser um bônus de PAC que não se paga e passa a ser a **licença para lutar**.
+Isso inverteu tudo de uma vez, e é a decisão central do arquivo.
+
+### O dilema que saiu disso
+
+**A partida que mais corta emissão não é a que sobrevive.** Quem pula Sociedade e compra só cortes
+termina em **2,4556 °C** — mais frio que a melhor jogada — e **é dissolvido por falta de apoio em
+2089**. O jogador escolhe entre o número bonito e continuar existindo. É a primeira vez que a
+derrota por apoio do `§2.7`, escrita e testada desde o `P6-08`, tem como disparar.
+
+### O que o engine já tinha pronto para este dia
+
+Duas peças, escritas em tarefas anteriores com este momento em mente:
+
+- o `climate.ts` diz *"A Inércia (P7-03) age por cima deste crescimento, não no lugar dele"* — e é
+  exatamente onde o subsídio entra;
+- o `tick.ts` diz *"Quem já está no piso ou abaixo dele não se move (…) Furar o piso é trabalho de
+  evento e da Inércia"* — e é o que permite à desinformação levar o apoio a zero.
+
+Nenhuma das duas precisou mudar. O protótipo é uma camada por cima do engine público.
+
+### Uma constante existente é contrariada, de propósito
+
+O `inertiaGrowthPerYear` está no `balance.json` em **2** desde o começo e **nunca foi lido por
+ninguém**. A proposta pede **0,5**: com 2 ao ano a Inércia satura em 100 antes de 2075 contra um
+jogador que não fez nada — o antagonista venceria sozinho e o espelho do `§2.6` viraria enfeite.
+É a única contradição com um valor existente, e como ninguém lê a chave hoje, mudá-la não quebra nada.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 262 testes em 16 arquivos
+
+  md5sum docs/planilha/* > /tmp/antes && npm run test && md5sum docs/planilha/* | diff /tmp/antes -
+  ```
+  Os aceites são os dois primeiros testes do `tests/inercia.test.ts` — "quem joga bem ainda ganha
+  Bronze" e "e isso sem mexer em nenhum número do balance.json". A tabela completa está em
+  `docs/INERCIA.md`; os dados, em `docs/planilha/inercia-verificacao.csv`.
+- **Pendente:**
+  - **A contenção é mecânica nova, além do que o `docs/GDD.md §2.6` descreve.** Foi decidida no chat
+    e está registrada no `INERCIA.md`, mas o GDD continua descrevendo só as três ações e a árvore
+    como contra-ataque. É a mesma dívida que o `§2.7` tinha antes do `P3-06` — vale um parágrafo
+    antes de o `P7-03` começar.
+  - **A tensão ainda decai, só que mais devagar.** De 2080 a 2100 continua sem nada em jogo — 6,3
+    minutos. Fechar o resto exige a alavanca 4 do `CURVA-DE-DIFICULDADE.md` (realimentações do ciclo
+    de carbono), que precisa de fonte no `docs/CIENCIA.md` antes de virar número.
+  - **A verificação usa uma política de jogador simplificada** — "contenha acima de 70, senão compre
+    o próximo da lista". Um humano joga diferente; quem descobre como é o `P8-01`.
+  - **A Inércia e os eventos do `P7-01` não foram medidos juntos.** Os dois derrubam apoio e os dois
+    escalam com o estado do mundo; somados, podem tornar a derrota por apoio fácil demais. Quem
+    fizer o `P7-01` roda esta verificação de novo — é `npm test`.
+  - **Nenhum número foi aplicado.** Tudo vive em `tests/`. Quem move para o `balance.json` é o
+    `P7-03`, e as oito chaves novas estão listadas no `INERCIA.md`.
+  - **Continuam faltando os prints** de `curvas.html` e `tensao.html` para `docs/evidencias/` — a
+    extensão do Chrome não conectou em nenhuma tentativa desta sessão.
+  - `P1-04` segue aberto; o `theme.css` do `P5-02` continua sem existir.
+- **Evidência:** — (faltam os prints das duas páginas geradas)
+
+---
+
 ## 2026-08-20 — A curva de dificuldade medida: o jogo tem nove minutos de jogo e treze de espera
 
 - **Parte / tarefa:** `P3-03` ✔
