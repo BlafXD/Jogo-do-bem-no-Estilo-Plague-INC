@@ -105,11 +105,11 @@ Todo nó tem: custo em PAC, pré-requisitos, **efeito mecânico** e **um fato re
 
 ### 2.5 Eventos
 
-Sorteados por tick, com peso crescente conforme a temperatura. Cada um tem um limiar: tsunami e elevação do mar só entram acima de certo aquecimento — **o jogador precisa sentir que o mundo piora porque ele demorou.**
+Sorteados por tick, com peso crescente conforme a temperatura. Cada um tem um limiar: ressaca costeira e elevação do mar só entram acima de certo aquecimento — **o jogador precisa sentir que o mundo piora porque ele demorou.**
 
-Tipos: onda de calor, seca, enchente, tempestade/ciclone, incêndio florestal, deslizamento/desabamento, tsunami e elevação do nível do mar, colapso de safra.
+Tipos: onda de calor, seca, enchente, tempestade/ciclone, incêndio florestal, deslizamento/desabamento, **ressaca e maré de tempestade** sobre um mar mais alto, colapso de safra.
 
-> **Nota de honestidade científica:** tsunamis são geológicos, não climáticos. Se o jogo incluir tsunami (está no conceito original), o texto do evento deve tratá-lo como **elevação do nível do mar + ressaca extrema**, ou marcar explicitamente que é licença de jogo. Registre a decisão em `docs/CIENCIA.md`. Não venda desinformação como educação.
+> **Nota de honestidade científica — decidido no `P3-06`, em 2026-08-20: o tsunami saiu.** Ele estava no conceito original, mas tsunami é geológico: o aquecimento não causa nenhum. Manter o nome exigiria colar uma ressalva no evento, e a ressalva gastaria a frase educativa explicando o que ele **não** é. Em vez disso o evento virou **ressaca e maré de tempestade sobre um mar mais alto** — mesma imagem, a costa engolida pela água, e inteiramente climático. Não sobra licença a assumir. O motivo completo está em `docs/CIENCIA.md`. **Não venda desinformação como educação.**
 
 Cada evento carrega uma frase educativa curta ligada a um fenômeno real.
 
@@ -121,10 +121,36 @@ Cresce quando o jogador avança rápido demais sem preparar apoio público. **É
 
 ### 2.7 Vitória e derrota
 
-- **Vitória**: emissões líquidas ≈ 0 antes de 2100.
-  - `< 1,5 °C` → Ouro · `< 2,0 °C` → Prata · `< 2,5 °C` → Bronze
-- **Derrota**: temperatura > 3,0 °C, **ou** apoio público médio global = 0 (a agência é dissolvida).
-- Tela final: gráfico da linha do tempo + "o que você poderia ter feito diferente" + 3 ações reais do mundo real. Curto. Sem sermão.
+A partida acaba de três jeitos, e **a ordem em que as perguntas são feitas faz parte da regra**:
+
+1. **Derrota** — temperatura `> 3,0 °C`, **ou** apoio público médio global `≤ 0` (a agência é dissolvida). Vem primeiro, sempre: uma agência dissolvida não recebe medalha por ter zerado as emissões no mesmo mês em que o apoio acabou.
+2. **Vitória por zero líquido** — emissões líquidas globais `≤ 0,5 GtCO₂/ano` antes de 2100.
+3. **Fim do horizonte** — 2100 chegou com o mundo ainda emitindo e abaixo do limiar de derrota. **Chegar vivo a 2100 também vale a escala de medalhas.**
+
+**Nos dois desfechos a medalha sai da temperatura em que a partida parou:**
+
+| Temperatura final | Resultado |
+|---|---|
+| `< 1,5 °C` | Ouro |
+| `< 2,0 °C` | Prata |
+| `< 2,5 °C` | Bronze |
+| `≥ 2,5 °C` | sobrevivência, sem medalha |
+
+> **Por que chegar a 2100 vale medalha** — decisão de 2026-08-19, no `P6-08`. O zero líquido é
+> hoje **inalcançável**: a árvore inteira soma 5,5% ao ano de corte contra 0,93% de crescimento da
+> linha de base, e o jogo ótimo medido com o engine real termina em **13 Gt/ano**, vinte e seis
+> vezes o limiar. Sem esta regra o jogo não teria vitória nenhuma. A escala por temperatura também
+> é a que a mecânica já ensina sozinha: o TCRE faz da temperatura uma **catraca de mão única** — o
+> CO₂ acumulado só cresce, e nenhuma compra faz a temperatura descer — o que transforma **quando**
+> o jogador agiu na decisão que decide a partida. Os números e as alavancas de conserto estão em
+> `docs/BALANCEAMENTO.md`.
+
+**O desfecho é recalculado, nunca gravado.** Ele sai de temperatura, apoio, emissões e tick a cada
+consulta, e não existe campo de "venceu" no `GameState` (`§3`). É o que impede um save adulterado
+de entregar uma medalha que a partida dele não sustenta, e o que elimina o bug de "ganhei mas o
+jogo não percebeu".
+
+Tela final: gráfico da linha do tempo + "o que você poderia ter feito diferente" + 3 ações reais do mundo real. Curto. Sem sermão.
 
 ---
 

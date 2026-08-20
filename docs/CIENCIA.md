@@ -274,14 +274,34 @@ desenho. O fato é verdade sobre o mundo; o efeito é verdade sobre o jogo.
 Mesma regra para o `fact` de cada evento climático (`docs/GDD.md §2.5`).
 Preenchimento: `P7-01`.
 
+**Um aviso para quem for preencher.** O evento de **ressaca e maré de tempestade** entrou no lugar
+do tsunami (ver a seção seguinte) e é o que mais pede cuidado na fonte. O achado do **[AR6]** que
+ele ilustra é o das cotas extremas de nível do mar: o que hoje é evento de uma vez por século passa
+a acontecer ao menos uma vez por ano em boa parte dos marégrafos até 2100. **Fixe o item exato do
+Resumo para Formuladores de Políticas antes de escrever a frase** — ele não está fixado aqui de
+propósito, porque citar item errado é pior do que não citar.
+
 ## Licenças de jogo assumidas
 
 Onde o jogo simplifica ou distorce de propósito, a decisão fica registrada aqui — dita
 com todas as letras, não escondida.
 
-- **Tsunami** — pendente. Tsunamis são geológicos, não climáticos. A decisão sobre tratar
-  como elevação do nível do mar com ressaca extrema, ou marcar como licença explícita,
-  é a tarefa `P3-06`.
+- **Tsunami — resolvido em 2026-08-20 (`P3-06`). Não há licença a assumir, porque o tsunami saiu
+  do jogo.** Ele estava no conceito original, mas o aquecimento não causa tsunami: a causa é
+  geológica. O `docs/GDD.md §2.5` abria duas saídas, e uma terceira apareceu na decisão:
+  1. **Manter o nome com a ressalva colada ao evento** — honesto, mas gasta a única frase
+     educativa do cartão explicando o que o evento **não** é.
+  2. **Apelar ao único elo real** — o tsunami de deslizamento em fiorde, que o degelo destrava
+     ao desestabilizar encostas (Groenlândia, 2017; Barry Arm, no Alasca, sob vigilância). É
+     verdade, mas é fenômeno polar de nicho, difícil de encaixar em 8 macrorregiões.
+  3. **Trocar o evento** — escolhida. Virou **ressaca e maré de tempestade sobre um mar mais
+     alto**: entrega a mesma imagem que o conceito queria, a costa engolida pela água, e é
+     inteiramente climático.
+
+  **Esta entrada fica no arquivo mesmo sem haver licença a registrar.** Quem abrir o repositório
+  e não achar tsunami numa lista que o conceito original prometia precisa achar aqui o motivo —
+  e a decisão de recusar o atalho é, ela mesma, o registro que a regra 9 pede.
+
 - **Incerteza do TCRE descartada** — o jogo usa a estimativa central e ignora a faixa provável do
   **[AR6]**. Registrado na tabela de constantes.
 - **`cleanShare` mede eletricidade, não a matriz energética inteira** — limite 5.

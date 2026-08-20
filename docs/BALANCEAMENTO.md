@@ -113,7 +113,7 @@ Duas consequências que já estão no código:
   em que um ajuste tornar o zero líquido alcançável, **é ele que deve falhar** e ser reescrito.
 - **Chegar a 2100 vivo passou a valer a escala de medalhas**, por decisão tomada no chat em
   2026-08-19 e registrada no `PROGRESSO.md`. Sem isso o jogo não teria vitória nenhuma. O `§2.7`
-  do GDD ainda não descreve esse desfecho.
+  do GDD passou a descrever esse desfecho em 2026-08-20.
 
 **Nada de balanceamento foi mexido nesta tarefa**, também por decisão do chat: um ajuste sem
 playtest por trás é exatamente o que o risco `R2` do `PLANO.md` e a regra deste arquivo tentam

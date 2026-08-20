@@ -120,7 +120,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 - [ ] `P3-03` Curva de dificuldade e Teoria do Fluxo: mapear a tensão década a década — **M**
 - [ ] `P3-04` Economia de PAC: quanto entra por ano vs custo total da árvore — **M** — aceite: falta ~35% para comprar tudo (a escolha precisa doer)
 - [ ] `P3-05` Especificação da Inércia: gatilhos, ações, contra-ataques — **M**
-- [ ] `P3-06` Decidir e registrar o tratamento do tsunami (`docs/GDD.md §2.5`) — **P**
+- [x] `P3-06` Decidir e registrar o tratamento do tsunami (`docs/GDD.md §2.5`) — **P**
 
 ---
 

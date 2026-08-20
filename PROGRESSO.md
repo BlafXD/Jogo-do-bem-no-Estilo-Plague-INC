@@ -28,6 +28,61 @@ Regras curtas:
 
 ---
 
+## 2026-08-20 — Duas pendências curtas fechadas: o GDD alcançou o código, e o tsunami saiu do jogo
+
+- **Parte / tarefa:** `P3-06` ✔ · pendência do `P6-08` (`docs/GDD.md §2.7`) ✔
+- **O que mudou:** só documentação. **Nenhum arquivo de código, de dados ou de teste foi tocado** — a suíte segue em 237, e o `dist/` sai idêntico.
+  - `docs/GDD.md §2.7` **reescrito** — passa a descrever a regra que o `outcome.ts` executa desde o `P6-08`.
+  - `docs/GDD.md §2.5` **reescrito** — o tsunami sai da lista de tipos, e a nota de honestidade científica deixa de fazer uma pergunta e passa a registrar a resposta.
+  - `docs/CIENCIA.md` — a licença pendente do tsunami virou a decisão, com as três saídas avaliadas; e a seção "Fatos dos eventos" ganhou um aviso de fonte para o `P7-01`.
+  - `docs/BALANCEAMENTO.md` — a linha que dizia "o `§2.7` do GDD ainda não descreve esse desfecho" deixou de ser verdade hoje; corrigida.
+  - `PLANO.md` — `P3-06` marcado.
+
+### O `§2.7` estava mentindo desde o `P6-08`
+
+O GDD abre dizendo "se o código discordar deste arquivo, o código está errado". Desde 2026-08-19 o código discordava e **estava certo**: o `§2.7` prometia vitória por emissões líquidas ≈ 0, que a sonda do `P6-08` mediu como inalcançável, enquanto o `outcome.ts` já entregava medalha a quem chega vivo a 2100. Uma regra de fonte-da-verdade que o próprio time sabe estar desatualizada é pior que não ter regra nenhuma — é o que faz a próxima pessoa implementar o arquivo em vez do jogo.
+
+O texto novo descreve o que o `outcomeOf` faz, na ordem em que ele pergunta, porque **a ordem é a regra**: derrota antes de tudo, zero líquido antes do horizonte. Ganhou a linha que faltava (chegar vivo a 2100 vale a escala de medalhas), a tabela com a quarta faixa que o texto antigo não tinha (`≥ 2,5 °C` → sobrevivência sem medalha), e duas correções de fidelidade ao código: o apoio derrota em `≤ 0` e não em `= 0`, e o zero líquido é `≤ 0,5 GtCO₂/ano`, que é o `netZeroEmissions` do `balance.json` — o "≈ 0" antigo não era um limiar, era um gesto.
+
+**A justificativa entrou como citação, não como regra.** O parágrafo do TCRE e das 13 Gt/ano explica *por que* a medalha por horizonte existe; se um dia o balanceamento tornar o zero líquido alcançável, é a citação que sai, e a regra acima dela continua de pé.
+
+### O tsunami: a decisão foi tirá-lo, não domesticá-lo
+
+O `docs/GDD.md §2.5` oferecia duas saídas — tratar como elevação do mar com ressaca, ou marcar como licença explícita. **Nenhuma das duas foi escolhida.** Marcar como licença é honesto, mas cada evento tem **uma** frase educativa, e ela seria gasta explicando o que o evento *não* é: um cartão que ensina "isto aqui não é ciência" é um cartão desperdiçado num jogo cujo objetivo é o ODS 13.
+
+Uma terceira saída apareceu na avaliação e também foi recusada: existe **um** elo real entre aquecimento e tsunami — o degelo desestabiliza encostas em fiorde e gera onda de deslizamento (Groenlândia, 2017; Barry Arm, no Alasca, sob vigilância). É verdadeiro e citável, mas é fenômeno polar de nicho, e as 8 macrorregiões do `§2.3` não têm onde colocá-lo sem que ele fique restrito a duas delas.
+
+**O evento virou ressaca e maré de tempestade sobre um mar mais alto.** É a mesma imagem que o conceito original queria — a costa engolida pela água — com a diferença de ser inteiramente climático, ter limiar de temperatura que faz sentido mecânico (só entra quando o mar já subiu) e não precisar de ressalva nenhuma.
+
+**A entrada no `CIENCIA.md` ficou mesmo não havendo licença a registrar.** Uma seção chamada "Licenças de jogo assumidas" que simplesmente perde o item do tsunami deixa quem chega depois sem resposta para "por que o conceito prometia tsunami e o jogo não tem?". A decisão de recusar o atalho é o registro.
+
+### O que **não** foi feito, de propósito
+
+- **O `fact` do evento novo não foi escrito, e a fonte não foi fixada.** O `CIENCIA.md` já dizia que os fatos de evento são preenchimento do `P7-01`; inventar a frase agora seria estender o escopo de uma tarefa **P**. O que entrou foi um aviso nominal para quem for preencher: o achado do **[AR6]** a usar é o das cotas extremas de nível do mar — o evento hoje centenário passando a anual em boa parte dos marégrafos até 2100 — **com o item do Resumo para Formuladores de Políticas deliberadamente não fixado**, porque citar item errado é pior que não citar. Quem fizer o `P7-01` abre o AR6 e fixa.
+- **Nenhum número de balanceamento foi mexido**, pelo mesmo motivo do `P6-08`: ajuste sem playtest é o risco `R2`.
+- **A entrada de 2026-08-19 deste diário não foi editada**, embora aponte o `§2.7` como pendente e a seção do tsunami como aberta. Ela descreve o que era verdade naquela data — é a mesma regra que segurou as entradas antigas na divisão do `CLAUDE.md`.
+- **Nada foi renomeado no código.** Não existe evento nenhum implementado ainda: o `src/data/events.json` é `[]` e o `src/engine/events.ts` tem só o comentário da fórmula de peso. O `P3-06` fechou porque era tarefa de decisão e registro, e o `id` `storm-surge` nasce direto certo no `P7-01`.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 237 testes em 13 arquivos — o mesmo número de ontem, porque nenhum código mudou
+
+  grep -rni "tsunami" --include="*.md" --include="*.ts" --include="*.json" . | grep -v node_modules
+  # devem sobrar 3: a decisão no CIENCIA.md, a nota do GDD §2.5 e o P3-06 no PLANO.md
+  # (mais as entradas antigas deste diário, que não se reescrevem)
+  ```
+  Leia o `docs/GDD.md §2.7` ao lado do `src/engine/outcome.ts`: as quatro perguntas do arquivo e as quatro do `outcomeOf` estão na mesma ordem.
+- **Pendente:**
+  - **As outras pendências do `P6-08` continuam abertas** e nenhuma delas é de documentação: a derrota por temperatura sempre mostrar "3,00 °C" no cartão (decisão do `P7-06`), a derrota por apoio ser inalcançável até o `P7-01` e o `P7-03` existirem, o `history` nunca ser preenchido, e `Espaço` com foco num nó da árvore recomprar em vez de pausar (`P7-08`).
+  - **O `§2.7` novo descreve um desfecho que ninguém consegue alcançar jogando** — o `netZero`. Isso agora está escrito com todas as letras no próprio GDD, o que é melhor que o silêncio de antes, mas não é conserto. O conserto é do `P3-04` e do `P8-02`.
+  - **O `P3-02` (planilha dos 75 anos) e o `P3-04` (economia de PAC) continuam abertos**, e são justamente os que decidem se o zero líquido volta a ser alcançável. A Parte 3 tem 4 de 6 tarefas abertas com o engine já pronto — a ordem inverteu-se em relação ao plano original.
+  - `P1-04` segue aberto: o `package.json` ainda diz `ponto-de-virada`, codinome.
+  - O `theme.css` do `P5-02` continua sem existir.
+- **Evidência:** — (tarefa de documentação, sem tela para fotografar)
+
+---
+
 ## 2026-08-19 — Vitória e derrota: a partida virou jogo com começo, meio e fim
 
 - **Parte / tarefa:** `P6-08` ✔ — **marco M2**
