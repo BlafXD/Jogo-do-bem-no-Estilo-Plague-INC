@@ -232,22 +232,24 @@ describe('a partida inteira', () => {
   });
 
   it('ACEITE: jogando bem, a partida chega viva a 2100 e ganha bronze', () => {
-    // A ordem é a mesma que a sonda do P6-08 achou como melhor: renda primeiro,
-    // depois corte por eficiência (corte ÷ custo). É a única ordem conhecida
-    // que fecha abaixo do teto do bronze, e por pouco — ver a seção do P6-08 em
-    // docs/BALANCEAMENTO.md.
-    const income = ['climate-education', 'treaties'];
+    // **A ordem mudou duas vezes desde que este teste nasceu, e as duas mudanças
+    // foram medidas, não achadas.** O P6-08 usava "renda primeiro, depois corte
+    // por eficiência"; o P3-04 mediu que os dois nós de renda são uma armadilha
+    // — atrasam todo corte em cerca de uma década e a partida acaba mais quente
+    // (docs/BALANCEAMENTO.md). Com os eventos do P7-01 cobrando PAC, aquela
+    // ordem deixou de alcançar o bronze de vez. A melhor conhecida hoje é só
+    // corte, do maior corte por PAC gasto para o menor.
     const cuts = skills
-      .filter((skill) => !income.includes(skill.id))
       .map((skill) => ({
         id: skill.id,
         cut: skill.effects.reduce((sum, e) => sum + (e.kind === 'emissionCut' ? e.value : 0), 0),
         cost: skill.cost,
       }))
+      .filter((skill) => skill.cut > 0)
       .sort((a, b) => b.cut / b.cost - a.cut / a.cost)
       .map((skill) => skill.id);
 
-    const state = playthrough([...income, ...cuts]);
+    const state = playthrough(cuts);
 
     expect(state.tick).toBe(TOTAL_TICKS);
     expect(outcomeOf(state)).toEqual({ kind: 'finished', ending: 'horizon', medal: 'bronze' });

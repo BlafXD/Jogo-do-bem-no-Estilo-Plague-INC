@@ -271,15 +271,43 @@ desenho. O fato é verdade sobre o mundo; o efeito é verdade sobre o jogo.
 
 ## Fatos dos eventos
 
-Mesma regra para o `fact` de cada evento climático (`docs/GDD.md §2.5`).
-Preenchimento: `P7-01`.
+Mesma regra para o `fact` de cada evento climático (`docs/GDD.md §2.5`). Preenchido em `P7-01`,
+com os 10 eventos de `src/data/events.json`.
 
-**Um aviso para quem for preencher.** O evento de **ressaca e maré de tempestade** entrou no lugar
-do tsunami (ver a seção seguinte) e é o que mais pede cuidado na fonte. O achado do **[AR6]** que
-ele ilustra é o das cotas extremas de nível do mar: o que hoje é evento de uma vez por século passa
-a acontecer ao menos uma vez por ano em boa parte dos marégrafos até 2100. **Fixe o item exato do
-Resumo para Formuladores de Políticas antes de escrever a frase** — ele não está fixado aqui de
-propósito, porque citar item errado é pior do que não citar.
+**Estas fontes são setoriais, como as das habilidades.** Um número errado aqui não quebra a
+simulação, mas quebra a honestidade do jogo — que é pior, porque é o texto que o jogador lê.
+
+**Consultadas em 2026-08-20.**
+
+| Chave | Publicação | Link |
+|---|---|---|
+| **[UNEP-FIRE]** | UNEP e GRID-Arendal, _Spreading like Wildfire: The Rising Threat of Extraordinary Landscape Fires_ (2022) | <https://www.unep.org/resources/report/spreading-wildfire-rising-threat-extraordinary-landscape-fires> |
+| **[NOAA-CRW]** | NOAA Coral Reef Watch / ICRI, sobre o 4º evento global de branqueamento (2023–2025) | <https://www.nesdis.noaa.gov/news/worlds-fourth-mass-coral-bleaching-event-likely-ended-2025> |
+| **[IJID25]** | Boletim global de dengue de 2024, _International Journal of Infectious Diseases_ (2025) | <https://www.ijidonline.com/article/S1201-9712(25)00164-X/fulltext> |
+| **[GFDL-LS]** | NOAA GFDL, _Changes in extreme precipitation and landslides over High Mountain Asia_ | <https://www.gfdl.noaa.gov/research_highlight/changes-in-extreme-precipitation-and-landslides-over-high-mountain-asia/> |
+| **[WMO-SGC24]** | WMO, _State of the Global Climate 2024_ | <https://wmo.int/publication-series/state-of-global-climate-2024> |
+
+A chave **[AR6]** não se repete aqui: ela é fonte primária no topo deste arquivo, e é de lá que
+saem cinco dos dez fatos.
+
+| Evento | Fato no jogo | Fonte | Observação |
+|---|---|---|---|
+| `heatwave` | O calor extremo que acontecia uma vez a cada dez anos fica cerca de quatro vezes mais frequente a 2 °C de aquecimento. | **[AR6]** | Figura SPM.6. A frequência do evento decenal de calor sobe ~3× a 1,5 °C, ~4× a 2 °C, ~5,5× a 3 °C e ~9× a 4 °C, contra a linha de base 1850–1900 |
+| `drought` | Em regiões que já secam, a seca agrícola extrema fica pelo menos duas vezes mais provável a 1,5 °C de aquecimento. | **[AR6]** | Figura SPM.6, e **só para as regiões em secagem** — o próprio AR6 restringe o resultado a elas. Seca agrícola e ecológica é definida por umidade do solo abaixo do 10º percentil de 1850–1900 |
+| `flood` | A cada grau de aquecimento a atmosfera segura cerca de 7% mais vapor de água — e é essa água que volta como chuva concentrada. | **[AR6]** | Relação de Clausius-Clapeyron. O AR6 registra que em algumas regiões a taxa de pico de chuva sobe **mais** que os 7%; o jogo usa o valor conservador |
+| `coral-bleaching` | Entre 2023 e 2025 o calor do mar branqueou 84% dos recifes do mundo, em 83 países. | **[NOAA-CRW]** | 4º evento global. Os três anteriores atingiram 21% (1998), 37% (2010) e 68% (2014–2017) — é a escalada que dá sentido ao número |
+| `cyclone` | A proporção de ciclones tropicais das categorias 3 a 5 aumentou nas últimas quatro décadas. | **[AR6]** | Classificado como *likely* pelo AR6. **É proporção, não número absoluto** — trocar uma coisa pela outra na frase seria erro grave, e é o motivo de ela estar escrita assim |
+| `wildfire` | Os incêndios extremos devem aumentar até 14% até 2030 e 50% até o fim do século. | **[UNEP-FIRE]** | Também 30% até 2050. O relatório atribui a mudança a clima **e** uso da terra juntos — o jogo simplifica ao citar só o total |
+| `vector-disease` | Em 2024 foram 14,1 milhões de casos de dengue no mundo, doze vezes mais que dez anos antes. | **[IJID25]** | Mais de 100 países; 9 508 mortes. O salto de 2023 para 2024 é de ~7 mi para 14,1 mi. **Notificação não é incidência** — parte do aumento é vigilância melhor, e o artigo diz isso |
+| `landslide` | Na Alta Ásia, os deslizamentos disparados por chuva extrema devem ficar 10% mais frequentes até o fim do século. | **[GFDL-LS]** | +7% em 2031–2060 e +10% em 2066–2095, contra 1971–2000. **É um resultado regional**, e o evento do jogo mira quatro regiões — a frase diz "na Alta Ásia" justamente para não generalizar |
+| `storm-surge` | A inundação costeira que acontecia uma vez por século deve passar a acontecer ao menos uma vez por ano em mais da metade dos marégrafos até 2100. | **[AR6]** | Entre ~60% (SSP1-2.6) e ~82% (SSP5-8.5) dos marégrafos, conforme o cenário. O jogo usa "mais da metade", que vale nos dois extremos |
+| `crop-failure` | Em 2024, oito países tiveram ao menos um milhão de pessoas a mais em insegurança alimentar aguda do que no ano anterior. | **[WMO-SGC24]** | O relatório atribui a eventos climáticos junto com conflito e economia — **não é atribuição climática pura**, e por isso a frase relata o fato sem afirmar a causa |
+
+**O limite que estes dez fatos compartilham.** Nenhum deles alimenta número da simulação: o
+`baseWeight`, o `tempThreshold` e o `impact` de cada evento são **balanceamento**, e moram em
+`docs/BALANCEAMENTO.md`. É a mesma separação dos fatos das habilidades — o fato é verdade sobre o
+mundo, o efeito é verdade sobre o jogo. Um evento que sorteia mais a 2,5 °C do que a 1,5 °C está
+imitando uma tendência real; a taxa exata é escolha de desenho.
 
 ## Licenças de jogo assumidas
 
@@ -301,6 +329,8 @@ com todas as letras, não escondida.
   **Esta entrada fica no arquivo mesmo sem haver licença a registrar.** Quem abrir o repositório
   e não achar tsunami numa lista que o conceito original prometia precisa achar aqui o motivo —
   e a decisão de recusar o atalho é, ela mesma, o registro que a regra 9 pede.
+
+  O evento substituto entrou no `P7-01` como `storm-surge`, com a fonte fixada na seção anterior.
 
 - **Incerteza do TCRE descartada** — o jogo usa a estimativa central e ignora a faixa provável do
   **[AR6]**. Registrado na tabela de constantes.

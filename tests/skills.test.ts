@@ -386,13 +386,17 @@ describe('a árvore ligada à simulação', () => {
     expect(end.year).toBe(balance.endYear);
   });
 
-  it('o orçamento do P3-04: sobra para 16 dos 20 nós, 65% do custo', () => {
-    // O número que docs/BALANCEAMENTO.md registra. Se mexer no custo de um nó ou
-    // no basePointsPerYear, é aqui que a mudança aparece — e vira linha lá.
+  it('o orçamento do P3-04: sobra para 15 dos 20 nós, 56% do custo', () => {
+    // O número que docs/BALANCEAMENTO.md registra. Se mexer no custo de um nó,
+    // no `basePointsPerYear` ou no `impact.points` de um evento, é aqui que a
+    // mudança aparece — e vira linha lá.
+    //
+    // Eram 16 nós e 65% até o P7-01. Os eventos cobram PAC — é o `impact.points`
+    // do §2.5 — e isso tirou um nó inteiro do alcance.
     const end = playGreedy();
 
-    expect(end.unlockedSkills).toHaveLength(16);
-    expect(Math.round((spentOn(end) / 1600) * 100)).toBe(65);
+    expect(end.unlockedSkills).toHaveLength(15);
+    expect(Math.round((spentOn(end) / 1600) * 100)).toBe(56);
   });
 
   it('comprar cedo vale mais que comprar tarde', () => {

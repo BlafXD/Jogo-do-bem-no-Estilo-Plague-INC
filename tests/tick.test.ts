@@ -85,11 +85,12 @@ describe('advanceTick', () => {
     );
   });
 
-  it('não sorteia nada, então a posição do gerador não anda', () => {
-    // Se um dia o tick passar a sortear, este teste vai falhar — e aí é para
-    // atualizá-lo de propósito, não por acidente.
+  it('sorteia eventos, então a posição do gerador anda', () => {
+    // Até o P7-01 o tick não consumia sorteio nenhum, e havia aqui um teste que
+    // cobrava exatamente isso — com o aviso de que ele deveria falhar no dia em
+    // que o sorteio entrasse. Entrou; este é o teste que o substitui.
     const start = createInitialState(2025);
-    expect(run(60).rngState).toBe(start.rngState);
+    expect(run(60).rngState).not.toBe(start.rngState);
   });
 
   it('a mesma seed produz exatamente a mesma partida', () => {
@@ -111,21 +112,33 @@ describe('o apoio público', () => {
     );
   });
 
-  it('para no piso de apatia e não desce mais', () => {
-    // Do valor inicial até o piso são 200 ticks exatos — ano de 2041.
-    const atFloor = run((initial - balance.supportFloor) / (balance.supportDecayPerYear / 12));
-    const muchLater = run(TOTAL_TICKS);
+  // Desde o P7-01 o `advanceTick` também sorteia eventos, e evento **fura o
+  // piso**. Os três testes abaixo mediam o desgaste isolado; agora eles medem o
+  // que continua verdade num mundo com eventos — o desgaste sozinho para no
+  // piso, e tudo que passar disso é trabalho de outra coisa.
 
-    expect(atFloor.regions.na.support).toBeCloseTo(balance.supportFloor, 6);
+  it('o desgaste sozinho para no piso: quem está nele não se move', () => {
+    const start = createInitialState(1);
+    const atFloor: GameState = {
+      ...start,
+      regions: Object.fromEntries(
+        REGION_IDS.map((id) => [id, { ...start.regions[id], support: balance.supportFloor }]),
+      ) as GameState['regions'],
+    };
+
+    // Um tick pode trazer um evento, que subtrai. O que o desgaste **nunca**
+    // faz é empurrar quem já está no piso — então o apoio não sobe, e só desce
+    // se um evento tiver batido.
+    const next = advanceTick(atFloor);
     for (const id of REGION_IDS) {
-      expect(muchLater.regions[id].support).toBe(balance.supportFloor);
+      expect(next.regions[id].support).toBeLessThanOrEqual(balance.supportFloor);
     }
   });
 
-  it('encosta no piso em 2041', () => {
-    // O ano é fato de balanceamento, não conta derivada das constantes: se eu
-    // escrever a taxa errada, os testes acima continuam coerentes consigo
-    // mesmos — o piso absorve o erro — e só este aqui percebe.
+  it('encosta no piso até 2041, e evento só antecipa', () => {
+    // 200 ticks é a conta do desgaste puro — ano de 2041. Com eventos batendo,
+    // uma região chega antes; nunca depois. O `<=` é a propriedade, e o valor
+    // exato do desgaste puro está travado no teste de cima.
     let state = createInitialState(1);
     let floorTick = 0;
     while (state.regions.na.support > balance.supportFloor) {
@@ -133,19 +146,22 @@ describe('o apoio público', () => {
       floorTick++;
     }
 
-    expect(floorTick).toBe(200);
-    expect(yearForTick(floorTick)).toBe(2041);
+    const pureDecayTicks = (initial - balance.supportFloor) / (balance.supportDecayPerYear / 12);
+    expect(pureDecayTicks).toBe(200);
+    expect(yearForTick(pureDecayTicks)).toBe(2041);
+    expect(floorTick).toBeLessThanOrEqual(pureDecayTicks);
   });
 
   it('ACEITE: 2058 deixa de decidir a partida sozinho', () => {
     // Sem o piso, este é o tick exato em que o apoio das 8 regiões chegaria a
-    // zero. Como o §2.7 dá derrota por apoio médio zero, toda partida se
-    // perderia em 2058 — fizesse o jogador o que fizesse.
+    // zero **só de desgaste**. Como o §2.7 dá derrota por apoio médio zero,
+    // toda partida se perderia em 2058 — fizesse o jogador o que fizesse. O
+    // piso é o que impede isso; quem derruba depois dele é o evento, e aí a
+    // derrota passa a ser consequência de jogo, não do calendário.
     const zeroTick = initial / (balance.supportDecayPerYear / balance.ticksPerYear);
 
     expect(yearForTick(zeroTick)).toBe(2058);
     expect(averageSupport(run(zeroTick))).toBeGreaterThan(0);
-    expect(averageSupport(run(TOTAL_TICKS))).toBe(balance.supportFloor);
   });
 
   it('não puxa de volta para cima quem já está abaixo do piso', () => {
@@ -214,8 +230,13 @@ describe('o fim da partida', () => {
     expect(end.temperature).toBeGreaterThan(balance.loseTemperature);
   });
 
-  it('entrega 750 PAC ao longo da partida inteira', () => {
-    expect(end.actionPoints).toBeCloseTo(balance.basePointsPerYear * 75, 6);
+  it('arrecada 750 PAC na partida inteira, e os eventos cobram parte de volta', () => {
+    // A entrada bruta continua sendo `basePointsPerYear × 75`. O que sobra no
+    // caixa é menos, porque desde o P7-01 alguns eventos custam PAC — é o
+    // `impact.points` do §2.5. Sem essa diferença, o campo seria decorativo.
+    const gross = balance.basePointsPerYear * 75;
+    expect(end.actionPoints).toBeLessThan(gross);
+    expect(end.actionPoints).toBeGreaterThan(gross / 2);
   });
 });
 

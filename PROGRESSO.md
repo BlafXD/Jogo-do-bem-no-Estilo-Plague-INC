@@ -28,6 +28,123 @@ Regras curtas:
 
 ---
 
+## 2026-08-20 — Os eventos entraram, o GDD §2.6 alcançou o P3-05, e a Inércia colidiu com eles
+
+- **Parte / tarefa:** `P7-01` ✔ · pendência do `P3-05` (`docs/GDD.md §2.6`) ✔
+- **O que mudou:**
+  - `docs/GDD.md §2.6` **reescrito** — descreve o espelho, as três ações, a permanência do estrago e as duas metades do contra-ataque, incluindo a contenção que o `P3-05` propôs.
+  - `src/engine/events.ts` **implementado** — o sorteio semeado, a mitigação por resiliência e a resolução. Era placeholder desde o `SETUP-05`.
+  - `src/data/events.json` **preenchido** — 10 eventos, com fonte fixada para cada fato.
+  - `src/engine/state.ts` — `parseEvents` e a lista `climateEvents`, no mesmo padrão do `parseRegions` e do `parseSkills`.
+  - `src/engine/tick.ts` — os eventos entram por último no tick, e o cabeçalho deixou de dizer que faltavam.
+  - `docs/CIENCIA.md` — os 10 fatos com fonte, 5 tabelas novas de referência.
+  - `docs/BALANCEAMENTO.md` — o custo dos eventos, a rampa de frequência, as duas afinações e a colisão.
+  - `tests/events.test.ts` **criado** (30). Seis testes existentes reescritos. Suíte: 262 → **291**.
+
+### O sorteio, e o que ele tem para ensinar
+
+O peso segue a fórmula do `§2.5` que já estava escrita no arquivo vazio, com o
+`eventWeightPerDegree` de 1,8 que estava no `balance.json` e **nunca tinha sido lido por ninguém**.
+A rampa que sai dela é o argumento inteiro do jogo virado mecânica:
+
+| Temperatura | Eventos destravados | Por ano |
+|---|---|---|
+| 1,37 °C (início) | 1 de 10 | 0,45 |
+| 1,9 °C | 8 | 3,3 |
+| 2,45 °C | 10 | 5,8 |
+| 3,0 °C | 10 | 8,2 |
+
+A primeira década é quase silenciosa **de propósito**: dá ao jogador tempo de agir antes de o mundo
+cobrar. Quem demora sente o mundo piorar em vez de ler sobre isso num cartão.
+
+**O `advanceTick` passou a consumir o gerador**, e era a primeira vez. Havia um teste que cobrava
+que ele *não* sorteava, com o aviso de que deveria falhar no dia em que isso mudasse. Falhou; foi
+substituído pelo teste inverso.
+
+### As dez fontes foram buscadas e conferidas
+
+A decisão do chat foi fixar fonte antes de escrever, e foi o que levou mais tempo desta tarefa.
+O `ipcc.ch` recusa fetch, então cinco fatos do **[AR6]** foram confirmados por fontes secundárias
+que os citam, e os outros cinco vêm de UNEP, NOAA Coral Reef Watch, NOAA GFDL, WMO e um artigo
+revisado por pares sobre dengue — todos com link no `docs/CIENCIA.md`.
+
+**Três frases foram escritas defensivamente, e a coluna de observação diz por quê:** o ciclone fala
+em *proporção* de categorias 3–5 e não em número absoluto, porque é isso que o AR6 afirma; o
+deslizamento diz "na Alta Ásia", porque o resultado é regional; e o colapso de safra relata o número
+da insegurança alimentar **sem afirmar a causa**, porque o próprio WMO atribui a clima, conflito e
+economia juntos.
+
+### Duas afinações que vieram da medição, não do gosto
+
+- **O impacto de apoio caiu para ~40% do primeiro chute.** Na primeira versão o apoio médio zerava
+  em toda estratégia e a partida bem jogada **morria em 2096** — o jogo deixava de ser vencível. O
+  dreno tinha de caber nos ~50 pontos entre o apoio inicial e a dissolução. Hoje quem joga bem
+  termina entre 6 e 12, conferido em cinco seeds, e **as cinco dão Bronze**.
+- **A resiliência ganhou piso de 0,25 no fator de dano.** As 8 regiões começam em 50 e a árvore
+  oferece +50 — o que dá 100, e `1 − 100/100` é **dano zero**. Sem o piso, o último nó de
+  resiliência viraria botão de imunidade. Com ele, investir tudo corta o dano pela metade. É também
+  a única leitura honesta do que adaptação faz: dique reduz estrago, não cancela enchente.
+
+**A derrota por apoio deixou de ser decorativa.** A regra está no `§2.7` desde o `P6-08`, testada,
+e nada no jogo conseguia dispará-la. Os eventos furam o piso de apatia — que o `tick.ts` já previa,
+por escrito, desde o `P6-03`.
+
+### A colisão com o `P3-05`, que era a pergunta em aberto
+
+O `docs/INERCIA.md` fechou pedindo que quem fizesse o `P7-01` rodasse a verificação da Inércia de
+novo. Rodou, e **ela quebrou**:
+
+| Estratégia | Só com eventos | Com eventos **e** a Inércia proposta |
+|---|---|---|
+| Corta bem, ignora Sociedade | 2,4652 °C · **Bronze** | 2,4819 °C · **Bronze** |
+| Compra Sociedade e contém | — | 2,5197 °C · **sem medalha** |
+
+Não é bug de nenhum dos dois: é o orçamento de dano estourando. A melhor jogada termina a 0,06 °C
+do teto do Bronze, e os dois sistemas somados consomem mais que isso. Pior, **a inversão que o
+`P3-05` tinha conseguido desapareceu** — com eventos em cena, comprar Sociedade volta a custar a
+medalha.
+
+Os três aceites da Inércia foram **reescritos invertidos**, marcados com `COLISÃO`, e é para eles
+falharem no dia em que houver espaço de novo. O conserto mais barato medido é mover o teto do Bronze
+de 2,5 para ~2,55 °C — mudança de balanceamento sem playtest, ou seja o risco `R2`, e por isso fica
+para o `P8-02`.
+
+### Um contador que mentia
+
+O teste "a armadilha virou obrigação" contava contenções como "os meses em que a Inércia caiu". Mas
+o termo de amortecimento do próprio crescimento também a derruba quando há apoio acima do piso —
+então o teste dizia que um jogador **sem** o ramo Sociedade continha, o que é impossível por
+construção. Agora o `step` devolve uma bandeira explícita.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 291 testes em 17 arquivos
+  ```
+  Os aceites são os quatro `ACEITE` do `tests/events.test.ts` — o mundo piora com a temperatura, a
+  derrota por apoio fura o piso, quem não faz nada ainda perde em **2089**, e o apoio termina bem
+  abaixo do piso. O `docs/CIENCIA.md` tem as 10 fontes.
+- **Pendente:**
+  - **A colisão do `P3-05` está registrada, não resolvida.** É `P8-02`, e o `BALANCEAMENTO.md` tem
+    o número do conserto.
+  - **Nenhum evento aparece na tela ainda.** O `activeEvents` enche e esvazia, e nada o mostra — o
+    cartão com o fato real e a auto-pausa são o `P7-02`. Até lá o jogador sente o efeito sem saber
+    o motivo, que é a pior versão possível desta mecânica. **É a próxima tarefa natural.**
+  - **O `impact.economy` não faz nada mecanicamente.** O campo é aplicado e o `economy` da região
+    cai, mas nenhuma regra lê esse número — nem o `outcome.ts`, nem o custo de habilidade. Ele está
+    ali porque o contrato do `§3` o define; quem lhe der função é o `P7-04` ou o `P8-02`.
+  - **O `SAVE_VERSION` não subiu, e vale conferir.** O `activeEvents` já era campo do `GameState` e
+    já era salvo; o que mudou é que agora ele vem preenchido. Um save antigo carrega com a lista
+    vazia e funciona — mas eu não testei um save gravado antes do `P7-01`.
+  - **A duração de evento não existe.** O impacto é instantâneo e o `ticksRemaining` só controla
+    quanto tempo o cartão fica em cena. Dano contínuo exigiria campo novo no `ClimateEvent` do `§3`,
+    que o `§12` proíbe mexer sem pedir.
+  - Continuam faltando os prints para `docs/evidencias/`; a extensão do Chrome não conectou.
+  - `P1-04` segue aberto; o `theme.css` do `P5-02` continua sem existir.
+- **Evidência:** —
+
+---
+
 ## 2026-08-20 — A Inércia especificada e verificada: a Parte 3 fechou
 
 - **Parte / tarefa:** `P3-05` ✔ — **Parte 3 completa** (6 de 6)

@@ -115,9 +115,25 @@ Cada evento carrega uma frase educativa curta ligada a um fenômeno real.
 
 ### 2.6 O antagonista — "A Inércia"
 
-Não é um vilão de bigode. É a **força que resiste à mudança**: lobby fóssil, desinformação, subsídios, prioridade de curto prazo. Age a cada ~6 ticks: campanhas de desinformação (derrubam apoio), subsídios (aumentam emissões), recuos regulatórios (encarecem habilidades).
+Não é um vilão de bigode. É a **força que resiste à mudança**: lobby fóssil, desinformação, subsídios, prioridade de curto prazo.
 
-Cresce quando o jogador avança rápido demais sem preparar apoio público. **É um espelho das decisões do jogador, não um dado aleatório.** Habilidades do ramo Sociedade são o contra-ataque.
+**Ela é um espelho das decisões do jogador, não um dado aleatório.** Cresce um pouco sozinha — o lobby existe de qualquer jeito — e cresce muito mais quanto mais o jogador já cortou, porque é exatamente aí que a transição ameaça quem vive do combustível fóssil. Apoio público acima do piso de apatia a segura.
+
+Age a cada ~6 ticks, com intensidade proporcional ao nível que acumulou:
+
+| Ação | Efeito |
+|---|---|
+| **Desinformação** | derruba o apoio das regiões, **furando o piso de apatia** |
+| **Subsídios** | empurra a emissão das regiões para cima |
+| **Recuos regulatórios** | encarecem as habilidades ainda não compradas |
+
+**O estrago é permanente.** Nada do que ela faz se desfaz sozinho: a emissão segue a partir do valor novo, e o apoio derrubado não volta com o tempo. É essa permanência que dá peso à segunda metade da partida.
+
+**O contra-ataque tem duas metades.** O ramo Sociedade é a primeira, como sempre foi. A segunda é a **contenção**: em vez de comprar um nó no mês, o jogador pode gastar PAC para empurrar a Inércia para baixo — e **isso só fica disponível depois de comprar `climate-education`**, ficando mais barato a cada nó de Sociedade que ele tiver.
+
+> **Por que a contenção existe** (decidido em 2026-08-20, no `P3-05`). Sem ela, o ramo Sociedade era uma armadilha medida: rendia PAC, comprava mais nós, e a partida terminava mais quente — a jogada ótima simplesmente o ignorava. Condicionar a contenção a ele inverte a conta: o ramo deixa de ser um bônus que não se paga e passa a ser a **licença para lutar**. O dilema que sai daí é o ponto: a partida que mais corta emissão não é a que sobrevive, porque quem pula Sociedade termina mais frio e é dissolvido por falta de apoio antes de 2100.
+>
+> A especificação completa, com os números verificados contra o engine, está em `docs/INERCIA.md`. Quem implementa é o `P7-03`.
 
 ### 2.7 Vitória e derrota
 

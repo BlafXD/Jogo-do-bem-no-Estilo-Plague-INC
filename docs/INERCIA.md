@@ -134,8 +134,9 @@ bonito e continuar existindo.
   6,3 minutos de tela. Fechar esse resto exigiria a alavanca 4 do `docs/CURVA-DE-DIFICULDADE.md`
   (realimentações do ciclo de carbono, que precisam de fonte no `docs/CIENCIA.md`), e essa é
   decisão do `P8-02`.
-- **O `GDD §2.6` não descreve a contenção.** Como o `§2.7` antes do `P3-06`, o documento de design
-  vai ficar atrás do que foi decidido. Vale acertar antes de o `P7-03` começar — é um parágrafo.
+- ~~O `GDD §2.6` não descreve a contenção.~~ **Resolvido em 2026-08-20**: o `§2.6` foi reescrito e
+  agora descreve o espelho, as três ações, a permanência do estrago e as duas metades do
+  contra-ataque.
 - **O `inertiaGrowthPerYear` do `balance.json` está em 2 e a proposta pede 0,5.** É a única
   contradição com um valor existente, e ela é deliberada: o porquê está acima. Como ninguém lê essa
   chave hoje, mudá-la não quebra nada.
@@ -143,6 +144,11 @@ bonito e continuar existindo.
   é o `P7-03`, e as sete chaves novas são: `inertiaGrowthPerCutPercent`, `inertiaDampingPerSupport`,
   `inertiaSubsidyBite`, `inertiaDisinformationBite`, `inertiaActionEveryTicks`, `containCost`,
   `containDiscountPerNode` e `containRelief`.
-- **A Inércia interage com os eventos do `P7-01`, e ninguém mediu isso.** Os dois derrubam apoio; os
-  dois escalam com o estado do mundo. Somados, podem tornar a derrota por apoio fácil demais. Quem
-  fizer o `P7-01` roda esta verificação de novo — é `npm test`.
+- **A interação com os eventos foi medida em 2026-08-20, no `P7-01`, e a proposta não sobreviveu.**
+  Somados, os dois consomem a folga de 0,06 °C entre a melhor jogada e o teto do Bronze — e a
+  inversão que esta especificação tinha conseguido, o ramo Sociedade virar obrigação, **desapareceu**:
+  com eventos em cena, comprá-lo volta a custar a medalha. **Não é bug de nenhum dos dois sistemas**,
+  é o orçamento de dano do jogo estourando. Os números desta página valem para um mundo sem eventos
+  e precisam ser refeitos junto com o conserto, que o `docs/BALANCEAMENTO.md` mede como mover o teto
+  do Bronze para ~2,55 °C. Os três testes que registram a colisão estão em `tests/inercia.test.ts`,
+  marcados com `COLISÃO`, e é para eles falharem no dia em que houver espaço de novo.

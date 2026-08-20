@@ -142,11 +142,13 @@ export function simulate(strategy: Strategy): SimResult {
   statesByYear.push(state);
 
   for (let step = 0; step < TOTAL_TICKS; step += 1) {
-    const before = state.actionPoints;
+    // A arrecadação é lida **da regra**, não da diferença de caixa. Até o P7-01
+    // as duas coisas eram a mesma; agora não são, porque evento cobra PAC (o
+    // `impact.points` do §2.5) dentro do próprio `advanceTick`. Medir por
+    // diferença passaria a contar o dano de evento como "não arrecadado", e a
+    // economia do P3-04 deixaria de significar o que o nome dela diz.
+    earnedPoints += pointsPerYear(state) / balance.ticksPerYear;
     state = advanceTick(state);
-    // Medido **antes** da compra do mês: o que interessa aqui é quanto a
-    // partida arrecadou, não quanto sobrou no caixa.
-    earnedPoints += state.actionPoints - before;
 
     if (state.year >= strategy.startYear) {
       // Um item por mês, no máximo. Esvaziar a lista de uma vez quando o bolso

@@ -4,6 +4,7 @@
 // no código (regra 8).
 
 import balanceData from '../data/balance.json';
+import eventsData from '../data/events.json';
 import regionsData from '../data/regions.json';
 import skillsData from '../data/skills.json';
 import { createRngState, type RngState } from './rng';
@@ -93,8 +94,14 @@ export type ClimateEvent = {
 };
 
 /**
- * Evento em curso. Forma mínima — quem define o ciclo de vida de verdade
- * (duração, intensidade, encadeamento) é o P7-01, dono de events.ts.
+ * Evento em cena.
+ *
+ * O P7-01 decidiu o ciclo de vida que estava em aberto aqui: **o impacto é
+ * instantâneo e isto é só a vitrine.** `ticksRemaining` conta quanto tempo o
+ * cartão fica visível, não quanto tempo o evento faz estrago. Evento com dano
+ * contínuo exigiria um campo de duração no `ClimateEvent` do `docs/GDD.md §3`, e
+ * o §12 proíbe reescrever o contrato sem pedir — além de brigar com o `impact`,
+ * que o contrato descreve como delta e não como taxa.
  */
 export type ActiveEvent = {
   readonly eventId: string;
@@ -382,6 +389,98 @@ function assertNoCycle(byId: ReadonlyMap<string, Skill>): void {
 
 /** A árvore inteira, validada na carga. Ordem igual à do skills.json. */
 export const skills: readonly Skill[] = parseSkills(skillsData);
+
+// ---------------------------------------------------------------- eventos ---
+
+/**
+ * Um evento como ele sai do JSON.
+ *
+ * `targets` é `string` solta e não `'any'`: o `resolveJsonModule` alarga todo
+ * literal de texto do arquivo para `string`, então exigir o literal aqui faria
+ * o `tsc` recusar o próprio `events.json`. Quem estreita é o `parseEvents`.
+ */
+export type RawClimateEvent = Omit<ClimateEvent, 'targets'> & {
+  readonly targets: readonly string[] | string;
+};
+
+/**
+ * Converte a lista crua de `events.json` na lista tipada.
+ *
+ * Mesma razão do `parseRegions` e do `parseSkills`: o `tsc` garante o formato,
+ * não os valores. Ele não sabe que `tempThreshold` precisa ser plausível, que
+ * `baseWeight` positivo é o que faz o sorteio ter sentido, nem que um id de
+ * região escrito errado em `targets` produziria um evento que **nunca sorteia
+ * alvo nenhum** — falha silenciosa, a pior espécie.
+ *
+ * O `events.json` é arquivo do pacote `[D-Historia]`, editado à mão sem abrir
+ * um `.ts`. O erro precisa dizer o que está errado.
+ */
+export function parseEvents(raw: readonly RawClimateEvent[]): readonly ClimateEvent[] {
+  const byId = new Map<string, ClimateEvent>();
+
+  for (const event of raw) {
+    if (!event.id.trim()) {
+      throw new Error('events.json: há um evento sem id.');
+    }
+    if (byId.has(event.id)) {
+      throw new Error(`events.json: o evento "${event.id}" aparece mais de uma vez.`);
+    }
+    for (const field of ['name', 'fact'] as const) {
+      if (!event[field].trim()) {
+        throw new Error(`events.json: "${event.id}" está sem ${field}.`);
+      }
+    }
+    if (!Number.isFinite(event.tempThreshold) || event.tempThreshold < 0) {
+      throw new Error(`events.json: "${event.id}" tem tempThreshold ${event.tempThreshold}.`);
+    }
+    if (!Number.isFinite(event.baseWeight) || event.baseWeight <= 0) {
+      throw new Error(`events.json: "${event.id}" tem baseWeight ${event.baseWeight}.`);
+    }
+
+    // Os três impactos são **danos**, então entram como números não negativos e
+    // é o applyEvent que subtrai. Aceitar sinal aqui abriria a porta para um
+    // evento que, por um menos digitado errado, presenteia o jogador.
+    for (const field of ['support', 'economy', 'points'] as const) {
+      const value = event.impact[field];
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error(
+          `events.json: "${event.id}" tem impact.${field} = ${value}, que é negativo.`,
+        );
+      }
+    }
+
+    let targets: readonly RegionId[] | 'any' = 'any';
+    if (typeof event.targets === 'string') {
+      // Só `"any"` é texto válido. Sem esta recusa, um `"todas"` digitado por
+      // engano viraria silenciosamente "qualquer região" — o evento funcionaria,
+      // mas não como quem escreveu o arquivo quis.
+      if (event.targets !== 'any') {
+        throw new Error(`events.json: "${event.id}" tem targets "${event.targets}". Use "any".`);
+      }
+    } else {
+      if (event.targets.length === 0) {
+        throw new Error(`events.json: "${event.id}" tem targets vazio. Use "any".`);
+      }
+      for (const id of event.targets) {
+        if (!isRegionId(id)) {
+          throw new Error(`events.json: "${event.id}" mira a região desconhecida "${id}".`);
+        }
+      }
+      targets = event.targets as readonly RegionId[];
+    }
+
+    byId.set(event.id, { ...event, targets });
+  }
+
+  if (byId.size === 0) {
+    throw new Error('events.json: nenhum evento. O jogo precisa de pelo menos um.');
+  }
+
+  return [...byId.values()];
+}
+
+/** Os eventos climáticos, validados na carga. Ordem igual à do events.json. */
+export const climateEvents: readonly ClimateEvent[] = parseEvents(eventsData);
 
 /**
  * O apoio público médio das 8 regiões.

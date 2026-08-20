@@ -3,8 +3,8 @@
 // Implementado em P6-03; o relógio de tempo real veio em P6-04.
 //
 // Este é o orquestrador do loop do docs/GDD.md §2.1. Hoje ele avança o clima,
-// desgasta o apoio público e acumula PAC à taxa que a árvore de habilidades
-// determina. Faltam os eventos (P7-01) e A Inércia (P7-03).
+// desgasta o apoio público, acumula PAC à taxa que a árvore de habilidades
+// determina e sorteia os eventos do §2.5. Falta A Inércia (P7-03).
 //
 // Duas metades, e a divisão importa:
 //   1. `advanceTick` — o passo fixo. Um mês acontece, sempre igual.
@@ -13,6 +13,7 @@
 //      que passa o resultado para cá. O engine não sabe que existe uma tela (§3).
 
 import { advanceClimate } from './climate';
+import { advanceEvents } from './events';
 import { pointsPerYear } from './skills';
 import { balance, REGION_IDS, type GameState, type Region, type RegionId } from './state';
 
@@ -96,7 +97,7 @@ export function advanceTick(state: GameState): GameState {
   // o desgaste do apoio entra em cima do mapa que sai de lá, e não no lugar dele.
   const afterClimate = advanceClimate(state);
 
-  return {
+  const afterTime: GameState = {
     ...afterClimate,
     tick: nextTick,
     year: yearForTick(nextTick),
@@ -105,6 +106,15 @@ export function advanceTick(state: GameState): GameState {
     actionPoints: state.actionPoints + pointsPerYear(state) / balance.ticksPerYear,
     regions: decaySupport(afterClimate.regions),
   };
+
+  // Os eventos entram **por último**, e a ordem é regra, não gosto (P7-01):
+  //
+  //  - depois do clima, para que o sorteio use a temperatura deste mês. Sortear
+  //    antes deixaria o limiar do §2.5 sempre um mês atrasado;
+  //  - depois do desgaste, porque o evento **fura o piso de apatia** e o
+  //    `decaySupport` devolveria uma região derrubada ao piso se rodasse em
+  //    cima dela — que é exatamente o oposto do que o §2.5 quer.
+  return advanceEvents(afterTime);
 }
 
 // ------------------------------------------------- relógio de tempo real ---

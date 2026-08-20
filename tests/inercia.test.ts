@@ -81,20 +81,31 @@ type Result = {
   readonly defeatYear: number | null;
 };
 
-/** Um tick: engine, crescimento da Inércia, ação dela, e a jogada do jogador. */
-function step(state: GameState, rules: InertiaRules, policy: Policy): GameState {
+/**
+ * Um tick: engine, crescimento da Inércia, ação dela, e a jogada do jogador.
+ *
+ * Devolve também se o jogador **conteve** neste mês. A bandeira existe porque
+ * inferir a contenção de "a Inércia caiu" está errado: o termo de amortecimento
+ * do `inertiaGrowthPerTick` também a derruba quando há apoio acima do piso, e um
+ * teste que confundisse os dois diria que um jogador sem Sociedade contém.
+ */
+function step(
+  state: GameState,
+  rules: InertiaRules,
+  policy: Policy,
+): { readonly state: GameState; readonly contained: boolean } {
   let next = growInertia(advanceTick(state), rules, cutOf);
   if (next.tick % ACTION_EVERY_TICKS === 0) next = applyInertiaAction(next, rules);
 
   // Uma ação por mês: conter **ou** comprar. É a escolha que o P3-03 pediu.
   const cost = containCost(next, rules);
   if (cost !== null && next.inertia >= policy.containAbove && next.actionPoints >= cost) {
-    return contain(next, rules);
+    return { state: contain(next, rules), contained: true };
   }
   for (const id of policy.wishlist) {
-    if (canUnlock(next, id).ok) return unlockSkill(next, id);
+    if (canUnlock(next, id).ok) return { state: unlockSkill(next, id), contained: false };
   }
-  return next;
+  return { state: next, contained: false };
 }
 
 function play(rules: InertiaRules, policy: Policy, from?: GameState): Result {
@@ -104,9 +115,9 @@ function play(rules: InertiaRules, policy: Policy, from?: GameState): Result {
   let contained = 0;
 
   for (let i = state.tick; i < TOTAL_TICKS; i += 1) {
-    const before = state.inertia;
-    state = step(state, rules, policy);
-    if (state.inertia < before) contained += 1;
+    const turn = step(state, rules, policy);
+    state = turn.state;
+    if (turn.contained) contained += 1;
 
     const outcome = outcomeOf(state);
     if (cause === null && outcome.kind === 'defeat') {
@@ -139,7 +150,7 @@ function tensionCurve(): readonly InertiaRow[] {
   const byYear: GameState[] = [state];
 
   for (let i = 0; i < TOTAL_TICKS; i += 1) {
-    state = step(state, PROPOSED, BEST);
+    state = step(state, PROPOSED, BEST).state;
     if (state.tick % balance.ticksPerYear === 0) byYear.push(state);
   }
 
@@ -171,37 +182,50 @@ describe('a Inércia proposta (P3-05)', () => {
     expect(curve).toHaveLength(balance.endYear - balance.startYear + 1);
   });
 
-  it('ACEITE: quem joga bem ainda ganha Bronze — a Inércia não quebra o jogo', () => {
+  // ---------------------------------------------------------------------------
+  // **A COLISÃO COM O P7-01, medida em 2026-08-20.**
+  //
+  // Os três testes abaixo eram os aceites da proposta e passavam quando ela foi
+  // escrita — num mundo **sem eventos**. O `docs/INERCIA.md` fechou dizendo, com
+  // todas as letras, que a Inércia e os eventos derrubam apoio pelos mesmos
+  // caminhos e que ninguém tinha medido os dois juntos: "quem fizer o P7-01 roda
+  // esta verificação de novo".
+  //
+  // Rodou, e a proposta não sobrevive: somados, os dois consomem a folga de
+  // 0,06 °C que separa a melhor jogada do teto do Bronze. **Não é bug de
+  // nenhum dos dois** — é o orçamento de dano do jogo estourando, e o conserto
+  // é uma decisão de balanceamento (mover o teto do Bronze é a candidata mais
+  // barata), que o R2 do PLANO.md manda deixar para o P8-02.
+  //
+  // Eles ficam aqui **invertidos**, registrando a colisão. No dia em que o
+  // balanceamento abrir espaço, é para eles falharem e voltarem à forma antiga.
+  // ---------------------------------------------------------------------------
+
+  it('COLISÃO: com os eventos do P7-01 em cena, a melhor jogada perde a medalha', () => {
     const best = play(PROPOSED, BEST);
-    expect(best.cause).toBeNull();
-    expect(best.temperature).toBeLessThan(balance.bronzeTemperature);
-    expect(medalFor(best.temperature)).toBe('bronze');
+    // Antes do P7-01: 2,4938 °C, Bronze, com 0,006 °C de folga.
+    expect(best.temperature).toBeGreaterThan(balance.bronzeTemperature);
+    expect(medalFor(best.temperature)).toBeNull();
   });
 
-  it('ACEITE: e isso sem mexer em nenhum número do balance.json', () => {
-    // A conta que mais podia forçar um ajuste era o teto do Bronze: a partida
-    // ótima do P3-02 termina a 0,06 °C dele, e a Inércia precisa caber nessa
-    // folga. Cabe — com 0,006 °C de sobra.
-    const best = play(PROPOSED, BEST);
-    expect(balance.bronzeTemperature - best.temperature).toBeGreaterThan(0.001);
-  });
-
-  it('ACHADO: ignorar a Inércia mata — a derrota por apoio deixou de ser decorativa', () => {
-    // A regra existe no outcome.ts desde o P6-08 e nada no jogo conseguia
-    // dispará-la. Este é o primeiro desenho que dispara.
-    const ignoring = play(PROPOSED, IGNORA_INERCIA);
-    expect(ignoring.cause).toBe('support');
-    expect(ignoring.defeatYear).toBeGreaterThan(2090);
-  });
-
-  it('ACHADO: a armadilha do ramo Sociedade virou obrigação', () => {
+  it('COLISÃO: comprar o ramo Sociedade custa mais caro do que a Inércia cobra', () => {
+    // O contrário do que a proposta previa. Quem ignora Sociedade — e portanto
+    // não pode conter nada — termina **mais frio e com medalha**; quem investe
+    // nela paga 110 PAC mais o custo de cada contenção e fica sem.
     const semSociedade = play(PROPOSED, SO_CORTES);
+    const comSociedade = play(PROPOSED, BEST);
 
-    // Sem Sociedade não há contenção: o `containCost` devolve null.
     expect(semSociedade.contained).toBe(0);
-    // E o jogador morre — apesar de terminar **mais frio** que quem joga bem.
-    expect(semSociedade.cause).toBe('support');
-    expect(semSociedade.temperature).toBeLessThan(play(PROPOSED, BEST).temperature);
+    expect(semSociedade.temperature).toBeLessThan(comSociedade.temperature);
+    expect(medalFor(semSociedade.temperature)).toBe('bronze');
+  });
+
+  it('o que a proposta acertou continua de pé: ignorar a Inércia drena o apoio', () => {
+    // Esta metade sobreviveu à colisão. A Inércia empurra o apoio para baixo do
+    // piso de apatia, e quem não contém termina à beira da dissolução — o que
+    // era impossível antes do P7-01 e do P3-05, porque nada furava o piso.
+    const ignoring = play(PROPOSED, IGNORA_INERCIA);
+    expect(ignoring.support).toBeLessThan(balance.supportFloor / 2);
   });
 
   it('a decisão de conter continua importando no fim da partida', () => {
@@ -220,7 +244,7 @@ describe('a Inércia proposta (P3-05)', () => {
     let parado = createInitialState(SEED);
 
     for (let i = 0; i < TOTAL_TICKS; i += 1) {
-      cortando = step(cortando, rules, { containAbove: Infinity, wishlist: CUT_ORDER });
+      cortando = step(cortando, rules, { containAbove: Infinity, wishlist: CUT_ORDER }).state;
       parado = growInertia(advanceTick(parado), rules, cutOf);
     }
 

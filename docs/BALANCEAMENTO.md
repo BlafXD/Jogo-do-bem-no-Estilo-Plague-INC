@@ -238,6 +238,76 @@ As alavancas que a planilha deixa medidas, para quando a hora chegar:
 4. **Alargar a faixa das medalhas**, ou mover o teto do Bronze. É o conserto do Achado 3 com a
    menor mudança, mas trata o sintoma: a partida continuaria decidida em 2060.
 
+### Os eventos do `P7-01` (2026-08-20)
+
+Dez eventos entraram, e com eles o primeiro sorteio da partida. Os números abaixo são **novos**,
+não ajustes de valores existentes — mas mudam a partida inteira, e por isso ficam registrados aqui.
+
+#### O que os eventos custam
+
+| Medida | Antes do `P7-01` | Depois |
+|---|---|---|
+| Nós que a jogada gulosa alcança | 16 de 20 (65% do custo) | **15 de 20 (56%)** |
+| Apoio médio em 2100, jogando bem | 25,0 (o piso, para sempre) | **~7** |
+| Derrota por apoio | inalcançável | **alcançável** |
+| Melhor jogada conhecida | 2,4400 °C · Bronze | **2,4652 °C · Bronze** |
+| Quem não faz nada | derrota por temperatura em **2089** | derrota por temperatura em **2089** |
+
+O ano de 2089 sobreviveu intacto, e isso não é sorte: os eventos pressionam o apoio, não a
+temperatura, então o aceite do `P6-02` continua medindo o que sempre mediu.
+
+#### A frequência foi desenhada como rampa
+
+O peso segue a fórmula do `§2.5` — `baseWeight × (1 + eventWeightPerDegree × (T − limiar))` — com
+`eventWeightPerDegree` em 1,8, que já estava no `balance.json` e nunca tinha sido lido.
+
+| Temperatura | Eventos destravados | Eventos por ano |
+|---|---|---|
+| 1,37 °C (início) | 1 de 10 | 0,45 |
+| 1,9 °C | 8 | 3,3 |
+| 2,45 °C | 10 | 5,8 |
+| 3,0 °C | 10 | 8,2 |
+
+São ~175 eventos numa partida inteira. A primeira década é quase silenciosa de propósito: dá ao
+jogador tempo de agir antes de o mundo começar a cobrar.
+
+#### Duas afinações feitas na medição, e por quê
+
+- **O impacto de apoio caiu para ~40% do primeiro chute.** Na primeira versão o apoio médio chegava
+  a zero em **toda** estratégia e a partida bem jogada morria em 2096 — o jogo deixava de ser
+  vencível. O dreno tinha de caber nos ~50 pontos que separam o apoio inicial da dissolução, e
+  passou a caber com folga fina: hoje quem joga bem termina entre 6 e 12, em cinco seeds testadas.
+- **A resiliência ganhou um piso de 0,25 no fator de dano.** As 8 regiões começam com 50 de
+  resiliência e a árvore inteira oferece +50, o que levaria a 100 — e `1 − 100/100` é **dano zero**.
+  Sem o piso, o último nó de resiliência viraria botão de imunidade. Com ele, investir tudo corta o
+  dano pela metade em relação ao começo, que é recompensa forte sem ser interruptor. É também a
+  leitura honesta do que adaptação faz: dique e alerta precoce reduzem estrago, não cancelam
+  enchente.
+
+#### O achado que não é sobre eventos: a colisão com o `P3-05`
+
+A especificação da Inércia foi verificada **antes** de os eventos existirem, e o próprio
+`docs/INERCIA.md` fechou pedindo que quem fizesse o `P7-01` rodasse a verificação de novo. Rodou, e
+ela quebrou:
+
+| Estratégia | Só com eventos | Com eventos **e** a Inércia proposta |
+|---|---|---|
+| Corta bem, ignora Sociedade | 2,4652 °C · **Bronze** | 2,4819 °C · **Bronze** |
+| Compra Sociedade e contém | — | 2,5197 °C · **sem medalha** |
+
+**Não é bug de nenhum dos dois sistemas: é o orçamento de dano do jogo estourando.** A melhor
+jogada termina a 0,06 °C do teto do Bronze, e eventos mais Inércia consomem mais que isso. Pior, a
+inversão que o `P3-05` tinha conseguido — "Sociedade deixa de ser armadilha e vira licença para
+lutar" — **desapareceu**: com eventos em cena, comprar o ramo volta a custar a medalha.
+
+Os três testes que registram isso estão em `tests/inercia.test.ts`, escritos invertidos e marcados
+com `COLISÃO`. **No dia em que o balanceamento abrir espaço, é para eles falharem.**
+
+O conserto mais barato medido é **mover o teto do Bronze de 2,5 para ~2,55 °C**, que devolve
+espaço para os dois sistemas sem tocar em árvore, em custo ou em clima. É mudança de balanceamento
+sem playtest por trás, ou seja, o risco `R2` — fica para o `P8-02`, com este parágrafo como o
+registro de que o problema é conhecido, medido e tem uma saída identificada.
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz

@@ -163,7 +163,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 
 ## Parte 7 — Desenvolvimento
 
-- [ ] `P7-01` `engine/events.ts` + `data/events.json` com 10 eventos e limiares de temperatura — **G**
+- [x] `P7-01` `engine/events.ts` + `data/events.json` com 10 eventos e limiares de temperatura — **G**
 - [ ] `P7-02` Cartão de evento com o fato real + auto-pausa em evento crítico — **M**
 - [ ] `P7-03` `engine/inertia.ts`: ações do antagonista a cada ~6 ticks — **M**
 - [ ] `P7-04` Feedback visual: o mapa muda com a temperatura; alertas por região — **M**
