@@ -28,6 +28,114 @@ Regras curtas:
 
 ---
 
+## 2026-08-20 — A curva de dificuldade medida: o jogo tem nove minutos de jogo e treze de espera
+
+- **Parte / tarefa:** `P3-03` ✔
+- **O que mudou:**
+  - `docs/CURVA-DE-DIFICULDADE.md` **criado** — a leitura de Fluxo, os três problemas e a especificação do que precisa existir para a partida seguir tensa até 2100.
+  - `tests/tensao.test.ts` **criado** — a medição, com sete asserções.
+  - `tests/planilha-engine.ts` **criado** — o motor de simulação, extraído do `planilha.test.ts` para ser compartilhado pelas duas sondas. Ganhou o `playOut`, que bifurca a partida a partir de um estado qualquer.
+  - `tests/planilha-relatorio.ts` — o CSV e a página da tensão.
+  - `docs/planilha/` — `tensao-por-ano.csv` e `tensao.html` **novos**.
+  - `PLANO.md` — o checkbox.
+  - Suíte: 247 → **254**. **Nenhum arquivo de `src/` foi tocado.**
+
+### A tensão virou número, e o número é a decisão que segura o documento
+
+O problema de aplicar Teoria do Fluxo aqui é que o canal entre ansiedade e tédio é definido por
+"desafio contra habilidade" — e num jogo de estratégia com pausa não há execução para errar. Medir
+dificuldade por tempo de reação não diria nada.
+
+O que separa canal de tédio neste jogo é outra coisa: **ainda existe decisão capaz de mudar o
+desfecho?** E isso é mensurável direto. No ano Y, pega-se a partida como ela está e joga-se dela em
+diante de dois jeitos — o melhor possível e o pior possível. A distância entre os dois finais **é** a
+tensão. Zero significa que o jogo acabou, mesmo que o relógio não saiba.
+
+Isso só foi possível porque o `advanceTick` é puro: bifurcar a partida é chamar a mesma função duas
+vezes com o mesmo estado. A regra do `§4` que parecia burocracia pagou uma conta concreta hoje.
+
+### O que a medição achou
+
+| Marco | Ano | Minuto a 1x |
+|---|---|---|
+| A medalha trava — largar tudo e jogar perfeito dão o mesmo | **2055** | 9 de 22,5 |
+| A janela de perdão fecha — quem não agiu já perdeu | **2071** | 13,8 |
+| A tensão chega a zero absoluto | **2090** | 19,5 |
+
+**25 dos 76 anos têm menos de 0,01 °C em jogo.** Nove minutos de jogo, treze e meio de espera — 60%
+do tempo de tela é o jogador assistindo a uma conclusão que ele já escreveu. No Modo Feira, a 4x, a
+proporção é idêntica.
+
+**A assimetria é o pior achado, e eu não esperava por ele.** Entre 2055 e 2071 há dezesseis anos em
+que quem está engajado já não tem nada a decidir, mas quem está parado ainda pode piorar. **O jogo
+para de recompensar a ação antes de parar de punir a inação** — exatamente ao contrário do que o
+canal do Fluxo pede. Quem joga bem entra no tédio primeiro.
+
+**E há doze decisões em vinte e dois minutos**, uma a cada 113 segundos — nenhuma delas difícil,
+porque a ordem gulosa é ótima e uma busca de 200 permutações não achou nada melhor. A fantasia do
+`GDD §1` é "escolher o que sacrificar". Hoje não há sacrifício: há fila.
+
+### A boa notícia enterrada: falta muito menos do que parece
+
+A partida ótima termina em 2,44 °C e o teto do Bronze é 2,50 — folga de **0,06 °C**, ou 133 Gt de
+CO₂ pelo TCRE. E em 2055, o momento em que a medalha trava, a diferença entre largar tudo e jogar
+perfeito é **0,0508 °C**. **A medalha trava por nove milésimos de grau.** O jogo não está decidido
+por goleada.
+
+Daí saiu a especificação, que é uma conta simples e está no documento: manter a disputa viva até
+2070 exige uma força capaz de agravar as emissões em ~34% (4,4 Gt/ano); até 2090 exigiria dobrá-las,
+o que é caro demais. **Alvo prático: disputa até ~2075, e os últimos 25 anos como desfecho** — de
+60% de tempo morto para 25%.
+
+### A causa raiz não é balanceamento
+
+Os três problemas têm a mesma origem: **hoje a trajetória só melhora.** Nenhuma força tira do
+jogador o que ele construiu — nó comprado é permanente, apoio não cai abaixo do piso, e a emissão de
+base é uma curva fixa que a árvore só reduz. Num jogo assim tensão só pode decair, e há um teste
+travando exatamente essa propriedade ("a tensão só cai") **para que ela falhe** no dia em que
+deixar de ser verdade.
+
+Por isso o documento não propõe mexer em `basePointsPerYear`, em custo de nó nem em limiar de
+medalha. A partida não é curta demais nem cara demais — ela é **unidirecional**.
+
+**Dois dos quatro itens da lista para o `P7-01` e o `P7-03` não custam nenhum número novo:** fazer a
+derrota por apoio ser alcançável e fazer os eventos escalarem com a temperatura. O primeiro conserta,
+de quebra, o "ramo Sociedade é uma armadilha" do `P3-04` — ele defende contra um perigo que ainda não
+existe.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 254 testes em 15 arquivos
+
+  md5sum docs/planilha/* > /tmp/antes && npm run test && md5sum docs/planilha/* | diff /tmp/antes -
+  # os 6 arquivos saem byte a byte iguais
+  ```
+  Abra `docs/planilha/tensao.html`: a curva cai de 0,91 °C para zero, com os marcos de 2055 e 2071
+  desenhados. A leitura completa está em `docs/CURVA-DE-DIFICULDADE.md`.
+- **Pendente:**
+  - **Não abri a `tensao.html` num navegador** — mesma limitação da entrada anterior, a extensão do
+    Chrome não conectou. Conferi por varredura: 76 pontos dentro do `viewBox`, sem `NaN`, tags
+    balanceadas, os dois marcos presentes. **Falta o olho humano**, e faltam os dois prints que o
+    `§11` pede para `docs/evidencias/`.
+  - **A medição é de um jogo incompleto.** Não existem eventos nem Inércia — os dois arquivos estão
+    vazios. Todo número do documento vai mudar quando eles entrarem, e é por isso que ele existe: é
+    a linha de base contra a qual medir se esses sistemas fizeram o trabalho.
+  - **Quatro testes do `tensao.test.ts` estão escritos para falhar um dia.** Os três `ACHADO` e o "a
+    tensão só cai" registram o problema, não a qualidade. Quando o `P7-01` e o `P7-03` entrarem, o
+    conserto é **apagá-los**, não afrouxá-los.
+  - **O `P3-05` (especificação da Inércia) ficou com o trabalho meio feito por esta tarefa.** A
+    quantidade de dano que a Inércia precisa causar está medida; o que falta é gatilho, cadência e
+    contra-ataque. Quem for fazer o `P3-05` começa pela tabela de Gt/ano do documento.
+  - **A extração do `planilha-engine.ts` mexeu em código que ainda não foi commitado.** O
+    `planilha.test.ts` encolheu e passou a importar o motor; os 10 testes dele continuam passando
+    idênticos. Vale conferir esse pedaço do diff com atenção, porque é refatoração em cima de
+    trabalho da mesma sessão.
+  - `P1-04` segue aberto; o `theme.css` do `P5-02` continua sem existir.
+- **Evidência:** — (faltam os prints da `curvas.html` e da `tensao.html`)
+
+---
+
 ## 2026-08-20 — A planilha dos 75 anos saiu do engine, e achou uma armadilha na árvore
 
 - **Parte / tarefa:** `P3-02` ✔ · `P3-04` ✔

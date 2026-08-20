@@ -117,7 +117,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 
 - [x] `P3-01` `docs/CIENCIA.md`: fórmulas e constantes com fonte (IPCC AR6, Global Carbon Budget) — **M**
 - [x] `P3-02` Planilha simulando os 75 anos do loop — **G** — aceite: dá para ver a curva de temperatura reagindo à compra de habilidades
-- [ ] `P3-03` Curva de dificuldade e Teoria do Fluxo: mapear a tensão década a década — **M**
+- [x] `P3-03` Curva de dificuldade e Teoria do Fluxo: mapear a tensão década a década — **M**
 - [x] `P3-04` Economia de PAC: quanto entra por ano vs custo total da árvore — **M** — aceite: falta ~35% para comprar tudo (a escolha precisa doer)
 - [ ] `P3-05` Especificação da Inércia: gatilhos, ações, contra-ataques — **M**
 - [x] `P3-06` Decidir e registrar o tratamento do tsunami (`docs/GDD.md §2.5`) — **P**

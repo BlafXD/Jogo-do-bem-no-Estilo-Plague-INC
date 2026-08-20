@@ -210,8 +210,9 @@ medido. **Prata morre entre 2055 e 2060.** Depois disso a única pergunta que re
 e ela se decide por volta de 2060. Os últimos 40 anos da partida — mais da metade do tempo de tela,
 uns 10 minutos a 1x — não têm mais nada em jogo.
 
-Isso é insumo direto do `P3-03` (curva de dificuldade e Teoria do Fluxo), e é o problema de desenho
-mais sério que a planilha achou. As três medalhas ficam espremidas numa janela estreita: o melhor
+Isso é insumo direto do `P3-03`, que foi feito no mesmo dia e mediu a coisa direito: a medalha
+trava em **2055** e a tensão zera em **2090**. A leitura completa e a especificação do conserto estão
+em `docs/CURVA-DE-DIFICULDADE.md`. É o problema de desenho mais sério que a planilha achou. As três medalhas ficam espremidas numa janela estreita: o melhor
 jogo possível fica **0,06 °C** abaixo do teto do Bronze, e uma ordem de compra ruim tirada ao acaso
 já perde a medalha (2,53 °C). Entre "jogou bem" e "jogou mal" há 0,09 °C; entre "jogou" e "não
 jogou", 0,91 °C. **O jogo distingue muito bem agir de não agir, e quase nada agir bem de agir mal.**
