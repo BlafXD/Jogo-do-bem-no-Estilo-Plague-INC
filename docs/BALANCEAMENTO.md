@@ -33,10 +33,13 @@ tabela abaixo; a primeira linha aqui é a primeira mudança em cima deles.
 
 ## Ajustes
 
-As rodadas de playtest ainda não aconteceram — saem de `P3-02` (a planilha) e de `P8-02`
-(o playtest com 5 pessoas). As seis linhas abaixo são anteriores a isso: vieram de fonte
-científica (`P3-01`) e de furos de desenho achados na conta (`P6-02`, `P6-03` e `P6-05`), não de
-partida jogada. Por isso todas estão com **resultado não testado**.
+As rodadas de playtest ainda não aconteceram — saem do `P8-02` (o playtest com 5 pessoas). As seis
+linhas abaixo são anteriores a isso: vieram de fonte científica (`P3-01`) e de furos de desenho
+achados na conta (`P6-02`, `P6-03` e `P6-05`), não de partida jogada. Por isso todas estão com
+**resultado não testado**.
+
+O `P3-02` (a planilha) foi feito em 2026-08-20 e **não gerou linha nenhuma nesta tabela**: ele mede
+e registra, e o que ele achou está na seção de achados abaixo, não em ajuste de número.
 
 | Data | Constante | De → Para | Por quê | Resultado |
 |---|---|---|---|---|
@@ -126,6 +129,113 @@ menor para maior estrago no resto do desenho:
 3. **Aceitar que o zero líquido não é a vitória deste jogo** e reescrever o `§2.7` em torno da
    temperatura final — que é, de fato, o que a mecânica já ensina, porque o TCRE faz da
    temperatura uma catraca de mão única e transforma **quando** o jogador agiu na decisão central.
+
+### A planilha do `P3-02` e a economia do `P3-04` (2026-08-20)
+
+A partir de hoje a planilha não é escrita à mão: o `tests/planilha.test.ts` roda o **engine de
+produção** por 900 ticks sob quatro estratégias e grava `docs/planilha/`. É determinístico, então
+`npm test` regrava byte a byte igual — e um `git status` sujo naquela pasta depois de uma rodada é
+**o sinal** de que o balanceamento mudou.
+
+#### As quatro partidas, em 2100
+
+| Estratégia | 2100 | Emissões | Nós | PAC arrecadado | Desfecho |
+|---|---|---|---|---|---|
+| `nada` — não faz nada | **3,35 °C** | 81,6 Gt/ano | 0 de 20 | 750 | derrota em **2089** |
+| `tarde` — acorda em 2060 | 2,85 °C | 22,2 Gt/ano | 14 de 20 | 950 | sem medalha |
+| `sociedade-cedo` — investe em PAC antes de cortar | 2,48 °C | 12,6 Gt/ano | 15 de 20 | 1047 | Bronze |
+| `melhor` — corta cedo, ignora Sociedade | **2,44 °C** | 13,1 Gt/ano | 12 de 20 | 750 | Bronze |
+
+**O aceite do `P3-02` está cumprido**: entre não fazer nada e jogar bem há **0,91 °C** de
+diferença, e a curva se abre visivelmente a partir de 2040. O gráfico está em
+`docs/planilha/curvas.html`.
+
+#### Achado 1 — o ramo Sociedade é uma armadilha
+
+`sociedade-cedo` arrecada **297 PAC a mais**, compra **3 nós a mais** e termina com **emissão
+menor** que `melhor` — e ainda assim acaba **0,04 °C mais quente**. A varredura mede o efeito
+inteiro (`economia-quando-comprar.csv`), e ela é **monótona**: quanto mais tarde os dois nós de PAC
+entram, melhor a partida acaba, e nunca comprá-los é o melhor de todos.
+
+| Sociedade comprada após | 2100 | PAC arrecadado |
+|---|---|---|
+| 0 cortes (primeira coisa) | 2,4811 °C | 1047 |
+| 4 cortes | 2,4702 °C | 1007 |
+| 8 cortes | 2,4558 °C | 955 |
+| 16 cortes (por último) | 2,4482 °C | 867 |
+| **nunca** | **2,4400 °C** | 750 |
+
+A causa é a catraca do TCRE, não um erro de conta. `climate-education` + `treaties` custam 110 PAC,
+que a 10 PAC/ano são **onze anos** em que nenhum corte foi comprado. A temperatura integra a
+emissão ao longo do tempo, então esse CO₂ fica no ar para sempre; os 5 PAC/ano que os dois nós
+devolvem só terminam de se pagar perto de 2060, e o que eles compram depois disso opera por poucos
+anos. **Um ramo inteiro dos cinco, 320 PAC de conteúdo, é hoje um custo puro para quem joga para
+ganhar.**
+
+Vale dizer o que isto **não** é: os nós não estão "quebrados". Numa partida mais longa eles venceriam
+— `sociedade-cedo` já termina 2100 emitindo menos. É o horizonte de 75 anos que os condena, e o
+horizonte é o jogo.
+
+#### Achado 2 — a economia de PAC cumpre o alvo do `P3-04`, mas só na estratégia pior
+
+A árvore custa **1600 PAC**. A entrada de base é 10 PAC/ano, ou **750 PAC** nos 75 anos.
+
+| Cenário | Arrecadado | % da árvore | Falta |
+|---|---|---|---|
+| Sem tocar em Sociedade | 750 | 46,9% | **53,1%** |
+| Com os dois nós de PAC, comprados cedo | 1047 | 65,5% | **34,5%** |
+
+O `PLANO.md` pede "falta ~35% para comprar tudo (a escolha precisa doer)". **O alvo é atingido —
+34,5% — pela linha `sociedade-cedo`.** Só que essa é justamente a linha que joga pior. Quem joga
+para ganhar fica com 53% da árvore fora de alcance. A escolha dói dos dois jeitos; a questão aberta
+é se doer 53% é doer demais.
+
+**Consequência prática:** os quatro nós de 140 PAC — 560 PAC, 35% do custo da árvore — são
+**inalcançáveis** sem o ramo Sociedade. Rodar a melhor ordem sem eles dá exatamente o mesmo
+resultado (2,4400 °C), porque o dinheiro acaba antes.
+
+#### Achado 3 — a partida está decidida em 2060, e ainda faltam 40 anos
+
+Os anos de cruzamento saem iguais em todas as estratégias na primeira metade:
+
+| Estratégia | cruza 1,5 °C | cruza 2,0 °C | cruza 2,5 °C |
+|---|---|---|---|
+| `nada` | 2032 | 2055 | 2074 |
+| `tarde` | 2032 | 2055 | 2077 |
+| `sociedade-cedo` | 2032 | 2058 | — |
+| `melhor` | 2032 | 2060 | — |
+
+**Ouro morre em 2032, sempre, faça o jogador o que fizer** — o `P6-05` suspeitava, e agora está
+medido. **Prata morre entre 2055 e 2060.** Depois disso a única pergunta que resta é Bronze ou nada,
+e ela se decide por volta de 2060. Os últimos 40 anos da partida — mais da metade do tempo de tela,
+uns 10 minutos a 1x — não têm mais nada em jogo.
+
+Isso é insumo direto do `P3-03` (curva de dificuldade e Teoria do Fluxo), e é o problema de desenho
+mais sério que a planilha achou. As três medalhas ficam espremidas numa janela estreita: o melhor
+jogo possível fica **0,06 °C** abaixo do teto do Bronze, e uma ordem de compra ruim tirada ao acaso
+já perde a medalha (2,53 °C). Entre "jogou bem" e "jogou mal" há 0,09 °C; entre "jogou" e "não
+jogou", 0,91 °C. **O jogo distingue muito bem agir de não agir, e quase nada agir bem de agir mal.**
+
+#### Nada foi ajustado — de novo, e de propósito
+
+Nenhum número de `balance.json` mudou nesta tarefa. Os três achados acima são material do `P3-03`
+(curva de dificuldade), do `P3-05` (a Inércia, que pode devolver função ao ramo Sociedade) e do
+`P8-02` (a rodada depois do playtest). Mexer agora seria ajustar com base em simulação sem jogador
+— o risco `R2` do `PLANO.md`.
+
+As alavancas que a planilha deixa medidas, para quando a hora chegar:
+
+1. **Dar ao ramo Sociedade um efeito que a simulação de hoje não consegue medir.** É a saída mais
+   promissora e não mexe em número nenhum: o `pointsPerYear` compete de frente com corte de
+   emissão e perde. Se o apoio público e a Inércia passarem a **ameaçar a partida** — que é o
+   `P7-01` e o `P7-03` —, comprar Sociedade deixa de ser luxo. Hoje o `supportFloor` trava o apoio
+   em 25 e nada o empurra para baixo, então o ramo defende contra um perigo que não existe.
+2. **Subir `basePointsPerYear`** de 10 para algo entre 13 e 15, que põe a árvore inteira ao alcance
+   de quem joga bem sem depender de Sociedade. Custa a tensão do corte de escopo — "nenhuma partida
+   tem pontos para comprar tudo" é fantasia central no `GDD §1`.
+3. **Baratear os nós de 140**, que hoje são conteúdo que quase ninguém vê.
+4. **Alargar a faixa das medalhas**, ou mover o teto do Bronze. É o conserto do Achado 3 com a
+   menor mudança, mas trata o sintoma: a partida continuaria decidida em 2060.
 
 ### O que observar no primeiro playtest
 

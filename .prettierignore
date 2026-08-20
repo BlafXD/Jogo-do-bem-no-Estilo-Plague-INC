@@ -7,3 +7,8 @@ package-lock.json
 # escolhidas. Uma passada do Prettier reflui tudo e gera um diff gigante sem
 # ganho nenhum de legibilidade. O Prettier aqui cuida do código.
 *.md
+
+# Gerada pelo tests/planilha.test.ts a cada `npm test` (P3-02). Formatar à mão
+# criaria um laço: o Prettier reflui, a próxima suíte regrava sem reflow, e o
+# `format:check` volta a acusar. Quem define o formato é o gerador.
+docs/planilha/

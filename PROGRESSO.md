@@ -28,6 +28,136 @@ Regras curtas:
 
 ---
 
+## 2026-08-20 — A planilha dos 75 anos saiu do engine, e achou uma armadilha na árvore
+
+- **Parte / tarefa:** `P3-02` ✔ · `P3-04` ✔
+- **O que mudou:**
+  - `tests/planilha.test.ts` **criado** — a simulação das quatro estratégias e os aceites das duas tarefas.
+  - `tests/planilha-relatorio.ts` **criado** — a escrita dos CSV e da página de curvas. Não termina em `.test.ts`, então o vitest não o roda como suíte; é importado.
+  - `tests/node-io.d.ts` **criado** — os tipos de `node:fs` que a escrita usa, declarados à mão.
+  - `docs/planilha/` **criada** — `partidas.csv`, `economia-pac.csv`, `economia-quando-comprar.csv` e `curvas.html`. **Gerados, não escritos.**
+  - `docs/BALANCEAMENTO.md` — os três achados abaixo, com as tabelas completas.
+  - `.prettierignore` — a pasta gerada.
+  - `PLANO.md` — os dois checkboxes.
+  - Suíte: 237 → **247**. **Nenhum arquivo de `src/` foi tocado.**
+
+### A planilha é gerada pelo engine de produção, e essa é a decisão que segura a tarefa
+
+O `PLANO.md` pedia uma planilha, e o caminho óbvio era montar uma no Excel. Uma planilha escrita à
+mão responde a pergunta no dia em que foi escrita e mente a partir do dia seguinte, porque o
+`balance.json` muda e ela não — que é exatamente o modo de falhar que o `R2` descreve. Aqui os
+números saem do mesmo `advanceTick` e do mesmo `unlockSkill` que o jogador roda.
+
+Três consequências saem de graça. **Os arquivos são regravados a cada `npm test`** — a partida é
+determinística, então saem byte a byte iguais (conferido com `md5sum` antes e depois), e um
+`git status` sujo em `docs/planilha/` depois de uma rodada **é o sinal** de que o balanceamento
+mudou. **Os aceites viraram teste**: quem mexer num custo e quebrar a economia descobre pelo
+`npm test`, não pela feira. E o CSV sai com `;` e vírgula decimal, porque num Excel em pt-BR o
+formato americano abre com tudo empilhado numa coluna só.
+
+**A estratégia é uma lista de desejos, não uma agenda datada.** Uma agenda ("compre solar em 2031")
+quebra em silêncio quando um custo muda: a compra simplesmente não acontece e a curva piora sem
+ninguém entender por quê. A lista pergunta ao `canUnlock` a cada mês e compra o primeiro item que
+couber no bolso. Pelo mesmo motivo, a ordem "melhor" é **derivada do `skills.json`** por corte por
+PAC, e não escrita à mão.
+
+### O achado que inverteu a tarefa: o ramo Sociedade é uma armadilha
+
+Comecei com uma estratégia chamada `otimo` que comprava `climate-education` e `treaties` primeiro, e
+escrevi no comentário que era óbvio, porque os dois se pagam em ~20 anos. **O primeiro teste que
+rodei falhou**, e falhou dizendo que a estratégia sem eles terminava mais fria.
+
+A varredura mediu o efeito inteiro, e ela é **monótona**: quanto mais tarde os dois nós de PAC
+entram, melhor a partida acaba. Nunca comprá-los é o melhor de todos.
+
+| Sociedade comprada após | 2100 | Nós | PAC |
+|---|---|---|---|
+| 0 cortes | 2,4811 °C | 15 | 1047 |
+| 8 cortes | 2,4558 °C | 14 | 955 |
+| 16 cortes | 2,4482 °C | 14 | 867 |
+| **nunca** | **2,4400 °C** | 12 | 750 |
+
+A causa é a catraca do TCRE. Os 110 PAC dos dois nós são **onze anos** a 10 PAC/ano em que nenhum
+corte foi comprado, e o CO₂ desses anos fica no ar para sempre. `sociedade-cedo` compra 3 nós a
+mais, arrecada 297 PAC a mais e termina **emitindo menos** — e ainda assim mais quente. Não é bug:
+numa partida mais longa ele venceria. É o horizonte de 75 anos que o condena, e o horizonte é o
+jogo. **Um ramo dos cinco, 320 PAC de conteúdo, é hoje custo puro para quem joga para ganhar.**
+
+**Está travado em teste, e o teste está escrito como registro de problema:** "no dia em que o
+balanceamento fizer o ramo se pagar, é ele que deve falhar e ser reescrito" — a mesma forma do teste
+de vitória inalcançável do `P6-08`.
+
+### O `P3-04` bate o alvo, mas só na estratégia pior
+
+A árvore custa **1600 PAC**; a base rende **750** em 75 anos.
+
+| Cenário | Arrecadado | Falta |
+|---|---|---|
+| Sem tocar em Sociedade | 750 | **53,1%** |
+| Com os dois nós de PAC, cedo | 1047 | **34,5%** |
+
+O aceite do `PLANO.md` é "falta ~35%". **Atingido — 34,5% — pela linha que joga pior.** Quem joga
+para ganhar fica com 53% da árvore fora de alcance, e os quatro nós de 140 PAC (35% do custo)
+**nunca são vistos**: rodar a melhor ordem sem eles dá exatamente o mesmo 2,4400 °C, porque o
+dinheiro acaba antes.
+
+### O terceiro achado, que não era da tarefa e é o mais sério
+
+A partida está decidida em 2060. **Ouro morre em 2032 em todas as estratégias**, faça o jogador o
+que fizer — o `P6-05` suspeitava, agora está medido. Prata morre entre 2055 e 2060. Depois disso só
+resta Bronze ou nada, e os últimos 40 anos — metade do tempo de tela — não têm nada em jogo. Entre
+jogar bem e jogar mal há **0,09 °C**; entre jogar e não jogar, **0,91 °C**. O jogo distingue muito
+bem agir de não agir, e quase nada agir bem de agir mal. É insumo direto do `P3-03`.
+
+### Duas decisões de ferramenta que merecem um segundo olhar
+
+- **`tests/node-io.d.ts` em vez de `@types/node`.** O `tsc` não tem tipos de Node — o projeto é
+  tipado só para navegador (`lib: ES2022, DOM`), e a suíte passava no vitest mas o `typecheck` caía.
+  Instalar `@types/node` resolveria e, de quebra, faria `process` e `Buffer` existirem **dentro de
+  `src/`**, inclusive no `engine/`, que o `§3` quer sem noção de ambiente. Declarei à mão as três
+  funções de `node:fs` que uso. **O risco é real e está escrito no arquivo:** tipo feito à mão não é
+  conferido contra a implementação. Se preferir o pacote, é uma linha.
+- **O caminho de saída é relativo (`docs/planilha`), não derivado de `import.meta.dirname`.**
+  Derivar exigiria estender a interface `ImportMeta`, e o ESLint do projeto recusa `interface`
+  (`consistent-type-definitions`) — só que `type` não funde declarações, então não havia saída
+  limpa. O teste **lê os quatro arquivos de volta** e confere cabeçalho e contagem de linhas, para
+  que um diretório de trabalho diferente caia na suíte em vez de deixar a planilha velha em
+  silêncio.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 247 testes em 14 arquivos
+
+  # determinismo — a prova de que a planilha nunca fica velha:
+  md5sum docs/planilha/* > /tmp/antes && npm run test && md5sum docs/planilha/* | diff /tmp/antes -
+  # sem diferença nenhuma
+  ```
+  Abra `docs/planilha/curvas.html` no navegador: as quatro curvas, com `nada` disparando para
+  3,35 °C e as outras três se separando a partir de 2040. Os CSV abrem no Excel em pt-BR sem ajuste.
+- **Pendente:**
+  - **Não abri a `curvas.html` num navegador de verdade** — a extensão do Chrome não estava conectada
+    nesta sessão. Conferi a estrutura por varredura: 4 curvas de 76 pontos, todas dentro do
+    `viewBox`, sem `NaN`, tags balanceadas, rótulos em pt-BR. **Falta o olho humano**, e é o print
+    que o `§11` pede para `docs/evidencias/`.
+  - **Nenhum número de balanceamento foi mexido**, de novo por `R2`. Os três achados são material do
+    `P3-03`, do `P3-05` e do `P8-02`. As quatro alavancas medidas estão no `BALANCEAMENTO.md`.
+  - **A saída mais promissora para o ramo Sociedade não é ajustar número.** Ele defende contra um
+    perigo que não existe: o `supportFloor` trava o apoio em 25 e nada o empurra para baixo. Quando
+    o `P7-01` e o `P7-03` fizerem apoio e Inércia **ameaçarem a partida**, o ramo ganha função sem
+    que um custo mude. Vale tentar isso antes de mexer no `basePointsPerYear`.
+  - **A planilha simula um mundo sem eventos e sem Inércia**, porque eles não existem. Todo número
+    aqui vai mudar quando o `P7-01` e o `P7-03` entrarem — e é justamente por isso que a planilha é
+    gerada: ela se refaz sozinha.
+  - **O ano da derrota aparece como 2089 na página e 2090 quando se varre o CSV.** Não é divergência:
+    o `defeatYear` é medido a cada tick e o CSV só guarda dezembro de cada ano. Quem for comparar os
+    dois precisa saber disso.
+  - `P1-04` segue aberto: o `package.json` ainda diz `ponto-de-virada`.
+  - O `theme.css` do `P5-02` continua sem existir.
+- **Evidência:** — (falta o print da `curvas.html`, acima)
+
+---
+
 ## 2026-08-20 — Duas pendências curtas fechadas: o GDD alcançou o código, e o tsunami saiu do jogo
 
 - **Parte / tarefa:** `P3-06` ✔ · pendência do `P6-08` (`docs/GDD.md §2.7`) ✔
