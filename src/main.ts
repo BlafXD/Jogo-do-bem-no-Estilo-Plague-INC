@@ -1,5 +1,5 @@
 // Ponto de entrada da aplicação: monta o HUD, a barra de tempo, a barra da
-// partida e a árvore, retoma o save e roda o relógio.
+// partida, o cartão de resultado e a árvore, retoma o save e roda o relógio.
 //
 // Este arquivo é o **único motorista** do engine. Ele é quem finalmente chama o
 // `advanceRealTime`, que estava escrito e testado desde o P6-04 e sem ninguém
@@ -14,6 +14,7 @@
 // quadro depois da pausa entregar o intervalo inteiro de uma vez.
 
 import { ui } from './data/i18n';
+import { isFinished } from './engine/outcome';
 import { unlockSkill } from './engine/skills';
 import { createInitialState, type SkillId } from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
@@ -27,6 +28,7 @@ import {
   type TimeCommand,
 } from './ui/controls';
 import { hudView, mountHud, renderHud } from './ui/hud';
+import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import {
   afterReset,
   armReset,
@@ -39,6 +41,7 @@ import { clearGame, loadGame, saveGame } from './ui/storage';
 import { mountTree, renderTree, treeView } from './ui/tree';
 import './ui/controls.css';
 import './ui/hud.css';
+import './ui/outcome.css';
 import './ui/session.css';
 import './ui/tree.css';
 
@@ -72,6 +75,7 @@ function required<T extends Element>(selector: string): T {
 const hud = required('#hud');
 const controls = required('#controles');
 const partida = required('#partida');
+const resultado = required('#resultado');
 const tree = required('#arvore');
 const app = required<HTMLElement>('#app');
 
@@ -100,6 +104,10 @@ function handleCommand(command: TimeCommand | null): void {
 function renderGame(): void {
   renderHud(hud, hudView(state));
   renderTree(tree, treeView(state));
+  renderOutcome(resultado, outcomeView(state));
+  // A árvore fica apagada depois do fim. O `data-finished` só existe para o
+  // CSS: quem de fato recusa a compra é o `handleUnlock`.
+  app.dataset.finished = String(isFinished(state));
 }
 
 function renderSessionBar(): void {
@@ -142,6 +150,13 @@ function handleReset(): void {
  * `disabled`), sem que a tela precise repetir a regra do engine.
  */
 function handleUnlock(id: SkillId): void {
+  // Partida acabada não compra mais nada. A trava mora aqui, e não no
+  // `unlockSkill`, porque o engine não deve precisar do `outcome.ts` para
+  // responder uma pergunta de compra — o §2.7 fala de quando a partida termina,
+  // não de quanto custa um nó. Com a árvore apagada e o cartão na tela, o
+  // caminho até este clique é curto: basta a tecla Tab.
+  if (isFinished(state)) return;
+
   const next = unlockSkill(state, id);
   if (next === state) return;
 
@@ -155,6 +170,10 @@ function handleUnlock(id: SkillId): void {
 
 mountHud(hud);
 mountControls(controls, handleCommand);
+// O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
+// barra da partida exige. Os dois passos de lá existem para proteger vinte
+// minutos de jogo em curso; aqui não há mais partida para destruir.
+mountOutcome(resultado, handleReset);
 mountSession(partida, {
   onArm: () => {
     session = armReset(session);
@@ -205,7 +224,22 @@ document.addEventListener('keydown', (event) => {
 });
 
 function frame(now: number): void {
-  const step = advanceRealTime(state, clock, now - previousFrame, effectiveSpeed(control));
+  // `isFinished` é perguntado pelo engine a cada passo do lote, não aqui uma
+  // vez por quadro: uma chamada entrega até doze ticks quando a aba volta do
+  // segundo plano, e sem isso a partida rodaria até nove meses depois do mês em
+  // que acabou. O porquê está no advanceRealTime.
+  //
+  // O laço de quadro **não** para depois do fim — só deixa de avançar. É a
+  // mesma razão de o engine ser chamado durante a pausa: um laço que se desliga
+  // precisa ser religado no reinício, e um `previousFrame` velho entregaria o
+  // intervalo inteiro de uma vez no primeiro quadro da partida nova.
+  const step = advanceRealTime(
+    state,
+    clock,
+    now - previousFrame,
+    effectiveSpeed(control),
+    isFinished,
+  );
 
   previousFrame = now;
   state = step.state;

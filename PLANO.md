@@ -157,7 +157,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P6-05` `engine/skills.ts` + `data/skills.json` com 20 nós — **G**
 - [x] `P6-06` UI da árvore: pré-requisitos, custo, estado bloqueado/disponível/comprado — **G**
 - [x] `P6-07` Save, load e reset em `localStorage` — **M**
-- [ ] `P6-08` **M2** — engine ligado à UI: o HUD reage ao tick e a compra muda a curva — **marco**
+- [x] `P6-08` **M2** — engine ligado à UI: o HUD reage ao tick e a compra muda a curva — **marco**
 
 ---
 

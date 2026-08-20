@@ -46,6 +46,8 @@ partida jogada. Por isso todas estão com **resultado não testado**.
 | 2026-08-18 | custos da árvore (`skills.json`) | — → **40 / 70 / 140 PAC** por nível | **Árvore nova, 20 nós em 5 ramos.** Dimensionada contra os 750 PAC que a partida entrega: um jogador que compra sempre que pode fecha em **16 dos 20 nós — 65% das 1600 PAC de custo total**, que é exatamente o alvo de "falta ~35%" do `P3-04`. Custo uniforme por nível de propósito; variação por ramo é ajuste de playtest, não chute inicial | não testado |
 | 2026-08-18 | corte de emissão total da árvore | — → **5,5% ao ano** | Soma dos 16 nós que cortam emissão. É o número que decide se o jogo é vencível: comprando cedo, leva a partida para a faixa de 2,0–2,4 °C (Prata/Bronze) | não testado |
 | 2026-08-18 | `supportFloor` | — → **25 pontos** | **Constante nova.** O `supportDecayPerYear` sozinho levava o apoio das 8 regiões a zero no tick 400 — ano de **2058** — e o `docs/GDD.md §2.7` dá derrota por apoio médio zero: toda partida se perderia ali, fizesse o jogador o que fizesse. O piso trava o desgaste do tempo. Furar para baixo passa a ser trabalho de evento (`P7-01`) e da Inércia (`P7-03`) | não testado |
+| 2026-08-19 | `goldTemperature`, `silverTemperature`, `bronzeTemperature` | — → **1,5 / 2,0 / 2,5 °C** | **Constantes novas (`P6-08`).** Os três limiares estavam escritos só em prosa no `docs/GDD.md §2.7` e não existiam em lugar nenhum que o código pudesse ler. Valores idênticos aos do GDD — não é ajuste, é a mudança de um número de prosa para `balance.json` (regra 8) | não testado |
+| 2026-08-19 | `netZeroEmissions` | — → **0,5 GtCO₂/ano** | **Constante nova (`P6-08`).** O `§2.7` define vitória como "emissões líquidas ≈ 0", e "≈ 0" não é executável: o corte da árvore é multiplicativo e a curva nunca encosta em zero. Ver o achado abaixo — **com este valor a vitória é inalcançável, e com qualquer outro razoável também** | não testado |
 
 ### O achado do `P6-05`: a medalha de Ouro é inalcançável
 
@@ -83,6 +85,47 @@ Dois sintomas para observar junto: **a última compra da partida acontece em 209
 nada, e o apoio médio termina exatamente no `supportFloor`. O primeiro diz que a economia de PAC
 tardia não tem para onde ir; o segundo, que a folga de apoio some assim que os eventos (`P7-01`)
 começarem a furar o piso.
+
+### O achado do `P6-08`: a vitória do `§2.7` também é inalcançável — não só o Ouro
+
+O `P6-05` já tinha achado que o Ouro é medalha morta. Ao ligar a regra de vitória de verdade, a
+sonda do `P6-08` mediu o resto, e **a conclusão é maior do que a anterior**: não é uma medalha que
+falta, é a condição de vitória inteira.
+
+Simulação com o engine real, 900 ticks, comprando na melhor ordem conhecida (renda primeiro,
+depois corte por eficiência, `corte ÷ custo`):
+
+| Partida | 2100 | Emissões | Nós | Cruzamentos |
+|---|---|---|---|---|
+| Sem comprar nada | 3,35 °C | 81,6 Gt/ano | 0/20 | 1,5 em 2031 · 2,0 em 2054 · **3,0 em 2089 (derrota)** |
+| **Jogo ótimo** | **2,48 °C** | **13,0 Gt/ano** | **16/20**, o último em 2099 | 1,5 em 2031 · 2,0 em 2057 |
+
+**As emissões param em 13 Gt/ano — vinte e seis vezes o limiar de 0,5.** E o teto não é o jogador:
+a árvore inteira soma **5,5% ao ano** de corte contra 0,93% de crescimento da linha de base, o que
+dá 4,6% de queda líquida. Comprando os 20 nós no tick 0 — impossível, mas serve de limite
+superior — a partida terminaria em **~1,2 Gt/ano**, ainda o dobro do limiar. O custo total de 1600
+PAC contra os ~1125 que 75 anos rendem garante que ninguém chega nem perto disso.
+
+Duas consequências que já estão no código:
+
+- **Existe um teste que trava este achado** (`tests/outcome.test.ts`, "a vitória por emissões ≈ 0 é
+  inalcançável com o balanceamento de hoje"). Ele documenta um problema, não uma qualidade: no dia
+  em que um ajuste tornar o zero líquido alcançável, **é ele que deve falhar** e ser reescrito.
+- **Chegar a 2100 vivo passou a valer a escala de medalhas**, por decisão tomada no chat em
+  2026-08-19 e registrada no `PROGRESSO.md`. Sem isso o jogo não teria vitória nenhuma. O `§2.7`
+  do GDD ainda não descreve esse desfecho.
+
+**Nada de balanceamento foi mexido nesta tarefa**, também por decisão do chat: um ajuste sem
+playtest por trás é exatamente o que o risco `R2` do `PLANO.md` e a regra deste arquivo tentam
+evitar. O conserto é do `P3-04` (economia de PAC) e do `P8-02`. As três alavancas, em ordem de
+menor para maior estrago no resto do desenho:
+
+1. **Baratear a árvore** — mais nós comprados, mesmo corte por nó. Mexe no `P3-04` de frente.
+2. **Engordar o corte por nó** — hoje 0,15% a 0,6% ao ano cada. Chegar a zero líquido exigiria
+   algo como **15% ao ano** no total, quase três vezes a árvore atual.
+3. **Aceitar que o zero líquido não é a vitória deste jogo** e reescrever o `§2.7` em torno da
+   temperatura final — que é, de fato, o que a mecânica já ensina, porque o TCRE faz da
+   temperatura uma catraca de mão única e transforma **quando** o jogador agiu na decisão central.
 
 ### O que observar no primeiro playtest
 

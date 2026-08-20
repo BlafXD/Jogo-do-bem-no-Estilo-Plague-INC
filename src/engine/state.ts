@@ -167,6 +167,19 @@ export type Balance = {
   readonly inertiaGrowthPerYear: number;
   readonly eventWeightPerDegree: number;
   readonly loseTemperature: number;
+  /**
+   * Emissão global anual, em GtCO₂, abaixo da qual o docs/GDD.md §2.7 considera
+   * as emissões líquidas "≈ 0". Precisa ser um número e não um zero exato: o
+   * corte da árvore é multiplicativo, então a curva se aproxima de zero sem
+   * nunca encostar nele.
+   */
+  readonly netZeroEmissions: number;
+  /** Teto de temperatura da medalha de ouro (docs/GDD.md §2.7). */
+  readonly goldTemperature: number;
+  /** Teto de temperatura da medalha de prata. */
+  readonly silverTemperature: number;
+  /** Teto de temperatura da medalha de bronze. */
+  readonly bronzeTemperature: number;
 };
 
 export const balance: Balance = balanceData;

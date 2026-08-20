@@ -95,6 +95,65 @@ export const ui = {
     restored: (year: string) => `Partida retomada em ${year}.`,
   },
 
+  // O cartão de fim de partida (P6-08), com a regra do docs/GDD.md §2.7.
+  //
+  // Os limiares chegam como argumento em vez de estarem escritos nas frases. É
+  // a regra 8 aplicada onde ela quase escapa: "abaixo de 1,5 °C" **é** um
+  // número de balanceamento, e uma frase que o repete vira mentira no dia em
+  // que o balance.json mudar — sem nada quebrar, que é o pior jeito de errar.
+  outcome: {
+    label: 'Resultado da partida',
+    playAgain: 'Jogar de novo',
+    playAgainHint: 'Começa uma partida nova em 2025.',
+    skillsLabel: 'Habilidades',
+    skillsValue: (bought: string, total: string) => `${bought} de ${total}`,
+
+    // Como a partida acabou — a linha de cima do cartão.
+    ending: {
+      netZero: (limit: string) => `As emissões líquidas caíram abaixo de ${limit} antes de 2100.`,
+      horizon: (year: string) => `A partida chegou a ${year} com o mundo ainda emitindo.`,
+      temperature: (limit: string) => `O aquecimento passou de ${limit}. A agência foi dissolvida.`,
+      support: 'O apoio público zerou nas oito regiões. A agência foi dissolvida.',
+    },
+
+    // Ícone **mais** rótulo escrito, como nos estados da árvore: o §5 do GDD
+    // proíbe comunicar resultado só por cor, e medalha é justamente o caso em
+    // que a cor tenta carregar tudo sozinha. Tire as cores da tela e o cartão
+    // continua dizendo "Ouro", "Sem medalha" ou "Derrota" por escrito.
+    result: {
+      gold: {
+        icon: '🥇',
+        title: 'Ouro',
+        verdict: (limit: string) =>
+          `Abaixo de ${limit} — o melhor caso descrito pelo Acordo de Paris.`,
+      },
+      silver: {
+        icon: '🥈',
+        title: 'Prata',
+        verdict: (limit: string) =>
+          `Abaixo de ${limit} — dentro do limite de Paris, longe do ideal.`,
+      },
+      bronze: {
+        icon: '🥉',
+        title: 'Bronze',
+        verdict: (limit: string) => `Abaixo de ${limit} — o mundo virou a curva tarde, mas virou.`,
+      },
+      none: {
+        icon: '◐',
+        title: 'Sem medalha',
+        verdict: (limit: string) =>
+          `Acima de ${limit} — o mundo atravessou o século sem virar a curva.`,
+      },
+      // O único cujo veredito não leva limiar: quem perdeu não parou "abaixo"
+      // nem "acima" de nada que valha contar — a frase fala do que sobrou.
+      defeat: {
+        icon: '✕',
+        title: 'Derrota',
+        verdict: 'O carbono já emitido não volta atrás: a curva precisava ter virado antes.',
+      },
+    },
+  },
+
   hudLabel: 'Indicadores da partida',
 
   units: {

@@ -169,17 +169,33 @@ export function stepsForElapsed(
  * É o que a UI chama a cada quadro, passando o delta que ela mediu. O resultado
  * não depende da taxa de quadros: 30 e 144 FPS produzem a mesma partida, porque
  * o que manda é o tempo acumulado, não o número de chamadas.
+ *
+ * **`hasEnded` é perguntado a cada passo do lote, não uma vez por chamada** — e
+ * é para isso que ele existe. Uma chamada entrega até MAX_STEPS_PER_CALL ticks
+ * de uma vez quando a aba volta do segundo plano (o P6-06 registrou a partida
+ * andando em degraus de um ano inteiro). Sem a pergunta dentro do laço, uma
+ * derrota no terceiro passo de doze deixaria a simulação rodar mais nove meses
+ * **depois** de a partida ter acabado, e o jogador leria no cartão de fim um
+ * mundo mais quente do que aquele em que ele perdeu.
+ *
+ * Ele entra como parâmetro em vez de este módulo importar o `outcome.ts` porque
+ * o caminho inverso fecharia um ciclo: o `outcome.ts` precisa do `isOver` e do
+ * `TOTAL_TICKS` daqui. O tick continua sem saber o que faz uma partida acabar —
+ * só honra a resposta de quem sabe. O padrão nunca para, que é o que mantém
+ * todo chamador anterior a esta tarefa funcionando igual.
  */
 export function advanceRealTime(
   state: GameState,
   clock: Clock,
   elapsedMs: number,
   speed = 1,
+  hasEnded: (state: GameState) => boolean = () => false,
 ): { readonly state: GameState; readonly clock: Clock } {
   const { steps, clock: nextClock } = stepsForElapsed(clock, elapsedMs, speed);
 
   let next = state;
   for (let i = 0; i < steps; i++) {
+    if (hasEnded(next)) break;
     next = advanceTick(next);
   }
 

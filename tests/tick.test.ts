@@ -337,3 +337,46 @@ describe('o relógio de tempo real', () => {
     expect(minutes / 4).toBeLessThan(6);
   });
 });
+
+describe('o predicado de parada (P6-08)', () => {
+  /** Um lote grande o bastante para pedir os 12 passos do teto. */
+  const BURST_MS = balance.realSecondsPerTick * 1000 * 12;
+
+  it('sem predicado, o lote inteiro roda — o padrão não para nada', () => {
+    const { state } = advanceRealTime(createInitialState(1), createClock(), BURST_MS);
+
+    expect(state.tick).toBe(12);
+  });
+
+  it('para no passo exato em que a partida acaba, no meio do lote', () => {
+    // É o motivo de o predicado existir. A aba volta do segundo plano e o
+    // quadro entrega doze meses de uma vez; se a partida acabou no terceiro,
+    // os outros nove não podem acontecer — o jogador leria no cartão de fim um
+    // mundo diferente daquele em que ele perdeu.
+    const { state } = advanceRealTime(
+      createInitialState(1),
+      createClock(),
+      BURST_MS,
+      1,
+      (s) => s.tick >= 3,
+    );
+
+    expect(state.tick).toBe(3);
+  });
+
+  it('não avança nada quando a partida já tinha acabado', () => {
+    const before = createInitialState(1);
+    const { state } = advanceRealTime(before, createClock(), BURST_MS, 1, () => true);
+
+    expect(state).toBe(before);
+  });
+
+  it('o relógio consome o tempo mesmo com a simulação parada', () => {
+    // O resto do mês não é guardado para depois: a partida acabou e não há
+    // "depois". Guardá-lo faria o primeiro mês da partida seguinte chegar
+    // adiantado, que é o mesmo defeito que o handleReset evita zerando o Clock.
+    const { clock } = advanceRealTime(createInitialState(1), createClock(), 1000, 1, () => true);
+
+    expect(clock.leftoverMs).toBe(1000);
+  });
+});

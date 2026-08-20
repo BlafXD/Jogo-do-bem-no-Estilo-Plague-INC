@@ -32,6 +32,7 @@ Todas consultadas em **2026-08-18**. As chaves entre colchetes são usadas no re
 | **[OWID-ENE]** | Our World in Data, `owid-energy-data.csv` — Ember e Energy Institute, eletricidade por país | <https://github.com/owid/energy-data> |
 | **[M49]** | ONU, padrão de códigos geográficos M49 (via ISO 3166) — recorte das sub-regiões | <https://unstats.un.org/unsd/methodology/m49/> |
 | **[UNEP25]** | UNEP, _Emissions Gap Report 2025_ — usado só para conferir o modelo, não alimenta nenhum valor | <https://www.unep.org/resources/emissions-gap-report-2025> |
+| **[PARIS]** | ONU, _Acordo de Paris_ (2015), Artigo 2.1(a) — "bem abaixo de 2 °C" e "esforços para limitar a 1,5 °C" | <https://unfccc.int/process-and-meetings/the-paris-agreement> |
 
 ---
 
@@ -45,6 +46,9 @@ Todas consultadas em **2026-08-18**. As chaves entre colchetes são usadas no re
 | **0,0093 por ano (0,93%)** | `balance.json → baselineGrowthPerYear` | **[AR6]**, cenário SSP3-7.0 | Crescimento das emissões enquanto o jogador não age. É exatamente a taxa que **dobra** as emissões até 2100 — que é como o AR6 descreve o SSP3-7.0, o mundo sem política climática nova. Entrou em `P6-02`; sem ela, não fazer nada não perdia o jogo |
 | 2025 → 2100 | `balance.json → startYear` e `endYear` | não se aplica | Recorte da partida — decisão de jogo |
 | 3,0 °C | `balance.json → loseTemperature` | não se aplica | Limiar de derrota — decisão de jogo, não dado científico. **Ver o achado no fim deste arquivo** |
+| **1,5 °C** e **2,0 °C** | `balance.json → goldTemperature` e `silverTemperature` | **[PARIS]**, Artigo 2.1(a) | Entraram no `P6-08`. Não são chute: são os dois números que o Acordo de Paris fixa — 1,5 como o esforço e 2,0 como o teto. **O jogo herda a meta política, não uma escala inventada**, e é isso que dá conteúdo à medalha. Que as duas sejam inalcançáveis com o balanceamento de hoje é problema de balanceamento, não da fonte — está em `docs/BALANCEAMENTO.md` |
+| 2,5 °C | `balance.json → bronzeTemperature` | não se aplica | Limiar de Bronze — decisão de jogo. Fica entre o teto de Paris e o limiar de derrota, e é a única medalha alcançável hoje |
+| **0,5 GtCO₂/ano** | `balance.json → netZeroEmissions` | não se aplica, mas ver observação | Entrou no `P6-08`: é o "≈ 0" do `docs/GDD.md §2.7` virado número. **Precisa ser um número, e não zero exato**, porque o corte da árvore é multiplicativo — a curva se aproxima de zero sem nunca encostar. 0,5 Gt é **1,2% da emissão de 2025**. Não é dado observado, mas conversa com a literatura: nos cenários de zero líquido do **[AR6]** sobram alguns GtCO₂/ano de emissão residual, compensados por remoção — e o jogo **não simula remoção**, então o limiar faz o papel dela |
 | 12, 10, 1,5, 2, 1,8 | demais chaves de `balance.json` | não se aplica | Ritmo, economia de PAC e antagonista — balanceamento puro, ajustável via `docs/BALANCEAMENTO.md` |
 
 > **Fórmula da temperatura** (`docs/GDD.md §4`): `temperature = startTemperature + tcre × cumulativeCO2`.

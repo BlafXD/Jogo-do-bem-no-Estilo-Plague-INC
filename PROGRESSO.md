@@ -28,6 +28,84 @@ Regras curtas:
 
 ---
 
+## 2026-08-19 — Vitória e derrota: a partida virou jogo com começo, meio e fim
+
+- **Parte / tarefa:** `P6-08` ✔ — **marco M2**
+- **O que mudou:**
+  - `src/engine/outcome.ts` **criado** — a regra do `docs/GDD.md §2.7`, pura: `outcomeOf`, `medalFor` e `isFinished`.
+  - `src/ui/outcome.ts` e `src/ui/outcome.css` **criados** — o cartão de fim, com a mesma divisão puro/DOM do resto.
+  - `src/engine/tick.ts` — o `advanceRealTime` ganhou um **predicado de parada**.
+  - `src/data/balance.json` e `src/engine/state.ts` — quatro constantes novas: `netZeroEmissions`, `goldTemperature`, `silverTemperature`, `bronzeTemperature`.
+  - `src/data/i18n.ts`, `index.html`, `src/main.ts` — os textos do cartão, a seção `#resultado` e a ligação.
+  - `docs/CIENCIA.md` e `docs/BALANCEAMENTO.md` — os quatro números com fonte, e o achado abaixo.
+  - `tests/outcome.test.ts` (21) e `tests/outcome.dom.test.ts` (16) **criados**, `tests/tick.test.ts` (+4). Suíte: 196 → **237**.
+- **O desfecho não é gravado em lugar nenhum, e essa é a decisão central do arquivo.** O `outcomeOf` recalcula a partir de temperatura, apoio, emissões e tick, sempre. Três consequências saem de graça: **o `SAVE_VERSION` não subiu**, porque não há campo novo; um save editado à mão não consegue entregar uma medalha que a partida dele não sustenta, pelo mesmo motivo que `year` e `temperature` já eram recalculados na carga; e não existe o bug clássico de "ganhei mas o jogo não percebeu", em que uma bandeira booleana deixa de ser ligada num caminho de código.
+- **O predicado de parada existe por causa de um buraco concreto, não por elegância.** O `advanceRealTime` entrega até 12 ticks numa chamada quando a aba volta do segundo plano — o `P6-06` registrou a partida andando em degraus de um ano. Sem a pergunta **dentro** do laço, cruzar os 3 °C no terceiro passo de doze deixaria a simulação rodar mais nove meses depois da derrota, e o cartão mostraria um mundo diferente daquele em que o jogador perdeu. Ele entra como **parâmetro** do `tick.ts` em vez de o `tick.ts` importar o `outcome.ts` porque o caminho inverso fecharia um ciclo: o `outcome.ts` precisa do `isOver` e do `TOTAL_TICKS` de lá. O padrão é "nunca para", o que manteve todo chamador anterior funcionando sem tocar em nada.
+- **O laço de quadro não se desliga depois do fim — só deixa de avançar.** É a mesma razão de o engine ser chamado durante a pausa (`P5-05`): um laço que se desliga precisa ser religado no reinício, e um `previousFrame` velho entregaria o intervalo inteiro de uma vez no primeiro quadro da partida nova.
+- **O cartão entra no `#app`, e não por cima da tela.** Um modal exigiria prender o foco e tratar `Esc`, e cobriria justamente o HUD — que é onde estão os números que se quer ler quando a partida acaba. Assim o topo continua visível, a navegação por teclado do `§5` sai de graça, e o `hidden` na seção tira o botão "Jogar de novo" da ordem de tabulação durante a partida. **Conferido no navegador:** com a partida em curso, `.focus()` no botão não pega; depois do fim, pega.
+- **"Jogar de novo" reinicia num clique só, ao contrário da barra da partida.** Os dois passos de lá (`P6-07`) existem para proteger vinte minutos de jogo em curso. Aqui não há mais partida para destruir.
+- **A trava de compra depois do fim ficou no `main.ts`, e não no `unlockSkill`.** O engine não deve precisar do `outcome.ts` para responder uma pergunta de compra: o `§2.7` fala de quando a partida termina, não de quanto custa um nó.
+- **O achado que mudou o desenho da tarefa: a vitória do `§2.7` é inalcançável.** Antes de escrever qualquer linha, rodei uma sonda com o engine real — 900 ticks, comprando na melhor ordem conhecida:
+
+  | Partida | 2100 | Emissões | Nós |
+  |---|---|---|---|
+  | Sem comprar nada | 3,35 °C | 81,6 Gt/ano | 0/20 |
+  | **Jogo ótimo** | **2,48 °C** | **13,0 Gt/ano** | 16/20, o último em 2099 |
+
+  As emissões param em **vinte e seis vezes** o limiar de zero líquido. E o teto não é o jogador: a árvore inteira soma 5,5%/ano de corte contra 0,93% de crescimento, então comprar os 20 nós no tick 0 ainda terminaria em ~1,2 Gt/ano — o dobro do limiar. **Ouro e Prata também são inalcançáveis**, e por um motivo estrutural: neste modelo a temperatura **nunca desce**, porque o CO₂ acumulado só cresce. O jogo ótimo cruza 1,5 °C em 2031 e 2,0 °C em 2057. O `P6-05` já tinha achado o Ouro morto; o que é novo é que a **condição de vitória inteira** está fora de alcance. Tudo em `docs/BALANCEAMENTO.md`.
+- **As três decisões que saíram disso foram tomadas no chat, não por mim** — o `CLAUDE.md` manda avisar em caso de conflito com o GDD:
+  1. **Chegar a 2100 vivo passa a valer a escala de medalhas**, pela temperatura em que a partida parou; acima de 2,5 °C é sobrevivência sem medalha. É o que torna o jogo vencível hoje, e a lição vira **quando você agiu** — que é o que a catraca do TCRE já ensina sozinha.
+  2. **Cartão mínimo.** O gráfico da linha do tempo, o "o que você poderia ter feito diferente" e as 3 ações reais do `§2.7` ficam no `P7-06`, dono das telas de fim.
+  3. **Nenhum número de balanceamento foi mexido** — ajuste sem playtest por trás é o risco `R2` do `PLANO.md`.
+- **Conferi que os testes pegam — quinze defeitos plantados, treze pegos de primeira:**
+
+  | defeito plantado | testes que caem |
+  |---|---|
+  | limiar da medalha vira `<=` | 1 |
+  | derrota por temperatura vira `>=` | 1 |
+  | a medalha passa na frente da derrota | 1 |
+  | o horizonte passa na frente do zero líquido | 2 |
+  | as medalhas saem na ordem inversa | 5 |
+  | a parada é perguntada uma vez, fora do laço | 1 |
+  | a parada é perguntada depois de avançar | 1 |
+  | o cartão não esconde a seção | 2 |
+  | o ícone perde o rótulo escrito ao lado | 4 |
+  | os números do cartão são formatados de novo | 1 |
+  | o `<dl>` acumula em vez de trocar | 1 |
+  | **o apoio exige zero exato (`=== 0`)** | **0** |
+  | **sem medalha cita o teto do ouro** | **0** |
+
+  - **O primeiro buraco:** trocar `<= 0` por `=== 0` no apoio não quebrava nada, porque **nenhum caminho de hoje produz apoio negativo** — o desgaste para no piso e a compra passa por `clamp`. Só que o `outcomeOf` é função total sobre o `GameState`, e quem vai subtrair apoio de verdade é o evento (`P7-01`) e a Inércia (`P7-03`): uma subtração que passe do zero por um fio deixaria a agência de pé com apoio negativo, que é o pior jeito possível de a regra falhar. Teste novo, com apoio a −0,5.
+  - **O segundo:** nenhum teste de veredito passava pelo ramo "sem medalha", que é o único que usa o teto do bronze na frase. Com o defeito, quem terminava em 2,9 °C lia "Acima de 1,5 °C" — verdade, mas inútil; o número que interessa é o da medalha que escapou por pouco. Teste novo.
+  - Replantados os dois depois dos testes novos: **1 e 1**.
+- **Um defeito real escapou dos 236 testes e só apareceu no navegador.** Com `<dt>` e `<dd>` soltos dentro do `<dl>`, a grade dá uma célula a cada um: o cartão saiu com **"Emissões" no fim de uma linha e "46,7 Gt/ano" no começo da seguinte, debaixo do rótulo de outro indicador** — um cartão que atribui o valor errado ao nome errado. A contagem de `<dt>` e `<dd>` que eu tinha escrito passava feliz por isso. Conserto: cada par vive num `<div>` agrupador, que é HTML válido dentro de `<dl>` desde o 5.2 exatamente para este caso; e o teste novo exige a **estrutura**, não a contagem.
+- **Verificado no navegador, com os quatro desfechos semeados via `localStorage`:**
+  - **Derrota:** save com `cumulativeCO2` a 3615 (2,99 °C) no tick 700. A partida rodou dois meses, cruzou os 3 °C e **parou em 2083** — conferido esperando 5 segundos e comparando o HUD: `2083/3,00 °C` nas duas leituras.
+  - **Bronze:** 2100, 2,40 °C, 13,0 Gt/ano, 16 de 20 nós — a partida do jogo ótimo, reconstruída. É a evidência.
+  - **Sem medalha:** 2100, 2,90 °C — `◐ Sem medalha`, "Acima de 2,5 °C — o mundo atravessou o século sem virar a curva."
+  - **Ouro:** semeado com as 8 regiões a 0,05 Gt (0,4 global) em 2058 — `🥇 Ouro`, "As emissões líquidas caíram abaixo de 0,5 Gt/ano antes de 2100". **É a prova de que a regra existe e funciona**, mesmo sendo hoje inalcançável jogando.
+  - Depois do fim: `#app[data-finished=true]`, a árvore a 55% de opacidade, e **clicar num nó `Disponível` com 84 PAC no bolso não compra** — status e PAC idênticos antes e depois.
+  - `Jogar de novo` → 2025, PAC 0, cartão escondido, save apagado, a linha de status de volta ao texto de partida nova.
+  - Nenhum texto abaixo de 16px dentro do cartão, por varredura de `getComputedStyle`. Console sem erro nenhum.
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npm run dev    # deixe correr até 2100 — 22 min a 1x, 6 a 4x — ou semeie um save perto do fim
+  ```
+  237 testes em 13 arquivos. O aceite são os dois testes `ACEITE` do `tests/outcome.test.ts` — "quem não compra nada perde por temperatura antes de 2100" (derrota em **2089**, o ano que o `docs/CIENCIA.md` prevê) e "jogando bem, a partida chega viva a 2100 e ganha bronze" — mais os quatro desfechos conferidos acima.
+- **Pendente:**
+  - **O `docs/GDD.md §2.7` não descreve o fim por horizonte.** A decisão de dar medalha a quem chega vivo a 2100 foi tomada no chat e está registrada aqui e no `BALANCEAMENTO.md`, mas o GDD continua dizendo só "vitória: emissões líquidas ≈ 0". **Não editei** porque o `§12` proíbe reescrever o GDD sem pedir. É uma linha, e vale fazer antes que o arquivo e o código divirjam de vez.
+  - **A derrota por temperatura sempre mostra "3,00 °C" no cartão.** O tick que cruza soma ~0,0018 °C, então o valor real fica entre 3,000 e 3,002 — e o HUD arredonda para duas casas. O jogador lê "O aquecimento passou de 3 °C" ao lado de um "3,00 °C". Não consertei mostrando três casas só no cartão: quebraria a propriedade de o cartão e o HUD mostrarem sempre o mesmo número, que tem teste. Vale decidir no `P7-06`.
+  - **A derrota por apoio continua inalcançável.** O `supportFloor` trava o desgaste em 25 e nada mais empurra o apoio para baixo. A regra está escrita e testada; quem vai poder disparar é o `P7-01` e o `P7-03`.
+  - **O cartão não tem gráfico nem "o que você poderia ter feito diferente".** É o `P7-06`, e depende do `history` — que **nenhuma partida preenche ainda**: o campo existe no `GameState` desde o `P6-01` e continua sempre vazio. Quem for fazer o `P7-06` precisa começar a gravar snapshots **e subir o `SAVE_VERSION`**.
+  - **A árvore apagada a 55% é a única pista visual de que ela ficou inerte.** Quem diz que a partida acabou é o cartão, por escrito, então o `§5` está cumprido — mas um nó `Disponível` que não compra ao clique ainda é uma pequena surpresa. Vale um rótulo no `P7-08`.
+  - **`Espaço` com o foco num nó da árvore continua recomprando em vez de pausar** — herdado do `P6-06`, ainda aberto no `P7-08`.
+  - O `theme.css` do `P5-02` continua sem existir; as quatro folhas seguem nos valores de reserva.
+  - `npm audit` segue acusando o `nanoid` de `vite → postcss`; nada a ver com esta tarefa.
+- **Evidência:** `docs/evidencias/2026-08-19-p6-08-fim-de-partida-bronze.jpg`
+
+---
+
 ## 2026-08-19 — Save, load e reset: a partida deixou de morrer no F5
 
 - **Parte / tarefa:** `P6-07` ✔
