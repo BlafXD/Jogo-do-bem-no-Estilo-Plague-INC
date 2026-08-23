@@ -3,9 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceEvents,
   applyEvent,
+  CARD_TICKS,
   damageMultiplier,
   drawEvent,
   eligibleEvents,
+  eventById,
+  isCritical,
+  startTickOf,
   weightFor,
 } from '../src/engine/events';
 import {
@@ -314,6 +318,108 @@ describe('a partida inteira, com eventos', () => {
     const semCompras = run(TOTAL_TICKS);
     for (const event of climateEvents) {
       expect(event.tempThreshold).toBeLessThan(semCompras.temperature);
+    }
+  });
+});
+
+// ------------------------------------------------------------------ P7-02 ---
+
+describe('eventById', () => {
+  it('acha os 10 do catálogo e devolve undefined para o que não existe', () => {
+    for (const event of climateEvents) expect(eventById(event.id)).toBe(event);
+    expect(eventById('evento-que-nao-existe')).toBeUndefined();
+  });
+});
+
+describe('startTickOf', () => {
+  it('um cartão recém-criado começou neste tick', () => {
+    expect(startTickOf({ eventId: 'x', target: 'na', ticksRemaining: CARD_TICKS }, 40)).toBe(40);
+  });
+
+  it('cada tick a menos no cartão é um mês a mais de idade', () => {
+    for (let age = 0; age < CARD_TICKS; age += 1) {
+      const active = { eventId: 'x', target: 'na' as const, ticksRemaining: CARD_TICKS - age };
+      expect(startTickOf(active, 100)).toBe(100 - age);
+    }
+  });
+
+  it('ACEITE: a idade deduzida bate com o tick real, numa partida de verdade', () => {
+    // **Este é o teste que segura o P7-02 inteiro.** O `startTickOf` deduz a
+    // idade do `ticksRemaining` em vez de gravá-la, e a dedução só vale
+    // enquanto o `advanceEvents` envelhecer todo cartão em 1 por tick e criar
+    // no máximo um por tick. Conferir a aritmética contra ela mesma não
+    // provaria nada; o que prova é rodar a partida e anotar, por fora, o tick
+    // em que cada evento de fato entrou.
+    //
+    // Se um dia a duração do cartão variar por evento, é aqui que quebra — e
+    // quebra ruidosamente, em vez de a UI passar a pausar no evento errado.
+    let state = createInitialState(2025);
+    const realStart = new Map<string, number>();
+    let conferidos = 0;
+
+    for (let i = 0; i < TOTAL_TICKS; i += 1) {
+      state = advanceTick(state);
+
+      // **No máximo um cartão novo por tick** — a invariante de que a dedução
+      // depende. Com dois, dois eventos diferentes nasceriam no mesmo tick e a
+      // chave `id@tick` do cartão deixaria de ser única.
+      const fresh = state.activeEvents.filter((a) => a.ticksRemaining === CARD_TICKS);
+      expect(fresh.length).toBeLessThanOrEqual(1);
+
+      const born = fresh[0];
+      if (born !== undefined) realStart.set(`${born.eventId}@${state.tick}`, state.tick);
+
+      for (const active of state.activeEvents) {
+        const deduzido = startTickOf(active, state.tick);
+        expect(realStart.get(`${active.eventId}@${deduzido}`)).toBe(deduzido);
+        conferidos += 1;
+      }
+    }
+
+    // Sem isto o teste passaria com a lista sempre vazia.
+    expect(conferidos).toBeGreaterThan(1000);
+  });
+
+  it('o cartão vive exatamente CARD_TICKS meses', () => {
+    const start = createInitialState(9);
+    let state: GameState = {
+      ...start,
+      activeEvents: [{ eventId: 'heatwave', target: 'na', ticksRemaining: CARD_TICKS }],
+    };
+
+    for (let i = 1; i < CARD_TICKS; i += 1) {
+      state = { ...advanceEvents(state), rngState: state.rngState };
+      expect(state.activeEvents.some((a) => a.eventId === 'heatwave')).toBe(true);
+    }
+
+    state = { ...advanceEvents(state), rngState: state.rngState };
+    // Pode haver outro `heatwave` sorteado no caminho; o que não pode
+    // sobreviver é o cartão original, e ele é o único que chegaria a 0.
+    expect(state.activeEvents.every((a) => a.ticksRemaining > 0)).toBe(true);
+  });
+});
+
+describe('isCritical', () => {
+  it('crítico é o que ameaça a derrota por apoio do §2.7', () => {
+    for (const event of climateEvents) {
+      expect(isCritical(event)).toBe(event.impact.support >= balance.criticalEventSupport);
+    }
+  });
+
+  it('com o balanceamento de hoje, são a ressaca e o colapso de safra', () => {
+    // O número escolhido está medido em docs/BALANCEAMENTO.md: 10 pausas numa
+    // partida bem jogada. Este teste é o alarme de que mexer no
+    // `criticalEventSupport` muda quantas vezes o jogo interrompe quem joga.
+    const criticos = climateEvents.filter(isCritical).map((e) => e.id);
+    expect(criticos).toEqual(['storm-surge', 'crop-failure']);
+  });
+
+  it('nenhum evento crítico é alcançável antes de 2 °C', () => {
+    // É o que faz a auto-pausa aparecer só na segunda metade da partida. Se um
+    // evento crítico ganhasse limiar baixo, o jogo passaria a parar sozinho na
+    // primeira década — justamente a que o P7-01 deixou silenciosa de propósito.
+    for (const event of climateEvents.filter(isCritical)) {
+      expect(event.tempThreshold).toBeGreaterThanOrEqual(2);
     }
   });
 });

@@ -28,6 +28,19 @@ export function togglePause(control: TimeControl): TimeControl {
   return { ...control, paused: !control.paused };
 }
 
+/**
+ * Pausa, esteja como estiver. **Idempotente, e é o ponto.**
+ *
+ * A auto-pausa do P7-02 não pode usar o `togglePause`: chamado com o jogo já
+ * parado, ele **despausaria** — um evento crítico caindo em cima de uma pausa
+ * do jogador faria o tempo voltar a correr sem ninguém ter pedido, que é o
+ * oposto exato do que a auto-pausa existe para fazer. É o tipo de bug que só
+ * aparece na feira, com alguém que pausou para ler.
+ */
+export function pause(control: TimeControl): TimeControl {
+  return control.paused ? control : { ...control, paused: true };
+}
+
 /** Trocar de velocidade não tira da pausa: são duas decisões separadas. */
 export function setSpeed(control: TimeControl, speed: Speed): TimeControl {
   return { ...control, speed };
@@ -50,7 +63,9 @@ export function effectiveSpeed(control: TimeControl): number {
 // ------------------------------------------------------------- atalhos ---
 
 export type TimeCommand =
-  { readonly kind: 'togglePause' } | { readonly kind: 'setSpeed'; readonly speed: Speed };
+  | { readonly kind: 'togglePause' }
+  | { readonly kind: 'pause' }
+  | { readonly kind: 'setSpeed'; readonly speed: Speed };
 
 function isSpeed(value: number): value is Speed {
   return (SPEEDS as readonly number[]).includes(value);
@@ -71,9 +86,25 @@ export function commandForKey(key: string): TimeCommand | null {
   return key.trim() !== '' && isSpeed(speed) ? { kind: 'setSpeed', speed } : null;
 }
 
+/**
+ * Aplica um comando, ou devolve o controle intacto quando não há comando.
+ *
+ * `switch` sobre a união discriminada, e não o ternário que estava aqui: com
+ * três variantes o `tsc` passa a cobrar o caso que faltar. Se um quarto comando
+ * entrar, este arquivo para de compilar em vez de deixar a tecla nova cair
+ * silenciosamente no ramo errado.
+ */
 export function applyCommand(control: TimeControl, command: TimeCommand | null): TimeControl {
   if (command === null) return control;
-  return command.kind === 'togglePause' ? togglePause(control) : setSpeed(control, command.speed);
+
+  switch (command.kind) {
+    case 'togglePause':
+      return togglePause(control);
+    case 'pause':
+      return pause(control);
+    case 'setSpeed':
+      return setSpeed(control, command.speed);
+  }
 }
 
 // ----------------------------------------------------------------- DOM ---

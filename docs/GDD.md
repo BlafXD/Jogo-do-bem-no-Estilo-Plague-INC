@@ -255,6 +255,7 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "supportFloor": 25,              // piso de apatia: o decaimento para aqui
   "inertiaGrowthPerYear": 2,
   "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
+  "criticalEventSupport": 2.5,     // impacto de apoio que torna o evento crítico
   "loseTemperature": 3.0
 }
 ```
@@ -278,6 +279,14 @@ porque sem ele a constante decidiria toda partida: 50 pontos caindo 1,5 ao ano z
 o §2.7 dá derrota por apoio médio zero — o jogador perderia em 2058 fizesse o que fizesse.
 **Furar o piso para baixo é trabalho de evento (§2.5) e da Inércia (§2.6)**, que agem por cima
 dele; o ramo Sociedade (§2.4) é o que empurra de volta para cima.
+
+**Evento crítico (`criticalEventSupport`).** Um evento cujo `impact.support` alcança este valor
+**pausa o relógio sozinho** e mostra o cartão com o fato real (`P7-02`). O eixo é o apoio, e não a
+soma dos três impactos, porque é o único ligado a uma condição de fim: o §2.7 dissolve a agência
+quando o apoio médio zera. Crítico quer dizer *ameaça encerrar a partida*, não "tem números
+grandes". Com 2,5, os eventos que param o jogo são a ressaca e o colapso de safra — nenhum dos dois
+alcançável abaixo de 2 °C, então **a primeira metade da partida nunca é interrompida.** A contagem
+que escolheu o valor está em `docs/BALANCEAMENTO.md`.
 
 Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor antigo → novo → por quê → o que mudou no playtest.**
 

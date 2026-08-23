@@ -30,6 +30,12 @@
            cobriria justamente o HUD, que é onde estão os números que o jogador
            quer ler quando a partida acaba. Fica escondido durante a partida. -->
       <section id="resultado" class="outcome"></section>
+      <!-- Os eventos ficam acima da árvore e abaixo do resultado: durante a
+           partida o resultado está escondido, então o cartão de evento é a
+           primeira coisa do corpo da página — que é onde precisa estar, já que
+           o tempo pode parar sozinho por causa dele. Quando a partida acaba, o
+           resultado passa na frente. Fica escondido enquanto não cai evento. -->
+      <section id="eventos" class="events" hidden></section>
       <section id="arvore" class="tree"></section>
     </main>
 

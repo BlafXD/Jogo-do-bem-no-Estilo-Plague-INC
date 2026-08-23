@@ -27,6 +27,12 @@ import {
   renderControls,
   type TimeCommand,
 } from './ui/controls';
+import {
+  eventCardsView,
+  mountEventCards,
+  newestCriticalTick,
+  renderEventCards,
+} from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import {
@@ -40,6 +46,7 @@ import {
 import { clearGame, loadGame, saveGame } from './ui/storage';
 import { mountTree, renderTree, treeView } from './ui/tree';
 import './ui/controls.css';
+import './ui/event-cards.css';
 import './ui/hud.css';
 import './ui/outcome.css';
 import './ui/session.css';
@@ -76,6 +83,7 @@ const hud = required('#hud');
 const controls = required('#controles');
 const partida = required('#partida');
 const resultado = required('#resultado');
+const eventos = required('#eventos');
 const tree = required('#arvore');
 const app = required<HTMLElement>('#app');
 
@@ -95,9 +103,62 @@ let session = createSession(restored === null ? null : restored.year);
 let previousFrame = performance.now();
 let shownTick = state.tick;
 
+/**
+ * O tick do evento crítico que já parou o relógio (P7-02).
+ *
+ * Começa no tick atual, e não em -1: os cartões que vieram dentro de um save já
+ * estavam em cena quando o jogador fechou a aba, e retomar a partida não deve
+ * parar o tempo de novo por causa deles.
+ */
+let pausedForTick = state.tick;
+
+/**
+ * O tempo parou por causa de um evento, e não porque alguém pediu.
+ *
+ * Separar as duas pausas paga em dois lugares: o aviso na tela só aparece na
+ * primeira, e o reinício desfaz só a primeira.
+ */
+let autoPaused = false;
+
 function handleCommand(command: TimeCommand | null): void {
   control = applyCommand(control, command);
+
+  // O aviso sai da tela no instante em que o tempo volta a correr — por
+  // qualquer caminho, inclusive a barra de espaço. Deixá-lo no ar depois disso
+  // faria a tela afirmar que o jogo está parado enquanto ele anda.
+  if (!control.paused) autoPaused = false;
+
   renderControls(controls, control);
+  renderEvents();
+}
+
+/** Os cartões de evento e o aviso de auto-pausa. */
+function renderEvents(): void {
+  renderEventCards(eventos, eventCardsView(state, autoPaused));
+}
+
+/**
+ * Para o relógio quando um evento crítico **novo** entra em cena (P7-02).
+ *
+ * A comparação é contra o tick do último crítico que já pausou, e não contra um
+ * booleano de "tem crítico na tela": o cartão fica seis meses em cena, e um
+ * booleano repausaria o jogo a cada mês desses — o jogador não conseguiria
+ * voltar a jogar sem esperar o cartão vencer.
+ *
+ * **Limitação conhecida.** O relógio do P6-04 entrega até 12 ticks num quadro
+ * quando a aba volta do segundo plano, e o cartão vive 6: um crítico que
+ * apareça e vença dentro do mesmo lote não pausa nada, porque quando este
+ * código roda ele já saiu de cena. Só acontece depois de ~18 s de aba parada, e
+ * consertar exigiria o engine chamar de volta a UI a cada passo — o §3 não
+ * deixa. Fica registrado no PROGRESSO.md.
+ */
+function checkAutoPause(): void {
+  const newest = newestCriticalTick(state);
+  if (newest === null || newest <= pausedForTick) return;
+
+  pausedForTick = newest;
+  autoPaused = true;
+  handleCommand({ kind: 'pause' });
 }
 
 /** Redesenha tudo que depende do estado da partida. */
@@ -105,6 +166,7 @@ function renderGame(): void {
   renderHud(hud, hudView(state));
   renderTree(tree, treeView(state));
   renderOutcome(resultado, outcomeView(state));
+  renderEvents();
   // A árvore fica apagada depois do fim. O `data-finished` só existe para o
   // CSS: quem de fato recusa a compra é o `handleUnlock`.
   app.dataset.finished = String(isFinished(state));
@@ -135,6 +197,14 @@ function handleReset(): void {
   clock = createClock();
   session = afterReset();
   shownTick = state.tick;
+  pausedForTick = state.tick;
+
+  // Um reinício desfaz a **auto**-pausa, e só ela. A pausa que o jogador pediu
+  // continua valendo — é a regra que o controls.ts registra, e ela não muda
+  // aqui. A distinção importa porque o relógio parado por um evento que não
+  // existe mais na partida nova faria o jogo parecer travado na largada, e
+  // `autoPaused` é exatamente o que separa os dois casos.
+  if (autoPaused) handleCommand({ kind: 'togglePause' });
 
   renderGame();
   renderSessionBar();
@@ -170,6 +240,7 @@ function handleUnlock(id: SkillId): void {
 
 mountHud(hud);
 mountControls(controls, handleCommand);
+mountEventCards(eventos);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
 // minutos de jogo em curso; aqui não há mais partida para destruir.
@@ -251,6 +322,10 @@ function frame(now: number): void {
   // A árvore entra aqui junto com o HUD porque o PAC sobe a cada tick: é a
   // virada do mês que faz um nó sair de "PAC insuficiente" para "Disponível".
   if (state.tick !== shownTick) {
+    // Antes do desenho: a auto-pausa muda o aviso que o `renderGame` escreve, e
+    // deixá-la depois faria o cartão crítico aparecer um mês antes do texto que
+    // explica por que o tempo parou.
+    checkAutoPause();
     renderGame();
     shownTick = state.tick;
     // Salvar aqui, e não a cada quadro, sai de graça: é uma escrita por mês de

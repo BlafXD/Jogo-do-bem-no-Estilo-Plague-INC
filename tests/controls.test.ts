@@ -6,6 +6,7 @@ import {
   commandForKey,
   createTimeControl,
   effectiveSpeed,
+  pause,
   setSpeed,
   SPEEDS,
   togglePause,
@@ -28,6 +29,37 @@ describe('o controle de tempo', () => {
     expect(paused.paused).toBe(true);
     expect(running.paused).toBe(false);
     expect(togglePause(paused).paused).toBe(false);
+  });
+
+  it('pause é idempotente: chamado em cima da pausa, não despausa (P7-02)', () => {
+    // **É a razão de esta função existir.** A auto-pausa do evento crítico não
+    // pode usar `togglePause`: um evento caindo em cima de uma pausa do jogador
+    // faria o tempo voltar a correr sem ninguém ter pedido — que é o oposto
+    // exato do que a auto-pausa serve para fazer.
+    const running = createTimeControl();
+    const paused = pause(running);
+
+    expect(paused.paused).toBe(true);
+    expect(pause(paused).paused).toBe(true);
+    expect(running.paused).toBe(false);
+  });
+
+  it('pause preserva a velocidade escolhida e devolve o mesmo objeto se já parado', () => {
+    const paused = pause(setSpeed(createTimeControl(), 4));
+    expect(paused.speed).toBe(4);
+    expect(pause(paused)).toBe(paused);
+  });
+
+  it('applyCommand entende o comando de pausa', () => {
+    expect(applyCommand(createTimeControl(), { kind: 'pause' }).paused).toBe(true);
+    expect(applyCommand(pause(createTimeControl()), { kind: 'pause' }).paused).toBe(true);
+  });
+
+  it('nenhuma tecla dispara o comando de pausa — ele é só da auto-pausa', () => {
+    // A barra de espaço continua sendo `togglePause`, senão ela pausaria e
+    // nunca mais retomaria.
+    const teclas = [' ', 'Spacebar', '1', '2', '4', 'p', 'Escape'];
+    for (const key of teclas) expect(commandForKey(key)?.kind).not.toBe('pause');
   });
 
   it('trocar de velocidade não tira da pausa', () => {

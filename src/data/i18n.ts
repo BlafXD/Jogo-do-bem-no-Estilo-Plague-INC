@@ -80,6 +80,38 @@ export const ui = {
     requires: (names: readonly string[]) => `Exige: ${listOfNames.format(names)}`,
   },
 
+  // Os cartões de evento climático (P7-02), com a regra do docs/GDD.md §2.5.
+  //
+  // **O `fact` de cada evento não está aqui**, e é de propósito: ele mora no
+  // `src/data/events.json`, que é o arquivo que o pacote [D-Historia] tem
+  // contrato para editar sem abrir um `.ts` (`PLANO.md`). Trazê-lo para cá
+  // tiraria justamente o texto que o cargo de narrativa existe para escrever.
+  events: {
+    label: 'Eventos climáticos',
+    hint: 'O que o clima está cobrando agora. Cada cartão fica alguns meses em cena.',
+
+    // Ícone **mais** rótulo escrito, como na árvore e no cartão de fim: o §5 do
+    // GDD proíbe comunicar gravidade só por cor. Os dois ícones têm formas
+    // diferentes de longe — triângulo e círculo —, não só tons diferentes.
+    severity: {
+      critical: { icon: '▲', label: 'Crítico' },
+      moderate: { icon: '●', label: 'Moderado' },
+    },
+
+    /** O cabeçalho do cartão: onde bateu, e em que ano. */
+    where: (region: string, year: string) => `${region} · ${year}`,
+
+    /**
+     * O aviso da auto-pausa.
+     *
+     * Diz **por que** o tempo parou e **como** voltar. Um jogo que para sozinho
+     * sem explicar parece travado — e num estande de feira ninguém vai
+     * investigar, vai chamar alguém.
+     */
+    paused: (name: string) =>
+      `Tempo pausado: ${name}. Aperte Retomar, ou a barra de espaço, para seguir.`,
+  },
+
   session: {
     label: 'Partida',
     reset: 'Reiniciar partida',

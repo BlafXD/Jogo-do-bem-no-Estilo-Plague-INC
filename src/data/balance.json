@@ -12,6 +12,7 @@
   "supportFloor": 25,
   "inertiaGrowthPerYear": 2,
   "eventWeightPerDegree": 1.8,
+  "criticalEventSupport": 2.5,
   "loseTemperature": 3,
   "netZeroEmissions": 0.5,
   "goldTemperature": 1.5,

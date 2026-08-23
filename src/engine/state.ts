@@ -173,6 +173,12 @@ export type Balance = {
   readonly supportFloor: number;
   readonly inertiaGrowthPerYear: number;
   readonly eventWeightPerDegree: number;
+  /**
+   * Impacto de apoio a partir do qual um evento é **crítico** e pausa o relógio
+   * sozinho (P7-02). O apoio é o eixo porque é o único do `impact` ligado a uma
+   * condição de fim (docs/GDD.md §2.7).
+   */
+  readonly criticalEventSupport: number;
   readonly loseTemperature: number;
   /**
    * Emissão global anual, em GtCO₂, abaixo da qual o docs/GDD.md §2.7 considera

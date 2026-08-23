@@ -308,6 +308,47 @@ espaço para os dois sistemas sem tocar em árvore, em custo ou em clima. É mud
 sem playtest por trás, ou seja, o risco `R2` — fica para o `P8-02`, com este parágrafo como o
 registro de que o problema é conhecido, medido e tem uma saída identificada.
 
+### A auto-pausa do `P7-02` (2026-08-23)
+
+O `P7-02` precisava de uma definição de "evento crítico" para saber quando parar o relógio, e o
+`ClimateEvent` do `§3` não tem campo de gravidade — inventar um reescreveria o contrato, que o
+`§12` proíbe. A gravidade passou a sair do `impact.support`, com o limiar novo
+**`criticalEventSupport`** no `balance.json`.
+
+**Por que o apoio, e não a soma dos três impactos.** É o único eixo do `impact` ligado a uma
+condição de fim: o `§2.7` dissolve a agência quando o apoio médio zera. A economia, hoje, não é
+lida por regra nenhuma, e o PAC perdido volta no mês seguinte. Crítico quer dizer *ameaça encerrar
+a partida* — não "tem números grandes". (A soma daria o mesmo par de eventos, mas por coincidência,
+sem justificativa que sobreviva a uma mudança no `events.json`.)
+
+**O valor foi contado, não escolhido.** Uma partida tem **279 eventos** em 22,5 minutos — um a
+cada 4,8 segundos. Quantos deles parariam o jogo, por limiar, na melhor jogada medida:
+
+| `criticalEventSupport` | Eventos que pausam | Uma pausa a cada | Veredito |
+|---|---|---|---|
+| 2,0 | 52 | ~26 s | o jogo vira um soluço |
+| **2,5** | **10** | **~2,2 min** | **escolhido** |
+| 3,0 | 1 | a partida inteira | a mecânica não se paga |
+
+Com 2,5, os críticos são a **ressaca** (`impact.support` 2,5) e o **colapso de safra** (3,0). Os
+dois têm `tempThreshold` de 2,0 e 2,2 °C, então **nenhuma interrupção acontece antes de o mundo
+passar de 2 °C** — a década silenciosa que o `P7-01` construiu de propósito continua silenciosa, e
+o jogo só passa a interromper quando tem motivo. Numa partida sem compra nenhuma, que morre por
+temperatura em 2089, são **17 pausas**.
+
+**Fragilidade conhecida.** Se um dia o balanceamento tornar a Prata alcançável, uma partida que
+fique abaixo de 2 °C nunca verá uma auto-pausa. É defensável — não houve catástrofe para
+interromper ninguém — mas é uma consequência a lembrar, não um acidente.
+
+Os dois testes que travam isso são o `ACEITE` do `tests/event-cards.test.ts` (a contagem de pausas
+numa partida inteira) e o `isCritical` do `tests/events.test.ts` (a lista dos dois eventos). Mexer
+no limiar faz os dois falharem — **é o alarme de que o número mudou quantas vezes o jogo
+interrompe quem está jogando**, que é a decisão mais visível desta constante.
+
+| Data | Constante | De → Para | Por quê | Resultado |
+|---|---|---|---|---|
+| 2026-08-23 | `criticalEventSupport` | — → 2,5 | O `P7-02` precisava de um limiar de gravidade e o `§3` não tem campo para isso | Não testado com jogador. Medido: 10 pausas na melhor jogada, 17 em quem não compra nada |
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz

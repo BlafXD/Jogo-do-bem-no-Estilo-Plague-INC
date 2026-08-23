@@ -28,6 +28,123 @@ Regras curtas:
 
 ---
 
+## 2026-08-23 — Os eventos chegaram à tela, e os críticos param o relógio
+
+- **Parte / tarefa:** `P7-02` ✔
+- **O que mudou:**
+  - `src/ui/event-cards.ts` e `src/ui/event-cards.css` **criados** — o cartão com nome, região, ano e o fato real, mais o aviso da auto-pausa.
+  - `src/engine/events.ts` — `CARD_TICKS` exportado; `eventById`, `startTickOf` e `isCritical` novos.
+  - `src/ui/controls.ts` — `pause` idempotente e o comando `{ kind: 'pause' }`; o `applyCommand` virou `switch`.
+  - `src/data/balance.json` + o tipo `Balance` — `criticalEventSupport: 2.5`.
+  - `src/data/i18n.ts` — o bloco `events`. `index.html` — a seção `#eventos`. `src/main.ts` — a ligação e a auto-pausa.
+  - `docs/GDD.md §4` e `docs/BALANCEAMENTO.md` — a constante nova, com a medição que a escolheu.
+  - `tests/event-cards.test.ts` (17) e `tests/event-cards.dom.test.ts` (14) **criados**; `events.test.ts` +11, `controls.test.ts` +4. Suíte: 291 → **334**.
+
+### O problema que esta tarefa existia para resolver
+
+O `PROGRESSO.md` do `P7-01` registrou, com todas as letras, que nenhum evento aparecia na tela e
+que aquilo era "a pior versão possível desta mecânica". Era mesmo: o apoio caía, o PAC sumia, e as
+dez fontes científicas que custaram a maior parte daquela sessão não chegavam a ninguém. Agora o
+fato real fica no cartão, que é onde ele sempre precisou estar.
+
+### Como a tela sabe que um evento é novo — sem tocar no contrato
+
+Este era o problema difícil, e a solução é a decisão central da tarefa. O relógio do `P6-04`
+entrega **até 12 ticks num quadro só** quando a aba volta do segundo plano, e nesse intervalo até
+doze eventos podem ter entrado e saído. Comparar as duas listas não resolve: o `ageCards` recria
+todos os objetos a cada mês, então nem a identidade nem o conteúdo distinguem um cartão velho de
+um novo.
+
+**A idade já estava codificada no `ticksRemaining`, e é exata.** O `advanceEvents` envelhece todo
+cartão em 1 por tick e cria no máximo um por tick com `CARD_TICKS` cheio — logo
+`startTick = tick − (CARD_TICKS − ticksRemaining)`, sem ambiguidade. A alternativa era gravar um
+`startedTick` no `ActiveEvent`, subindo o `SAVE_VERSION` para guardar um número dedutível.
+
+O preço é o acoplamento ao `CARD_TICKS`: se um dia a duração do cartão variar por evento, isso
+quebra. Por isso o `ACEITE` do `tests/events.test.ts` **não confere a aritmética contra ela mesma**
+— roda os 900 ticks, anota por fora o tick em que cada evento de fato entrou, e cobra a dedução
+contra o registro. São mais de mil conferências, e o teste também cobra a invariante de que nunca
+nasce mais de um cartão por tick, que é de onde a chave `id@tick` tira a unicidade.
+
+### O limiar de "crítico" foi contado, não escolhido
+
+Uma partida tem **279 eventos** em 22,5 minutos — um a cada 4,8 segundos. A pergunta não era
+"o que é grave", era "quantas vezes o jogo pode interromper quem está jogando":
+
+| `criticalEventSupport` | Pausas na melhor jogada | Uma a cada | Veredito |
+|---|---|---|---|
+| 2,0 | 52 | ~26 s | o jogo vira um soluço |
+| **2,5** | **10** | **~2,2 min** | **escolhido** |
+| 3,0 | 1 | a partida inteira | a mecânica não se paga |
+
+O eixo é o `impact.support` e não a soma dos três, e a razão não é conveniência: **o apoio é o
+único campo do `impact` ligado a uma condição de fim** (`§2.7`). Crítico quer dizer *ameaça
+encerrar a partida*. A soma daria os mesmos dois eventos, mas por coincidência.
+
+Cai de graça uma propriedade boa: a ressaca e o colapso de safra só existem acima de 2 °C, então
+**nenhuma interrupção acontece na primeira metade da partida**. A década silenciosa que o `P7-01`
+construiu de propósito continua silenciosa. Numa partida sem compra nenhuma, que morre em 2089,
+são 17 pausas.
+
+### Duas armadilhas pequenas que teriam passado
+
+- **`togglePause` não serve para auto-pausa.** Um evento crítico caindo em cima de uma pausa do
+  jogador faria o tempo **voltar a correr** sem ninguém ter pedido. Por isso entrou o `pause`
+  idempotente, com teste próprio dizendo exatamente isso.
+- **`auto-fit` esticava o cartão pela tela inteira.** Com um único evento em cena, o `auto-fit`
+  colapsa as colunas vazias e uma frase de duas linhas virava uma caixa de 1500 px. Achado no
+  navegador, não no teste — `auto-fill` mantém a coluna e o cartão tem sempre o mesmo tamanho.
+  Pelo mesmo motivo, o nome do evento agora fica sempre em linha própria: antes ele cabia ao lado
+  da etiqueta quando era curto e quebrava quando era longo.
+
+### O que a lista faz e o que ela recusa fazer
+
+A lista é **reconstruída só quando muda de verdade** — o `renderEventCards` compara as chaves antes
+de mexer no DOM. Sem isso, a seleção de texto de quem estivesse lendo uma frase seria apagada a
+cada 1,5 s. Nada dentro da seção é focável, e é o que torna a reconstrução segura (o `tree.ts`
+precisa do contrário, e registra por quê).
+
+O `aria-live` fica **só no aviso de pausa**, não na lista: anunciar os 279 eventos de uma partida
+deixaria a tela impossível de usar com leitor de tela; os críticos são ~10.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 334 testes em 19 arquivos
+  npm run dev   # aperte 4 e espere: o cartão entra com o fato real
+  ```
+  Os aceites são o `ACEITE` do `tests/events.test.ts` (a idade deduzida bate com a real numa
+  partida de verdade) e o do `tests/event-cards.test.ts` (a auto-pausa interrompe ~10 vezes, não
+  ~50).
+
+  **Conferido no navegador**, e vale registrar como: esperar um evento crítico jogando levaria
+  vinte anos de jogo. Em vez disso, o `advanceTick` do próprio jogo foi rodado no console até
+  achar o mês do primeiro crítico (2072), o save foi gravado **um mês antes** pelo `saveGame` do
+  jogo, e os últimos meses correram sozinhos na tela. O estado é o que o engine produz — mesmo
+  caminho de código de quem joga —, e a auto-pausa aconteceu ao vivo. O save de teste que estava
+  no `localStorage` foi devolvido como estava.
+- **Pendente:**
+  - **A auto-pausa perde um crítico depois de a aba ficar parada — e isso foi visto acontecer, não
+    deduzido.** O lote do relógio vai a 12 ticks e o cartão vive 6: um crítico que apareça e vença
+    dentro do mesmo lote já saiu de cena quando o `checkAutoPause` roda. Na primeira tentativa de
+    fotografar a auto-pausa, a aba estrangulada entregou os ticks 568 a 577 num quadro só; o
+    colapso de safra do tick 570 nasceu e morreu ali dentro, e o jogo não parou. Repetindo com o
+    save um mês antes do evento, parou na hora. Consertar exigiria o engine chamar de volta a UI a
+    cada passo — o `§3` não deixa.
+  - **O cartão não diz quanto o evento tirou.** Decidido no chat: o dano depende da resiliência no
+    instante da pancada e a resiliência muda depois, então recalcular mostraria um número diferente
+    do que foi cobrado. Guardar o aplicado exige campo novo no `ActiveEvent` e `SAVE_VERSION` novo
+    — é do `P7-04`.
+  - **A 4x o cartão fica 2,25 s na tela.** Seis meses de jogo é pouco tempo real para ler uma
+    frase. Os críticos pausam, então esses dão tempo; os moderados, não. Vale medir no `P8-01`.
+  - **Se a Prata algum dia virar alcançável, quem ficar abaixo de 2 °C nunca verá uma auto-pausa.**
+    É defensável — não houve catástrofe para interromper ninguém — mas é consequência a lembrar.
+  - A colisão `P3-05` × `P7-01` segue registrada e não resolvida (`P8-02`). O `impact.economy`
+    continua sem função mecânica. `P1-04` e o `theme.css` do `P5-02` seguem abertos.
+- **Evidência:** `docs/evidencias/2026-08-23-p7-02-cartao-de-evento-e-auto-pausa.jpg` — 2072, três cartões em cena, o crítico com a faixa laranja e o aviso da pausa acima deles
+
+---
+
 ## 2026-08-20 — Os eventos entraram, o GDD §2.6 alcançou o P3-05, e a Inércia colidiu com eles
 
 - **Parte / tarefa:** `P7-01` ✔ · pendência do `P3-05` (`docs/GDD.md §2.6`) ✔

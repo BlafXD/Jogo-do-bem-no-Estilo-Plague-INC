@@ -19,6 +19,7 @@ import {
   balance,
   climateEvents,
   REGION_IDS,
+  type ActiveEvent,
   type ClimateEvent,
   type GameState,
   type Region,
@@ -34,8 +35,68 @@ import { nextRandom, type RngState } from './rng';
  * do `docs/GDD.md §3`, e o §12 proíbe reescrever o contrato sem pedir. Aplicar
  * de uma vez também é mais honesto com o `impact` que o contrato descreve: ele é
  * um delta, não uma taxa.
+ *
+ * Exportado no P7-02: é a constante que faz o `startTickOf` funcionar, e a UI
+ * precisa dela para saber quanto tempo um cartão ainda tem de vida.
  */
-const CARD_TICKS = 6;
+export const CARD_TICKS = 6;
+
+const eventsById: ReadonlyMap<string, ClimateEvent> = new Map(
+  climateEvents.map((event) => [event.id, event]),
+);
+
+/**
+ * O evento do catálogo por id, ou `undefined`.
+ *
+ * O `ActiveEvent` guarda só o id — o cartão do P7-02 precisa do nome e do fato,
+ * e um segundo `find` linear a cada quadro sobre uma lista que nunca muda seria
+ * desperdício. Mesmo padrão do `skillById`.
+ */
+export function eventById(id: string): ClimateEvent | undefined {
+  return eventsById.get(id);
+}
+
+/**
+ * O tick em que este cartão entrou em cena.
+ *
+ * **A idade já está codificada no `ticksRemaining`, e é exato.** O
+ * `advanceEvents` envelhece todo cartão em 1 por tick e cria no máximo um por
+ * tick com `CARD_TICKS` cheio — então quem está com 4 nasceu há dois meses, sem
+ * ambiguidade possível.
+ *
+ * Existe porque a UI precisa saber **o que é novo**, e não tem como descobrir
+ * sozinha: o relógio do P6-04 entrega até doze ticks num quadro só, e nesse
+ * intervalo até doze eventos podem ter entrado. Comparar as duas listas não
+ * resolve — o `ageCards` recria todos os objetos a cada mês, então nem a
+ * identidade nem o conteúdo distinguem um cartão velho de um novo.
+ *
+ * A alternativa era gravar um `startedTick` no `ActiveEvent`, o que subiria o
+ * `SAVE_VERSION` para guardar um número que já dá para deduzir. O preço deste
+ * caminho é o acoplamento ao `CARD_TICKS`: se um dia a duração do cartão variar
+ * por evento, esta função quebra em silêncio — e é por isso que o
+ * `tests/events.test.ts` cobra a invariante contra uma simulação de verdade, em
+ * vez de conferir a aritmética contra ela mesma.
+ */
+export function startTickOf(active: ActiveEvent, currentTick: number): number {
+  return currentTick - (CARD_TICKS - active.ticksRemaining);
+}
+
+/**
+ * O evento é grave o bastante para parar o relógio (P7-02).
+ *
+ * **O eixo é o apoio, e a escolha tem razão.** Dos três campos do `impact`, o
+ * apoio é o único ligado a uma condição de fim: o `docs/GDD.md §2.7` dissolve a
+ * agência quando o apoio médio zera. Crítico, aqui, quer dizer *ameaça encerrar
+ * a partida* — não "tem números grandes". A economia, hoje, não é lida por
+ * regra nenhuma, e o PAC perdido se recupera sozinho no mês seguinte.
+ *
+ * O limiar mora no `balance.json` (regra 8) porque é dele que depende quantas
+ * vezes o jogo interrompe quem está jogando. A medição que escolheu o valor
+ * está em `docs/BALANCEAMENTO.md`.
+ */
+export function isCritical(event: ClimateEvent): boolean {
+  return event.impact.support >= balance.criticalEventSupport;
+}
 
 /** Um evento pode sortear qualquer região, ou só as que ele lista. */
 function targetsOf(event: ClimateEvent): readonly RegionId[] {
