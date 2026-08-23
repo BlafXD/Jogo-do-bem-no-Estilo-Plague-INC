@@ -14,6 +14,7 @@
 // quadro depois da pausa entregar o intervalo inteiro de uma vez.
 
 import { ui } from './data/i18n';
+import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
 import { unlockSkill } from './engine/skills';
 import { createInitialState, type SkillId } from './engine/state';
@@ -27,6 +28,7 @@ import {
   renderControls,
   type TimeCommand,
 } from './ui/controls';
+import { containView, mountContain, renderContain } from './ui/contain';
 import {
   eventCardsView,
   mountEventCards,
@@ -45,6 +47,7 @@ import {
 } from './ui/session';
 import { clearGame, loadGame, saveGame } from './ui/storage';
 import { mountTree, renderTree, treeView } from './ui/tree';
+import './ui/contain.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
 import './ui/hud.css';
@@ -84,6 +87,7 @@ const controls = required('#controles');
 const partida = required('#partida');
 const resultado = required('#resultado');
 const eventos = required('#eventos');
+const contencao = required('#contencao');
 const tree = required('#arvore');
 const app = required<HTMLElement>('#app');
 
@@ -167,8 +171,10 @@ function renderGame(): void {
   renderTree(tree, treeView(state));
   renderOutcome(resultado, outcomeView(state));
   renderEvents();
-  // A árvore fica apagada depois do fim. O `data-finished` só existe para o
-  // CSS: quem de fato recusa a compra é o `handleUnlock`.
+  renderContain(contencao, containView(state));
+  // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só
+  // existe para o CSS: quem de fato recusa é o `handleUnlock` e o
+  // `handleContain`.
   app.dataset.finished = String(isFinished(state));
 }
 
@@ -238,9 +244,32 @@ function handleUnlock(id: SkillId): void {
   saveGame(state);
 }
 
+/**
+ * A contenção da Inércia (P7-03).
+ *
+ * Mesmo padrão do `handleUnlock`, e pelo mesmo motivo: a UI manda conter e olha
+ * o que voltou. Recusada, o `contain` devolve **o mesmo objeto** de estado, e a
+ * comparação por identidade detecta isso sem redesenhar nada — é o que permite
+ * ao botão bloqueado continuar clicável e focável.
+ *
+ * Salva na hora, como a compra: gastar PAC é a decisão que o jogador mais
+ * lamentaria perder ao fechar a aba.
+ */
+function handleContain(): void {
+  if (isFinished(state)) return;
+
+  const next = contain(state);
+  if (next === state) return;
+
+  state = next;
+  renderGame();
+  saveGame(state);
+}
+
 mountHud(hud);
 mountControls(controls, handleCommand);
 mountEventCards(eventos);
+mountContain(contencao, handleContain);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
 // minutos de jogo em curso; aqui não há mais partida para destruir.

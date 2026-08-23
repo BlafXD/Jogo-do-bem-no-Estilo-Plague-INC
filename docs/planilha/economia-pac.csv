@@ -3,3 +3,4 @@ nada;Não faz nada;750,0;1600;0,0;0;20;850,0;53,1
 melhor;Corta cedo, na melhor ordem, e ignora Sociedade;750,0;1600;580,0;10;20;850,0;53,1
 sociedade-cedo;Investe em Sociedade antes de cortar;1044,5;1600;830,0;14;20;555,5;34,7
 tarde;Acorda em 2060;949,7;1600;760,0;13;20;650,3;40,6
+contencao;Compra Sociedade, corta e contém a Inércia;1044,5;1600;880,0;13;20;555,5;34,7

@@ -18,7 +18,18 @@ import { ui } from '../data/i18n';
 import { globalEmissions } from '../engine/climate';
 import { averageSupport, type GameState } from '../engine/state';
 
-export const HUD_FIELDS = ['year', 'temperature', 'emissions', 'actionPoints', 'support'] as const;
+export const HUD_FIELDS = [
+  'year',
+  'temperature',
+  'emissions',
+  'actionPoints',
+  'support',
+  // A Inércia entrou no P7-03. O docs/GDD.md §2.2 sempre a listou como
+  // indicador; até aqui ela era um campo do GameState que ninguém mostrava, e
+  // sem o número na tela o antagonista seria uma força que o jogador sente sem
+  // poder medir — a mesma falha que o P7-02 consertou nos eventos.
+  'inertia',
+] as const;
 
 export type HudField = (typeof HUD_FIELDS)[number];
 
@@ -55,6 +66,11 @@ export function hudView(state: GameState): HudView {
     emissions: `${oneDecimal.format(globalEmissions(state))} ${ui.units.emissionsPerYear}`,
     actionPoints: whole.format(Math.floor(state.actionPoints)),
     support: whole.format(Math.round(averageSupport(state))),
+    // Truncada, **pela mesma razão do PAC**: o número na tela não pode
+    // prometer o que a ação vai negar. Arredondar mostraria "1" para uma
+    // Inércia de 0,6 — e o botão de conter, que recusa abaixo de 1, diria
+    // "Nada a conter" logo abaixo. Truncar faz os dois concordarem sempre.
+    inertia: whole.format(Math.floor(state.inertia)),
   };
 }
 

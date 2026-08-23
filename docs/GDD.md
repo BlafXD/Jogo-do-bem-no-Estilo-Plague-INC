@@ -149,8 +149,15 @@ A partida acaba de três jeitos, e **a ordem em que as perguntas são feitas faz
 |---|---|
 | `< 1,5 °C` | Ouro |
 | `< 2,0 °C` | Prata |
-| `< 2,5 °C` | Bronze |
-| `≥ 2,5 °C` | sobrevivência, sem medalha |
+| `< 2,55 °C` | Bronze |
+| `≥ 2,55 °C` | sobrevivência, sem medalha |
+
+> **O teto do Bronze subiu de 2,5 para 2,55 °C no `P7-03`**, e não foi ajuste de gosto. Com os
+> eventos do §2.5 e a Inércia do §2.6 agindo juntos, **nenhuma estratégia alcançava medalha
+> nenhuma** — a melhor jogada medida termina em 2,5197 °C. O `docs/BALANCEAMENTO.md` já tinha
+> medido este conserto como o mais barato e o havia adiado para o `P8-02`; a alternativa era
+> publicar uma escala de medalhas decorativa. **O preço está registrado junto:** a faixa ficou
+> larga o bastante para caber também quem desiste depois de ~2070, e fechar isso é do `P8-02`.
 
 > **Por que chegar a 2100 vale medalha** — decisão de 2026-08-19, no `P6-08`. O zero líquido é
 > hoje **inalcançável**: a árvore inteira soma 5,5% ao ano de corte contra 0,93% de crescimento da
@@ -253,7 +260,15 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "basePointsPerYear": 10,
   "supportDecayPerYear": 1.5,      // pontos de apoio perdidos por ano, por região
   "supportFloor": 25,              // piso de apatia: o decaimento para aqui
-  "inertiaGrowthPerYear": 2,
+  "inertiaGrowthPerYear": 0.5,     // crescimento de base da Inércia
+  "inertiaGrowthPerCutPercent": 1, // quanto cada 1%/ano de corte a alimenta
+  "inertiaDampingPerSupport": 0.25,// quanto cada ponto de apoio acima do piso a segura
+  "inertiaSubsidyBite": 0.002,     // agravo de emissão por turno de subsídio
+  "inertiaDisinformationBite": 0.5,// apoio derrubado por turno de desinformação
+  "inertiaActionEveryTicks": 6,    // de quantos em quantos meses ela age
+  "containCost": 30,               // PAC de uma contenção, com só o nó raiz
+  "containDiscountPerNode": 0.2,   // desconto por nó de Sociedade além do primeiro
+  "containRelief": 25,             // pontos de Inércia que a contenção derruba
   "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
   "criticalEventSupport": 2.5,     // impacto de apoio que torna o evento crítico
   "loseTemperature": 3.0
@@ -279,6 +294,15 @@ porque sem ele a constante decidiria toda partida: 50 pontos caindo 1,5 ao ano z
 o §2.7 dá derrota por apoio médio zero — o jogador perderia em 2058 fizesse o que fizesse.
 **Furar o piso para baixo é trabalho de evento (§2.5) e da Inércia (§2.6)**, que agem por cima
 dele; o ramo Sociedade (§2.4) é o que empurra de volta para cima.
+
+**A Inércia (as nove chaves `inertia*` e `contain*`).** O crescimento dela é a conta do §2.6 —
+base, mais pressão por corte comprado, menos amortecimento por apoio acima do piso de apatia. Duas
+delas merecem nota. O `inertiaGrowthPerYear` **caiu de 2 para 0,5** no `P7-03`: com 2 ao ano a
+Inércia satura em 100 antes de 2075 contra um jogador que não fez nada, e o antagonista venceria
+sozinho — o espelho do §2.6 viraria enfeite. E o `inertiaDisinformationBite` ficou em **0,5**, não
+no 1,0 que o `docs/INERCIA.md` propôs: aquele número foi verificado num mundo **sem eventos**, e com
+os eventos do §2.5 em cena ele dissolve a agência em toda estratégia. A varredura em cinco seeds
+está em `docs/BALANCEAMENTO.md`.
 
 **Evento crítico (`criticalEventSupport`).** Um evento cujo `impact.support` alcança este valor
 **pausa o relógio sozinho** e mostra o cartão com o fato real (`P7-02`). O eixo é o apoio, e não a

@@ -8,6 +8,7 @@
 // Nada aqui é código de jogo: é o engine de produção sendo dirigido de fora.
 
 import { globalEmissions } from '../src/engine/climate';
+import { canContain, contain, containCost } from '../src/engine/inertia';
 import { outcomeOf } from '../src/engine/outcome';
 import { canUnlock, pointsPerYear, unlockSkill } from '../src/engine/skills';
 import {
@@ -39,6 +40,16 @@ export type Strategy = {
   readonly label: string;
   readonly startYear: number;
   readonly wishlist: readonly SkillId[];
+  /**
+   * A partir de que nível de Inércia o jogador gasta PAC contendo em vez de
+   * comprar (P7-03). `Infinity` — o padrão — é quem nunca contém.
+   *
+   * Entrou aqui porque a Inércia mudou o que "jogar bem" quer dizer: desde que
+   * o `advanceTick` a aplica, a lista de desejos sozinha não descreve mais uma
+   * partida bem jogada. As quatro estratégias históricas continuam sem conter,
+   * de propósito — é o contrafactual que mostra o que a contenção compra.
+   */
+  readonly containAbove?: number;
 };
 
 /**
@@ -86,9 +97,42 @@ export const STRATEGIES: readonly Strategy[] = [
     startYear: 2060,
     wishlist: [...ECONOMY_NODES, ...CUT_ORDER],
   },
+  // A quinta entrou no P7-03, e ela é a única que sobrevive: desde que a
+  // Inércia age, cortar sem preparar apoio termina em dissolução, e o ramo
+  // Sociedade deixou de ser bônus para virar a licença de conter (§2.6).
+  // As quatro acima ficaram intocadas de propósito — é a comparação com elas
+  // que mostra o que a Inércia mudou.
+  {
+    id: 'contencao',
+    label: 'Compra Sociedade, corta e contém a Inércia',
+    startYear: balance.startYear,
+    wishlist: [...ECONOMY_NODES, ...CUT_ORDER],
+    containAbove: 70,
+  },
 ];
 
 const costById = new Map(skills.map((s) => [s.id, s.cost]));
+
+/**
+ * O jogador contém neste mês? Devolve o estado depois da contenção e o que ela
+ * custou, ou `null` quando ele não contém — porque a política não manda, porque
+ * o ramo Sociedade ainda não destravou, ou porque o bolso não dá.
+ *
+ * Quem decide se a contenção é possível é o `canContain` do engine; aqui só
+ * mora a política do jogador simulado.
+ */
+function tryContain(
+  state: GameState,
+  policy: { readonly containAbove?: number },
+): { readonly state: GameState; readonly cost: number } | null {
+  const threshold = policy.containAbove ?? Infinity;
+  if (state.inertia < threshold) return null;
+
+  const cost = containCost(state);
+  if (cost === null || !canContain(state).ok) return null;
+
+  return { state: contain(state), cost };
+}
 
 export type SimResult = Run & {
   readonly finalState: GameState;
@@ -151,14 +195,22 @@ export function simulate(strategy: Strategy): SimResult {
     state = advanceTick(state);
 
     if (state.year >= strategy.startYear) {
-      // Um item por mês, no máximo. Esvaziar a lista de uma vez quando o bolso
-      // permite esconderia o ritmo — que é justamente o que a planilha mostra.
-      for (const id of strategy.wishlist) {
-        if (canUnlock(state, id).ok) {
-          state = unlockSkill(state, id);
-          spentPoints += costById.get(id) ?? 0;
-          boughtThisYear.push(id);
-          break;
+      // Conter **ou** comprar, nunca os dois no mesmo mês: é a escolha que o
+      // P3-03 pediu e o que dá peso à contenção — ela custa um nó adiado.
+      const contencao = tryContain(state, strategy);
+      if (contencao !== null) {
+        state = contencao.state;
+        spentPoints += contencao.cost;
+      } else {
+        // Um item por mês, no máximo. Esvaziar a lista de uma vez quando o bolso
+        // permite esconderia o ritmo — que é justamente o que a planilha mostra.
+        for (const id of strategy.wishlist) {
+          if (canUnlock(state, id).ok) {
+            state = unlockSkill(state, id);
+            spentPoints += costById.get(id) ?? 0;
+            boughtThisYear.push(id);
+            break;
+          }
         }
       }
     }
@@ -205,18 +257,30 @@ export type PlayOut = {
  * Nada é mutado: o `advanceTick` devolve estado novo, então bifurcar é só
  * chamar esta função duas vezes com o mesmo `from`.
  */
-export function playOut(from: GameState, wishlist: readonly SkillId[]): PlayOut {
+export function playOut(
+  from: GameState,
+  wishlist: readonly SkillId[],
+  containAbove = Infinity,
+): PlayOut {
   let state = from;
   let defeated = outcomeOf(state).kind === 'defeat';
 
   while (!isOver(state)) {
     state = advanceTick(state);
-    for (const id of wishlist) {
-      if (canUnlock(state, id).ok) {
-        state = unlockSkill(state, id);
-        break;
+
+    // Mesma escolha do `simulate`: conter ou comprar, nunca os dois.
+    const contencao = tryContain(state, { containAbove });
+    if (contencao !== null) {
+      state = contencao.state;
+    } else {
+      for (const id of wishlist) {
+        if (canUnlock(state, id).ok) {
+          state = unlockSkill(state, id);
+          break;
+        }
       }
     }
+
     if (!defeated && outcomeOf(state).kind === 'defeat') defeated = true;
   }
 

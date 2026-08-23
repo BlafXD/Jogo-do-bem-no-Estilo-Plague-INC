@@ -28,6 +28,117 @@ Regras curtas:
 
 ---
 
+## 2026-08-23 — A Inércia entrou no engine, e a colisão do P3-05 era pior do que o registro dizia
+
+- **Parte / tarefa:** `P7-03` ✔ — **o loop do `§2.1` está completo**
+- **O que mudou:**
+  - `src/engine/inertia.ts` **implementado** — o espelho, as duas ações, a contenção. Era um comentário de 6 linhas desde o `SETUP-05`.
+  - `src/engine/tick.ts` — a Inércia entra por último no tick; o cabeçalho deixou de dizer que ela faltava.
+  - `src/engine/skills.ts` — `purchasedCutPercent`, que é o que a Inércia enxerga como ameaça.
+  - `src/data/balance.json` + o tipo `Balance` — **8 chaves novas**, `inertiaGrowthPerYear` de 2 para 0,5, `bronzeTemperature` de 2,5 para 2,55.
+  - `src/ui/hud.ts` — o sexto indicador. `src/ui/contain.ts` e `.css` **criados** — o botão de conter.
+  - `src/data/i18n.ts`, `index.html`, `src/main.ts` — textos, seção e ligação.
+  - `docs/GDD.md §2.7 e §4`, `docs/BALANCEAMENTO.md`, `docs/INERCIA.md` — os números e o porquê de cada um.
+  - `tests/contain.test.ts` (11) e `tests/contain.dom.test.ts` (9) **criados**; `inercia.test.ts` reescrito (25); `planilha-engine.ts`, `planilha.test.ts`, `tensao.test.ts`, `outcome.test.ts`, `tick.test.ts` e `hud.test.ts` atualizados. Suíte: 334 → **375**.
+
+### A colisão era pior do que o registro dizia, e isso é o achado da tarefa
+
+O `docs/INERCIA.md` fechou dizendo que a Inércia mais os eventos custavam a medalha. Ao medir contra
+o engine antes de escrever qualquer coisa, apareceu que **os três testes `COLISÃO` verificavam
+temperatura e medalha e nunca a causa da derrota**. Com os números da especificação:
+
+| Estratégia | Desfecho |
+|---|---|
+| Compra Sociedade e contém | **dissolvida em 2098** |
+| Corta bem, pula Sociedade | **dissolvida em 2083** |
+| Sociedade mas nunca contém | **dissolvida em 2091** |
+
+Nenhuma sobrevivia. Não era "perde a medalha": era o jogo invencível. **A lição é sobre o teste, não
+sobre o balanceamento** — um aceite que mede só o número bonito não percebe que a partida acabou.
+
+### Dois problemas que estavam confundidos num só
+
+**O apoio é o gargalo.** Sem Inércia nenhuma, a melhor jogada já termina 2100 com 11 pontos de apoio
+médio: os eventos do `P7-01` consomem quase todo o pool sozinhos. A desinformação a 1,0 tira ~52
+pontos ao longo do século, mais do que existe. A varredura em **cinco seeds** achou 0,5 como a única
+faixa que entrega as duas coisas: a melhor jogada sobrevive nas cinco, e quem pula Sociedade morre
+nas cinco. Em 0,4 a inversão do `P3-05` desaparece de novo; em 0,7 quem faz tudo certo termina com
+menos de um ponto de apoio.
+
+**A medalha não era culpa da Inércia.** Com `subsidyBite: 0` a melhor jogada ainda dá 2,5101 °C, e
+**sem Inércia nenhuma** comprar Sociedade já dava 2,5057 °C — acima do teto de 2,5. O subsídio
+contribui com 0,0096 °C. A armadilha do `P3-04` é anterior a esta tarefa e não se conserta afinando
+o antagonista, então o teto do Bronze foi para 2,55 °C, que é o conserto que o `BALANCEAMENTO.md` já
+tinha medido e adiado. **Decidido no chat**, porque mexe na tabela do `§2.7` e puxa uma decisão do
+`P8-02` para cá.
+
+### O que se ganhou
+
+| | Antes | Depois |
+|---|---|---|
+| Melhor jogada | 2,4652 °C · Bronze | 2,5197 °C · **Bronze, viva** |
+| Quem pula Sociedade | melhor jogada, Bronze | **dissolvida em 2095** |
+| Janela de perdão fecha em | 2055 | **depois de 2065** |
+| Derrota por apoio | só por evento | **alcançável por estratégia** |
+
+A inversão que o `P3-05` procurava está de pé e testada: **a partida que mais corta emissão não é a
+que sobrevive.** Quem ignora Sociedade termina mais frio e é dissolvido.
+
+**E o que se pagou, registrado como teste em vez de escondido:** com a faixa do Bronze mais larga,
+de ~2070 em diante largar o controle também termina em Bronze — continuar jogando e desistir
+separam-se por 0,005 °C. Está no `tests/inercia.test.ts` como `ACHADO`, e o conserto é a escala de
+medalhas, no `P8-02`.
+
+### O modelo do P3-05 virou contrato, em vez de virar lixo
+
+Com o engine aplicando a Inércia sozinho, o `tests/inercia-modelo.ts` passaria a somar o efeito duas
+vezes — e foi exatamente o que aconteceu na primeira rodada de testes. Em vez de aposentá-lo, o
+`tests/inercia.test.ts` agora **cobra que a implementação concorde com ele função por função**, sobre
+estados tirados de uma partida de verdade. É o que impede o engine de derivar em silêncio dos
+números que o `docs/INERCIA.md` publica.
+
+### Um defeito que só o navegador achou
+
+O HUD mostrava **INÉRCIA 0** e o botão dizia **Disponível** logo abaixo: a Inércia estava em 0,4,
+arredondada para zero na tela, e a guarda do `canContain` recusava só em `<= 0`. O jogador gastaria
+30 PAC para derrubar algo que não tinha como enxergar. Consertado nos dois lados de uma vez — o HUD
+**trunca** a Inércia (a mesma razão do PAC: o número na tela não promete o que a ação vai negar) e a
+guarda recusa abaixo de 1. Os dois testes que trancam isso citam o navegador.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 375 testes em 21 arquivos
+  npm run dev   # compre "Educação climática" e o botão de conter destrava
+  ```
+  Os aceites são os quatro `ACEITE` do `tests/inercia.test.ts`, o do `tests/outcome.test.ts` ("só
+  cortar termina mais frio e ainda assim perde") e o do `tests/planilha.test.ts`.
+
+  **Conferido no navegador**, com os quatro estados do botão: bloqueado → disponível → clicado (30
+  PAC cobrados, Inércia de 66 para 41) → PAC insuficiente. A partida de 2076 foi produzida rodando o
+  `advanceTick` do próprio jogo no console até a Inércia passar de 60 e gravando com o `saveGame` —
+  esperar isso jogando levaria vinte minutos. O save de teste foi devolvido como estava.
+- **Pendente:**
+  - **A faixa do Bronze ficou larga demais.** Largar o controle depois de ~2070 ainda dá medalha. É
+    o preço documentado da mudança de teto, e o conserto é a escala de medalhas — `P8-02`.
+  - **Os recuos regulatórios, a terceira ação do `§2.6`, não foram implementados.** O `P3-05` os
+    deixou fora da verificação por não carregarem peso mecânico; pô-los no jogo sem número medido
+    seria pôr um efeito que ninguém pesou.
+  - **A alternância das ações é determinística.** Um jogador atento vai perceber que subsídio e
+    desinformação se revezam a cada seis meses. Sortear faria a partida depender da seed por um
+    motivo que ele não tem como ler; vale reavaliar depois do `P8-01`.
+  - **A contenção não avisa quando acontece.** Diferente do evento crítico, ela não pausa nem mostra
+    cartão — o jogador clica e vê dois números mudarem no HUD. Vale um retorno visual no `P7-04`.
+  - **Nada impede gastar 30 PAC com a Inércia em 5.** A guarda só cobre o zero; conter 5 pontos pelo
+    preço de 25 é uma jogada ruim que o jogo permite. Se o `P8-01` mostrar gente caindo nisso, o
+    conserto é um piso, não uma trava.
+  - **A política do jogador simulado continua sendo "contenha acima de 70".** Um humano vai jogar
+    diferente, e é o `P8-01` que descobre como.
+  - `P1-04` e o `theme.css` do `P5-02` seguem abertos.
+- **Evidência:** `docs/evidencias/2026-08-23-p7-03-inercia-no-hud-e-contencao.jpg` — 2079, Inércia 45 no HUD e o botão de conter sem PAC para agir
+
+---
+
 ## 2026-08-23 — Os eventos chegaram à tela, e os críticos param o relógio
 
 - **Parte / tarefa:** `P7-02` ✔

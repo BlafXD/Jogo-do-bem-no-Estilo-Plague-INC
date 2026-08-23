@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { globalEmissions } from '../src/engine/climate';
+import { canContain, contain } from '../src/engine/inertia';
 import { isFinished, MEDAL_CEILING, medalFor, outcomeOf } from '../src/engine/outcome';
 import { canUnlock, unlockSkill } from '../src/engine/skills';
 import {
@@ -194,22 +195,32 @@ describe('outcomeOf', () => {
 });
 
 describe('a partida inteira', () => {
-  /** Roda até acabar, comprando na ordem pedida assim que o PAC permitir. */
-  function playthrough(order: readonly string[]): GameState {
+  /**
+   * Roda até acabar, comprando na ordem pedida assim que o PAC permitir.
+   *
+   * `containAbove` entrou no P7-03: acima desse nível de Inércia o jogador
+   * gasta o PAC do mês contendo em vez de comprando. `Infinity` — o padrão — é
+   * quem nunca contém, que continua sendo o contrafactual útil.
+   */
+  function playthrough(order: readonly string[], containAbove = Infinity): GameState {
     let state = start();
     const pending = [...order];
 
     for (let i = 0; i < TOTAL_TICKS; i++) {
       if (isFinished(state)) break;
 
-      let bought = true;
-      while (bought) {
-        bought = false;
-        const next = pending.findIndex((id) => canUnlock(state, id).ok);
-        if (next >= 0) {
-          state = unlockSkill(state, pending[next] as string);
-          pending.splice(next, 1);
-          bought = true;
+      if (state.inertia >= containAbove && canContain(state).ok) {
+        state = contain(state);
+      } else {
+        let bought = true;
+        while (bought) {
+          bought = false;
+          const next = pending.findIndex((id) => canUnlock(state, id).ok);
+          if (next >= 0) {
+            state = unlockSkill(state, pending[next] as string);
+            pending.splice(next, 1);
+            bought = true;
+          }
         }
       }
 
@@ -231,28 +242,46 @@ describe('a partida inteira', () => {
     expect(state.tick).toBeLessThan(TOTAL_TICKS);
   });
 
-  it('ACEITE: jogando bem, a partida chega viva a 2100 e ganha bronze', () => {
-    // **A ordem mudou duas vezes desde que este teste nasceu, e as duas mudanças
-    // foram medidas, não achadas.** O P6-08 usava "renda primeiro, depois corte
-    // por eficiência"; o P3-04 mediu que os dois nós de renda são uma armadilha
-    // — atrasam todo corte em cerca de uma década e a partida acaba mais quente
-    // (docs/BALANCEAMENTO.md). Com os eventos do P7-01 cobrando PAC, aquela
-    // ordem deixou de alcançar o bronze de vez. A melhor conhecida hoje é só
-    // corte, do maior corte por PAC gasto para o menor.
-    const cuts = skills
-      .map((skill) => ({
-        id: skill.id,
-        cut: skill.effects.reduce((sum, e) => sum + (e.kind === 'emissionCut' ? e.value : 0), 0),
-        cost: skill.cost,
-      }))
-      .filter((skill) => skill.cut > 0)
-      .sort((a, b) => b.cut / b.cost - a.cut / a.cost)
-      .map((skill) => skill.id);
+  /** Os nós que cortam emissão, do maior corte por PAC gasto para o menor. */
+  const cuts = skills
+    .map((skill) => ({
+      id: skill.id,
+      cut: skill.effects.reduce((sum, e) => sum + (e.kind === 'emissionCut' ? e.value : 0), 0),
+      cost: skill.cost,
+    }))
+    .filter((skill) => skill.cut > 0)
+    .sort((a, b) => b.cut / b.cost - a.cut / a.cost)
+    .map((skill) => skill.id);
 
-    const state = playthrough(cuts);
+  it('ACEITE: jogando bem, a partida chega viva a 2100 e ganha bronze', () => {
+    // **A ordem mudou três vezes desde que este teste nasceu, e as três
+    // mudanças foram medidas, não achadas.** O P6-08 usava "renda primeiro,
+    // depois corte por eficiência"; o P3-04 mediu que os dois nós de renda
+    // atrasam todo corte em cerca de uma década, e com os eventos do P7-01
+    // cobrando PAC aquela ordem deixou de alcançar o bronze.
+    //
+    // O P7-03 inverteu de novo, e desta vez pelo motivo que o P3-05 procurava:
+    // com a Inércia em cena, **só cortar é uma partida perdida**. O ramo
+    // Sociedade voltou para a frente da fila porque é o primeiro nó dele que
+    // destrava a contenção — ele deixou de ser um bônus de PAC que não se paga
+    // e virou a licença para lutar (docs/GDD.md §2.6).
+    const state = playthrough(['climate-education', 'treaties', ...cuts], 70);
 
     expect(state.tick).toBe(TOTAL_TICKS);
     expect(outcomeOf(state)).toEqual({ kind: 'finished', ending: 'horizon', medal: 'bronze' });
+  });
+
+  it('ACEITE do P7-03: só cortar termina mais frio e ainda assim perde', () => {
+    // O dilema do §2.6 como asserção: a partida que mais corta emissão não é a
+    // que sobrevive. Quem ignora Sociedade alimenta a Inércia sem nunca poder
+    // contê-la, e a desinformação fura o piso de apatia até dissolver a agência
+    // — mesmo com uma temperatura que teria dado medalha.
+    const soCortes = playthrough(cuts);
+    const bemJogada = playthrough(['climate-education', 'treaties', ...cuts], 70);
+
+    expect(soCortes.temperature).toBeLessThan(bemJogada.temperature);
+    expect(outcomeOf(soCortes)).toEqual({ kind: 'defeat', cause: 'support' });
+    expect(medalFor(soCortes.temperature)).toBe('bronze');
   });
 
   it('a vitória por emissões ≈ 0 é inalcançável com o balanceamento de hoje', () => {

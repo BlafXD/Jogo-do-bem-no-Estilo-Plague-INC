@@ -26,7 +26,15 @@ import { describe, expect, it } from 'vitest';
 
 import { medalFor } from '../src/engine/outcome';
 import { balance } from '../src/engine/state';
-import { CUT_ORDER, playOut, SEED, simulate, STRATEGIES, type Strategy } from './planilha-engine';
+import {
+  CUT_ORDER,
+  ECONOMY_NODES,
+  playOut,
+  SEED,
+  simulate,
+  STRATEGIES,
+  type Strategy,
+} from './planilha-engine';
 import { readOutput, writeTensaoCsv, writeTensaoHtml, type TensionRow } from './planilha-relatorio';
 
 /** Tempo real de uma década de jogo na velocidade 1x, em minutos. */
@@ -37,6 +45,24 @@ function strategyById(id: string): Strategy {
   if (found === undefined) throw new Error(`estratégia desconhecida: ${id}`);
   return found;
 }
+
+/**
+ * A partir de que nível de Inércia o jogador simulado contém (P7-03).
+ *
+ * O mesmo número da estratégia `contencao` do `planilha-engine.ts`, e ele
+ * precisa ser o mesmo: a linha de referência da tensão e a bifurcação "o melhor
+ * possível daqui" têm que descrever o mesmo jogador. Com jogadores diferentes,
+ * "quanto ainda está em jogo" mediria a distância entre duas pessoas em vez de
+ * entre duas decisões.
+ */
+const CONTAIN_ABOVE = 70;
+
+/**
+ * A lista de desejos de quem joga bem hoje: os dois nós de Sociedade primeiro,
+ * porque é o primeiro deles que destrava a contenção, e depois os cortes na
+ * ordem de melhor corte por PAC.
+ */
+const BEST_ORDER = [...ECONOMY_NODES, ...CUT_ORDER];
 
 /**
  * A tensão ano a ano, medida a partir de duas linhas de referência.
@@ -51,7 +77,12 @@ function strategyById(id: string): Strategy {
  *    controle no meio da partida é recuperável ou terminal.
  */
 function measureTension(): readonly TensionRow[] {
-  const bem = simulate(strategyById('melhor'));
+  // **A linha de referência mudou no P7-03, e a mudança é o achado.** Até aqui
+  // ela era a `melhor` — cortar cedo e ignorar Sociedade. Desde que a Inércia
+  // age, essa partida é **dissolvida por falta de apoio em 2095**, e medir a
+  // tensão de quem está morrendo diria pouco sobre o jogo. A partida bem jogada
+  // de hoje compra Sociedade e contém.
+  const bem = simulate(strategyById('contencao'));
   const parado = simulate(strategyById('nada'));
 
   const rows: TensionRow[] = [];
@@ -62,11 +93,13 @@ function measureTension(): readonly TensionRow[] {
     if (engajado === undefined || inerte === undefined) throw new Error('ano faltando');
 
     // As duas pontas do que ainda é possível, a partir de quem jogou bem.
-    const melhorFim = playOut(engajado, CUT_ORDER);
+    // "O melhor possível" agora inclui conter — desde o P7-03, uma partida que
+    // só compra nós não é a melhor jogável, é uma que perde mais devagar.
+    const melhorFim = playOut(engajado, BEST_ORDER, CONTAIN_ABOVE);
     const piorFim = playOut(engajado, []);
 
     // E o teto de quem só vai começar a agir agora.
-    const perdao = playOut(inerte, CUT_ORDER);
+    const perdao = playOut(inerte, BEST_ORDER, CONTAIN_ABOVE);
 
     rows.push({
       year: engajado.year,
@@ -142,8 +175,13 @@ describe('curva de dificuldade (P3-03)', () => {
 
   it('ACHADO: a janela de perdão fecha antes do fim — largar tarde é terminal', () => {
     // Quem não fez nada até 2025 ainda alcança o melhor resultado possível.
+    //
+    // O limiar vem do `balance.json` e não é mais o 2.5 escrito à mão que
+    // estava aqui: a regra 8 proíbe número de balanceamento no código, e este
+    // era um — o teto do Bronze mudou para 2,55 no P7-03 e a linha teria
+    // passado a cobrar um limiar que o jogo não usa mais.
     expect(at(balance.startYear).lateStartDefeated).toBe(false);
-    expect(at(balance.startYear).lateStartBest).toBeLessThan(2.5);
+    expect(at(balance.startYear).lateStartBest).toBeLessThan(balance.bronzeTemperature);
 
     // Em algum ano essa mesma partida deixa de ter salvação: por mais bem que
     // se jogue dali em diante, a derrota já está no caminho.

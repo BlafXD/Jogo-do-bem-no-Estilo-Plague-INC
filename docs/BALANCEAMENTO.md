@@ -349,6 +349,75 @@ interrompe quem está jogando**, que é a decisão mais visível desta constante
 |---|---|---|---|---|
 | 2026-08-23 | `criticalEventSupport` | — → 2,5 | O `P7-02` precisava de um limiar de gravidade e o `§3` não tem campo para isso | Não testado com jogador. Medido: 10 pausas na melhor jogada, 17 em quem não compra nada |
 
+### A Inércia implementada, e a colisão resolvida (2026-08-23)
+
+O `P7-03` levou a especificação do `P3-05` para `src/engine/inertia.ts`. Ao medir contra o engine
+real — com os eventos do `P7-01` em cena — apareceu que **a colisão registrada era pior do que o
+registro dizia**.
+
+**Os três testes `COLISÃO` só verificavam temperatura e medalha, nunca a causa da derrota.** Com os
+números da especificação aplicados, o desfecho de cada estratégia era:
+
+| Estratégia | Com `disinformationBite: 1.0` |
+|---|---|
+| Compra Sociedade e contém | **dissolvida em 2098** |
+| Corta bem, pula Sociedade | **dissolvida em 2083** |
+| Sociedade mas nunca contém | **dissolvida em 2091** |
+| Larga tudo | dissolvida em 2089 |
+
+Nenhuma estratégia sobrevivia. Não era "a melhor jogada perde a medalha": era o jogo invencível.
+
+#### O apoio é o gargalo, e é ele que não cabia
+
+Sem Inércia nenhuma, a melhor jogada já termina 2100 com **11 pontos** de apoio médio — os eventos
+consomem quase todo o pool sozinhos. A desinformação a 1,0 tira cerca de 0,7 ponto por região ao
+ano, o que dá ~52 pontos ao longo do século: mais do que as regiões têm para dar.
+
+A varredura, em **cinco seeds**, com a melhor jogada e com quem pula Sociedade:
+
+| `inertiaDisinformationBite` | Melhor jogada | Quem pula Sociedade |
+|---|---|---|
+| 1,0 (especificado) | morre 2098 | morre 2083 |
+| 0,7 | vive, apoio 0,3–1,3 | morre 2087–2089 |
+| **0,5** | **vive, apoio 1,5–3,0** | **morre 2094–2095** |
+| 0,4 | vive, apoio 2,4–4,1 | **vive** — a armadilha volta |
+
+**0,5 é a única faixa que entrega as duas coisas ao mesmo tempo**: a melhor jogada sobrevive nas
+cinco seeds, e quem pula o ramo Sociedade é dissolvido nas cinco. Abaixo de 0,4 a inversão que o
+`P3-05` construiu desaparece de novo; em 0,7 o jogador que faz tudo certo termina com menos de um
+ponto de apoio, que é margem nenhuma para quem joga pior que a política simulada.
+
+#### A medalha não era problema da Inércia
+
+Medido com `inertiaSubsidyBite: 0`, a melhor jogada ainda termina em **2,5101 °C**; e **sem Inércia
+nenhuma**, comprar o ramo Sociedade já dava **2,5057 °C**. O subsídio contribui com 0,0096 °C. Ou
+seja: a armadilha do `P3-04` — comprar Sociedade custa a medalha — é anterior ao `P7-03` e não se
+conserta afinando o antagonista.
+
+Por isso o **teto do Bronze foi movido de 2,5 para 2,55 °C**, que era o conserto que este arquivo já
+tinha medido e adiado. Sem ele, implementar o `P7-03` deixaria o jogo sem nenhum caminho para
+medalha — hoje "corta bem, pula Sociedade" ainda leva Bronze.
+
+#### O que se ganhou, e o que se pagou
+
+| | Antes do `P7-03` | Depois |
+|---|---|---|
+| Melhor jogada | 2,4652 °C · Bronze | 2,5197 °C · **Bronze, viva** |
+| Quem pula Sociedade | melhor jogada, Bronze | **dissolvida em 2095** |
+| Janela de perdão fecha em | 2055 | **depois de 2065** |
+| Derrota por apoio | só por evento | **alcançável por estratégia** |
+
+**O preço, medido e registrado:** com o teto em 2,55 a faixa do Bronze ficou larga, e **de ~2070 em
+diante largar o controle também termina em Bronze** — continuar jogando e desistir separam-se por
+0,005 °C. O `tests/inercia.test.ts` tem esse achado escrito como teste. O conserto não é
+enfraquecer a Inércia; é a escala de medalhas, e ela precisa de playtest (`P8-02`).
+
+| Data | Constante | De → Para | Por quê | Resultado |
+|---|---|---|---|---|
+| 2026-08-23 | `inertiaGrowthPerYear` | 2 → 0,5 | Com 2 a Inércia satura em 100 antes de 2075 contra quem não faz nada — o antagonista venceria sozinho | Não testado com jogador. Pico de 62–72 na melhor jogada |
+| 2026-08-23 | `inertiaDisinformationBite` | (spec 1,0) → 0,5 | Com os eventos do `P7-01` em cena, 1,0 dissolve a agência em toda estratégia | Não testado com jogador. Medido em 5 seeds: melhor jogada viva, quem pula Sociedade morre |
+| 2026-08-23 | `bronzeTemperature` | 2,5 → 2,55 | Sem isso nenhuma estratégia alcança medalha; a melhor jogada termina em 2,5197 °C | Não testado com jogador. Devolve o Bronze — e alarga a faixa demais, ver acima |
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz

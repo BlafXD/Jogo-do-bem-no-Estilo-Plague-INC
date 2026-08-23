@@ -1,0 +1,111 @@
+/* O botão de conter a Inércia (P7-03).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
+   encostar aqui.
+
+   Nenhuma cor nova entra. São as mesmas já conferidas contra o fundo #0F1C17:
+     valor    #F2F7F4  16,17:1     rótulo  #A7C0B4  9,04:1
+     destaque #7FD1A8   9,67:1     alerta  #F2A65A  9,73:1
+     borda    #4C8069   3,84:1 (não-texto, exige 3:1)
+
+   **O botão é deliberadamente parecido com um nó da árvore, e deliberadamente
+   não igual.** Parecido porque a gramática é a mesma — nome, custo, ícone mais
+   rótulo escrito, uma frase de detalhe — e o jogador não deve ter que reaprender
+   a ler. Diferente na cor de destaque (alerta, não destaque) porque ele não é
+   uma compra: não fica comprado, repete, e o que compra é tempo.
+
+   Como na árvore, **não há opacidade no estado bloqueado**: apagar o cartão
+   derruba o contraste abaixo do AA que o §5 exige. Um botão bloqueado continua
+   perfeitamente legível, ele só não é clicável. */
+
+.contain {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+.contain__button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  /* Não ocupa a largura da tela: ele é uma ação, não uma seção. A medida casa
+     com a coluna da árvore logo abaixo, então os dois se alinham. */
+  width: min(100%, 22rem);
+  padding: 0.75rem;
+  border: 2px dashed var(--cor-borda, #4c8069);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  /* 16px é o piso do §5, e vale para o cartão inteiro. */
+  font-size: 1rem;
+  text-align: start;
+  cursor: not-allowed;
+}
+
+/* Anel de foco explícito, igual ao da árvore e dos controles. */
+.contain__button:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+/* Disponível é o único estado clicável, e o único de borda contínua e grossa —
+   a mesma convenção da árvore. O 12% do fundo de hover é o próprio alerta
+   diluído, não uma cor nova. */
+.contain__button[data-status='available'] {
+  border-style: solid;
+  border-width: 3px;
+  border-color: var(--cor-alerta, #f2a65a);
+  cursor: pointer;
+}
+
+.contain__button[data-status='available']:hover {
+  background: rgb(242 166 90 / 12%);
+}
+
+.contain__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.contain__name {
+  font-weight: 600;
+}
+
+.contain__cost {
+  color: var(--cor-rotulo, #a7c0b4);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.contain__status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+/* O ícone não encolhe: ele é metade do par que carrega o estado, e é o que se
+   enxerga de longe num estande. */
+.contain__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.contain__button[data-status='available'] .contain__status {
+  color: var(--cor-alerta, #f2a65a);
+  font-weight: 600;
+}
+
+.contain__description,
+.contain__detail {
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+/* Com a partida acabada, conter não faz mais sentido. Mesma pista visual da
+   árvore; quem de fato recusa o clique é o main.ts. */
+#app[data-finished='true'] .contain {
+  opacity: 0.55;
+}

@@ -2,9 +2,10 @@
 // Função pura: recebe GameState, devolve GameState novo, nunca muta o recebido (§4).
 // Implementado em P6-03; o relógio de tempo real veio em P6-04.
 //
-// Este é o orquestrador do loop do docs/GDD.md §2.1. Hoje ele avança o clima,
+// Este é o orquestrador do loop do docs/GDD.md §2.1. Ele avança o clima,
 // desgasta o apoio público, acumula PAC à taxa que a árvore de habilidades
-// determina e sorteia os eventos do §2.5. Falta A Inércia (P7-03).
+// determina, sorteia os eventos do §2.5 e move a Inércia do §2.6. O loop está
+// completo desde o P7-03.
 //
 // Duas metades, e a divisão importa:
 //   1. `advanceTick` — o passo fixo. Um mês acontece, sempre igual.
@@ -14,6 +15,7 @@
 
 import { advanceClimate } from './climate';
 import { advanceEvents } from './events';
+import { advanceInertia } from './inertia';
 import { pointsPerYear } from './skills';
 import { balance, REGION_IDS, type GameState, type Region, type RegionId } from './state';
 
@@ -107,14 +109,30 @@ export function advanceTick(state: GameState): GameState {
     regions: decaySupport(afterClimate.regions),
   };
 
-  // Os eventos entram **por último**, e a ordem é regra, não gosto (P7-01):
+  // Os eventos entram depois do clima e do desgaste, e a ordem é regra, não
+  // gosto (P7-01):
   //
   //  - depois do clima, para que o sorteio use a temperatura deste mês. Sortear
   //    antes deixaria o limiar do §2.5 sempre um mês atrasado;
   //  - depois do desgaste, porque o evento **fura o piso de apatia** e o
   //    `decaySupport` devolveria uma região derrubada ao piso se rodasse em
   //    cima dela — que é exatamente o oposto do que o §2.5 quer.
-  return advanceEvents(afterTime);
+  const afterEvents = advanceEvents(afterTime);
+
+  // A Inércia é a **última** (P7-03), e por três razões:
+  //
+  //  - ela é espelho, e o espelho precisa refletir o mês inteiro: o apoio que
+  //    ela lê já passou pelo desgaste e pelos eventos, que é o apoio que o
+  //    jogador tem de verdade quando o mês fecha;
+  //  - o subsídio multiplica a emissão **depois** do crescimento da linha de
+  //    base, que é o que o climate.ts quer dizer com "a Inércia age por cima
+  //    deste crescimento, não no lugar dele";
+  //  - a desinformação fura o piso de apatia pelo mesmo motivo dos eventos, e
+  //    rodar antes do `decaySupport` desfaria o estrago.
+  //
+  // É também a ordem que o protótipo do P3-05 mediu, aplicando a regra por fora
+  // do engine entre um `advanceTick` e o seguinte.
+  return advanceInertia(afterEvents);
 }
 
 // ------------------------------------------------- relógio de tempo real ---

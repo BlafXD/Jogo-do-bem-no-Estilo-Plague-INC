@@ -157,6 +157,28 @@ export function emissionCutFor(state: GameState, region: RegionId): number {
   return Math.min(1, percent / 100);
 }
 
+/**
+ * A soma dos cortes já comprados, em **porcentagem ao ano**.
+ *
+ * É o que a Inércia (P7-03) enxerga como ameaça: o §2.6 diz que ela cresce mais
+ * quanto mais o jogador já cortou, porque é exatamente aí que a transição
+ * ameaça quem vive do combustível fóssil.
+ *
+ * **Soma todo `emissionCut`, com ou sem região alvo**, e é diferente do
+ * `emissionCutFor`: aquele responde "quanto cai *nesta* região" e divide por
+ * 100; este responde "quanto o jogador já cortou no total" e devolve o número
+ * na unidade em que o docs/GDD.md §3 o escreve. Um corte regional de 0,5%/ano
+ * conta como 0,5, igual a um global — o lobby de quem perde a região reage do
+ * mesmo jeito. É a forma que a verificação do P3-05 mediu.
+ */
+export function purchasedCutPercent(state: GameState): number {
+  let percent = 0;
+  for (const effect of unlockedEffects(state)) {
+    if (effect.kind === 'emissionCut') percent += effect.value;
+  }
+  return percent;
+}
+
 /** PAC por ano: a entrada de base do balance.json mais o que a árvore acrescenta. */
 export function pointsPerYear(state: GameState): number {
   let extra = 0;

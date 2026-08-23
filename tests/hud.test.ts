@@ -11,14 +11,30 @@ import { HUD_FIELDS, hudView } from '../src/ui/hud';
  * parte onde cabe bug — arredondamento, unidade, média — caísse deste lado.
  */
 describe('hudView', () => {
-  it('mostra os cinco indicadores de abertura da partida', () => {
+  it('mostra os seis indicadores de abertura da partida', () => {
+    // O sexto entrou no P7-03. O docs/GDD.md §2.2 sempre listou a Inércia como
+    // indicador; até ali ela era um campo do estado que ninguém mostrava.
     expect(hudView(createInitialState(2025))).toEqual({
       year: '2025',
       temperature: '1,37 °C',
       emissions: '40,8 Gt/ano',
       actionPoints: '0',
       support: '50',
+      inertia: '0',
     });
+  });
+
+  it('a Inércia é truncada, como o PAC — e pela mesma razão', () => {
+    // **Este teste nasceu de um defeito visto no navegador.** Com a Inércia
+    // arredondada, uma partida em 0,4 mostrava "0" no HUD enquanto o botão de
+    // conter dizia "Disponível" logo abaixo: 30 PAC para derrubar algo que o
+    // jogador não tinha como enxergar. Truncar faz o mostrador e a guarda do
+    // `canContain` concordarem em toda faixa.
+    const start = createInitialState(2025);
+
+    expect(hudView({ ...start, inertia: 0.4 }).inertia).toBe('0');
+    expect(hudView({ ...start, inertia: 0.9 }).inertia).toBe('0');
+    expect(hudView({ ...start, inertia: 67.6 }).inertia).toBe('67');
   });
 
   it('formata em pt-BR: vírgula decimal, não ponto', () => {

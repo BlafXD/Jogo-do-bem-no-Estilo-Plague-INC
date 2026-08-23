@@ -225,8 +225,22 @@ describe('o fim da partida', () => {
     expect(after).toEqual(end);
   });
 
-  it('chega no mesmo clima que o climate.test.ts trava, sem habilidade nenhuma', () => {
-    expect(end.temperature).toBeCloseTo(3.3548, 4);
+  it('termina mais quente que a linha de base do climate.test.ts — é a Inércia', () => {
+    // **Este teste dizia "chega no mesmo clima", e desde o P7-03 não chega
+    // mais.** O `climate.test.ts` trava 3,3548 °C para o `advanceClimate`
+    // sozinho, e esse número continua certo: é a linha de base do SSP3-7.0, sem
+    // antagonista. O `advanceTick` passou a rodar a Inércia por cima, e os
+    // turnos de subsídio empurram a emissão das oito regiões para cima — o que
+    // o climate.ts sempre disse que aconteceria ("a Inércia age por cima deste
+    // crescimento, não no lugar dele").
+    //
+    // A diferença é pequena porque quem não compra nada quase não alimenta o
+    // espelho do §2.6: a Inércia dele fica em ~30 de pico, contra os ~70 de
+    // quem corta. É exatamente o desenho — o antagonista responde ao jogador.
+    const semAntagonista = 3.3548;
+
+    expect(end.temperature).toBeGreaterThan(semAntagonista);
+    expect(end.temperature).toBeCloseTo(3.3663, 4);
     expect(end.temperature).toBeGreaterThan(balance.loseTemperature);
   });
 

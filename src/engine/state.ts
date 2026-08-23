@@ -171,7 +171,27 @@ export type Balance = {
   readonly supportDecayPerYear: number;
   /** Piso de apatia: até onde o decaimento do apoio desce sozinho. */
   readonly supportFloor: number;
+  /**
+   * Crescimento de base da Inércia, ao ano. O lobby existe mesmo se o jogador
+   * não fizer nada (docs/GDD.md §2.6).
+   */
   readonly inertiaGrowthPerYear: number;
+  /** Quanto cada 1%/ano de corte já comprado alimenta a Inércia, ao ano. */
+  readonly inertiaGrowthPerCutPercent: number;
+  /** Quanto cada ponto de apoio acima do piso de apatia segura a Inércia, ao ano. */
+  readonly inertiaDampingPerSupport: number;
+  /** Agravo multiplicativo de emissão que um turno de subsídios aplica, com a Inércia em 100. */
+  readonly inertiaSubsidyBite: number;
+  /** Pontos de apoio que um turno de desinformação derruba, com a Inércia em 100. */
+  readonly inertiaDisinformationBite: number;
+  /** De quantos em quantos ticks a Inércia age — o "~6 ticks" do §2.6. */
+  readonly inertiaActionEveryTicks: number;
+  /** Custo em PAC de uma contenção, com só o nó raiz do ramo Sociedade comprado. */
+  readonly containCost: number;
+  /** Desconto no custo da contenção por nó de Sociedade além do primeiro. */
+  readonly containDiscountPerNode: number;
+  /** Pontos de Inércia que uma contenção derruba. */
+  readonly containRelief: number;
   readonly eventWeightPerDegree: number;
   /**
    * Impacto de apoio a partir do qual um evento é **crítico** e pausa o relógio

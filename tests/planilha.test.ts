@@ -129,10 +129,29 @@ describe('planilha dos 75 anos (P3-02)', () => {
     expect(finalTemperature('tarde')).toBeLessThan(finalTemperature('nada'));
   });
 
-  it('ACEITE: quem não compra nada perde, e quem compra cedo chega vivo a 2100', () => {
+  it('ACEITE: quem não compra nada perde, e quem joga bem chega vivo a 2100', () => {
+    // **A estratégia que cumpre este aceite mudou no P7-03**, e a troca é o
+    // achado da tarefa. Até aqui era a `melhor` — cortar cedo e ignorar
+    // Sociedade. Desde que a Inércia age, comprar só cortes alimenta o
+    // antagonista (o espelho do §2.6) sem nunca poder contê-lo, e a agência é
+    // dissolvida por falta de apoio. Quem chega vivo é quem compra Sociedade e
+    // contém.
     expect(run('nada').defeatYear).not.toBeNull();
-    expect(run('melhor').defeatYear).toBeNull();
-    expect(outcomeOf(run('melhor').finalState).kind).toBe('finished');
+    expect(run('contencao').defeatYear).toBeNull();
+    expect(outcomeOf(run('contencao').finalState).kind).toBe('finished');
+  });
+
+  it('ACEITE do P7-03: cortar sem preparar apoio deixou de ser jogar bem', () => {
+    // **A inversão que o P3-05 procurava.** A `melhor` termina **mais fria** que
+    // a `contencao` e ainda assim perde a partida: o número bonito não protege
+    // de ser dissolvido. É o dilema que o docs/GDD.md §2.6 descreve, agora
+    // mensurável — "a partida que mais corta emissão não é a que sobrevive".
+    const semSociedade = run('melhor');
+    const contendo = run('contencao');
+
+    expect(finalTemperature('melhor')).toBeLessThan(finalTemperature('contencao'));
+    expect(semSociedade.defeatYear).not.toBeNull();
+    expect(contendo.defeatYear).toBeNull();
   });
 
   it('agir cedo vale mais do que agir muito: quem acorda em 2060 fica atrás', () => {

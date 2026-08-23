@@ -1,5 +1,16 @@
 # INERCIA.md — especificação do antagonista
 
+> **✔ IMPLEMENTADA em 2026-08-23, no `P7-03`.** O que se lê abaixo é a especificação do `P3-05` como
+> ela foi escrita e verificada — **num mundo sem eventos**. Ela continua valendo como desenho, e o
+> `tests/inercia.test.ts` cobra que `src/engine/inertia.ts` calcule exatamente o que
+> `tests/inercia-modelo.ts` descreve, função por função.
+>
+> **Dois números mudaram na implementação, e os dois estão medidos em `docs/BALANCEAMENTO.md`:**
+> o `disinformationBite` caiu de 1,0 para **0,5** (com eventos em cena, 1,0 dissolve a agência em
+> toda estratégia) e o teto do Bronze subiu de 2,5 para **2,55 °C** (sem isso nenhuma estratégia
+> alcança medalha). A tabela "Resultado da verificação" abaixo é a de antes dos eventos; a de hoje
+> está no `BALANCEAMENTO.md`.
+
 > **Tarefa `P3-05`.** Gatilhos, ações e contra-ataques da Inércia, com números **verificados contra
 > o engine** antes de virarem código.
 >
@@ -140,15 +151,21 @@ bonito e continuar existindo.
 - **O `inertiaGrowthPerYear` do `balance.json` está em 2 e a proposta pede 0,5.** É a única
   contradição com um valor existente, e ela é deliberada: o porquê está acima. Como ninguém lê essa
   chave hoje, mudá-la não quebra nada.
-- **Nenhum número foi aplicado.** Tudo isto vive em `tests/`. Quem move para `src/data/balance.json`
-  é o `P7-03`, e as sete chaves novas são: `inertiaGrowthPerCutPercent`, `inertiaDampingPerSupport`,
-  `inertiaSubsidyBite`, `inertiaDisinformationBite`, `inertiaActionEveryTicks`, `containCost`,
-  `containDiscountPerNode` e `containRelief`.
-- **A interação com os eventos foi medida em 2026-08-20, no `P7-01`, e a proposta não sobreviveu.**
-  Somados, os dois consomem a folga de 0,06 °C entre a melhor jogada e o teto do Bronze — e a
-  inversão que esta especificação tinha conseguido, o ramo Sociedade virar obrigação, **desapareceu**:
-  com eventos em cena, comprá-lo volta a custar a medalha. **Não é bug de nenhum dos dois sistemas**,
-  é o orçamento de dano do jogo estourando. Os números desta página valem para um mundo sem eventos
-  e precisam ser refeitos junto com o conserto, que o `docs/BALANCEAMENTO.md` mede como mover o teto
-  do Bronze para ~2,55 °C. Os três testes que registram a colisão estão em `tests/inercia.test.ts`,
-  marcados com `COLISÃO`, e é para eles falharem no dia em que houver espaço de novo.
+- ~~**Nenhum número foi aplicado.**~~ **Aplicados em 2026-08-23 (`P7-03`).** As chaves novas no
+  `balance.json` são **oito**, e não as sete que esta linha dizia: `inertiaGrowthPerCutPercent`,
+  `inertiaDampingPerSupport`, `inertiaSubsidyBite`, `inertiaDisinformationBite`,
+  `inertiaActionEveryTicks`, `containCost`, `containDiscountPerNode` e `containRelief`. O
+  `inertiaGrowthPerYear`, que já existia, caiu de 2 para 0,5 como esta página pedia.
+- ~~**A interação com os eventos foi medida em 2026-08-20, no `P7-01`, e a proposta não
+  sobreviveu.**~~ **Resolvida em 2026-08-23.** A colisão era pior do que este parágrafo registrava:
+  os três testes `COLISÃO` verificavam temperatura e medalha, mas nunca a causa da derrota — e com
+  os números desta página **toda estratégia era dissolvida por falta de apoio**, não só privada da
+  medalha. O conserto foram duas mudanças medidas, e não uma: o `disinformationBite` de 1,0 para
+  **0,5**, porque os eventos já consomem quase todo o pool de apoio sozinhos; e o teto do Bronze
+  para **2,55 °C**, que é o que este arquivo já apontava. A varredura em cinco seeds e o que se
+  pagou pela segunda mudança estão em `docs/BALANCEAMENTO.md`. Os testes `COLISÃO` voltaram à forma
+  positiva, como esta página mandava.
+- **A janela de perdão chegou a "depois de 2065", não aos 2080 que a tabela acima promete.** Aquele
+  número valia sem eventos e com o teto do Bronze em 2,5. Com a faixa do Bronze mais larga, largar
+  o controle a partir de ~2070 também termina em medalha — é o preço registrado no
+  `BALANCEAMENTO.md`, e fechá-lo é do `P8-02`.

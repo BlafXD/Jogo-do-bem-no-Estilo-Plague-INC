@@ -41,6 +41,10 @@ export const ui = {
       label: 'Apoio médio',
       hint: 'Média do apoio público das 8 regiões, de 0 a 100. Se zerar, a agência é dissolvida.',
     },
+    inertia: {
+      label: 'Inércia',
+      hint: 'A força que resiste à mudança, de 0 a 100. Cresce quanto mais você corta, e o apoio público a segura. A cada seis meses ela age.',
+    },
   },
 
   controls: {
@@ -110,6 +114,36 @@ export const ui = {
      */
     paused: (name: string) =>
       `Tempo pausado: ${name}. Aperte Retomar, ou a barra de espaço, para seguir.`,
+  },
+
+  // A contenção da Inércia (P7-03), com a regra do docs/GDD.md §2.6.
+  //
+  // Os números — o alívio, o custo, o que falta — chegam como argumento em vez
+  // de estarem escritos nas frases. É a regra 8 aplicada onde ela quase escapa:
+  // "derruba 25 pontos" **é** um número de balanceamento, e uma frase que o
+  // repete vira mentira no dia em que o balance.json mudar, sem nada quebrar.
+  contain: {
+    label: 'Contenção da Inércia',
+    name: 'Conter a Inércia',
+    hint: 'Gastar PAC aqui é não comprar um nó neste mês. É a escolha que o antagonista força.',
+    description: (relief: string) =>
+      `Derruba ${relief} pontos da Inércia. O estrago que ela já fez não volta — isto compra tempo, não perdão.`,
+    cost: (points: string) => `${points} PAC`,
+
+    // Ícone **mais** rótulo escrito, como na árvore e nos cartões de evento: o
+    // §5 do GDD proíbe comunicar estado só por cor.
+    status: {
+      available: { icon: '●', label: 'Disponível' },
+      unaffordable: { icon: '◌', label: 'PAC insuficiente' },
+      locked: { icon: '✕', label: 'Bloqueado' },
+      // O quarto estado não é um erro do jogador, é uma economia: conter uma
+      // Inércia que já está em zero só queima PAC.
+      idle: { icon: '—', label: 'Nada a conter' },
+    },
+
+    missingPoints: (points: string) => `Faltam ${points} PAC`,
+    requires: (name: string) => `Exige: ${name}`,
+    idle: 'A Inércia está em zero. Guarde o PAC.',
   },
 
   session: {
