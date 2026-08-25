@@ -55,6 +55,29 @@ export const ui = {
     speedHint: 'Velocidade da simulação. Atalhos: as teclas 1, 2 e 4.',
   },
 
+  // O mapa esquemático das 8 regiões (P5-01), com a lista do docs/GDD.md §2.3.
+  //
+  // **O nome de cada região não está aqui**, pelo mesmo motivo do `fact` dos
+  // eventos: ele mora no `src/data/regions.json`, que é o arquivo que o pacote
+  // [D-Historia] tem contrato para editar sem abrir um `.ts` (`PLANO.md`).
+  map: {
+    label: 'Mapa das regiões',
+    intro:
+      'As oito regiões do mundo. O apoio público de cada uma anda sozinho — os eventos derrubam, a Inércia corrói e o ramo Sociedade levanta. O indicador lá em cima mostra só a média das oito.',
+    support: (value: string) => `Apoio ${value}`,
+
+    /**
+     * O que o leitor de tela lê no lugar da forma.
+     *
+     * Traz a escala junto ("de 100"): quem não enxerga o mapa não tem como
+     * saber, pelo número sozinho, se 50 é muito ou pouco.
+     */
+    cell: (name: string, support: string) => `${name}. Apoio público ${support} de 100.`,
+
+    /** O sinal visível de que a região está escolhida. */
+    selectedMarker: '▸',
+  },
+
   tree: {
     label: 'Árvore de habilidades',
     intro:
@@ -228,6 +251,7 @@ export const ui = {
   },
 
   app: {
-    pending: 'O mapa das 8 regiões entra no P5-01. Por enquanto, o tempo corre e a árvore compra.',
+    pending:
+      'O mapa mostra o apoio de cada região. O painel de detalhe entra no P5-04, e o mapa passa a reagir à temperatura no P7-04.',
   },
 } as const;

@@ -36,6 +36,12 @@
            o tempo pode parar sozinho por causa dele. Quando a partida acaba, o
            resultado passa na frente. Fica escondido enquanto não cai evento. -->
       <section id="eventos" class="events" hidden></section>
+      <!-- O mapa fica entre os eventos e as ações, e é essa a ordem de leitura
+           que ele existe para criar: o cartão diz o que aconteceu, o mapa diz
+           onde doeu, e a árvore e a contenção logo abaixo são o que fazer a
+           respeito. Abaixo do evento porque o evento pode parar o relógio;
+           acima da árvore porque olhar o mundo vem antes de agir sobre ele. -->
+      <section id="mapa" class="map"></section>
       <!-- A contenção fica logo acima da árvore porque compete com ela: gastar
            PAC aqui é não comprar um nó neste mês (docs/GDD.md §2.6). Aparece
            bloqueada desde 2025 de propósito — é ela que ensina que o ramo

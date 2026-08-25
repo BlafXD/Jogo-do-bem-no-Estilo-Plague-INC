@@ -28,6 +28,118 @@ Regras curtas:
 
 ---
 
+## 2026-08-25 — O mapa entrou, e metade da simulação parou de rodar invisível
+
+- **Parte / tarefa:** `P5-01` ✔
+- **O que mudou:**
+  - `src/ui/map.ts` e `src/ui/map.css` **criados** — o SVG esquemático com as 8 regiões, o apoio de cada uma e a seleção por clique ou teclado.
+  - `src/data/i18n.ts` — o bloco `map`. O `app.pending` deixou de prometer o mapa e passou a apontar o `P5-04` e o `P7-04`.
+  - `index.html` — a seção `#mapa`, entre os eventos e as ações. `src/main.ts` — a ligação e a região selecionada.
+  - `tests/map.test.ts` (19) e `tests/map.dom.test.ts` (21) **criados**. Suíte: 375 → **415**.
+  - Nenhum arquivo do engine foi tocado. Nenhuma constante de balanceamento entrou.
+
+### O problema que esta tarefa existia para resolver
+
+O engine simula as oito regiões desde o `P6-01`: o `climate.ts` cresce emissão região a região, o
+`events.ts` acerta um alvo, a Inércia derruba apoio localmente e as habilidades aplicam efeito
+regional. Um `grep -rln "region" src/ui/` antes desta tarefa devolvia **um arquivo** — o
+`event-cards.ts`, e só pelo nome dentro do cartão. **Metade da simulação rodava sem chegar à tela.**
+
+O HUD mostra a **média** do apoio, e é justamente a média que esconde o que interessa. Na partida de
+2055 que estava salva na máquina, o HUD dizia 26 enquanto as regiões estavam em 24, 25, 26, 27 e 29.
+Não é uma diferença grande nessa partida, mas é a diferença entre um número e oito, e a derrota por
+apoio do `§2.7` acontece região a região.
+
+### Por que o apoio, e não as emissões
+
+O HUD já mostra a emissão global. A emissão de uma região é um número pequeno com decimal (0,56 a
+16,4 Gt) que se lê mal de longe, num estande. O apoio é o número que **só existe em média** no HUD, é
+o que os eventos e a Inércia atacam, e é uma das duas condições de derrota. É o que o jogador precisa
+ver chegando.
+
+### O que ficou fora, de propósito
+
+O `PLANO.md` separa três tarefas que seria fácil confundir numa só, e elas continuam separadas:
+
+| | |
+|---|---|
+| **`P5-01`, esta** | as formas, os nomes, o apoio, a seleção |
+| `P5-04` | o painel de detalhe da região escolhida |
+| `P7-04` | o mapa **reagir à temperatura** e os alertas por região |
+
+Por isso o mapa é monocromático e a cor não carrega nenhum estado do jogo. A seleção existe, é
+visível e já expõe o `handleSelect` — é a costura em que o `P5-04` encaixa. Uma região escolhida hoje
+não faz nada além de ficar marcada, e isso é o combinado, não um pedaço faltando.
+
+### O preço escondido de não usar um `<button>`
+
+Um `<button>` não pode conter um `<rect>` de SVG, e oito botões de HTML posicionados por cima do
+desenho exigiriam manter **duas geometrias em sincronia**. A saída foi `<g role="button" tabindex="0">`
+— a única vez no projeto em que a UI abre mão do elemento nativo — com Enter e Espaço tratados à mão.
+
+E aí aparece o problema que o elemento nativo resolveria de graça: o `main.ts` escuta Espaço no
+`document` para pausar, e a guarda de lá deixa passar tudo que não for `HTMLButtonElement`. Um `<g>`
+não é. **Sem `stopPropagation`, escolher uma região pelo teclado pausaria a partida junto** — e o
+jogador não teria como ligar uma coisa à outra. Está consertado e trancado por dois testes, um deles
+citando exatamente esse caminho.
+
+### Duas coisas que só a medição resolveu
+
+**A altura.** Com `max-width: 68rem` o mapa renderizava a 1088 × 675 px: sozinho comia uma tela
+inteira e empurrava a árvore para fora dela. Medido no navegador, corrigido para `54rem` — 864 × 536.
+O número está escrito no `map.css` com o porquê.
+
+**O texto dentro das formas.** Transbordo de texto em SVG não quebra nada, não avisa e não corta: ele
+pinta o nome por cima da região vizinha. O `tests/map.test.ts` cobra que nome e apoio caibam na forma
+usando uma **estimativa conservadora** de 0,58 em por caractere. No navegador, o `getBBox()` real de
+cada região confirmou a estimativa e mostrou que ela erra para o lado seguro — o pior caso,
+"Apoio 100", mede 116,7 unidades onde o teste supunha 135,7, e a forma mais estreita tem 170. Folga
+mínima medida: **53,3 unidades na horizontal e 15,3 na vertical**, nas oito regiões.
+
+### O que não foi possível conferir no navegador
+
+O relógio do jogo roda em `requestAnimationFrame`, e **aba em segundo plano não recebe quadro** —
+`document.visibilityState` estava `hidden` e o contador ficou em 0 quadros em 2 s. Ou seja: o mapa
+**não** foi visto atualizando mês a mês numa partida correndo de verdade. O que cobre esse caminho é
+o teste `atualiza o apoio quando ele muda na partida` mais a linha do `renderGame` que chama o
+`renderMap`. Fica registrado como o que é: verificado por teste, não por observação.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 415 testes em 23 arquivos
+  npm run dev   # role até o mapa; clique numa região e clique de novo para desmarcar
+  ```
+  Os aceites são os dois `ACEITE` do `tests/map.test.ts` — "nenhuma forma invade outra" e "mantém
+  nome e apoio dentro da forma, nas 8 regiões".
+
+  **Conferido no navegador**, sobre a partida de 2055 que estava salva: as oito regiões com apoio
+  próprio (24 a 29) contra o 26 da média no HUD; seleção por clique e por Espaço com o foco na
+  região; desmarcar clicando de novo; e o Espaço **não** retomando o tempo pausado. O pior caso de
+  texto foi produzido escrevendo um save com apoio 0, 8 e 100 — **o save do jogador foi guardado no
+  `sessionStorage` e devolvido**, conferido tick a tick depois.
+
+- **Pendente:**
+  - **A partida salva na máquina andou 12 meses** (2055 → 2056) durante a verificação: com a página
+    aberta o jogo corre e salva sozinho a cada mês. Ficou pausada no fim. Nada foi perdido, mas o
+    save não é byte a byte o que era antes.
+  - **A seleção não sobrevive ao recarregamento**, e é decisão: ela não entra no `GameState` nem no
+    save. Onde o jogador está olhando não muda o clima, e pôr isso no estado mudaria o contrato do
+    `§3` e o formato do save do `P6-07` por um dado sem consequência mecânica.
+  - **O mapa é monocromático e não reage a nada.** É o combinado com o `P7-04`, mas até lá ele é uma
+    tabela bonita: mostra o apoio e mais nada. Quem olhar antes do `P7-04` vai achar que falta algo.
+  - **O canto inferior esquerdo do desenho fica vazio.** A disposição é aproximadamente geográfica e
+    não há região ali. Não incomoda, mas é onde caberia uma legenda quando o `P7-04` trouxer estados.
+  - **`role="button"` num `<g>` é menos garantido que um `<button>`.** Funciona no Chrome — foco,
+    Enter, Espaço e `aria-pressed` conferidos —, mas leitor de tela de verdade não foi testado. É
+    candidato à passagem de acessibilidade do `P8-04`.
+  - **Nenhum teste mede o contraste do `map.css`.** Os números do cabeçalho da folha foram calculados
+    à mão, como nas outras. Continua valendo o que o `P5-02` vai revisar.
+  - `P1-04` e o `theme.css` do `P5-02` seguem abertos.
+- **Evidência:** `docs/evidencias/2026-08-25-p5-01-mapa-das-8-regioes.jpg` — as 8 regiões em 2055, com a África selecionada
+
+---
+
 ## 2026-08-23 — A Inércia entrou no engine, e a colisão do P3-05 era pior do que o registro dizia
 
 - **Parte / tarefa:** `P7-03` ✔ — **o loop do `§2.1` está completo**

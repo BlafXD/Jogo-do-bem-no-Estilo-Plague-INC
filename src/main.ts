@@ -17,7 +17,7 @@ import { ui } from './data/i18n';
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
 import { unlockSkill } from './engine/skills';
-import { createInitialState, type SkillId } from './engine/state';
+import { createInitialState, type RegionId, type SkillId } from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
 import {
   applyCommand,
@@ -36,6 +36,7 @@ import {
   renderEventCards,
 } from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
+import { mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import {
   afterReset,
@@ -51,6 +52,7 @@ import './ui/contain.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
 import './ui/hud.css';
+import './ui/map.css';
 import './ui/outcome.css';
 import './ui/session.css';
 import './ui/tree.css';
@@ -87,6 +89,7 @@ const controls = required('#controles');
 const partida = required('#partida');
 const resultado = required('#resultado');
 const eventos = required('#eventos');
+const mapa = required('#mapa');
 const contencao = required('#contencao');
 const tree = required('#arvore');
 const app = required<HTMLElement>('#app');
@@ -123,6 +126,21 @@ let pausedForTick = state.tick;
  * primeira, e o reinício desfaz só a primeira.
  */
 let autoPaused = false;
+
+/**
+ * A região escolhida no mapa (P5-01), ou nenhuma.
+ *
+ * **Não entra no GameState e não entra no save**, e isso é decisão, não
+ * esquecimento: onde o jogador está olhando não muda o clima. Pô-la no estado
+ * mudaria o contrato do §3 do GDD e o formato do save do P6-07 por um dado sem
+ * consequência mecânica — e o `parseSave` passaria a ter que validar um campo
+ * que, se viesse corrompido, não faria diferença nenhuma na partida.
+ *
+ * Pela mesma razão ela **sobrevive ao reinício**: é de quem assiste, não da
+ * simulação — a mesma regra que o controls.ts registra sobre a velocidade e a
+ * pausa.
+ */
+let selectedRegion: RegionId | null = null;
 
 function handleCommand(command: TimeCommand | null): void {
   control = applyCommand(control, command);
@@ -165,9 +183,26 @@ function checkAutoPause(): void {
   handleCommand({ kind: 'pause' });
 }
 
+/**
+ * Escolher uma região no mapa.
+ *
+ * Clicar de novo na região já escolhida desmarca. Sem isso não haveria caminho
+ * de volta para "nenhuma", e o painel do P5-04 ficaria preso na última escolha
+ * até o fim da partida.
+ *
+ * Redesenha só o mapa: a escolha não mexe em indicador, em árvore nem em
+ * cartão, e chamar o `renderGame` aqui reescreveria a tela inteira a cada
+ * clique numa forma.
+ */
+function handleSelect(id: RegionId): void {
+  selectedRegion = selectedRegion === id ? null : id;
+  renderMap(mapa, mapView(state, selectedRegion));
+}
+
 /** Redesenha tudo que depende do estado da partida. */
 function renderGame(): void {
   renderHud(hud, hudView(state));
+  renderMap(mapa, mapView(state, selectedRegion));
   renderTree(tree, treeView(state));
   renderOutcome(resultado, outcomeView(state));
   renderEvents();
@@ -269,6 +304,7 @@ function handleContain(): void {
 mountHud(hud);
 mountControls(controls, handleCommand);
 mountEventCards(eventos);
+mountMap(mapa, mapView(state, selectedRegion), handleSelect);
 mountContain(contencao, handleContain);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
