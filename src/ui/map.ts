@@ -351,6 +351,26 @@ function slot(group: ParentNode, name: Slot): SVGElement | null {
 }
 
 /**
+ * Devolve o foco do teclado à forma de uma região (P5-04).
+ *
+ * Existe por causa do painel de detalhe: quando ele fecha, o botão que tinha o
+ * foco desaparece da tela, e sem isto o foco cairia no `<body>` — quem navega
+ * por teclado voltaria ao começo da página e teria que atravessar o HUD, a barra
+ * de tempo e os cartões de evento de novo para chegar ao mapa. O §5 do GDD pede
+ * painel navegável por teclado; sair dele sem perder o lugar faz parte disso.
+ *
+ * Devolve se conseguiu, em vez de falhar calado: quem chama sabe que o foco
+ * pode não ter ido a lugar nenhum.
+ */
+export function focusRegion(root: ParentNode, id: RegionId): boolean {
+  const group = root.querySelector<SVGGElement>(`[data-region="${id}"]`);
+  if (group === null) return false;
+
+  group.focus();
+  return true;
+}
+
+/**
  * Escreve o estado atual nas formas já montadas.
  *
  * **Atualiza em vez de reconstruir**, como a árvore e pelo mesmo motivo: o mapa

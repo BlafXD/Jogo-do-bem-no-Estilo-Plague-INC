@@ -1,0 +1,147 @@
+/* O painel de detalhe da região (P5-04).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
+   encostar aqui.
+
+   **Nenhuma cor nova entra.** São as mesmas já conferidas contra o fundo
+   #0F1C17 (WCAG 2.1):
+
+     valor    #F2F7F4  16,17:1     rótulo  #A7C0B4  9,04:1
+     destaque #7FD1A8   9,67:1     alerta  #F2A65A  8,66:1
+     borda    #4C8069   3,84:1 (não-texto, exige 3:1)
+
+   **O painel fica logo abaixo do mapa e é uma faixa, não uma coluna.** Uma lista
+   vertical de seis linhas empurraria a árvore para longe e obrigaria a rolar
+   entre clicar na região e ler o número dela — que é justamente o par que
+   precisa caber na mesma tela. Em faixa, os seis campos ocupam ~2 linhas e o
+   mapa continua visível acima.
+
+   Nenhum estado do jogo é comunicado por cor aqui: todo campo tem rótulo escrito
+   e todo número traz a escala junto ("27 de 100", "5% do mundo"). */
+
+.region {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+/* A frase que ensina o clique, quando não há região escolhida. */
+.region__empty {
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  max-width: 70ch;
+}
+
+.region__detail {
+  /* A mesma medida do `max-width` do mapa: os dois formam um bloco só, e um
+     painel que avançasse até a borda da página ficaria pendurado à direita do
+     desenho de onde ele vem. Se o mapa mudar de largura, esta linha muda junto —
+     está anotado nos dois arquivos. */
+  max-width: 54rem;
+  /* Sem isto o painel fica 34px mais largo que o mapa: o projeto não tem reset
+     global de box-sizing, então a borda e o padding somariam por fora das 54rem
+     e as duas caixas terminariam em pontos diferentes. Medido no navegador. */
+  box-sizing: border-box;
+  border: 1px solid var(--cor-borda, #4c8069);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.region__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.region__name {
+  margin: 0;
+  color: var(--cor-destaque, #7fd1a8);
+  font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+}
+
+.region__close {
+  /* 44px de alvo mínimo, a mesma medida do controls.css: o dedo de quem passa
+     num estande não mira bem. */
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  /* 16px é o piso do §5. */
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.region__close:hover {
+  background: rgb(127 209 168 / 12%);
+}
+
+/* Anel de foco explícito, igual ao da árvore, do mapa e da contenção. */
+.region__close:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+.region__group + .region__group {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--cor-borda, #4c8069);
+  padding-top: 0.75rem;
+}
+
+.region__group-title {
+  margin: 0 0 0.4rem;
+  color: var(--cor-rotulo, #a7c0b4);
+  /* 1rem e não menos: o §5 fixa 16px como piso para TODO texto, e um título de
+     grupo que encolhe é o primeiro a virar decoração ilegível de longe. */
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* A faixa: os campos lado a lado, quebrando linha conforme a tela aperta. */
+.region__rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem clamp(1rem, 3vw, 2.5rem);
+  margin: 0;
+}
+
+.region__row {
+  display: flex;
+  flex-direction: column;
+  /* O valor cresce e encolhe (0,56 → 16,37; 8 → 100); a largura mínima evita
+     que os campos dancem de posição a cada mês — a mesma razão do hud.css. */
+  min-width: 9ch;
+}
+
+.region__label {
+  color: var(--cor-rotulo, #a7c0b4);
+  font-size: 1rem;
+}
+
+.region__value {
+  margin: 0;
+  /* Tabular: os dígitos têm todos a mesma largura, então o número não treme
+     enquanto o tempo corre. */
+  font-variant-numeric: tabular-nums;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.region__note {
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+/* Diferente da árvore e da contenção, o painel **não** é apagado quando a
+   partida acaba: ele é justamente o que se quer ler depois do fim, para
+   entender em que região o apoio ruiu. Não há nada aqui que possa ser recusado
+   — o botão de fechar continua valendo. */

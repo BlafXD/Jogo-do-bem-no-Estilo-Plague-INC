@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ui } from '../src/data/i18n';
 import { REGION_IDS, createInitialState, type GameState, type RegionId } from '../src/engine/state';
-import { mapView, mountMap, renderMap } from '../src/ui/map';
+import { focusRegion, mapView, mountMap, renderMap } from '../src/ui/map';
 
 /**
  * O mapa no DOM (P5-01).
@@ -237,5 +237,26 @@ describe('o mapa redesenhado', () => {
     region(root, 'af').dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(onSelect).toHaveBeenCalledExactlyOnceWith('af');
+  });
+});
+
+/**
+ * Devolver o foco ao mapa (P5-04).
+ *
+ * O painel de detalhe fecha e o botão que tinha o foco some da tela. Sem isto o
+ * foco cairia no `<body>`, e quem navega por teclado voltaria ao começo da
+ * página — teria que atravessar o HUD, a barra de tempo e os cartões de evento
+ * de novo para chegar de volta ao mapa, que é onde a pessoa estava.
+ */
+describe('focusRegion', () => {
+  it('põe o foco do teclado na forma da região', () => {
+    const root = mount();
+
+    expect(focusRegion(root, 'af')).toBe(true);
+    expect(document.activeElement).toBe(region(root, 'af'));
+  });
+
+  it('avisa em vez de falhar calado quando a região não está na tela', () => {
+    expect(focusRegion(document.createElement('section'), 'af')).toBe(false);
   });
 });

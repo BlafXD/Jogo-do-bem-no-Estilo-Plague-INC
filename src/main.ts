@@ -36,8 +36,9 @@ import {
   renderEventCards,
 } from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
-import { mapView, mountMap, renderMap } from './ui/map';
+import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
+import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
 import {
   afterReset,
   armReset,
@@ -54,6 +55,7 @@ import './ui/event-cards.css';
 import './ui/hud.css';
 import './ui/map.css';
 import './ui/outcome.css';
+import './ui/region-panel.css';
 import './ui/session.css';
 import './ui/tree.css';
 
@@ -90,6 +92,7 @@ const partida = required('#partida');
 const resultado = required('#resultado');
 const eventos = required('#eventos');
 const mapa = required('#mapa');
+const regiao = required('#regiao');
 const contencao = required('#contencao');
 const tree = required('#arvore');
 const app = required<HTMLElement>('#app');
@@ -184,25 +187,54 @@ function checkAutoPause(): void {
 }
 
 /**
+ * As duas telas que dependem da região escolhida: o mapa e o painel de detalhe.
+ *
+ * Andam sempre juntas, e por isso moram na mesma função — o mapa marcando uma
+ * região enquanto o painel mostra outra seria o pior jeito de essa dupla
+ * quebrar, porque nada erraria em voz alta.
+ */
+function renderSelection(): void {
+  renderMap(mapa, mapView(state, selectedRegion));
+  renderRegionPanel(regiao, regionPanelView(state, selectedRegion));
+}
+
+/**
  * Escolher uma região no mapa.
  *
  * Clicar de novo na região já escolhida desmarca. Sem isso não haveria caminho
- * de volta para "nenhuma", e o painel do P5-04 ficaria preso na última escolha
- * até o fim da partida.
+ * de volta para "nenhuma", e o painel ficaria preso na última escolha até o fim
+ * da partida.
  *
- * Redesenha só o mapa: a escolha não mexe em indicador, em árvore nem em
- * cartão, e chamar o `renderGame` aqui reescreveria a tela inteira a cada
+ * Redesenha só o mapa e o painel: a escolha não mexe em indicador, em árvore nem
+ * em cartão, e chamar o `renderGame` aqui reescreveria a tela inteira a cada
  * clique numa forma.
  */
 function handleSelect(id: RegionId): void {
   selectedRegion = selectedRegion === id ? null : id;
-  renderMap(mapa, mapView(state, selectedRegion));
+  renderSelection();
+}
+
+/**
+ * Fechar o painel de detalhe — pelo botão ou pelo `Esc` do §5 do GDD.
+ *
+ * O foco volta para a forma que estava escolhida. Sem isso ele cairia no
+ * `<body>` junto com o botão que sumiu, e quem navega por teclado teria que
+ * atravessar o HUD, a barra de tempo e os cartões de evento de novo para voltar
+ * ao mapa — que é onde a pessoa estava.
+ */
+function handleCloseRegion(): void {
+  const closing = selectedRegion;
+  if (closing === null) return;
+
+  selectedRegion = null;
+  renderSelection();
+  focusRegion(mapa, closing);
 }
 
 /** Redesenha tudo que depende do estado da partida. */
 function renderGame(): void {
   renderHud(hud, hudView(state));
-  renderMap(mapa, mapView(state, selectedRegion));
+  renderSelection();
   renderTree(tree, treeView(state));
   renderOutcome(resultado, outcomeView(state));
   renderEvents();
@@ -305,6 +337,7 @@ mountHud(hud);
 mountControls(controls, handleCommand);
 mountEventCards(eventos);
 mountMap(mapa, mapView(state, selectedRegion), handleSelect);
+mountRegionPanel(regiao, handleCloseRegion);
 mountContain(contencao, handleContain);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
@@ -333,11 +366,22 @@ document.addEventListener('keydown', (event) => {
   // desiste. O §5 do GDD diz que Esc sempre fecha, e a confirmação de reinício
   // é a primeira coisa da tela que precisa fechar.
   if (event.key === 'Escape') {
-    if (!session.armed) return;
+    // A confirmação de reinício vem primeiro, e tem que vir: ela é a única coisa
+    // da tela que segura uma decisão destrutiva esperando resposta. Fechar o
+    // painel de detalhe por baixo dela deixaria a pergunta no ar.
+    if (session.armed) {
+      event.preventDefault();
+      session = cancelReset(session);
+      renderSessionBar();
+      return;
+    }
 
-    event.preventDefault();
-    session = cancelReset(session);
-    renderSessionBar();
+    // Depois dela, o painel de detalhe (P5-04).
+    if (selectedRegion !== null) {
+      event.preventDefault();
+      handleCloseRegion();
+    }
+
     return;
   }
 

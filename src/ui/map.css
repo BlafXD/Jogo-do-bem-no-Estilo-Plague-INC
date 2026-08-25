@@ -55,7 +55,10 @@
   /* 54rem, e não a largura da coluna: medido no navegador, 68rem davam 675px de
      altura — o mapa sozinho comia uma tela inteira e empurrava a árvore para
      fora dela. Aqui ele fica em ~536px e ainda cabe com o HUD acima. A altura
-     acompanha a largura porque o viewBox é 1000×620. */
+     acompanha a largura porque o viewBox é 1000×620.
+
+     O `.region__detail` do painel de detalhe (P5-04) repete esta medida para
+     ficar alinhado com o mapa. Mudar aqui é mudar lá. */
   max-width: 54rem;
   height: auto;
 }

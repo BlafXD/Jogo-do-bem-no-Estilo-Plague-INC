@@ -78,6 +78,62 @@ export const ui = {
     selectedMarker: '▸',
   },
 
+  // O painel de detalhe da região escolhida no mapa (P5-04).
+  //
+  // **As dicas dizem o que move cada número, e só isso.** Nenhuma promete efeito
+  // que a simulação não tenha: hoje o `climate.ts`, o `events.ts` e o
+  // `inertia.ts` leem apenas emissão, apoio e resiliência — população e matriz
+  // limpa não são lidas por ninguém, e a economia só é derrubada por evento sem
+  // nunca ser consultada de volta. Escrever "a matriz limpa facilita o corte"
+  // seria inventar mecânica no texto, que é a forma mais barata de mentir para o
+  // jogador. O que falta está registrado no PROGRESSO.md do P5-04.
+  regionPanel: {
+    label: 'Detalhe da região',
+    empty: 'Clique numa região do mapa para ver os números dela.',
+    close: 'Fechar',
+    closeHint: 'Tira a região da seleção. Atalho: Esc.',
+
+    groups: {
+      // A divisão é factual, não editorial: os dois de cima não mudam em nenhum
+      // momento da partida, e os quatro de baixo mudam.
+      character: 'O que ela é',
+      live: 'Como ela está',
+    },
+
+    fields: {
+      population: {
+        label: 'População',
+        hint: 'Habitantes da região, em milhões. Não muda durante a partida.',
+      },
+      cleanShare: {
+        label: 'Matriz limpa',
+        hint: 'Fatia limpa da matriz elétrica no começo da partida. Não muda durante a partida.',
+      },
+      emissions: {
+        label: 'Emissões',
+        hint: 'O que a região emite por ano. Cresce sozinha, cai com as habilidades que cortam emissão e sobe quando a Inércia subsidia.',
+      },
+      support: {
+        label: 'Apoio público',
+        hint: 'De 0 a 100. Os eventos derrubam, a Inércia corrói e o ramo Sociedade levanta. Zerar nas oito regiões dissolve a agência.',
+      },
+      resilience: {
+        label: 'Resiliência',
+        hint: 'De 0 a 100. Reduz o dano dos eventos que caem aqui.',
+      },
+      economy: {
+        label: 'Economia',
+        hint: 'Índice econômico, base 100. Os eventos derrubam.',
+      },
+    },
+
+    /** "27 de 100" — a escala junto do número, porque 27 sozinho não diz nada. */
+    scale: (value: string) => `${value} de 100`,
+
+    /** Quanto a emissão desta região pesa no total do mundo. */
+    shareOfWorld: (percent: string) => `${percent} do mundo`,
+  },
+
   tree: {
     label: 'Árvore de habilidades',
     intro:
@@ -248,6 +304,7 @@ export const ui = {
   units: {
     celsius: '°C',
     emissionsPerYear: 'Gt/ano',
+    millions: 'milhões',
   },
 
   app: {

@@ -28,6 +28,120 @@ Regras curtas:
 
 ---
 
+## 2026-08-25 — O painel da região entrou, e três dos sete campos de `Region` não movem nada
+
+- **Parte / tarefa:** `P5-04` ✔ — **a Parte 5 está em 4 de 6**
+- **O que mudou:**
+  - `src/ui/region-panel.ts` e `region-panel.css` **criados** — os seis campos da região escolhida, em dois grupos, com botão de fechar.
+  - `src/ui/map.ts` — `focusRegion` novo, para o foco do teclado voltar ao mapa quando o painel fecha.
+  - `src/data/i18n.ts` — o bloco `regionPanel` e `units.millions`.
+  - `index.html` — a seção `#regiao`, colada no mapa. `src/main.ts` — `renderSelection`, `handleCloseRegion` e o `Esc` do `§5`.
+  - `src/ui/map.css` — nota de que o `max-width` é compartilhado com o painel.
+  - `tests/region-panel.test.ts` (19) e `tests/region-panel.dom.test.ts` (18) **criados**; `map.dom.test.ts` +2. Suíte: 415 → **454**.
+  - Nenhum arquivo do engine foi tocado. Nenhuma constante de balanceamento entrou.
+
+### O achado da tarefa: três dos sete campos de `Region` são decorativos
+
+Antes de escrever o painel, uma varredura de quem lê cada campo no engine:
+
+| Campo | Quem escreve | Quem **lê** |
+|---|---|---|
+| `emissions` | clima, habilidades, Inércia | `climate.ts` — vira temperatura |
+| `support` | eventos, Inércia, decaimento, habilidades | `outcome.ts`, `inertia.ts` |
+| `resilience` | habilidades | `events.ts:221` — reduz o dano |
+| `economy` | eventos | **ninguém** |
+| `population` | ninguém | **ninguém** |
+| `cleanShare` | ninguém | **ninguém** |
+
+O `§2.3` do GDD promete que "quem tem sol abundante e pouca verba não se resolve igual a quem tem
+indústria pesada e verba alta". Hoje **isso não é verdade**: a matriz energética e a população não
+entram em conta nenhuma, e a economia é um contador que só desce e que ninguém consulta. As oito
+regiões se diferenciam por um campo só — quanto emitem.
+
+Isso muda o que o painel podia dizer. Um painel com seis números onde três não fazem nada seria pior
+do que nenhum painel: o jogador tentaria montar estratégia em cima da matriz limpa da Ásia Meridional
+e perderia a partida sem entender por quê. **A saída foi não mentir em nenhuma dica.** Cada dica diz
+o que move aquele número e para aí — a de população e a de matriz limpa dizem, com todas as letras,
+que não mudam durante a partida. Nenhuma promete efeito.
+
+**Não consertei a simulação**, e é decisão: fazer `cleanShare` valer alguma coisa é inventar mecânica
+nova, que o `§1` proíbe sem passar pelo chat, e é balanceamento que ninguém mediu. Fica como o
+pendente mais importante desta entrada.
+
+### Os dois grupos são uma afirmação verificável, não decoração
+
+"O que ela é" e "Como ela está" separam os dois campos que nenhum módulo escreve dos quatro que
+mudam. O `tests/region-panel.test.ts` **roda os 900 ticks de uma partida inteira** e cobra que
+população e matriz limpa terminem em 2100 iguais ao que eram em 2025. No dia em que uma habilidade
+mexer na matriz, o título do grupo vira mentira — e é esse teste que avisa.
+
+### O que o painel acrescenta que o mapa não dava
+
+A fatia do mundo, colada na emissão. A Ásia Oriental aparece com **21,96 Gt/ano · 40% do mundo**; a
+Oceania, com 0,56. É a primeira vez que o jogo mostra por que cortar num lugar vale mais do que em
+outro — que é exatamente o que o `§2.3` diz que deveria decidir a estratégia.
+
+A divisão é guardada contra zero: a emissão global **chega a zero**, é a condição de vitória do
+`§2.7`, e sem a guarda a partida vencida mostraria "NaN% do mundo" no instante da vitória.
+
+### Um defeito que o teste pegou antes do navegador
+
+O `mountRegionPanel` não deixava o painel num estado válido: entre montar e o primeiro `render`, as
+**duas** telas ficavam visíveis — a frase "clique numa região" e o detalhe vazio ao mesmo tempo,
+porque o `hidden` de nenhuma tinha sido escrito ainda. No `main.ts` a janela é de microssegundos e
+ninguém veria; em qualquer outra ordem de chamada, é um painel quebrado. O conserto foi o `mount`
+chamar o `render` com a view vazia, como o `mountMap` e o `mountTree` já faziam — a regra de "só uma
+das duas por vez" mora inteira num lugar só.
+
+### Duas medidas que só o navegador deu
+
+**O painel ficava 34px mais largo que o mapa.** O projeto não tem reset global de `box-sizing`, então
+a borda e o `padding` somavam por fora das 54rem e as duas caixas terminavam em pontos diferentes.
+Com `box-sizing: border-box`, mapa e painel medem 864px e vão de 40 a 904 — conferido no navegador.
+
+**O `Esc` não pôde ser testado com a tecla de verdade.** A automação de navegador **não entrega
+`Escape` à página**: um espião em fase de captura contou **zero** eventos depois de a tecla ser
+apertada. O manipulador foi exercitado por evento sintético despachado no botão de fechar com foco —
+mesmo caminho, mesmo `keydown` no `document` — e fecha o painel e desmarca o mapa. Mas **alguém
+precisa apertar Esc à mão uma vez**; isto aqui não é prova.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 454 testes em 25 arquivos
+  npm run dev   # clique numa região; feche pelo botão e por Esc
+  ```
+  O aceite é o `ACEITE` do `tests/region-panel.test.ts` — "concorda com o mapa sobre o apoio, nas 8
+  regiões" —, mais o teste dos 900 ticks que tranca a divisão em dois grupos.
+
+  **Conferido no navegador**, sobre a partida de 2056 que estava salva: a frase que ensina o clique
+  na carga; a Ásia Oriental com os seis campos e "40% do mundo"; o mapa e o painel mostrando o mesmo
+  26 de apoio; o botão de fechar devolvendo o foco à forma `ea` do mapa; e mapa e painel alinhados
+  em 864px. A partida ficou pausada e não andou nenhum mês desta vez.
+
+- **Pendente:**
+  - **`population`, `cleanShare` e `economy` continuam sem peso mecânico.** É a lacuna entre o `§2.3`
+    do GDD e o engine, e ela é anterior a esta tarefa — o painel só a tornou visível. Enquanto durar,
+    as oito regiões se diferenciam por um campo só. Consertar é decisão de design mais rodada de
+    balanceamento: vale uma tarefa própria, provavelmente perto do `P8-02`.
+  - **O `Esc` não foi apertado por uma pessoa.** Verificado por evento sintético; a automação não
+    entrega a tecla. É o primeiro item para conferir na mão.
+  - **A seleção não sobrevive ao recarregamento**, pela mesma razão registrada no `P5-01`: ela não
+    entra no `GameState` nem no save.
+  - **O painel não mostra evento em curso na região.** Um cartão de evento diz "Enchente · Europa"
+    enquanto o painel da Europa não menciona nada. Ligar os dois é o `P7-04`, que já é dono dos
+    alertas por região.
+  - **A largura 54rem está escrita em dois arquivos.** O `map.css` e o `region-panel.css` repetem a
+    medida, com nota cruzada nos dois. Uma custom property resolveria — e é justamente o tipo de
+    coisa que o `theme.css` do `P5-02` deve absorver.
+  - **`economy` aparece como número puro**, sem escala nem unidade — é a única exceção da regra de
+    "nunca número solto", porque é índice de base 100 e "97 de 100" mentiria: o índice pode passar de
+    100. Está escrito como exceção no teste, não escondido.
+  - `P1-04`, o `theme.css` do `P5-02` e o `P5-06` seguem abertos.
+- **Evidência:** `docs/evidencias/2026-08-25-p5-04-painel-de-detalhe-da-regiao.jpg` — a Ásia Oriental aberta, alinhada com o mapa acima
+
+---
+
 ## 2026-08-25 — O mapa entrou, e metade da simulação parou de rodar invisível
 
 - **Parte / tarefa:** `P5-01` ✔
