@@ -33,17 +33,16 @@
 }
 
 .region__detail {
-  /* A mesma medida do `max-width` do mapa: os dois formam um bloco só, e um
-     painel que avançasse até a borda da página ficaria pendurado à direita do
-     desenho de onde ele vem. Se o mapa mudar de largura, esta linha muda junto —
-     está anotado nos dois arquivos. */
-  max-width: 54rem;
+  /* A mesma medida do mapa, lida do mesmo token: os dois formam um bloco só, e
+     um painel que avançasse até a borda da página ficaria pendurado à direita do
+     desenho de onde ele vem. */
+  max-width: var(--largura-mundo, 54rem);
   /* Sem isto o painel fica 34px mais largo que o mapa: o projeto não tem reset
      global de box-sizing, então a borda e o padding somariam por fora das 54rem
      e as duas caixas terminariam em pontos diferentes. Medido no navegador. */
   box-sizing: border-box;
   border: 1px solid var(--cor-borda, #4c8069);
-  border-radius: 0.5rem;
+  border-radius: var(--raio, 0.5rem);
   padding: 0.75rem 1rem 1rem;
 }
 
@@ -63,22 +62,24 @@
 }
 
 .region__close {
-  /* 44px de alvo mínimo, a mesma medida do controls.css: o dedo de quem passa
-     num estande não mira bem. */
-  min-height: 44px;
+  /* Alvo de toque confortável, a mesma medida dos controles: o dedo de quem
+     passa num estande não mira bem. Estava escrito aqui como `44px` até o
+     P5-02 — o token é em `rem`, que é o que faz o botão crescer junto quando
+     alguém aumenta a fonte do navegador. */
+  min-height: var(--alvo-toque, 2.75rem);
   padding: 0.4rem 0.9rem;
   border: 2px solid var(--cor-borda, #4c8069);
-  border-radius: 0.5rem;
+  border-radius: var(--raio, 0.5rem);
   background: transparent;
   color: var(--cor-valor, #f2f7f4);
   font: inherit;
   /* 16px é o piso do §5. */
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   cursor: pointer;
 }
 
 .region__close:hover {
-  background: rgb(127 209 168 / 12%);
+  background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
 }
 
 /* Anel de foco explícito, igual ao da árvore, do mapa e da contenção. */
@@ -98,7 +99,7 @@
   color: var(--cor-rotulo, #a7c0b4);
   /* 1rem e não menos: o §5 fixa 16px como piso para TODO texto, e um título de
      grupo que encolhe é o primeiro a virar decoração ilegível de longe. */
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -122,7 +123,7 @@
 
 .region__label {
   color: var(--cor-rotulo, #a7c0b4);
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
 }
 
 .region__value {
@@ -130,7 +131,7 @@
   /* Tabular: os dígitos têm todos a mesma largura, então o número não treme
      enquanto o tempo corre. */
   font-variant-numeric: tabular-nums;
-  font-size: 1.125rem;
+  font-size: var(--texto-medio, 1.125rem);
   font-weight: 600;
 }
 
@@ -138,7 +139,7 @@
   margin: 0;
   color: var(--cor-rotulo, #a7c0b4);
   font-variant-numeric: tabular-nums;
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
 }
 
 /* Diferente da árvore e da contenção, o painel **não** é apagado quando a

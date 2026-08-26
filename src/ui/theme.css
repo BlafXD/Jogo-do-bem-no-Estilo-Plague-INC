@@ -1,0 +1,144 @@
+/* O tema (P5-02): paleta, tipografia e medidas do jogo inteiro.
+
+   **Este é o arquivo que o pacote [D-Design] entrega.** O contrato do PLANO.md
+   diz "só variáveis CSS", e é ao pé da letra: nenhum seletor, nenhuma regra de
+   layout, nenhuma cor escrita fora daqui. Quem for desenhar a identidade visual
+   troca os valores abaixo e não abre nenhum outro arquivo — nem `.ts`, nem as
+   outras folhas de estilo.
+
+   As folhas dos módulos continuam lendo tudo como `var(--nome, reserva)`, com o
+   valor de reserva repetido no próprio `var()`. Isso é deliberado e não é
+   redundância morta: se este arquivo faltar ou vier quebrado, a página continua
+   legível em vez de virar texto branco no branco — o que importa numa feira,
+   onde não há ninguém para consertar CSS no meio da apresentação.
+
+   ---------------------------------------------------------------------------
+   CONTRASTE — o §5 do GDD exige AA (4,5:1 em texto, 3:1 em elemento não textual)
+
+   Medido pela fórmula da WCAG 2.1. **Todas as combinações que o jogo usa de
+   verdade estão aqui**, e o tests/theme.test.ts recalcula todas elas a partir
+   deste arquivo — trocar uma cor por outra que não passe quebra a suíte.
+
+   Texto sobre os dois fundos:            exige 4,5:1
+     valor    #F2F7F4   sobre fundo 16,17   sobre superfície 13,61
+     rótulo   #A7C0B4   sobre fundo  9,04   sobre superfície  7,61
+     destaque #7FD1A8   sobre fundo  9,67   sobre superfície  8,13
+     alerta   #F2A65A   sobre fundo  8,66   sobre superfície  7,28
+
+   Borda, traço e anel de foco:           exige 3:1
+     borda    #4C8069   sobre fundo  3,84   sobre superfície  3,23
+     destaque #7FD1A8   sobre fundo  9,67   sobre superfície  8,13
+     alerta   #F2A65A   sobre fundo  8,66   sobre superfície  7,28
+
+   Os dois fundos entre si dão 1,19:1, e isso **não** é uma falha: quem separa a
+   superfície do fundo é o traço da borda, que faz 3,84:1 contra a página e
+   3,23:1 contra o que cerca. Preenchimento não precisa de contraste próprio
+   quando o contorno carrega a forma.
+
+   Texto sobre os fundos de hover, já compostos:
+     destaque a 12% sobre fundo       = #1C3228   pior texto 6,76
+     destaque a 12% sobre superfície  = #244034   pior texto 5,59
+     alerta   a 12% sobre fundo       = #2A2D1F   pior texto 6,95
+     alerta   a 12% sobre superfície  = #323B2A   pior texto 5,78
+
+   ---------------------------------------------------------------------------
+   O QUE ESTE ARQUIVO NÃO RESOLVE
+
+   O §5 também proíbe comunicar estado só por cor, e **isso não é ajustável por
+   tema**: quem cumpre a regra é o par ícone-mais-rótulo escrito que vive no
+   `src/data/i18n.ts` e é desenhado pelos módulos. Trocar a paleta aqui não pode
+   quebrar essa regra, e trocar por uma paleta monocromática também não — é
+   exatamente esse o teste. */
+
+:root {
+  /* ------------------------------------------------------------- paleta --- */
+
+  /** O fundo da página. */
+  --cor-fundo: #0f1c17;
+
+  /**
+   * O preenchimento das formas que se destacam do fundo — hoje, as regiões do
+   * mapa. Quase igual ao fundo de propósito: quem desenha o limite é a borda.
+   */
+  --cor-superficie: #182c24;
+
+  /** Texto principal: números, nomes, o que se lê primeiro. */
+  --cor-valor: #f2f7f4;
+
+  /** Texto secundário: rótulos, unidades, frases de apoio. */
+  --cor-rotulo: #a7c0b4;
+
+  /** Títulos, estado disponível, seleção, anel de foco dos controles. */
+  --cor-destaque: #7fd1a8;
+
+  /**
+   * O que pede atenção: evento crítico, contenção da Inércia, confirmação de
+   * reinício, anel de foco onde o destaque já é a cor do estado.
+   */
+  --cor-alerta: #f2a65a;
+
+  /** Contorno de tudo. Não é cor de texto — precisa de 3:1, não de 4,5:1. */
+  --cor-borda: #4c8069;
+
+  /* ---------------------------------------------------------- derivadas --- */
+
+  /*
+   * Os fundos de hover, tirados das cores acima em vez de escritos à mão.
+   *
+   * Antes do P5-02 estes dois viviam como `rgb(127 209 168 / 12%)` espalhados
+   * por cinco folhas de estilo — números que **não** acompanhariam uma troca de
+   * paleta. Trocar `--cor-destaque` aqui e ver o hover continuar verde seria o
+   * jeito silencioso de o contrato do [D-Design] falhar.
+   *
+   * `color-mix` existe em Chrome 111+, Firefox 113+ e Safari 16.2+ (2023). Onde
+   * não existir, a declaração é inválida e o hover simplesmente não pinta —
+   * degradação segura, porque nenhum estado do jogo é comunicado por hover.
+   */
+  --cor-destaque-suave: color-mix(in srgb, var(--cor-destaque) 12%, transparent);
+  --cor-alerta-suave: color-mix(in srgb, var(--cor-alerta) 12%, transparent);
+
+  /* --------------------------------------------------------- tipografia --- */
+
+  /**
+   * Pilha do sistema: sem download, sem FOUT, e funciona no build offline da
+   * feira (P8-05). Uma fonte própria é entrega do [D-Design] — e aí ela entra
+   * por aqui, com `@font-face` no arquivo dele.
+   */
+  --fonte-base: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /**
+   * **O piso de legibilidade do §5, não só o tamanho do corpo de texto.**
+   *
+   * O GDD fixa 16px como mínimo para todo texto — o jogo é visto de pé, de
+   * longe, numa feira. Por isso este token aparece como `font-size` em rótulo,
+   * botão, dica e etiqueta, e não só no `body`: subir aqui sobe o jogo inteiro
+   * junto, que é o que uma pessoa com dificuldade de leitura precisa.
+   */
+  --tamanho-base: 1rem;
+
+  /** Um degrau acima do piso: valores que o olho procura primeiro. */
+  --texto-medio: 1.125rem;
+
+  /* ------------------------------------------------------------ medidas --- */
+
+  /** Cantos de cartão, botão grande e painel. */
+  --raio: 0.5rem;
+
+  /** Cantos dos controles pequenos. */
+  --raio-pequeno: 0.375rem;
+
+  /**
+   * Alvo de toque mínimo. Em `rem` e nunca em `px`: quem aumenta a fonte do
+   * navegador precisa do botão crescendo junto, e `44px` ficaria parado.
+   */
+  --alvo-toque: 2.75rem;
+
+  /**
+   * A largura do bloco do mundo — o mapa e o painel de detalhe, que precisam
+   * terminar no mesmo ponto para se lerem como uma coisa só.
+   *
+   * Estava escrita duas vezes, uma em cada folha, com nota cruzada pedindo para
+   * lembrar de mudar as duas. Agora é um número só.
+   */
+  --largura-mundo: 54rem;
+}

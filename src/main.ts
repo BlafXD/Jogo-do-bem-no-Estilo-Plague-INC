@@ -40,6 +40,14 @@ import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
 import {
+  createScreens,
+  currentScreen,
+  renderScreens,
+  reviewWorld,
+  startGame,
+  type ScreenLayout,
+} from './ui/screens';
+import {
   afterReset,
   armReset,
   cancelReset,
@@ -48,7 +56,20 @@ import {
   renderSession,
 } from './ui/session';
 import { clearGame, loadGame, saveGame } from './ui/storage';
+import {
+  armNewGame,
+  cancelNewGame,
+  createTitle,
+  mountTitle,
+  renderTitle,
+  titleView,
+} from './ui/title';
 import { mountTree, renderTree, treeView } from './ui/tree';
+// O tema vem primeiro por leitura, não por necessidade: custom property é
+// resolvida no valor computado, então um `:root` declarado por último valeria
+// igual. Está no topo porque é o arquivo que manda nos outros, e quem abrir esta
+// lista deve ver isso antes de ver as folhas dos módulos (P5-02).
+import './ui/theme.css';
 import './ui/contain.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
@@ -56,7 +77,9 @@ import './ui/hud.css';
 import './ui/map.css';
 import './ui/outcome.css';
 import './ui/region-panel.css';
+import './ui/screens.css';
 import './ui/session.css';
+import './ui/title.css';
 import './ui/tree.css';
 
 /**
@@ -95,6 +118,9 @@ const mapa = required('#mapa');
 const regiao = required('#regiao');
 const contencao = required('#contencao');
 const tree = required('#arvore');
+const telaTitulo = required<HTMLElement>('#tela-titulo');
+const topo = required<HTMLElement>('.topo');
+const tabuleiro = required<HTMLElement>('#tabuleiro');
 const app = required<HTMLElement>('#app');
 
 required('#pendente').textContent = ui.app.pending;
@@ -144,6 +170,21 @@ let autoPaused = false;
  * pausa.
  */
 let selectedRegion: RegionId | null = null;
+
+/**
+ * Qual das três telas está no ar, e o que a leva de uma para a outra (P5-06).
+ *
+ * Como a região escolhida, isto é estado **da tela** e não entra no save: o
+ * jogador que volta amanhã volta pelo título, e não no meio do tabuleiro. É
+ * também o que faz o relógio ficar parado até alguém decidir jogar.
+ */
+let screens = createScreens();
+let title = createTitle();
+
+const layout: ScreenLayout = { title: telaTitulo, chrome: topo, board: tabuleiro };
+
+/** O ano da partida guardada, ou null. É tudo que a tela de título precisa. */
+const savedYear = restored === null ? null : restored.year;
 
 function handleCommand(command: TimeCommand | null): void {
   control = applyCommand(control, command);
@@ -231,12 +272,58 @@ function handleCloseRegion(): void {
   focusRegion(mapa, closing);
 }
 
-/** Redesenha tudo que depende do estado da partida. */
+/**
+ * Sair do título para a partida (P5-06).
+ *
+ * `newGame` diz se é para descartar a partida guardada. O `handleReset` já
+ * sabe apagar o save e zerar o relógio; aqui só se escolhe qual dos dois
+ * caminhos.
+ */
+function handleStart(newGame: boolean): void {
+  screens = startGame();
+  title = cancelNewGame(title);
+
+  if (newGame) {
+    // O `handleReset` redesenha por conta própria, e já com o `screens`
+    // trocado — por isso ele vem depois da troca de tela, e não antes.
+    handleReset();
+    return;
+  }
+
+  // Não há resto de tempo para descartar ao sair do título: o `previousFrame`
+  // continuou andando a cada quadro, e o que o `advanceRealTime` recebeu o
+  // tempo todo foi velocidade 0.
+  renderGame();
+}
+
+/** Voltar ao tabuleiro depois do fim, sem desfazer o fim. */
+function handleReview(): void {
+  screens = reviewWorld(screens);
+  renderGame();
+}
+
+/**
+ * Redesenha tudo que depende do estado da partida — e decide qual tela está
+ * no ar (P5-06).
+ *
+ * O roteamento mora aqui, e não numa função à parte, porque a tela depende de
+ * duas coisas que só este arquivo tem juntas: se o jogador saiu do título, e
+ * se a partida acabou. Perguntá-las em lugares diferentes seria o jeito de a
+ * tela de fim aparecer um mês depois do fim.
+ */
 function renderGame(): void {
+  const screen = currentScreen(screens, isFinished(state));
+
+  renderScreens(layout, screen);
+  renderTitle(telaTitulo, titleView(savedYear, title));
+
   renderHud(hud, hudView(state));
   renderSelection();
   renderTree(tree, treeView(state));
-  renderOutcome(resultado, outcomeView(state));
+  // No título o cartão de resultado não entra, nem quando o save é de uma
+  // partida encerrada: quem senta na frente do computador da feira vê o jogo
+  // se apresentar, e não o fim da partida de outra pessoa.
+  renderOutcome(resultado, screen === 'title' ? null : outcomeView(state), screens.reviewing);
   renderEvents();
   renderContain(contencao, containView(state));
   // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só
@@ -342,7 +429,31 @@ mountContain(contencao, handleContain);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
 // minutos de jogo em curso; aqui não há mais partida para destruir.
-mountOutcome(resultado, handleReset);
+mountOutcome(resultado, handleReset, handleReview);
+mountTitle(telaTitulo, {
+  onContinue: () => {
+    handleStart(false);
+  },
+  onNew: () => {
+    // Sem save não há o que apagar, e "Começar" entra direto. Com save, o
+    // primeiro clique só abre a pergunta — a regra dos dois cliques do
+    // session.ts, que existe porque apagar a partida não tem desfazer.
+    if (savedYear === null) {
+      handleStart(true);
+      return;
+    }
+
+    title = armNewGame(title);
+    renderGame();
+  },
+  onConfirmNew: () => {
+    handleStart(true);
+  },
+  onCancelNew: () => {
+    title = cancelNewGame(title);
+    renderGame();
+  },
+});
 mountSession(partida, {
   onArm: () => {
     session = armReset(session);
@@ -417,7 +528,12 @@ function frame(now: number): void {
     state,
     clock,
     now - previousFrame,
-    effectiveSpeed(control),
+    // Velocidade 0 fora da tela de partida: no título o jogo ainda não
+    // começou, e na tela de fim ele já acabou. O `advanceRealTime` continua
+    // sendo chamado em todo quadro — é ele que mantém o `previousFrame`
+    // fresco, e é por isso que sair do título não entrega de uma vez o tempo
+    // que a pessoa passou lendo o pitch.
+    currentScreen(screens, isFinished(state)) === 'game' ? effectiveSpeed(control) : 0,
     isFinished,
   );
 

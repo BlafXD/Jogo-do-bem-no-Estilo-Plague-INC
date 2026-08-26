@@ -5,7 +5,7 @@
    encostar aqui.
 
    Uma cor nova entra, e só uma: o #F2A65A do botão de confirmar o reinício.
-   Contra o fundo #0F1C17 ela dá 9,73:1 — acima dos 4,5:1 que o §5 exige para
+   Contra o fundo #0F1C17 ela dá 8,66:1 — acima dos 4,5:1 que o §5 exige para
    texto. É âmbar, e não vermelho, de propósito: vermelho puro sobre fundo
    escuro é justamente o par que mais castiga quem tem baixa visão, e o §5 já
    proíbe que a cor carregue a informação sozinha. Quem diz o que o botão faz é
@@ -22,15 +22,15 @@
 
 .session__button {
   border: 2px solid var(--cor-borda, #4c8069);
-  border-radius: 0.375rem;
+  border-radius: var(--raio-pequeno, 0.375rem);
   background: transparent;
   color: var(--cor-valor, #f2f7f4);
   font: inherit;
   /* 16px é o piso do §5 e vale para botão: o jogo é visto de pé e de longe. */
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   /* Mesmo alvo de toque do controls.css — o dedo de quem passa no estande não
      mira bem, e este é o botão em que errar dói mais. */
-  min-height: 2.75rem;
+  min-height: var(--alvo-toque, 2.75rem);
   padding: 0 0.875rem;
   cursor: pointer;
 }
@@ -54,7 +54,7 @@
 
 .session__button--danger:hover {
   border-color: var(--cor-alerta, #f2a65a);
-  background: rgb(242 166 90 / 12%);
+  background: var(--cor-alerta-suave, rgb(242 166 90 / 12%));
 }
 
 .session__status {

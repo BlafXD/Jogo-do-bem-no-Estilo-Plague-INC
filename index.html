@@ -15,8 +15,18 @@
          e nome de nó são texto de UI, e a regra 8 não deixa eles morarem aqui.
 
          O nome do jogo é a exceção deliberada: ele precisa estar no <title> de
-         qualquer jeito, e manter o <h1> ao lado é menos duplicação do que
-         separar os dois. Muda quando o P1-04 decidir o nome definitivo. -->
+         qualquer jeito, e manter os dois <h1> ao lado é menos duplicação do que
+         espalhá-los por outro arquivo. São três ocorrências, todas neste
+         arquivo, e o P1-04 troca as três de uma vez.
+
+         As três telas do P5-06 são estes três blocos: #tela-titulo, o .topo e
+         o #tabuleiro. Quem liga e desliga cada um é o src/ui/screens.ts, pelo
+         atributo hidden — o porquê de cada tela mostrar o que mostra está
+         escrito lá. -->
+    <section id="tela-titulo" class="title">
+      <h1 class="title__name">Ponto de Virada</h1>
+    </section>
+
     <header class="topo">
       <h1 class="topo__titulo">Ponto de Virada</h1>
       <div id="hud" class="hud"></div>
@@ -25,35 +35,43 @@
     </header>
 
     <main id="app" class="conteudo">
-      <p id="pendente" class="conteudo__pendente"></p>
-      <!-- O resultado entra acima da árvore, e não por cima da tela: um modal
-           cobriria justamente o HUD, que é onde estão os números que o jogador
-           quer ler quando a partida acaba. Fica escondido durante a partida. -->
+      <!-- O resultado fica FORA do #tabuleiro de propósito: a tela de fim
+           esconde o tabuleiro e mantém o resultado. Quem manda no hidden dele é
+           o renderOutcome, e não o roteador — dois donos do mesmo atributo se
+           apagariam um ao outro, um por quadro (src/ui/screens.ts). -->
       <section id="resultado" class="outcome"></section>
-      <!-- Os eventos ficam acima da árvore e abaixo do resultado: durante a
+
+      <!-- O tabuleiro: tudo que só faz sentido com a partida em curso. É o
+           bloco que a tela de fim desliga inteiro. Existe como invólucro porque
+           o #eventos já tem dono do próprio hidden (o renderEventCards), então
+           o roteador não pode mexer nas seções uma a uma. -->
+      <div id="tabuleiro" class="tabuleiro">
+        <p id="pendente" class="conteudo__pendente"></p>
+        <!-- Os eventos ficam acima da árvore e abaixo do resultado: durante a
            partida o resultado está escondido, então o cartão de evento é a
            primeira coisa do corpo da página — que é onde precisa estar, já que
            o tempo pode parar sozinho por causa dele. Quando a partida acaba, o
            resultado passa na frente. Fica escondido enquanto não cai evento. -->
-      <section id="eventos" class="events" hidden></section>
-      <!-- O mapa fica entre os eventos e as ações, e é essa a ordem de leitura
+        <section id="eventos" class="events" hidden></section>
+        <!-- O mapa fica entre os eventos e as ações, e é essa a ordem de leitura
            que ele existe para criar: o cartão diz o que aconteceu, o mapa diz
            onde doeu, e a árvore e a contenção logo abaixo são o que fazer a
            respeito. Abaixo do evento porque o evento pode parar o relógio;
            acima da árvore porque olhar o mundo vem antes de agir sobre ele. -->
-      <section id="mapa" class="map"></section>
-      <!-- O detalhe vem colado no mapa, e não numa coluna ao lado: clicar numa
+        <section id="mapa" class="map"></section>
+        <!-- O detalhe vem colado no mapa, e não numa coluna ao lado: clicar numa
            região e ler o número dela é um par que precisa caber na mesma tela.
            Aparece com a frase que ensina o clique desde 2025, pela mesma razão
            da contenção bloqueada — um painel que só existe depois do primeiro
            clique não tem como ensinar que o clique existe. -->
-      <section id="regiao" class="region"></section>
-      <!-- A contenção fica logo acima da árvore porque compete com ela: gastar
+        <section id="regiao" class="region"></section>
+        <!-- A contenção fica logo acima da árvore porque compete com ela: gastar
            PAC aqui é não comprar um nó neste mês (docs/GDD.md §2.6). Aparece
            bloqueada desde 2025 de propósito — é ela que ensina que o ramo
            Sociedade destrava alguma coisa. -->
-      <section id="contencao" class="contain"></section>
-      <section id="arvore" class="tree"></section>
+        <section id="contencao" class="contain"></section>
+        <section id="arvore" class="tree"></section>
+      </div>
     </main>
 
     <script type="module" src="/src/main.ts"></script>

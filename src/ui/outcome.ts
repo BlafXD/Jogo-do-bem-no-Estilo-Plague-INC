@@ -153,7 +153,7 @@ export function outcomeView(state: GameState): OutcomeView | null {
 
 // ------------------------------------------------------------------ DOM ---
 
-type Slot = 'card' | 'icon' | 'title' | 'lead' | 'verdict' | 'stats';
+type Slot = 'card' | 'icon' | 'title' | 'lead' | 'verdict' | 'stats' | 'review';
 
 function slot(root: ParentNode, name: Slot): HTMLElement | null {
   return root.querySelector<HTMLElement>(`[data-outcome="${name}"]`);
@@ -169,7 +169,7 @@ function slot(root: ParentNode, name: Slot): HTMLElement | null {
  * tela continua visível, e a navegação por teclado do §5 sai de graça porque
  * nada foi sequestrado.
  */
-export function mountOutcome(root: Element, onPlayAgain: () => void): void {
+export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: () => void): void {
   root.setAttribute('aria-label', ui.outcome.label);
 
   const card = document.createElement('div');
@@ -224,13 +224,41 @@ export function mountOutcome(root: Element, onPlayAgain: () => void): void {
   again.title = ui.outcome.playAgainHint;
   again.addEventListener('click', onPlayAgain);
 
-  card.append(said, stats, again);
+  const actions = document.createElement('div');
+  actions.className = 'outcome__actions';
+  actions.append(again);
+
+  // O caminho de volta ao tabuleiro (P5-06). Só é montado quando alguém pede:
+  // sem `onReview`, o cartão continua exatamente o que era no P6-08, e os
+  // testes de lá continuam medindo o mesmo cartão.
+  if (onReview !== undefined) {
+    const review = document.createElement('button');
+    review.type = 'button';
+    review.className = 'outcome__review';
+    review.dataset.outcome = 'review';
+    review.textContent = ui.outcome.review;
+    review.title = ui.outcome.reviewHint;
+    review.addEventListener('click', onReview);
+    actions.append(review);
+  }
+
+  card.append(said, stats, actions);
   root.replaceChildren(card);
   renderOutcome(root, null);
 }
 
-/** Escreve o resultado no cartão, ou esconde a seção enquanto se joga. */
-export function renderOutcome(root: Element, view: OutcomeView | null): void {
+/**
+ * Escreve o resultado no cartão, ou esconde a seção enquanto se joga.
+ *
+ * `reviewing` diz que o jogador já está vendo o tabuleiro (P5-06). Nesse caso o
+ * botão "Ver o mundo" sai da tela — e sai por `hidden`, não por CSS, pelo mesmo
+ * motivo da seção inteira: um botão invisível mas focável é a armadilha que só
+ * quem navega por teclado encontra.
+ */
+export function renderOutcome(root: Element, view: OutcomeView | null, reviewing = false): void {
+  const review = slot(root, 'review');
+  if (review !== null) review.hidden = reviewing;
+
   // `hidden` na seção inteira, e não `display: none` no CSS: assim o botão
   // "Jogar de novo" sai da ordem de tabulação durante a partida. Um botão
   // invisível mas focável é o tipo de armadilha que só quem navega por teclado

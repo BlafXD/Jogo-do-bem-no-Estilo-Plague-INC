@@ -36,7 +36,7 @@
   margin: 0 0 0.75rem;
   color: var(--cor-destaque, #7fd1a8);
   /* Acima do piso de 16px do §5, porque é título de seção. */
-  font-size: 1.125rem;
+  font-size: var(--texto-medio, 1.125rem);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -57,13 +57,13 @@
   width: 100%;
   padding: 0.75rem;
   border: 2px dashed var(--cor-borda, #4c8069);
-  border-radius: 0.5rem;
+  border-radius: var(--raio, 0.5rem);
   background: transparent;
   color: var(--cor-valor, #f2f7f4);
   font: inherit;
   /* 16px é o piso do §5 e vale para o cartão inteiro: o jogo é visto de pé e de
      longe numa feira, e um nó que não dá para ler não dá para escolher. */
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   text-align: start;
   cursor: not-allowed;
 }
@@ -87,7 +87,7 @@
 }
 
 .tree__node[data-status='available']:hover {
-  background: rgb(127 209 168 / 12%);
+  background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
 }
 
 .tree__node[data-status='unlocked'] {
@@ -126,7 +126,7 @@
    garante a informação para quem lê, mas o ícone é o que se enxerga de longe
    num estande — e o §5 fixa 16px justamente por causa dessa distância. */
 .tree__icon {
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   line-height: 1;
 }
 

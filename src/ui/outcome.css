@@ -6,7 +6,7 @@
 
    Nenhuma cor nova entra. As três usadas já foram medidas contra o fundo
    #0F1C17 no hud.css e no session.css:
-     --cor-destaque #7FD1A8  9,67:1     --cor-alerta  #F2A65A  9,73:1
+     --cor-destaque #7FD1A8  9,67:1     --cor-alerta  #F2A65A  8,66:1
      --cor-valor    #F2F7F4 16,17:1     --cor-rotulo  #A7C0B4   9,04:1
 
    O `data-tone` pinta a borda e o título de acordo com o resultado, e é
@@ -21,7 +21,7 @@
 
 .outcome__card {
   border: 2px solid var(--cor-borda, #4c8069);
-  border-radius: 0.5rem;
+  border-radius: var(--raio, 0.5rem);
   padding: clamp(1rem, 3vw, 1.75rem);
   max-width: 46rem;
 }
@@ -65,7 +65,7 @@
 .outcome__lead {
   margin: 0.75rem 0 0;
   /* 16px é o piso do §5 e vale para a frase mais importante do cartão. */
-  font-size: 1.125rem;
+  font-size: var(--texto-medio, 1.125rem);
   max-width: 60ch;
 }
 
@@ -95,7 +95,7 @@
 
 .outcome__stat-label {
   color: var(--cor-rotulo, #a7c0b4);
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -109,30 +109,62 @@
   font-weight: 600;
 }
 
+/* Os dois caminhos que saem do cartão (P5-06). Lado a lado, quebrando linha
+   numa tela estreita. */
+.outcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
 .outcome__again {
   border: 2px solid var(--cor-destaque, #7fd1a8);
-  border-radius: 0.375rem;
+  border-radius: var(--raio-pequeno, 0.375rem);
   background: transparent;
   color: var(--cor-destaque, #7fd1a8);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   font-weight: 700;
   /* Mesmo alvo de toque do controls.css e do session.css: o dedo de quem passa
      num estande não mira bem. */
-  min-height: 2.75rem;
-  margin-top: 1.5rem;
+  min-height: var(--alvo-toque, 2.75rem);
   padding: 0 1.125rem;
   cursor: pointer;
 }
 
 .outcome__again:hover {
-  background: rgb(127 209 168 / 12%);
+  background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
 }
 
 /* Anel de foco explícito: sem ele a navegação por teclado que o §5 exige
    existe, mas ninguém vê onde está. */
 .outcome__again:focus-visible {
   outline: 3px solid var(--cor-destaque, #7fd1a8);
+  outline-offset: 2px;
+}
+
+/* "Ver o mundo" é o caminho secundário: mesma forma do "Jogar de novo", mas na
+   cor de rótulo e sem o peso da fonte. Quem acabou de perder normalmente quer
+   jogar de novo; quem quer entender por que perdeu vai atrás do mapa. */
+.outcome__review {
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  font-size: var(--tamanho-base, 1rem);
+  min-height: var(--alvo-toque, 2.75rem);
+  padding: 0 1.125rem;
+  cursor: pointer;
+}
+
+.outcome__review:hover {
+  background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
+}
+
+.outcome__review:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
   outline-offset: 2px;
 }
 

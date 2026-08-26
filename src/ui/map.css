@@ -57,9 +57,11 @@
      fora dela. Aqui ele fica em ~536px e ainda cabe com o HUD acima. A altura
      acompanha a largura porque o viewBox é 1000×620.
 
-     O `.region__detail` do painel de detalhe (P5-04) repete esta medida para
-     ficar alinhado com o mapa. Mudar aqui é mudar lá. */
-  max-width: 54rem;
+     O painel de detalhe (P5-04) precisa terminar no mesmo ponto que o mapa, e
+     desde o P5-02 os dois leem a mesma medida do theme.css — antes ela estava
+     escrita duas vezes, com uma nota em cada folha pedindo para lembrar da
+     outra. */
+  max-width: var(--largura-mundo, 54rem);
   height: auto;
 }
 
@@ -81,7 +83,7 @@
 
 .map__region:hover .map__shape {
   /* O próprio destaque diluído, não uma cor nova. */
-  fill: rgb(127 209 168 / 10%);
+  fill: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
 }
 
 /* Selecionada: traço contínuo do dobro da espessura, na cor de destaque. A

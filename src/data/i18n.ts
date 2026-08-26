@@ -55,6 +55,46 @@ export const ui = {
     speedHint: 'Velocidade da simulação. Atalhos: as teclas 1, 2 e 4.',
   },
 
+  // A tela de título (P5-06).
+  //
+  // **O nome do jogo não está aqui**, pela mesma razão registrada no topo deste
+  // arquivo: ele vive no `index.html`, junto do `<title>` e do `<h1>`, e o
+  // `P1-04` troca os três de uma vez.
+  //
+  // **O pitch sai comprimido do `docs/GDD.md §1`, sem frase inventada** — papel
+  // do jogador, a lógica invertida do *Plague Inc*, e a tensão de não haver PAC
+  // para comprar tudo. São três linhas de propósito: o `§2.1` do GDD fecha
+  // avisando que a mensagem do ODS 13 está "embutida na mecânica — não em um
+  // texto de tutorial". O pitch definitivo é do `P1-01` e a narrativa é do
+  // pacote [D-Historia].
+  title: {
+    label: 'Início',
+    pitch: [
+      'Você é o Gerente de uma agência climática global, de 2025 a 2100.',
+      'É o Plague Inc ao contrário: em vez de evoluir uma praga até o mundo cair, você evolui soluções contra um mundo que já está esquentando.',
+      'Nenhuma partida rende PAC para comprar tudo. O jogo é escolher o que fica de fora.',
+    ],
+
+    /** O ano vem junto para o jogador reconhecer a partida antes de entrar. */
+    continueGame: (year: string) => `Continuar de ${year}`,
+    continueHint: 'Volta para a partida salva, no mês em que ela parou.',
+
+    /** Sem save não há o que apagar, e o rótulo não fala em apagar. */
+    start: 'Começar',
+    startHint: 'Começa uma partida em 2025.',
+
+    newGame: 'Nova partida',
+    newGameHint: 'Apaga a partida salva e recomeça em 2025.',
+
+    // Diz o que vai acontecer, e não "Sim" nem "OK": quem clica rápido precisa
+    // ler a consequência no próprio botão. É a regra do session.ts.
+    confirmNew: 'Apagar e recomeçar',
+    confirmNewHint: 'Confirma. Não dá para desfazer.',
+    cancel: 'Cancelar',
+    cancelHint: 'Mantém a partida salva como está.',
+    warning: 'A partida salva será apagada. Não dá para desfazer.',
+  },
+
   // O mapa esquemático das 8 regiões (P5-01), com a lista do docs/GDD.md §2.3.
   //
   // **O nome de cada região não está aqui**, pelo mesmo motivo do `fact` dos
@@ -250,6 +290,12 @@ export const ui = {
     label: 'Resultado da partida',
     playAgain: 'Jogar de novo',
     playAgainHint: 'Começa uma partida nova em 2025.',
+
+    // O caminho de volta ao tabuleiro depois do fim (P5-06). O mapa e o painel
+    // são justamente o que se quer olhar quando a partida acaba — para ver em
+    // que região o apoio ruiu —, e a tela de fim esconde os dois.
+    review: 'Ver o mundo',
+    reviewHint: 'Mostra o mapa e a árvore como ficaram. A partida continua encerrada.',
     skillsLabel: 'Habilidades',
     skillsValue: (bought: string, total: string) => `${bought} de ${total}`,
 

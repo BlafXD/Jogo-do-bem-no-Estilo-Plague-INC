@@ -138,11 +138,11 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 ## Parte 5 — Primeiros cenários e personagens
 
 - [x] `P5-01` Mapa esquemático com 8 regiões clicáveis (SVG) — **G**
-- [ ] `P5-02` `theme.css` com paleta e tipografia, contraste AA; todo estado com **ícone + rótulo de texto**, nunca só cor — **M** — *o arquivo que o Design vai substituir depois*
+- [x] `P5-02` `theme.css` com paleta e tipografia, contraste AA; todo estado com **ícone + rótulo de texto**, nunca só cor — **M** — *o arquivo que o Design vai substituir depois*
 - [x] `P5-03` HUD: ano, temperatura, emissões, PAC, apoio médio — **M**
 - [x] `P5-04` Painel de detalhe da região ao clicar — **M**
 - [x] `P5-05` Controle de tempo: pausa e 1x / 2x / 4x — **M** — aceite: `Espaço` pausa e retoma
-- [ ] `P5-06` Esqueleto das telas de título e de fim de jogo — **M**
+- [x] `P5-06` Esqueleto das telas de título e de fim de jogo — **M**
 
 ---
 

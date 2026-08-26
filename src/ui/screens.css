@@ -1,0 +1,17 @@
+/* As três telas (P5-06).
+
+   Este arquivo tem uma regra só, e ela é a rede de segurança do roteador.
+
+   O `screens.ts` liga e desliga os blocos pelo atributo `hidden`, que o
+   navegador estiliza como `display: none` — mas essa regra padrão tem a menor
+   precedência que existe, e **qualquer** `display` declarado por uma folha de
+   módulo a vence. O `.map` é `display: block`, o `.hud` é `display: flex`:
+   basta um deles cair sobre um bloco escondido para o `hidden` virar enfeite e
+   a tela de título aparecer por cima da partida.
+
+   O `!important` aqui é o uso legítimo dele: não está vencendo uma disputa de
+   estilo, está garantindo que "escondido" signifique escondido. */
+
+[hidden] {
+  display: none !important;
+}

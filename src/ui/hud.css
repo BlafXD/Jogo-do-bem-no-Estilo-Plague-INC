@@ -1,9 +1,15 @@
 /* Estilo do HUD (P5-03).
 
    As cores e as medidas são lidas de custom properties **com valor de reserva
-   no próprio var()**. O theme.css do P5-02 — o arquivo que o pacote
-   [D-Design] vai entregar — só precisa definir as variáveis no :root para
-   assumir o controle: este arquivo não muda quando isso acontecer.
+   no próprio var()**. Quem as define é o `theme.css` — o arquivo que o pacote
+   [D-Design] entrega, e o único lugar onde uma cor do jogo está escrita. A
+   reserva no `var()` é o que mantém a página legível se ele faltar.
+
+   A previsão original era que nenhuma folha de módulo mudaria quando o tema
+   entrasse. O P5-02 mostrou que **quatro coisas** não estavam extraídas e
+   precisaram mudar: os fundos de hover escritos como `rgb()` cru, a largura
+   compartilhada do mapa e do painel, o alvo de toque escrito em `px` num lugar
+   e em `rem` em outro, e dois textos abaixo do piso de 16px.
 
    Contraste conferido contra o fundo #0F1C17 (docs/GDD.md §5 exige AA):
      valor   #F2F7F4  16,17:1     rótulo  #A7C0B4  9,04:1
@@ -58,7 +64,7 @@ body {
   /* 1rem e não 0,875: o §5 fixa 16px como piso para TODO texto, e o rótulo é o
      que diz o que o número significa. Encolher justamente ele seria comunicar
      o indicador só pelo valor. */
-  font-size: 1rem;
+  font-size: var(--tamanho-base, 1rem);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }

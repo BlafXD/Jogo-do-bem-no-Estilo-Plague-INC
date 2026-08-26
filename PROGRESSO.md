@@ -28,6 +28,248 @@ Regras curtas:
 
 ---
 
+## 2026-08-25 — O jogo ganhou começo e fim, e o relógio parou de correr sozinho
+
+- **Parte / tarefa:** `P5-06` ✔ — **a Parte 5 fechou: 6 de 6**
+- **O que mudou:**
+  - `src/ui/screens.ts` e `screens.css` **criados** — o roteador das três telas.
+  - `src/ui/title.ts` e `title.css` **criados** — a tela de título, com o pitch e os dois caminhos.
+  - `src/ui/outcome.ts` e `.css` — o botão "Ver o mundo" e a fileira de ações.
+  - `index.html` — a seção `#tela-titulo`, o invólucro `#tabuleiro`, e o `#resultado` movido para fora dele.
+  - `src/main.ts` — o roteamento, os quatro caminhos do título, e o relógio preso à tela de partida.
+  - `src/data/i18n.ts` — o bloco `title` e o `outcome.review`.
+  - `tests/screens.test.ts` (9), `screens.dom.test.ts` (6) e `title.dom.test.ts` (21) **criados**. Suíte: 464 → **500**.
+  - Nenhum arquivo do engine foi tocado.
+
+### O conflito que esta tarefa precisou resolver antes de escrever qualquer coisa
+
+O `§2.7` do GDD pede **tela final**. O `outcome.css` do `P6-08` registrou o contrário, com todas as
+letras: *"um modal cobriria justamente o HUD, que é onde estão os números que o jogador quer ler
+quando a partida acaba"*. E o `map.css` e o `region-panel.css` registraram que mapa e painel são
+justamente o que se quer olhar depois do fim, para ver em que região o apoio ruiu.
+
+Três decisões escritas, aparentemente incompatíveis com uma tela de fim. **Nenhuma foi revertida** —
+o que a tela de fim esconde é o **tabuleiro**, e não os indicadores:
+
+| | título | partida | fim |
+|---|---|---|---|
+| tela de título | visível | — | — |
+| topo (HUD, tempo, partida) | — | visível | **visível** |
+| tabuleiro (mapa, painel, árvore) | — | visível | — |
+
+O HUD fica porque ele é o resumo da partida que a pessoa acabou de jogar. O tabuleiro sai porque não
+há mais nada a fazer nele. E o botão **"Ver o mundo"** devolve o tabuleiro para quem quiser entender
+o que aconteceu — sem desfazer o fim: a partida continua encerrada e a árvore continua apagada.
+
+### O invólucro `#tabuleiro` existe por causa de um bug que não chegou a acontecer
+
+A primeira ideia era o roteador esconder as seções uma a uma. Ela morre no `#eventos`: aquele elemento
+**já tem dono do próprio `hidden`** — o `renderEventCards` o usa para sumir quando não há evento em
+cena. E o `#resultado` também: o `renderOutcome` o usa para tirar "Jogar de novo" da ordem de
+tabulação durante a partida.
+
+Dois donos do mesmo atributo se apagariam um ao outro, **um por quadro**, e o sintoma seria um cartão
+piscando que nenhum teste unitário pegaria. A saída foi dar ao roteador três elementos que só ele
+toca — `#tela-titulo`, `.topo` e o `#tabuleiro` novo — e deixar o `#resultado` fora do invólucro,
+com o dono que ele já tinha. No título, quem o esconde continua sendo o `renderOutcome`: o `main.ts`
+passa `null` em vez de mexer no atributo.
+
+### O relógio estava correndo antes de o jogo começar
+
+Até hoje a página abria já jogando: o `requestAnimationFrame` andava desde o primeiro quadro. Com uma
+tela de título, isso significaria a partida envelhecendo enquanto a pessoa lê o pitch — e num estande,
+enquanto o computador espera o próximo visitante.
+
+O conserto foi passar **velocidade 0** ao `advanceRealTime` fora da tela de partida, em vez de deixar
+de chamá-lo. É a mesma razão que o `P6-04` registrou para chamá-lo durante a pausa: quem para de
+chamar precisa lembrar de atualizar o `previousFrame`, e esquecer disso faz o primeiro quadro depois
+entregar o intervalo inteiro de uma vez. **Medido no navegador:** três segundos na tela de título, ano
+e tick do save intactos.
+
+### "Nova partida" apaga o save, então pede dois cliques
+
+É a mesma regra do `session.ts`, e pelo mesmo motivo: apagar a partida é a única ação da tela que
+destrói vinte minutos de jogo e não tem desfazer. O rótulo do botão de confirmar diz o que vai
+acontecer — "Apagar e recomeçar", não "Sim" —, e o botão que abriu a pergunta sai da tela enquanto
+ela está no ar, para não haver dois caminhos para a mesma coisa, um deles sem aviso.
+
+Sem save não há o que destruir: o botão vira "Começar" e entra no primeiro clique.
+
+### O teste que o jsdom não sabia fazer
+
+A regra que importa é: **o que sai da tela sai junto da ordem de tabulação.** Um botão invisível mas
+focável é a armadilha que só quem navega por teclado encontra — e aqui um deles apaga a partida salva.
+
+A primeira versão do teste era `focus()` e falhou: **o jsdom deixa focar um botão dentro de um bloco
+escondido.** Ele não sobe a árvore para decidir focabilidade, e não tem `checkVisibility`. O que ele
+modela — conferido com uma sonda — é o `display` computado do elemento que tem o `hidden`. Então o
+teste passou a fazer a mesma pergunta que o navegador faz: subir os ancestrais procurando
+`display: none`.
+
+E o que sobrava por conta do navegador foi medido lá: **na tela de título, dos 43 elementos focáveis
+do documento, apenas 2 são alcançáveis** — os dois botões do título. O `checkVisibility()` do Chrome
+confirma o que o jsdom não conseguia.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 500 testes em 29 arquivos
+  npm run dev   # abre no título; "Continuar" entra; "Nova partida" pergunta antes
+  ```
+  Os aceites são o `no fim, o topo fica e o tabuleiro sai` do `tests/screens.dom.test.ts` e o
+  `tira da ordem de tabulação o que tirou da tela` do mesmo arquivo.
+
+  **Conferido no navegador**, sobre a partida de 2056 que estava salva: o título com "Continuar de
+  2056"; o relógio parado por 3 s sem mover ano nem tick; a confirmação de "Nova partida" e o
+  cancelamento devolvendo os dois botões; a entrada na partida; e a tela de fim produzida escrevendo
+  um save em 2100 — Bronze, com o HUD por cima e o tabuleiro fora. O "Ver o mundo" devolveu o
+  tabuleiro com `data-finished` ainda em `true`. **O save do jogador foi guardado no `sessionStorage`
+  e devolvido**, conferido tick a tick depois.
+
+- **Pendente:**
+  - **A tela de fim é só o esqueleto, e é isso que o `P5-06` prometia.** Falta o que o `§2.7` pede: o
+    gráfico da linha do tempo, o "o que você poderia ter feito diferente" e as 3 ações do mundo real.
+    Os três são do `P7-06`, e os dois primeiros dependem do `history`, que **nenhuma partida preenche
+    ainda** — o `Snapshot` existe no contrato do `§3` e ninguém escreve nele.
+  - **O nome do jogo agora aparece três vezes no `index.html`** — `<title>`, o `<h1>` do topo e o
+    `<h1>` do título. Todas no mesmo arquivo e adjacentes, e o `P1-04` troca as três de uma vez.
+  - **A semente continua fixa em 2025.** A tela de título seria o lugar de escolher uma, e o
+    comentário do `SEED` no `main.ts` já dizia isso — mas escolher semente não estava no `P5-06` e
+    não tem número medido por trás.
+  - **Não há como voltar ao título sem recarregar a página.** Nem do fim, nem da partida. Para a
+    feira isso importa: entre um visitante e outro alguém tem que apertar F5. O caminho de volta
+    natural é o "Reiniciar partida" da barra levar ao título em vez de direto à partida nova — vale
+    reavaliar no `P7-07` (Modo Feira).
+  - **O pitch é provisório.** Sai comprimido do `§1` do GDD sem frase inventada, mas o pitch de
+    verdade é o `P1-01` e a narrativa é do `[D-Historia]`.
+  - **O `screens.css` tem um `!important`.** É a rede de segurança do `hidden` contra qualquer
+    `display` declarado numa folha de módulo. Está justificado no arquivo, mas é o primeiro lugar a
+    olhar se um dia uma tela não sumir.
+  - `P1-04` segue aberto.
+- **Evidência:** `docs/evidencias/2026-08-25-p5-06-tela-de-titulo.jpg` e `2026-08-25-p5-06-tela-de-fim.jpg`
+
+---
+
+## 2026-08-25 — O tema saiu dos comentários e virou arquivo, e o contraste virou teste
+
+- **Parte / tarefa:** `P5-02` ✔ — **a Parte 5 está em 5 de 6**
+- **O que mudou:**
+  - `src/ui/theme.css` **criado** — 16 tokens: 7 cores, 2 fundos de hover derivados, 3 de tipografia, 4 de medida. Só variáveis, como o contrato do `[D-Design]` exige.
+  - `tests/theme.test.ts` **criado** (10) — lê o `theme.css` do disco e recalcula todo o contraste. Suíte: 464.
+  - As 9 folhas de módulo passaram a ler o tema em vez de repetir número: hover, raio, alvo de toque, largura do mundo e todo `font-size` de 1rem e 1,125rem.
+  - `src/ui/event-cards.css` — dois textos subiram de 0,875rem para o piso do `§5`.
+  - `src/main.ts` — o tema entra primeiro na lista de imports.
+  - Nenhum arquivo do engine foi tocado. Nenhum `.ts` de UI mudou.
+
+### O que estava errado e ninguém tinha como saber
+
+O `PROGRESSO.md` do `P5-01` fechou com esta pendência escrita: *"Nenhum teste mede o contraste do
+`map.css`. Os números do cabeçalho da folha foram calculados à mão."* Era isso mesmo — e a primeira
+coisa que o `P5-02` fez foi encontrar a consequência:
+
+**O `--cor-alerta` estava documentado como 9,73:1 em três arquivos.** O valor real é **8,66:1**.
+Passa o AA com folga nos dois casos, então nada quebrou — mas o número estava errado desde o
+`P5-05`, copiado de folha em folha, e nenhuma leitura humana ia pegar isso. Corrigido em
+`contain.css`, `event-cards.css`, `outcome.css` e `session.css`.
+
+**Dois textos furavam o piso de 16px do `§5`.** O `event-cards.css` escrevia a palavra da gravidade —
+**"CRÍTICO"**, "MODERADO" — em 0,875rem, ou seja 14px, com um comentário explicando que era para "não
+disputar com o nome do evento". O `hud.css` já tinha escrito o argumento contrário para o próprio
+rótulo: *"1rem e não 0,875: o §5 fixa 16px como piso para TODO texto"*. O ícone de gravidade estava
+no mesmo tamanho, contra o que o `contain.css` diz do ícone dele. Os dois subiram para o piso; o que
+separa a etiqueta do nome continua sendo a caixa alta, o espaçamento e a cor.
+
+**O alvo de toque estava escrito de duas formas.** `2.75rem` em três lugares e `44px` num — que fui
+eu quem escreveu, no `P5-04`. São o mesmo tamanho hoje e deixam de ser no instante em que alguém
+aumenta a fonte do navegador: o `rem` cresce, o `px` fica parado. Agora é um token só, em `rem`.
+
+### O buraco que teria feito o contrato do [D-Design] falhar em silêncio
+
+Cinco folhas de estilo tinham o fundo de hover escrito como `rgb(127 209 168 / 12%)` — o valor de
+`--cor-destaque`, à mão, sem nenhum vínculo com o token. Trocar a paleta e ver os hovers continuarem
+verdes é exatamente o tipo de falha que ninguém reporta como bug: parece só "um detalhe estranho".
+
+Agora eles são `color-mix(in srgb, var(--cor-destaque) 12%, transparent)`, derivados da cor de cima.
+`color-mix` existe em Chrome 111+, Firefox 113+ e Safari 16.2+ (2023); onde não existir, a declaração
+é inválida e o hover não pinta — degradação segura, porque **nenhum estado do jogo é comunicado por
+hover**.
+
+O mapa usava 10% e o resto 12%. Unificados em 12%, com o contraste do texto sobre a composição
+medido nos quatro casos: o pior é 5,59:1, acima do AA.
+
+### O teste faz o que o comentário nunca fez
+
+O `tests/theme.test.ts` lê as cores **do próprio `theme.css`** e recalcula tudo pela fórmula da WCAG
+2.1: texto sobre os dois fundos, borda e anel de foco sobre os dois fundos, e o texto sobre os quatro
+fundos de hover já compostos. Mais três regras estruturais: nenhuma cor escrita fora de um `var()`,
+nenhum `font-size` abaixo do piso, nenhum alvo de toque fora do token.
+
+**Testei os testes.** Cada regra foi quebrada de propósito e a suíte foi rodada:
+
+| O que quebrei | |
+|---|---|
+| `--cor-rotulo` para um verde escuro sem contraste | pegou |
+| hover escrito à mão em vez de derivado do token | pegou |
+| `color: #ff0000` solto numa folha de módulo | pegou |
+| `font-size: 0.875rem` numa folha de módulo | pegou |
+| `min-height: 44px` numa folha de módulo | pegou |
+
+Sem essa passagem eu teria entregado um teste que passa e não afirma nada — e a primeira versão da
+regra "nenhuma cor fora do tema" era exatamente isso: um filtro quebrado terminando em
+`expect(x.length >= 0).toBe(true)`, que é verdade sempre. Foi reescrita.
+
+### As duas metades do aceite, conferidas no navegador
+
+**"O arquivo que o Design vai substituir depois."** Injetei um `:root` com uma paleta azul completa
+por cima do tema e o jogo inteiro seguiu: fundo, superfície das regiões, traço de seleção, título do
+painel, botão de fechar, bordas. Nenhum resquício verde. A paleta de teste foi conferida contra a
+mesma fórmula antes de entrar — o pior texto dela dá 7,73:1.
+
+**"Todo estado com ícone + rótulo de texto, nunca só cor."** Apliquei `filter: grayscale(1)` na
+página inteira. Sem cor nenhuma, a árvore continua dizendo `✔ Comprado`, `● Disponível` e
+`✕ Bloqueado` por escrito, e a borda contínua e grossa continua separando o que é clicável do que não
+é. É a prova de que a regra do `§5` está no `i18n.ts` e nos módulos, não na paleta — e de que trocar
+o tema não tem como quebrá-la.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 464 testes em 26 arquivos
+  npm run dev
+  # No console, para ver o contrato funcionando:
+  #   document.head.append(Object.assign(document.createElement('style'),
+  #     { textContent: ':root{--cor-destaque:#ffb454;--cor-fundo:#10141f}' }))
+  ```
+  Os aceites são os quatro testes de contraste do `tests/theme.test.ts`.
+
+  **Conferido no navegador**: os 16 tokens resolvendo no `:root`; `color-mix` suportado e resolvido
+  (`color(srgb 0.498 0.82 0.659 / 0.12)`); as cores computadas iguais às da paleta em `body`, HUD e
+  mapa; a gravidade do evento agora em 16px; o alvo de toque em 44px computados a partir de `rem`. A
+  partida de 2056 ficou pausada e não andou nenhum mês.
+
+- **Pendente:**
+  - **Os ícones ainda são caracteres Unicode**, não os `assets/icons/*.svg` que o contrato do
+    `[D-Design]` prevê. `✔ ● ✕ ▲ ◌ 🥇` funcionam e não dependem de download — mas dependem da fonte
+    do sistema, e uma máquina de feira sem emoji desenharia caixinha no lugar da medalha do
+    `outcome.ts`. A pasta `assets/icons/` não existe; ela entra com o cargo (`P4-05`).
+  - **O tema é um só.** Não há tema claro, nem `prefers-color-scheme`, nem alto contraste. O
+    `hud.css` fixa `color-scheme: dark`. Se o `P8-01` mostrar gente reclamando da tela escura no
+    estande, o conserto agora custa um segundo bloco de `:root` — que é justamente o que este arquivo
+    passou a permitir.
+  - **`color-mix` não tem reserva de verdade.** O `var(--cor-destaque-suave, rgb(...))` protege
+    contra o token faltar, não contra o navegador não entender `color-mix` — nesse caso a declaração
+    inteira é descartada e o hover some. É aceitável porque hover não carrega estado, mas está
+    escrito aqui para não ser descoberto de novo.
+  - **A escala tipográfica é rasa.** Só `--tamanho-base` e `--texto-medio`; os cinco `clamp()` de
+    título continuam escritos nas folhas, porque são únicos. Se o Design quiser mandar nos títulos,
+    isso vira mais tokens.
+  - **Nenhum teste mede contraste de texto sobre imagem ou gradiente** — não existe nenhum hoje. Se
+    o `[D-Design]` trouxer fundo com textura, a fórmula deste teste deixa de bastar.
+  - `P1-04` e o `P5-06` seguem abertos.
+- **Evidência:** `docs/evidencias/2026-08-25-p5-02-tema-trocado.jpg` (paleta azul por um `:root`) e `2026-08-25-p5-02-sem-cor-estados-legiveis.jpg` (a árvore em escala de cinza, com os estados ainda legíveis)
+
+---
+
 ## 2026-08-25 — O painel da região entrou, e três dos sete campos de `Region` não movem nada
 
 - **Parte / tarefa:** `P5-04` ✔ — **a Parte 5 está em 4 de 6**
