@@ -44,6 +44,7 @@ import {
   currentScreen,
   renderScreens,
   reviewWorld,
+  backToTitle,
   startGame,
   type ScreenLayout,
 } from './ui/screens';
@@ -51,6 +52,7 @@ import {
   afterReset,
   armReset,
   cancelReset,
+  leaveNeedsConfirm,
   createSession,
   mountSession,
   renderSession,
@@ -184,8 +186,44 @@ let title = createTitle();
 
 const layout: ScreenLayout = { title: telaTitulo, chrome: topo, board: tabuleiro };
 
-/** O ano da partida guardada, ou null. É tudo que a tela de título precisa. */
-const savedYear = restored === null ? null : restored.year;
+/**
+ * O ano da partida **guardada** — não o da partida em curso.
+ *
+ * Deixou de ser constante no P7-07. Enquanto só se entrava no título uma vez,
+ * por carga de página, congelá-la na largada bastava; agora dá para voltar ao
+ * título no meio do jogo, e um valor de dez minutos atrás faria o botão
+ * "Continuar de 2031" abrir uma partida que já está em 2064.
+ *
+ * No Modo Feira ela **não anda**, porque nada é salvo — é o que faz a demo
+ * deixar a partida de verdade intacta.
+ */
+let savedYear = restored === null ? null : restored.year;
+
+/**
+ * O Modo Feira está ligado (P7-07).
+ *
+ * **Não é modo do engine, é modo da sessão.** O docs/GDD.md §4 registra que o
+ * ritmo de 1,5 s por mês foi escolhido para 4x cair em 5,6 min, "sem precisar
+ * de um modo à parte com regras próprias" — então aqui não há regra nenhuma
+ * diferente: é a mesma simulação, começada a 4x e não salva. Pôr um booleano
+ * disto no GameState mudaria o contrato do §3 por uma decisão de quem assiste.
+ */
+let fairMode = false;
+
+/**
+ * Salva a partida, exceto no Modo Feira.
+ *
+ * Existe para o `fairMode` ser conferido **num lugar só**. Espalhar o `if` pelos
+ * quatro pontos de escrita seria deixar quatro chances de esquecer um — e o
+ * esquecido seria descoberto por um visitante do estande recebendo a partida do
+ * visitante anterior.
+ */
+function persist(): void {
+  if (fairMode) return;
+
+  saveGame(state);
+  savedYear = state.year;
+}
 
 function handleCommand(command: TimeCommand | null): void {
   control = applyCommand(control, command);
@@ -297,6 +335,68 @@ function handleStart(newGame: boolean): void {
   renderGame();
 }
 
+/**
+ * Entrar no Modo Feira (P7-07).
+ *
+ * Três coisas, e nenhuma delas é regra de jogo: partida nova, velocidade 4x, e
+ * o `fairMode` que desliga a escrita no `localStorage`. O docs/GDD.md §4
+ * registra que 4x entrega os ~5 min "sem precisar de um modo à parte com regras
+ * próprias" — então a simulação aqui é a mesma de sempre.
+ *
+ * **A pausa é desfeita na entrada.** Uma demo que começa parada porque a pessoa
+ * anterior apertou Espaço é uma tela morta num estande, e ninguém vai descobrir
+ * por quê.
+ */
+function handleFair(): void {
+  fairMode = true;
+  screens = startGame();
+  title = cancelNewGame(title);
+
+  state = createInitialState(SEED);
+  clock = createClock();
+  session = createSession(null, true);
+  shownTick = state.tick;
+  pausedForTick = state.tick;
+  autoPaused = false;
+
+  handleCommand({ kind: 'setSpeed', speed: 4 });
+  if (control.paused) handleCommand({ kind: 'togglePause' });
+
+  renderGame();
+  renderSessionBar();
+}
+
+/**
+ * Voltar ao título sem recarregar a página (P7-07).
+ *
+ * **O estado em memória é recarregado do save**, e essa é a linha que faz o
+ * Modo Feira cumprir a promessa dele: sem isto, o "Continuar" do título abriria
+ * a demo que acabou de ser abandonada — uma partida que o jogador nunca salvou
+ * e que sobrescreveria, na cabeça dele, a que ele tinha.
+ *
+ * O `persist` antes é o que evita perder o mês corrente de uma partida normal;
+ * no Modo Feira ele não faz nada, que é o ponto.
+ */
+function handleBackToTitle(): void {
+  persist();
+
+  fairMode = false;
+  screens = backToTitle();
+  title = cancelNewGame(title);
+
+  const saved = loadGame();
+  state = saved ?? createInitialState(SEED);
+  savedYear = saved === null ? null : saved.year;
+  clock = createClock();
+  session = createSession(savedYear);
+  shownTick = state.tick;
+  pausedForTick = state.tick;
+  autoPaused = false;
+
+  renderGame();
+  renderSessionBar();
+}
+
 /** Voltar ao tabuleiro depois do fim, sem desfazer o fim. */
 function handleReview(): void {
   screens = reviewWorld(screens);
@@ -352,11 +452,17 @@ function renderSessionBar(): void {
  * quem assiste, não da simulação.
  */
 function handleReset(): void {
-  clearGame();
+  // No Modo Feira não há o que apagar — e apagar seria pior do que inútil:
+  // "Jogar de novo" numa demo destruiria a partida de verdade do dono da
+  // máquina, que é exatamente o que o modo promete não fazer.
+  if (!fairMode) {
+    clearGame();
+    savedYear = null;
+  }
 
   state = createInitialState(SEED);
   clock = createClock();
-  session = afterReset();
+  session = fairMode ? createSession(null, true) : afterReset();
   shownTick = state.tick;
   pausedForTick = state.tick;
 
@@ -396,7 +502,7 @@ function handleUnlock(id: SkillId): void {
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
   // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá
   // vontade de fechar a aba.
-  saveGame(state);
+  persist();
 }
 
 /**
@@ -418,7 +524,7 @@ function handleContain(): void {
 
   state = next;
   renderGame();
-  saveGame(state);
+  persist();
 }
 
 mountHud(hud);
@@ -454,9 +560,18 @@ mountTitle(telaTitulo, {
     title = cancelNewGame(title);
     renderGame();
   },
+  onFair: handleFair,
 });
 mountSession(partida, {
+  // Um clique só quando sair não destrói nada — que é toda partida normal, já
+  // que ela é salva sozinha a cada mês e o "Continuar" espera do outro lado.
+  // Os dois cliques ficam para o Modo Feira, que descarta.
   onArm: () => {
+    if (!leaveNeedsConfirm(session)) {
+      handleBackToTitle();
+      return;
+    }
+
     session = armReset(session);
     renderSessionBar();
   },
@@ -464,7 +579,7 @@ mountSession(partida, {
     session = cancelReset(session);
     renderSessionBar();
   },
-  onReset: handleReset,
+  onReset: handleBackToTitle,
 });
 mountTree(tree, treeView(state), handleUnlock);
 
@@ -558,7 +673,7 @@ function frame(now: number): void {
     // jogo — no máximo 1,3 por segundo a 4x — e limita a perda de um fechamento
     // de aba a um único mês. Salvar a cada quadro seriam 60 por segundo para
     // gravar o mesmo estado.
-    saveGame(state);
+    persist();
   }
 
   requestAnimationFrame(frame);

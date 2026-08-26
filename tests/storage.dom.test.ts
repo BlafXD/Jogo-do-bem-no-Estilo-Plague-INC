@@ -5,6 +5,7 @@
 // regra do navegador de verdade.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ui } from '../src/data/i18n';
 import { SAVE_VERSION } from '../src/engine/save';
 import { unlockSkill } from '../src/engine/skills';
 import { createInitialState, type GameState } from '../src/engine/state';
@@ -14,6 +15,7 @@ import {
   armReset,
   cancelReset,
   createSession,
+  leaveNeedsConfirm,
   mountSession,
   renderSession,
 } from '../src/ui/session';
@@ -255,15 +257,40 @@ describe('a barra da partida', () => {
     expect(visivel(root, 'arm')).toBe(true);
   });
 
-  it('o aviso do reinício é texto escrito, não só uma cor', () => {
+  it('o aviso da saída é texto escrito, não só uma cor', () => {
     // O §5 proíbe comunicar estado só por cor, e o botão vermelho seria
     // exatamente isso. O rótulo diz o que vai acontecer, e a frase ao lado
-    // repete que não dá para desfazer.
+    // repete o que se perde.
     const { root } = montar();
-    renderSession(root, armReset(createSession(null)));
+    renderSession(root, armReset(createSession(null, true)));
 
-    expect(botao(root, 'confirm')?.textContent).toContain('Apagar');
-    expect(status(root)).toContain('Não dá para desfazer');
+    expect(botao(root, 'confirm')?.textContent).toContain('descartar');
+    expect(status(root)).toContain('não foi salva');
+  });
+
+  it('o botão da barra leva ao início, e o rótulo diz isso (P7-07)', () => {
+    // Ele já se chamou "Reiniciar partida", quando de fato reiniciava ali
+    // mesmo. Agora quem apaga é o "Nova partida" do título, e um rótulo que
+    // prometesse reinício estaria mentindo.
+    const { root } = montar();
+
+    expect(botao(root, 'arm')?.textContent).toBe(ui.session.leave);
+  });
+
+  it('só o Modo Feira pede confirmação para sair (P7-07)', () => {
+    // A confirmação segue o risco real: numa partida normal sair não destrói
+    // nada, porque o jogo salva sozinho e o "Continuar" espera do outro lado.
+    expect(leaveNeedsConfirm(createSession(2043))).toBe(false);
+    expect(leaveNeedsConfirm(createSession(null, true))).toBe(true);
+  });
+
+  it('a barra declara o Modo Feira — não salvar é o que o jogador precisa saber', () => {
+    // Quem não sabe que a partida não está sendo salva descobre do pior jeito
+    // possível: quando ela some.
+    const { root } = montar();
+    renderSession(root, createSession(null, true));
+
+    expect(status(root)).toBe(ui.session.fair);
   });
 
   it('diz se a partida foi retomada, e em que ano', () => {

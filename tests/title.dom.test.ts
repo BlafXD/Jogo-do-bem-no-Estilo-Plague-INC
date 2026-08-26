@@ -27,6 +27,7 @@ function handlers(over: Partial<TitleHandlers> = {}): TitleHandlers {
     onNew: vi.fn(),
     onConfirmNew: vi.fn(),
     onCancelNew: vi.fn(),
+    onFair: vi.fn(),
     ...over,
   };
 }
@@ -239,5 +240,49 @@ describe('com partida salva', () => {
     for (const name of ['confirm', 'cancel']) {
       expect(part(root, name).closest('[hidden]'), name).toBeNull();
     }
+  });
+});
+
+describe('o Modo Feira no título (P7-07)', () => {
+  const fair = (root: ParentNode) => root.querySelector<HTMLButtonElement>('[data-title="fair"]');
+
+  it('existe como terceiro caminho, e o rótulo diz a duração', () => {
+    // Num estande a informação que decide o clique de quem está de pé é quanto
+    // tempo aquilo vai tomar.
+    const root = mount();
+
+    expect(fair(root)?.textContent).toBe(ui.title.fair);
+    expect(fair(root)?.textContent).toContain('5 min');
+  });
+
+  it('fica por último — quem senta na frente quer Continuar ou Começar', () => {
+    // A primeira fileira, e não todas: a caixa de confirmação tem uma segunda
+    // `.title__actions` dentro dela, com "Apagar e recomeçar" e "Cancelar".
+    const fileira = mount().querySelector('.title__actions');
+    const rotulos = [...(fileira?.children ?? [])].map((b) => b.getAttribute('data-title'));
+
+    expect(rotulos).toEqual(['continue', 'new', 'fair']);
+  });
+
+  it('a dica promete o que o modo cumpre: não salva e não apaga', () => {
+    // É o que separa a demo de uma "Nova partida" — e é a razão de dar para
+    // mostrar o jogo para alguém sem perder a sua partida.
+    expect(fair(mount())?.title).toContain('Não é salva');
+    expect(fair(mount())?.title).toContain('não apaga');
+  });
+
+  it('avisa quem clicou', () => {
+    const onFair = vi.fn();
+    fair(mount(handlers({ onFair })))?.click();
+
+    expect(onFair).toHaveBeenCalledOnce();
+  });
+
+  it('some enquanto a pergunta de "Nova partida" está no ar', () => {
+    // Com a confirmação aberta, o único jeito de sair dela é responder.
+    const root = mount();
+    renderTitle(root, titleView(2043, armNewGame(createTitle())));
+
+    expect(fair(root)?.hidden).toBe(true);
   });
 });

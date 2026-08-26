@@ -169,7 +169,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P7-04` Feedback visual: o mapa muda com a temperatura; alertas por região — **M**
 - [ ] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P**
 - [x] `P7-06` Telas de fim com gráfico da linha do tempo da partida — **G**
-- [ ] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**
+- [x] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**
 - [ ] `P7-08` Tutorial de 4 passos contextuais (sem modal gigante) — **M**
 
 ---

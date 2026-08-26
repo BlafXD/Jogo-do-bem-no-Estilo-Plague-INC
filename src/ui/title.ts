@@ -84,9 +84,11 @@ export type TitleHandlers = {
   readonly onNew: () => void;
   readonly onConfirmNew: () => void;
   readonly onCancelNew: () => void;
+  /** O Modo Feira: partida nova, já a 4x, que não é salva (P7-07). */
+  readonly onFair: () => void;
 };
 
-type Slot = 'continue' | 'new' | 'confirm' | 'cancel' | 'warning';
+type Slot = 'continue' | 'new' | 'confirm' | 'cancel' | 'warning' | 'fair';
 
 function button(className: string, slot: Slot, label: string, hint: string): HTMLButtonElement {
   const element = document.createElement('button');
@@ -134,7 +136,14 @@ export function mountTitle(root: Element, handlers: TitleHandlers): void {
   const fresh = button('title__button', 'new', ui.title.start, ui.title.newGameHint);
   fresh.addEventListener('click', handlers.onNew);
 
-  actions.append(keep, fresh);
+  // O Modo Feira é o **terceiro** caminho, e fica por último de propósito: num
+  // estande quem opera o computador conhece o botão, e quem senta na frente
+  // dele quer "Continuar" ou "Começar". Pô-lo em primeiro faria a demo ser o
+  // caminho padrão de quem só quer jogar.
+  const fair = button('title__button', 'fair', ui.title.fair, ui.title.fairHint);
+  fair.addEventListener('click', handlers.onFair);
+
+  actions.append(keep, fresh, fair);
 
   // A confirmação mora num bloco próprio que some inteiro: o rótulo do botão diz
   // o que vai acontecer ("Apagar e recomeçar"), e não "Sim" — quem clica rápido
@@ -196,6 +205,11 @@ export function renderTitle(root: ParentNode, view: TitleView): void {
     // um deles sem aviso.
     fresh.hidden = view.armed;
   }
+
+  // O Modo Feira some junto com o "Nova partida" enquanto a pergunta está no
+  // ar: com a confirmação aberta, o único jeito de sair dela é responder.
+  const fair = slot(root, 'fair');
+  if (fair !== null) fair.hidden = view.armed;
 
   const box = slot(root, 'confirm-box');
   if (box !== null) box.hidden = !view.armed;

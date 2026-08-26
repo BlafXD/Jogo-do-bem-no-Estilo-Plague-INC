@@ -66,6 +66,21 @@ export function reviewWorld(screens: ScreenState): ScreenState {
 }
 
 /**
+ * Voltar ao título sem recarregar a página (P7-07).
+ *
+ * **É o que faz o estande girar sozinho.** Até aqui não havia caminho de volta
+ * — nem do fim, nem da partida —, e entre um visitante e outro alguém precisava
+ * apertar F5. O `P5-06` já tinha anotado isso como problema de feira.
+ *
+ * Devolve o estado inicial em vez de só zerar o `started`: voltar ao título é
+ * literalmente recomeçar a navegação, e um `reviewing` que sobrevivesse faria a
+ * próxima partida abrir no tabuleiro em vez do resultado quando ela acabasse.
+ */
+export function backToTitle(): ScreenState {
+  return createScreens();
+}
+
+/**
  * Qual tela está no ar.
  *
  * `finished` chega de fora porque quem responde isso é o `isFinished` do

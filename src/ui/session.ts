@@ -3,22 +3,39 @@
 // Mesma divisão do controls.ts e do tree.ts: o núcleo é puro e roda em node, e
 // só `mountSession` e `renderSession` tocam no DOM.
 //
-// **O reinício pede dois cliques, e isso não é enfeite.** Apagar a partida é a
-// única ação da tela que destrói vinte minutos de jogo, e é irreversível — não
-// existe desfazer no `localStorage`. Um botão de um clique só ao lado dos
-// controles de velocidade seria um acidente esperando acontecer, ainda mais num
-// estande de feira, onde a pessoa clica primeiro e lê depois.
+// **O botão da barra leva ao título, e não apaga mais nada** (P7-07). Antes ele
+// reiniciava a partida ali mesmo, com dois cliques — e a tela de título fazia a
+// mesma coisa, com a própria confirmação. Eram dois caminhos destrutivos para o
+// mesmo lugar. Agora a barra só devolve ao título, e quem apaga é o "Nova
+// partida" de lá.
+//
+// **A confirmação sobrevive num caso só: o Modo Feira.** Ela não é enfeite nem
+// hábito — ela segue exatamente o risco. Numa partida normal sair não destrói
+// nada, porque o jogo salva sozinho a cada mês e o "Continuar" espera do outro
+// lado; pedir confirmação ali seria treinar o jogador a clicar sem ler. No Modo
+// Feira a partida **não é salva**, então sair descarta o que está na tela — e aí
+// os dois cliques têm o que proteger.
 //
 // **Não usei `confirm()`.** Ele resolveria em uma linha, mas trava a página
 // inteira, não é estilizável, e some do fluxo de quem navega por teclado de um
-// jeito que não dá para testar. Dois botões de verdade cumprem o mesmo papel e
-// continuam sendo HTML que o §5 sabe cobrar: foco, rótulo escrito, `Esc`.
+// jeito que não dá para testar.
+//
+// Dois botões de verdade cumprem o mesmo papel e continuam sendo HTML que o §5
+// sabe cobrar: foco, rótulo escrito, `Esc`.
 
 import { ui } from '../data/i18n';
 
 export type Session = {
-  /** O jogador clicou em "Reiniciar" e a confirmação está na tela. */
+  /** O jogador pediu para sair e a confirmação está na tela. */
   readonly armed: boolean;
+  /**
+   * Sair descarta o que está na tela?
+   *
+   * Só no Modo Feira (P7-07), que não salva. É este campo que decide se o botão
+   * pergunta antes ou sai direto — a confirmação segue o risco real, e não o
+   * hábito.
+   */
+  readonly discards: boolean;
   /**
    * O ano em que a partida foi retomada na carga, ou `null` se ela começou do
    * zero. Serve só para a linha de status dizer qual dos dois aconteceu.
@@ -26,8 +43,13 @@ export type Session = {
   readonly restoredYear: number | null;
 };
 
-export function createSession(restoredYear: number | null): Session {
-  return { armed: false, restoredYear };
+export function createSession(restoredYear: number | null, discards = false): Session {
+  return { armed: false, restoredYear, discards };
+}
+
+/** Sair pede confirmação? Só quando há o que perder. */
+export function leaveNeedsConfirm(session: Session): boolean {
+  return session.discards;
 }
 
 export function armReset(session: Session): Session {
@@ -46,7 +68,7 @@ export function cancelReset(session: Session): Session {
  * mentir para o jogador sobre o que ele está vendo.
  */
 export function afterReset(): Session {
-  return { armed: false, restoredYear: null };
+  return { armed: false, restoredYear: null, discards: false };
 }
 
 // ------------------------------------------------------------------ DOM ---
@@ -77,7 +99,7 @@ export function mountSession(
 ): void {
   root.setAttribute('aria-label', ui.session.label);
 
-  const reset = button('session__button', 'arm', ui.session.reset, ui.session.resetHint);
+  const reset = button('session__button', 'arm', ui.session.leave, ui.session.leaveHint);
   reset.addEventListener('click', handlers.onArm);
 
   const confirm = button(
@@ -115,9 +137,14 @@ export function renderSession(root: ParentNode, session: Session): void {
   const status = root.querySelector<HTMLElement>('[data-session="status"]');
   if (status === null) return;
 
+  // A linha de status é onde o Modo Feira **se declara**. Um jogador que não
+  // sabe que a partida não está sendo salva descobre isso do pior jeito
+  // possível: quando ela some.
   status.textContent = session.armed
     ? ui.session.warning
-    : session.restoredYear === null
-      ? ui.session.autosave
-      : ui.session.restored(String(session.restoredYear));
+    : session.discards
+      ? ui.session.fair
+      : session.restoredYear === null
+        ? ui.session.autosave
+        : ui.session.restored(String(session.restoredYear));
 }

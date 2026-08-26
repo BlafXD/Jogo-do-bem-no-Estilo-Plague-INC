@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   SCREENS,
+  backToTitle,
   createScreens,
   currentScreen,
   reviewWorld,
@@ -89,5 +90,27 @@ describe('as funções de estado', () => {
     reviewWorld(antes);
 
     expect(antes).toEqual(copia);
+  });
+});
+
+describe('backToTitle (P7-07)', () => {
+  it('devolve ao título', () => {
+    // Até aqui não havia caminho de volta — nem do fim, nem da partida —, e
+    // entre um visitante e outro do estande alguém precisava apertar F5.
+    expect(currentScreen(backToTitle(), false)).toBe('title');
+    expect(currentScreen(backToTitle(), true)).toBe('title');
+  });
+
+  it('esquece o "Ver o mundo" da partida anterior', () => {
+    // Um `reviewing` que sobrevivesse faria a próxima partida abrir no
+    // tabuleiro em vez do resultado quando ela acabasse.
+    const depoisDeRever = reviewWorld(startGame());
+
+    expect(currentScreen(depoisDeRever, true)).toBe('game');
+    expect(currentScreen(backToTitle(), true)).toBe('title');
+  });
+
+  it('é o mesmo estado de quem acabou de abrir a página', () => {
+    expect(backToTitle()).toEqual(createScreens());
   });
 });

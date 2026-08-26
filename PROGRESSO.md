@@ -28,6 +28,108 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — O estande passou a girar sozinho
+
+- **Parte / tarefa:** `P7-07` ✔ — **a Parte 7 vai a 7 de 8.**
+- **O que mudou:**
+  - `src/ui/title.ts` — o terceiro caminho: **Modo Feira (5 min)**.
+  - `src/ui/screens.ts` — `backToTitle`.
+  - `src/ui/session.ts` — o botão da barra leva ao título; a confirmação virou condicional.
+  - `src/main.ts` — `fairMode`, `persist`, `handleFair`, `handleBackToTitle`, e o `savedYear`
+    deixou de ser constante.
+  - `src/data/i18n.ts` — os textos do modo e da barra reescrita.
+  - `tests/storage.dom.test.ts` (+4), `title.dom.test.ts` (+5), `screens.test.ts` (+3).
+    Suíte: 598 → **609**. Nenhum arquivo do engine foi tocado.
+
+### Metade da tarefa já estava decidida, e o GDD dizia onde
+
+> **5,6 min a 4x, que é o Modo Feira — sem precisar de um modo à parte com regras próprias.**
+
+O `§4` do GDD registrou isso no `P6-04`: o ritmo de 1,5 s por mês foi escolhido para as duas metas
+caberem na mesma partida. **Então o `P7-07` não é balanceamento** — a simulação aqui é a mesma de
+sempre. É experiência de estande, e são três coisas: entrar já a 4x, não salvar, e ter como voltar.
+
+### O que o Modo Feira promete não fazer
+
+**Não salva, e não apaga a partida de quem é dono da máquina.** As duas metades importam. Num
+estande, o visitante B não pode ser recebido com "Continuar de 2043" — a partida abandonada do
+visitante A. E o efeito colateral é bom demais para não citar: **dá para mostrar o jogo para alguém
+sem perder o que você estava jogando.**
+
+Isso exigiu três cuidados que não são óbvios:
+
+1. **O `persist` existe para o `fairMode` ser conferido num lugar só.** Havia quatro pontos de
+   escrita no `localStorage`; espalhar o `if` por eles seria deixar quatro chances de esquecer um — e
+   o esquecido apareceria como um visitante recebendo a partida do anterior.
+2. **`handleReset` não pode apagar durante o Modo Feira.** "Jogar de novo" numa demo destruiria a
+   partida de verdade do dono da máquina — exatamente o que o modo promete não fazer.
+3. **Voltar ao título recarrega o estado do save.** Sem esta linha o "Continuar" abriria a demo que
+   acabou de ser abandonada: uma partida que ninguém salvou, ocupando o lugar da que existe.
+
+### A confirmação passou a seguir o risco, e não o hábito
+
+O botão da barra chamava-se "Reiniciar partida" e apagava ali mesmo, com dois cliques — enquanto o
+título fazia a mesma coisa, com a própria confirmação. **Eram dois caminhos destrutivos para o mesmo
+lugar.** Agora a barra só devolve ao título e quem apaga é o "Nova partida" de lá.
+
+Com isso a pergunta perdeu a razão de existir **numa partida normal**: sair não destrói nada, porque
+o jogo salva sozinho a cada mês e o "Continuar" espera do outro lado. Pedir confirmação ali seria
+treinar o jogador a clicar sem ler — que é como uma confirmação deixa de proteger qualquer coisa.
+
+Ela sobrevive num caso só: o **Modo Feira**, onde sair descarta de verdade. É o `leaveNeedsConfirm`,
+e é a coisa toda: a confirmação existe onde há o que perder.
+
+### A barra se declara
+
+`Modo Feira: partida rápida, não é salva.` Um jogador que não sabe que a partida não está sendo
+salva descobre isso do pior jeito possível — quando ela some.
+
+### O `savedYear` era uma constante, e virou bug na hora em que a volta existiu
+
+Ele era calculado uma vez, na carga da página, e isso bastava enquanto só se entrava no título uma
+vez por sessão. Com a volta ao título no meio do jogo, um valor de dez minutos atrás faria o botão
+dizer "Continuar de 2031" e abrir uma partida que já está em 2064. **Não era bug antes desta tarefa;
+passou a ser no instante em que o caminho de volta existiu.**
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 609 testes em 33 arquivos
+  ```
+  Os aceites são o `só o Modo Feira pede confirmação para sair` (`tests/storage.dom.test.ts`) e o
+  `backToTitle esquece o "Ver o mundo" da partida anterior` (`tests/screens.test.ts`).
+
+  **Conferido no navegador**, com o ciclo inteiro do estande sobre uma partida salva em 2043:
+
+  | passo | resultado |
+  |---|---|
+  | título | Continuar de 2043 · Nova partida · **Modo Feira (5 min)** |
+  | entra no Modo Feira | velocidade **4×** marcada, barra diz "não é salva" |
+  | demo roda 3 s | save **continua em 2043** — intocado |
+  | "Voltar ao início" | **pergunta**: "Esta partida não foi salva e será descartada." |
+  | confirma | volta ao título **sem F5**, e o "Continuar de 2043" continua lá |
+  | partida normal → "Voltar ao início" | **não pergunta**, volta direto, save intacto |
+
+- **Pendente:**
+  - **A velocidade 4x sobrevive à saída do Modo Feira.** Quem experimenta a demo e depois continua a
+    partida de verdade a encontra a 4x. É coerente com a regra do `controls.ts` — velocidade e pausa
+    são de quem assiste, não da simulação —, mas é efeito colateral de uma escolha que o jogador não
+    fez. Vale decidir no `P8-01`, com gente de fora.
+  - **Não há retorno automático ao título por inatividade.** Um estande abandonado no meio de uma
+    demo fica ali até alguém clicar. Não estava no `P7-07`, e um temporizador que reinicia sozinho é
+    o tipo de coisa que precisa de playtest antes de código — no `P8-01` dá para medir se o caso
+    acontece de verdade.
+  - **O Modo Feira não é oferecido na tela de fim.** Terminada a demo, os botões são "Jogar de novo"
+    e "Ver o mundo"; para voltar ao título é preciso passar por "Ver o mundo" e usar a barra. É um
+    clique a mais no momento em que o próximo visitante está esperando.
+  - **`afterReset` só é usada fora do Modo Feira agora**, e a `Session` ganhou um campo que o
+    `main.ts` decide. Se um terceiro modo aparecer, este é o lugar que fica confuso primeiro.
+  - `P1-04` segue aberto; a semente continua fixa em 2025. **Falta só o `P7-08`** (tutorial) e o
+    `P7-05` (áudio, `[D]`), que espera arquivos CC0.
+- **Evidência:** `docs/evidencias/2026-08-26-p7-07-modo-feira.jpg`
+
+---
+
 ## 2026-08-26 — O mapa esquenta e avisa onde doeu
 
 - **Parte / tarefa:** `P7-04` ✔ — **a Parte 7 vai a 6 de 8.**

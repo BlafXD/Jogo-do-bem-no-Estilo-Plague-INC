@@ -83,6 +83,11 @@ export const ui = {
     start: 'Começar',
     startHint: 'Começa uma partida em 2025.',
 
+    // O Modo Feira (P7-07). O rótulo diz a duração, que é a informação que
+    // decide o clique de quem está de pé num estande.
+    fair: 'Modo Feira (5 min)',
+    fairHint: 'Partida rápida a 4x, para demonstração. Não é salva e não apaga a sua partida.',
+
     newGame: 'Nova partida',
     newGameHint: 'Apaga a partida salva e recomeça em 2025.',
 
@@ -291,16 +296,24 @@ export const ui = {
 
   session: {
     label: 'Partida',
-    reset: 'Reiniciar partida',
-    resetHint: 'Apaga a partida salva e recomeça em 2025.',
+
+    // O botão da barra leva ao título (P7-07). O rótulo mudou junto com o que
+    // ele faz: "Reiniciar partida" prometia um reinício que já não acontece
+    // aqui — quem apaga é o "Nova partida" do título.
+    leave: 'Voltar ao início',
+    leaveHint: 'Volta para a tela inicial. A partida salva continua lá.',
+
     // O rótulo do botão de confirmar diz o que vai acontecer, não "Sim" nem
     // "OK": quem clica rápido precisa ler a consequência no próprio botão.
-    confirm: 'Apagar e recomeçar',
-    confirmHint: 'Confirma o reinício. Não dá para desfazer.',
+    confirm: 'Sair e descartar',
+    confirmHint: 'Sai do Modo Feira. Esta partida não foi salva.',
     cancel: 'Cancelar',
     cancelHint: 'Mantém a partida como está.',
-    warning: 'A partida salva será apagada. Não dá para desfazer.',
+    warning: 'Esta partida não foi salva e será descartada.',
     autosave: 'A partida é salva sozinha a cada mês.',
+
+    /** O Modo Feira se declara aqui: não salvar é a coisa que o jogador precisa saber. */
+    fair: 'Modo Feira: partida rápida, não é salva.',
     restored: (year: string) => `Partida retomada em ${year}.`,
   },
 
