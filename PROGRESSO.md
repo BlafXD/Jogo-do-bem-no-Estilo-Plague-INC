@@ -28,6 +28,105 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — O playtest ganhou instrumento; falta ele acontecer
+
+- **Parte / tarefa:** `P8-01` `[~]` — **o instrumento está pronto, as cinco sessões não.** A tarefa
+  continua aberta e só fecha quando cinco pessoas de fora tiverem jogado.
+- **O que mudou:**
+  - `docs/playtests/README.md` **criado** — o protocolo, reaproveitável em qualquer rodada.
+  - `docs/playtests/02-jogo.md` **criado** — a rodada do `P8-01`: por que Modo Feira, a lista do que
+    já está sob suspeita, cinco fichas em branco e o fechamento.
+  - `PLANO.md` — `P8-01` marcado `[~]`.
+  - Nenhuma linha de código foi tocada.
+
+### O que eu não fiz, e não é descuido
+
+**Não conduzi playtest nenhum e não inventei resultado.** Cinco pessoas jogando é a única coisa que
+esta tarefa mede, e um agente não tem como produzir isso. Preencher as fichas com achados plausíveis
+seria a pior entrega possível num projeto que exige fonte para cada número — e o `P8-02` ia refazer
+o balanceamento em cima de dados que nunca existiram.
+
+O que dá para fazer sem as pessoas é **tudo em volta**: o roteiro, as fichas, e a lista do que
+observar. É o que transforma o `P8-01` de tarefa em aberto numa tarefa de uma tarde.
+
+### Modo Feira, e não a partida completa
+
+Cinco pessoas × 25 min são duas horas de sessão, e ninguém aguenta. Cinco × 5,6 min cabem numa
+tarde — e o Modo Feira **é uma partida completa**, não uma demonstração cortada: 2025 a 2100 a 4×,
+com os mesmos eventos, a mesma Inércia e a mesma tela de fim (`§4` do GDD). É também a experiência
+que o estande vai ter, que é a que precisa funcionar.
+
+### As três regras de quem observa, e por que a primeira é a que importa
+
+**Não ajude, nem quando doer.** É a mais violada de todas, e violá-la destrói a sessão: quando a
+pessoa travar, dá vontade de dizer "é só clicar ali" — e aquele travamento era exatamente o dado que
+se foi buscar. Um jogo de feira não vem com o autor ao lado.
+
+As outras duas: anotar o que a pessoa **faz**, não o que ela diz que faria; e **cronometrar o
+silêncio** — mais de 10 s parada é travamento mesmo quando ela não reclama, e ela quase nunca
+reclama, porque assume que a culpa é dela.
+
+O roteiro é literal de propósito. Cinco sessões conduzidas de cinco jeitos não são cinco dados, são
+cinco anedotas.
+
+### A pergunta que testa a aposta central do projeto
+
+*"Com suas palavras, do que era esse jogo?"*
+
+O `§2.1` do GDD **afirma** que a mensagem do ODS 13 está "embutida na mecânica — não em um texto de
+tutorial". Essa frase está no documento desde o começo e nunca foi verificada por ninguém. Esta
+pergunta é o único jeito de saber se ela é verdade ou se é uma frase bonita: se as cinco pessoas
+descreverem o jogo como "clicar em coisas verdes", a aposta falhou — e falhou em silêncio, porque
+nada no código quebra quando isso acontece.
+
+O fechamento da rodada cobra o número: quantas de 5 descreveram o jogo em termos de **escolha** ou
+**tempo perdido**.
+
+### As oito suspeitas viraram lista, e ela é para quem observa
+
+Cada pendência que eu anotei nas tarefas desta semana virou linha de tabela com **de onde veio** e
+**o que seria a confirmação** — os oito alertas simultâneos do `P7-04`, o 4× que sobrevive ao Modo
+Feira do `P7-07`, o painel sem "Pular" do `P7-08`, o "Prata · 2 °C" do `P7-06`, e mais quatro.
+
+**E o `README.md` proíbe transformá-las em pergunta.** Perguntar *"o mapa ficou confuso com tantos
+alertas?"* garante um "é, um pouco" de qualquer pessoa educada — e aí a suspeita fica confirmada sem
+que nada tenha sido aprendido. Se os alertas confundem, a pessoa para em frente ao mapa sem clicar,
+e é isso que vai para a ficha.
+
+### O vídeo do `P8-03` sai daqui, mas só com consentimento
+
+As perguntas 4 e 5 ("o que mais gostou" / "o que mais incomodou") existem para render as opiniões
+positivas e negativas que a APS 2 pede. O protocolo manda **perguntar antes de gravar e aceitar um
+não** — quem recusar continua valendo como playtest, só não entra no vídeo —, e manda anotar o
+consentimento na ficha, porque um "sim" de boca não se lembra três semanas depois.
+
+- **Como verificar:**
+  ```bash
+  npm run format:check   # os dois arquivos novos passam
+  npm run build && ls dist/index.html
+  ```
+  Não há teste automatizado a rodar: a entrega é documento.
+
+  **Conferido:** a build sai com **caminhos relativos** — `./assets/index-*.js` e `.css`, zero
+  caminhos absolutos —, que é o mecanismo pelo qual o `dist/index.html` abre direto do disco, sem
+  servidor. É o que o protocolo manda testar.
+
+- **Pendente:**
+  - **As cinco sessões.** É a tarefa. O `P8-01` fica `[~]` até elas acontecerem.
+  - **Não consegui abrir o `dist/index.html` do disco por aqui** — a extensão de navegador recusa
+    `file://`. O que confirmei foi o mecanismo (caminhos relativos), não o resultado. Quem fecha
+    isso de verdade é o `P8-05`, que tem "roda sem internet" como aceite — **e vale abrir uma vez
+    antes de chamar a primeira pessoa**, para não descobrir na frente dela.
+  - **O `01-papel.md` não existe**, porque o `P1-03` nunca aconteceu. O `README.md` já cobre as duas
+    rodadas, então quando o protótipo de papel for testado o arquivo entra ao lado deste.
+  - **A lista de suspeitas é minha, não de ninguém de fora.** Todas as oito saíram de quem escreveu
+    o código, que é a pessoa menos qualificada do mundo para dizer o que confunde. Se as cinco
+    sessões não confirmarem nenhuma e apontarem três outras coisas, **o resultado é esse** — e a
+    lista terá servido para o que serve: reconhecer o travamento, não escolher qual encontrar.
+- **Evidência:** — (tarefa de documento; a evidência do `P8-01` são as fichas preenchidas)
+
+---
+
 ## 2026-08-26 — O jogo passou a se explicar, de dois jeitos
 
 - **Parte / tarefa:** `P7-08` ✔ — **a Parte 7 fechou 7 de 8; só o `P7-05` (áudio) fica esperando

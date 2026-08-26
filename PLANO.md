@@ -176,7 +176,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 
 ## Parte 8 — Testes e finalização
 
-- [ ] `P8-01` Playtest com 5 pessoas de fora; anotar onde travam — **G**
+- [~] `P8-01` Playtest com 5 pessoas de fora; anotar onde travam — **G** — *instrumento pronto em `docs/playtests/`; faltam as sessões*
 - [ ] `P8-02` Rodada de balanceamento a partir do playtest → `docs/BALANCEAMENTO.md` — **G**
 - [ ] `P8-03` (APS 2) Gravar o vídeo de 1 a 3 min com opiniões positivas e negativas — **M** — *sai de graça do `P8-01`*
 - [ ] `P8-04` Passagem de acessibilidade: contraste, navegação por teclado, tamanho de fonte — **M**
