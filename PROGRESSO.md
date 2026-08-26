@@ -28,6 +28,123 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — O mapa esquenta e avisa onde doeu
+
+- **Parte / tarefa:** `P7-04` ✔ — **a Parte 7 vai a 6 de 8.**
+- **O que mudou:**
+  - `src/ui/map.ts` — o aquecimento em quatro faixas, o alerta por região e a geometria do canto.
+  - `src/ui/map.css` — as quatro faixas por `color-mix`, com os contrastes conferidos.
+  - `src/data/i18n.ts` — os blocos `map.heat` e `map.alert`.
+  - `tests/map.test.ts` (18 → 32) e `map.dom.test.ts` (23 → 29). Suíte: 579 → **598**.
+  - Nenhum arquivo do engine foi tocado: é tudo camada de tela lendo estado que já existia.
+
+### O mapa esquenta pelos tetos das medalhas, e isso não é decoração
+
+As quatro faixas — abaixo de 1,5 / 2,0 / 2,55 / acima — **são os limiares pelos quais a tela de fim
+já julga a partida**. Quem decide a faixa é o `medalFor` do engine, a mesma função que concede a
+medalha. O efeito é que a cor do mapa passa a ensinar a escala da nota: ver as oito formas passarem
+de verde-frio a oliva quente é ver o ouro e depois a prata ficarem para trás, antes de qualquer texto
+dizer isso.
+
+**Nenhuma constante nova entrou.** Uma escala de calor inventada aqui seria número de balanceamento
+escondido em arquivo de tela, e ainda por cima uma segunda leitura dos mesmos limiares — o jeito de o
+mapa e a tela de fim discordarem em silêncio.
+
+### O limiar do alerta de apoio também já existia
+
+É o `supportFloor`, 25. O `tick.ts` registra que **o desgaste do tempo para no piso**: uma região
+abaixo dele não chegou ali sozinha — foi um evento (`P7-01`) ou a Inércia (`P7-03`) que a furou. É a
+diferença entre "o tempo passou" e "alguma coisa quebrou aqui", e ela já estava medida no
+`balance.json`. Quem está exatamente em 25 não acende alerta, e há teste para isso.
+
+### A prioridade entre os dois alertas é regra escrita
+
+Com evento em cena **e** apoio abaixo do piso na mesma região, aparece o **evento**. A razão: ele é o
+único dos dois que não tem outro lugar no mapa. O cabeçalho do `map.ts` promete desde o `P5-01` que
+"o cartão diz o que aconteceu, o mapa diz onde doeu", e até hoje o mapa não cumpria essa metade. O
+apoio crítico continua denunciado pelo próprio número na forma — um `Apoio 3` não precisa de canto
+para ser lido como ruim.
+
+### O defeito que só o navegador pegou, e o número que o conserta
+
+Os 19 testes novos passaram antes de eu abrir a página. O que eles não pegaram: **nas três formas de
+140 de altura com nome em duas linhas — Ásia Oriental, Oriente Médio e Ásia Meridional — o alerta era
+desenhado por cima do nome.**
+
+A causa é geométrica e vale registrar: o bloco de texto é **centrado na forma**, e numa forma baixa o
+centro sobe até a faixa dos cantos. Nas formas altas (170 a 240) sobra espaço e nada colidia — por
+isso o defeito só existia em três das oito.
+
+O conserto é um piso calculado, e não um chute:
+
+```
+base do alerta 28 + descida do glifo ~5 + subida do nome ~19 = 52  →  piso 56
+```
+
+Quando o centro pede um nome acima disso, o bloco inteiro desce até o piso — nome **e** apoio, para
+o espaçamento entre os dois não mudar. **O empurrão depende só da forma e do nome, nunca de haver
+alerta em cena**: se dependesse, o nome pularia de lugar toda vez que um evento caísse na região, que
+é exatamente o motivo pelo qual o marcador de seleção mora num canto desde o `P5-01`.
+
+E o defeito virou invariante conferida: `nenhum nome sobe até a base do alerta, em nenhuma das 8
+formas` roda sobre as oito de verdade, com os nomes de verdade do `regions.json`.
+
+### Uma armadilha de medição que vale anotar
+
+A primeira sonda no navegador usou `getBoundingClientRect` e acusou colisão em **seis** regiões,
+inclusive nas que estavam visivelmente limpas. O motivo: num `<text>` de SVG esse retângulo é a
+**caixa de em inteira**, com ascendente e descendente, não a extensão da tinta. Três a quatro pixels
+de sobreposição de caixa não são um pixel de sobreposição de letra. Quem decidiu foi a captura de
+tela; a sonda serviu para achar os candidatos, não para julgá-los.
+
+### Contrastes conferidos, como o map.css exige
+
+A faixa mais clara (`over`) é o pior caso:
+
+| | contra o preenchimento `over` | mínimo |
+|---|---|---|
+| valor `#F2F7F4` | **8,75:1** | 4,5:1 |
+| rótulo `#A7C0B4` | **5,36:1** | 4,5:1 |
+
+As outras três são mais escuras que essa, então passam com folga maior — a faixa `gold` mistura
+destaque em vez de alerta e fica **mais escura** que a superfície base.
+
+**Sobre o §5:** uma escala de calor é o caso extremo da tentação de comunicar por cor. Quem carrega o
+recado é a legenda abaixo do desenho, que nomeia a faixa por escrito — *"acima de 2,55 °C — nenhuma
+medalha ao alcance"* —, e cada alerta leva ícone **mais** palavra. Tire as cores da tela e o mapa
+continua dizendo em que ponto o mundo está e quais regiões estão em apuros.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 598 testes em 33 arquivos
+  ```
+  Os aceites são o `as faixas são os tetos das medalhas do §2.7` e o `nenhum nome sobe até a base do
+  alerta, em nenhuma das 8 formas`, ambos em `tests/map.test.ts`.
+
+  **Conferido no navegador**, em duas partidas escritas pelo próprio engine: 2025 a 1,37 °C (faixa
+  `gold`, verde-frio, zero alertas) e 2080 a 2,70 °C (faixa `over`, oliva quente, oito alertas — sete
+  `▲ crítico` e um `◉ evento`). A legenda muda junto com a cor nas duas.
+
+- **Pendente:**
+  - **Oito alertas ao mesmo tempo é muito.** Numa partida perdida todas as oito regiões acendem, e o
+    mapa vira uma parede de laranja que informa menos do que três alertas informariam. Não é bug — é
+    o estado honesto de uma partida arruinada —, mas vale ver com gente de fora no `P8-01` se o
+    recado ainda chega.
+  - **O apoio ficou perto da borda de baixo nas três formas empurradas.** São 4 unidades de folga
+    calculada. Se o `[D-Historia]` renomear uma região para algo mais longo, o piso empurra mais e
+    essa folga some — o teste `empurrar o nome não joga o apoio para fora da forma` é o que avisa.
+  - **A cor não distingue os dois alertas**, de propósito: `evento` e `crítico` usam o mesmo laranja,
+    e quem os separa é a palavra. Inventar uma terceira cor faria a cor voltar a ser o recado.
+  - **A faixa `silver` é a superfície neutra**, então entre 1,5 e 2,0 °C o mapa fica igual ao que era
+    antes desta tarefa. É a faixa do meio e a transição é sutil de propósito; se no `P8-01` ninguém
+    perceber a mudança, o lugar de mexer é o `map.css`, não o `map.ts`.
+  - `P1-04` segue aberto; a semente continua fixa em 2025. **Faltam `P7-05`, `P7-07` e `P7-08`.**
+- **Evidência:** `docs/evidencias/2026-08-26-p7-04-mapa-frio-em-2025.jpg` e
+  `2026-08-26-p7-04-mapa-quente-com-alertas.jpg`
+
+---
+
 ## 2026-08-26 — A tela de fim diz o que ficou para trás, e aponta para fora do jogo
 
 - **Parte / tarefa:** `P7-06` ✔ — **parte B de duas. A tarefa fechou.**

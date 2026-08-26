@@ -136,3 +136,72 @@
    quer olhar depois do fim, para entender onde o apoio ruiu. Diferente da
    árvore e da contenção, não é apagado: aqui não há nada para clicar que possa
    ser recusado. */
+
+/* --------------------------- o aquecimento e os alertas (P7-04) ---------- */
+
+/* As quatro faixas são os tetos das medalhas do §2.7 — a mesma escala pela qual
+   a tela de fim julga a partida. Todas saem por color-mix da paleta que já
+   existe; nenhuma cor nova entra.
+
+   **Contrastes conferidos na faixa mais clara**, que é o pior caso (`over`,
+   #48472F na prática — 22% de alerta sobre a superfície):
+
+     valor  #F2F7F4  vs  preenchimento `over`   8,75:1   (exige 4,5:1)
+     rótulo #A7C0B4  vs  preenchimento `over`   5,36:1   (exige 4,5:1)
+
+   As outras três são mais escuras que essa, então passam com folga maior. A
+   faixa `gold` mistura destaque em vez de alerta e fica **mais escura** que a
+   superfície base, o que só aumenta o contraste do texto.
+
+   **Sobre o §5.** A regra proíbe comunicar estado do jogo só por cor, e uma
+   escala de calor é o caso extremo da tentação. Quem carrega o recado é a
+   legenda `.map__heat` logo abaixo do desenho, que nomeia a faixa por escrito —
+   "acima de 2,55 °C — nenhuma medalha ao alcance". Tire as cores da tela e a
+   frase continua dizendo em que ponto o mundo está. */
+
+.map__canvas[data-heat='gold'] .map__shape {
+  fill: color-mix(in srgb, var(--cor-destaque, #7fd1a8) 8%, var(--cor-superficie, #182c24));
+}
+
+.map__canvas[data-heat='silver'] .map__shape {
+  fill: var(--cor-superficie, #182c24);
+}
+
+.map__canvas[data-heat='bronze'] .map__shape {
+  fill: color-mix(in srgb, var(--cor-alerta, #f2a65a) 10%, var(--cor-superficie, #182c24));
+}
+
+.map__canvas[data-heat='over'] .map__shape {
+  fill: color-mix(in srgb, var(--cor-alerta, #f2a65a) 22%, var(--cor-superficie, #182c24));
+}
+
+/* O hover continua vencendo o aquecimento: ele é resposta ao ponteiro, e uma
+   resposta que não aparece é pior do que nenhuma. Vem depois na folha, que é o
+   que basta com a mesma especificidade. */
+.map__canvas .map__region:hover .map__shape {
+  fill: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
+}
+
+.map__heat {
+  margin: 0.75rem 0 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  max-width: 70ch;
+}
+
+/* O alerta no canto da forma. Ícone **mais** palavra escrita — a cor aqui é
+   reforço, e o map.ts registra por quê. */
+.map__alert {
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.map__alert[data-alert='event'] {
+  fill: var(--cor-alerta, #f2a65a);
+}
+
+/* Crítico usa a mesma cor de alerta: são os dois avisos do mapa, e inventar uma
+   terceira cor para separá-los faria a cor voltar a ser o recado. Quem os
+   separa é a palavra escrita — "evento" e "crítico". */
+.map__alert[data-alert='support'] {
+  fill: var(--cor-alerta, #f2a65a);
+}

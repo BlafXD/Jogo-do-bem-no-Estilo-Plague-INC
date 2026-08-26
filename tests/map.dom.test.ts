@@ -103,7 +103,21 @@ describe('a região como alvo de clique', () => {
       'af',
     );
 
-    expect(africa.getAttribute('aria-label')).toBe(ui.map.cell('África', '23'));
+    // 23 está abaixo do piso de apatia, então a frase leva o alerta junto
+    // (P7-04): quem não enxerga o mapa fica sabendo que a região foi furada
+    // pelo mesmo caminho por que fica sabendo o apoio dela.
+    expect(africa.getAttribute('aria-label')).toBe(
+      ui.map.cell('África', '23') + ui.map.alert.said(ui.map.alert.support.label),
+    );
+  });
+
+  it('sem alerta, a frase não ganha sobra nenhuma', () => {
+    const africa = region(
+      mount(() => {}, comApoio('af', 60)),
+      'af',
+    );
+
+    expect(africa.getAttribute('aria-label')).toBe(ui.map.cell('África', '60'));
   });
 
   it('avisa quem escolheu, com o id da região', () => {
@@ -212,7 +226,9 @@ describe('o mapa redesenhado', () => {
     const root = mount();
     renderMap(root, mapView(comApoio('af', 11), null));
 
-    expect(region(root, 'af').getAttribute('aria-label')).toBe(ui.map.cell('África', '11'));
+    expect(region(root, 'af').getAttribute('aria-label')).toBe(
+      ui.map.cell('África', '11') + ui.map.alert.said(ui.map.alert.support.label),
+    );
   });
 
   /**
@@ -258,5 +274,71 @@ describe('focusRegion', () => {
 
   it('avisa em vez de falhar calado quando a região não está na tela', () => {
     expect(focusRegion(document.createElement('section'), 'af')).toBe(false);
+  });
+});
+
+describe('o aquecimento e os alertas no desenho (P7-04)', () => {
+  const canvas = (root: ParentNode): Element => {
+    const found = root.querySelector('.map__canvas');
+    if (found === null) throw new Error('o mapa não foi montado');
+    return found;
+  };
+
+  const alertOf = (root: ParentNode, id: RegionId): Element | null =>
+    region(root, id).querySelector('[data-map="alert"]');
+
+  it('a faixa de aquecimento vive no <svg>, não repetida nas oito formas', () => {
+    // Oito lugares para o mesmo valor são oito chances de ele ficar
+    // dessincronizado por um quadro.
+    const root = mount(() => {}, { ...start(), temperature: 2.9 });
+
+    expect(canvas(root).getAttribute('data-heat')).toBe('over');
+    expect(root.querySelectorAll('[data-heat]')).toHaveLength(1);
+  });
+
+  it('a legenda escrita acompanha a cor', () => {
+    const root = mount();
+    const legenda = (): string => root.querySelector('[data-map="heat"]')?.textContent ?? '';
+
+    expect(legenda()).toContain('ouro');
+
+    renderMap(root, mapView({ ...start(), temperature: 2.9 }, null));
+    expect(canvas(root).getAttribute('data-heat')).toBe('over');
+    expect(legenda()).toContain('2,55');
+  });
+
+  it('o alerta aparece com ícone e palavra, e some quando passa', () => {
+    const root = mount();
+
+    expect(alertOf(root, 'af')?.textContent).toBe('');
+
+    renderMap(root, mapView(comApoio('af', 5), null));
+    const escrito = alertOf(root, 'af')?.textContent ?? '';
+    expect(escrito).toContain(ui.map.alert.support.icon);
+    expect(escrito).toContain(ui.map.alert.support.label);
+    expect(alertOf(root, 'af')?.getAttribute('data-alert')).toBe('support');
+
+    // O mês seguinte cura a região: o canto precisa esvaziar de novo.
+    renderMap(root, mapView(comApoio('af', 60), null));
+    expect(alertOf(root, 'af')?.textContent).toBe('');
+    expect(alertOf(root, 'af')?.hasAttribute('data-alert')).toBe(false);
+  });
+
+  it('o alerta e o marcador de seleção convivem, cada um no seu canto', () => {
+    // Uma região escolhida que acabou de ser atingida mostra os dois, e nenhum
+    // dos dois pode empurrar o nome de lugar.
+    const root = mount(() => {}, comApoio('af', 5), 'af');
+    const grupo = region(root, 'af');
+
+    expect(grupo.querySelector('[data-map="marker"]')?.textContent).toBe(ui.map.selectedMarker);
+    expect(alertOf(root, 'af')?.textContent).toContain(ui.map.alert.support.label);
+  });
+
+  it('redesenhar não cria um segundo elemento de alerta', () => {
+    const root = mount();
+
+    for (let i = 0; i < 5; i++) renderMap(root, mapView(comApoio('af', 5), null));
+
+    expect(region(root, 'af').querySelectorAll('[data-map="alert"]')).toHaveLength(1);
   });
 });

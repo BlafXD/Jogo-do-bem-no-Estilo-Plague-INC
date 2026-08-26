@@ -116,6 +116,30 @@ export const ui = {
 
     /** O sinal visível de que a região está escolhida. */
     selectedMarker: '▸',
+
+    // O aquecimento pintado no mapa (P7-04).
+    //
+    // **As faixas são os tetos das medalhas do §2.7.** A legenda existe para o
+    // aquecimento não ser só cor (§5), e ela diz o que o número do HUD não diz:
+    // não a temperatura, mas **em que faixa da nota** o mundo já está.
+    heat: {
+      caption: (band: string) => `A cor das regiões acompanha o aquecimento. Agora: ${band}.`,
+      gold: (limit: string) => `abaixo de ${limit}, o teto do ouro`,
+      silver: (limit: string) => `abaixo de ${limit}, o teto da prata`,
+      bronze: (limit: string) => `abaixo de ${limit}, o teto do bronze`,
+      over: (limit: string) => `acima de ${limit} — nenhuma medalha ao alcance`,
+    },
+
+    // O alerta no canto da forma (P7-04). Ícone **mais** palavra escrita: o §5
+    // proíbe estado só por cor, e alerta é justamente onde a cor tenta carregar
+    // tudo sozinha.
+    alert: {
+      event: { icon: '◉', label: 'evento' },
+      support: { icon: '▲', label: 'crítico' },
+
+      /** O que entra na frase do leitor de tela, depois do apoio. */
+      said: (label: string) => ` Alerta: ${label}.`,
+    },
   },
 
   // O painel de detalhe da região escolhida no mapa (P5-04).

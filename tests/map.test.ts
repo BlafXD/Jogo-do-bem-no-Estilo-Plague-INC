@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { ui } from '../src/data/i18n';
-import { REGION_IDS, createInitialState, type GameState, type RegionId } from '../src/engine/state';
+import { MEDAL_CEILING } from '../src/engine/outcome';
+import {
+  balance,
+  REGION_IDS,
+  createInitialState,
+  type GameState,
+  type RegionId,
+} from '../src/engine/state';
 import {
   MAP_VIEWBOX,
   NAME_FONT_SIZE,
@@ -238,5 +245,146 @@ describe('mapView', () => {
     mapView(antes, 'eu');
 
     expect(JSON.stringify(antes)).toBe(copia);
+  });
+});
+
+describe('o aquecimento do mapa (P7-04)', () => {
+  /** Uma partida na temperatura pedida. */
+  const aQuente = (temperature: number): GameState => ({ ...start(), temperature });
+
+  it('as faixas são os tetos das medalhas do §2.7', () => {
+    // Se esta correspondência quebrar, o mapa passa a pintar uma escala e a
+    // tela de fim a julgar por outra.
+    expect(mapView(aQuente(MEDAL_CEILING.gold - 0.01), null).heat).toBe('gold');
+    expect(mapView(aQuente(MEDAL_CEILING.silver - 0.01), null).heat).toBe('silver');
+    expect(mapView(aQuente(MEDAL_CEILING.bronze - 0.01), null).heat).toBe('bronze');
+    expect(mapView(aQuente(MEDAL_CEILING.bronze + 0.01), null).heat).toBe('over');
+  });
+
+  it('a partida começa na faixa mais fria', () => {
+    expect(mapView(start(), null).heat).toBe('gold');
+  });
+
+  it('a legenda nomeia a faixa por escrito, com o número do balanceamento (§5)', () => {
+    // É ela que impede o aquecimento de ser só cor.
+    const frio = mapView(start(), null).heatCaption;
+    const quente = mapView(aQuente(2.9), null).heatCaption;
+
+    expect(frio).toContain('1,5');
+    expect(frio).toContain('ouro');
+    expect(quente).toContain('2,55');
+    expect(quente).not.toBe(frio);
+  });
+});
+
+describe('os alertas por região (P7-04)', () => {
+  it('marca a região que está abaixo do piso de apatia', () => {
+    // O limiar é o supportFloor, e não um número novo: o tick.ts registra que o
+    // desgaste do tempo para no piso, então abaixo dele foi evento ou Inércia.
+    const view = mapView(comApoio({ af: balance.supportFloor - 1 }), null);
+
+    expect(view.cells.find((cell) => cell.id === 'af')?.alert?.kind).toBe('support');
+  });
+
+  it('não marca quem está exatamente no piso — ali o tempo para sozinho', () => {
+    const view = mapView(comApoio({ af: balance.supportFloor }), null);
+
+    expect(view.cells.find((cell) => cell.id === 'af')?.alert).toBeNull();
+  });
+
+  it('marca a região que um evento acaba de atingir', () => {
+    const state: GameState = {
+      ...start(),
+      activeEvents: [{ eventId: 'heatwave', target: 'ea', ticksRemaining: 3 }],
+    };
+    const view = mapView(state, null);
+
+    expect(view.cells.find((cell) => cell.id === 'ea')?.alert?.kind).toBe('event');
+    expect(view.cells.find((cell) => cell.id === 'na')?.alert).toBeNull();
+  });
+
+  it('com evento E apoio crítico, o evento vence', () => {
+    // A prioridade é regra: o apoio crítico continua escrito no número da
+    // própria forma, e o evento não tem outro lugar no mapa.
+    const state: GameState = {
+      ...comApoio({ af: 5 }),
+      activeEvents: [{ eventId: 'drought', target: 'af', ticksRemaining: 2 }],
+    };
+    const view = mapView(state, null);
+
+    expect(view.cells.find((cell) => cell.id === 'af')?.alert?.kind).toBe('event');
+  });
+
+  it('o alerta leva ícone E palavra escrita, nunca só a cor (§5)', () => {
+    const view = mapView(comApoio({ af: 5 }), null);
+    const alert = view.cells.find((cell) => cell.id === 'af')?.alert;
+
+    expect(alert?.icon.trim()).toBeTruthy();
+    expect(alert?.label.trim()).toBeTruthy();
+  });
+
+  it('numa partida recém-começada nenhuma região está em alerta', () => {
+    expect(mapView(start(), null).cells.every((cell) => cell.alert === null)).toBe(true);
+  });
+
+  it('o canto do alerta fica dentro da forma, do lado oposto ao da seleção', () => {
+    for (const id of REGION_IDS) {
+      const shape = REGION_SHAPES[id];
+      const text = textAnchors(shape, 2);
+
+      expect(text.alertX).toBeGreaterThan(text.markerX);
+      expect(text.alertX).toBeLessThanOrEqual(shape.x + shape.width);
+      expect(text.alertY).toBeGreaterThanOrEqual(shape.y);
+    }
+  });
+});
+
+describe('a faixa dos cantos não invade o nome (P7-04)', () => {
+  /**
+   * Defeito real, achado no navegador e não pelos testes: com o alerta no canto
+   * direito, as três formas de 140 de altura com nome em duas linhas desenhavam
+   * "▲ crítico" **por cima** do nome. O bloco de texto é centrado na forma, e
+   * numa forma baixa o centro sobe até a faixa dos cantos.
+   *
+   * As caixas abaixo são aproximações da altura de glifo — o SVG só sabe a
+   * medida real com um documento na tela. São conservadoras de propósito: se
+   * estas não se tocam, as de verdade também não.
+   */
+  const ALERT_DESCENT = 5;
+  const NAME_ASCENT = 19;
+  const SUPPORT_DESCENT = 6;
+
+  it('nenhum nome sobe até a base do alerta, em nenhuma das 8 formas', () => {
+    for (const id of REGION_IDS) {
+      const shape = REGION_SHAPES[id];
+      const region = createInitialState(1).regions[id];
+      const linhas = nameLines(region.name).length;
+      const text = textAnchors(shape, linhas);
+
+      const baseDoAlerta = text.alertY + ALERT_DESCENT;
+      const topoDoNome = text.nameY - NAME_ASCENT;
+
+      expect(topoDoNome, `${id} (${linhas} linha(s))`).toBeGreaterThan(baseDoAlerta);
+    }
+  });
+
+  it('empurrar o nome não joga o apoio para fora da forma', () => {
+    // A outra ponta do mesmo conserto: o bloco desce inteiro, e numa forma
+    // baixa quem corre risco de vazar passa a ser a linha de baixo.
+    for (const id of REGION_IDS) {
+      const shape = REGION_SHAPES[id];
+      const linhas = nameLines(createInitialState(1).regions[id].name).length;
+      const text = textAnchors(shape, linhas);
+
+      expect(text.supportY + SUPPORT_DESCENT, id).toBeLessThan(shape.y + shape.height);
+    }
+  });
+
+  it('as formas altas não se mexeram — o piso só age onde precisa', () => {
+    // América Latina tem 230 de altura: o bloco dela continua centrado.
+    const la = REGION_SHAPES.la;
+    const centrado = la.y + la.height / 2 - 26;
+
+    expect(textAnchors(la, 2).nameY).toBe(centrado);
   });
 });

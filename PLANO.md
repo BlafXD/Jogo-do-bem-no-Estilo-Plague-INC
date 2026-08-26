@@ -166,7 +166,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P7-01` `engine/events.ts` + `data/events.json` com 10 eventos e limiares de temperatura — **G**
 - [x] `P7-02` Cartão de evento com o fato real + auto-pausa em evento crítico — **M**
 - [x] `P7-03` `engine/inertia.ts`: ações do antagonista a cada ~6 ticks — **M**
-- [ ] `P7-04` Feedback visual: o mapa muda com a temperatura; alertas por região — **M**
+- [x] `P7-04` Feedback visual: o mapa muda com a temperatura; alertas por região — **M**
 - [ ] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P**
 - [x] `P7-06` Telas de fim com gráfico da linha do tempo da partida — **G**
 - [ ] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**

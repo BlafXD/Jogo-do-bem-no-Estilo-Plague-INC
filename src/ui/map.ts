@@ -28,7 +28,8 @@
 // importa do engine; nenhum arquivo do engine importa daqui.
 
 import { ui } from '../data/i18n';
-import { REGION_IDS, type GameState, type RegionId } from '../engine/state';
+import { medalFor, MEDAL_CEILING, type Medal } from '../engine/outcome';
+import { balance, REGION_IDS, type GameState, type RegionId } from '../engine/state';
 
 // ------------------------------------------------------------- geometria ---
 
@@ -85,9 +86,32 @@ export const REGION_SHAPES: Readonly<Record<RegionId, RegionShape>> = {
 export const NAME_FONT_SIZE = 26;
 export const SUPPORT_FONT_SIZE = 26;
 export const MARKER_FONT_SIZE = 30;
+export const ALERT_FONT_SIZE = 22;
 
 /** Distância entre as duas linhas do nome. */
 const NAME_LINE_HEIGHT = 30;
+
+/** Linha de base do marcador de seleção e do alerta, medida do topo da forma. */
+const CORNER_Y = 28;
+
+/**
+ * O quanto o nome tem que descer para não entrar na faixa dos cantos.
+ *
+ * **Isto existe por causa de um defeito visto no navegador**, e não por
+ * precaução: com o alerta do P7-04 no canto direito, as três formas de 140 de
+ * altura com nome em duas linhas — Ásia Oriental, Oriente Médio e Ásia
+ * Meridional — desenhavam "▲ crítico" **por cima** do nome. O bloco de texto é
+ * centrado na forma, e numa forma baixa o centro sobe até a faixa dos cantos.
+ *
+ * O piso é a soma que dá folga: a base do alerta cai em `CORNER_Y`, a descida
+ * dele vai a cerca de `+5`, e a primeira linha do nome sobe cerca de `19` acima
+ * da própria base. `28 + 5 + 19 = 52`, e 56 deixa 4 unidades de sobra.
+ *
+ * Vale para as duas linhas do bloco: o apoio desce junto, para o espaçamento
+ * entre nome e apoio continuar o mesmo. Nas formas altas o piso nunca é
+ * alcançado e nada se move.
+ */
+const NAME_TOP_LIMIT = 56;
 
 export type CellText = {
   /** O eixo em que o nome e o apoio se centram. */
@@ -99,6 +123,9 @@ export type CellText = {
   readonly supportY: number;
   readonly markerX: number;
   readonly markerY: number;
+  /** O canto do alerta (P7-04): o oposto do marcador de seleção. */
+  readonly alertX: number;
+  readonly alertY: number;
 };
 
 /**
@@ -115,20 +142,61 @@ export function textAnchors(shape: RegionShape, lines: number): CellText {
   const cy = shape.y + shape.height / 2;
   const twoLines = lines >= 2;
 
+  // O bloco quer ficar centrado; numa forma baixa ele é empurrado para baixo o
+  // bastante para sair da faixa dos cantos. O empurrão depende só da **forma e
+  // do nome**, nunca de haver alerta em cena — se dependesse, o nome pularia de
+  // lugar toda vez que um evento caísse na região.
+  const wantedNameY = cy - (twoLines ? 26 : 8);
+  const nameY = Math.max(wantedNameY, shape.y + NAME_TOP_LIMIT);
+  const push = nameY - wantedNameY;
+
   return {
     cx,
-    nameY: cy - (twoLines ? 26 : 8),
+    nameY,
     lineHeight: NAME_LINE_HEIGHT,
-    supportY: cy + (twoLines ? 48 : 30),
+    supportY: cy + (twoLines ? 48 : 30) + push,
     // O marcador de seleção mora no canto superior esquerdo, fora do caminho do
     // nome: ele aparece e some durante a partida, e se dividisse a linha com o
     // nome faria o nome pular de lugar a cada clique.
     markerX: shape.x + 16,
-    markerY: shape.y + 34,
+    markerY: shape.y + CORNER_Y,
+    // Espelho do marcador, no canto oposto: os dois podem estar em cena ao
+    // mesmo tempo (uma região escolhida que acabou de ser atingida) e nenhum
+    // dos dois pode empurrar o nome de lugar.
+    alertX: shape.x + shape.width - 16,
+    alertY: shape.y + CORNER_Y,
   };
 }
 
 // ---------------------------------------------------------------- a view ---
+
+/**
+ * O quanto o mundo esquentou, em faixas (P7-04).
+ *
+ * **As faixas são os tetos das medalhas do §2.7**, e sai de graça o que isso
+ * ensina: a cor do mapa é a mesma escala pela qual a tela de fim vai julgar a
+ * partida. Quem vê as oito formas passarem de frias a quentes está vendo o ouro
+ * e depois a prata ficarem para trás, antes de qualquer texto dizer isso.
+ *
+ * Quem decide a faixa é o `medalFor` do engine — a mesma função que concede a
+ * medalha. Uma segunda leitura dos limiares aqui seria o jeito de o mapa e a
+ * tela de fim discordarem em silêncio.
+ */
+export type MapHeat = Medal | 'over';
+
+export type RegionAlertKind = 'event' | 'support';
+
+/**
+ * O alerta no canto da forma.
+ *
+ * **Ícone mais palavra escrita, nunca a cor sozinha** (§5 do GDD): tire as cores
+ * da tela e continua escrito `evento` ou `crítico` no canto da região.
+ */
+export type RegionAlert = {
+  readonly kind: RegionAlertKind;
+  readonly icon: string;
+  readonly label: string;
+};
 
 export type RegionCell = {
   readonly id: RegionId;
@@ -144,12 +212,67 @@ export type RegionCell = {
   readonly marker: string;
   readonly shape: RegionShape;
   readonly text: CellText;
+  /** `null` quando não há nada a avisar sobre esta região. */
+  readonly alert: RegionAlert | null;
 };
 
 export type MapView = {
   readonly cells: readonly RegionCell[];
   readonly selected: RegionId | null;
+  readonly heat: MapHeat;
+  /** A faixa dita por escrito. É o que impede o aquecimento de ser só cor (§5). */
+  readonly heatCaption: string;
 };
+
+/** O limiar que define cada faixa de aquecimento. */
+const HEAT_CEILING: Readonly<Record<MapHeat, number>> = {
+  gold: MEDAL_CEILING.gold,
+  silver: MEDAL_CEILING.silver,
+  bronze: MEDAL_CEILING.bronze,
+  // Acima do bronze não há teto seguinte: o número que descreve essa faixa é o
+  // que ela já ultrapassou.
+  over: MEDAL_CEILING.bronze,
+};
+
+const threshold = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+
+/**
+ * A faixa em que o mundo está, e a frase que a nomeia.
+ *
+ * O `?? 'over'` é a única tradução feita aqui: o `medalFor` devolve `null` acima
+ * do bronze, e `null` não é nome de faixa de cor.
+ */
+function heatFor(state: GameState): { readonly heat: MapHeat; readonly caption: string } {
+  const heat: MapHeat = medalFor(state.temperature) ?? 'over';
+  const limit = `${threshold.format(HEAT_CEILING[heat])} ${ui.units.celsius}`;
+
+  return { heat, caption: ui.map.heat.caption(ui.map.heat[heat](limit)) };
+}
+
+/**
+ * O alerta de uma região, ou `null` quando não há o que avisar.
+ *
+ * **A prioridade é regra, não gosto.** Com evento em cena e apoio abaixo do
+ * piso ao mesmo tempo, quem aparece é o evento — porque ele é o único dos dois
+ * que não tem outro lugar no mapa. O apoio crítico continua escrito na própria
+ * forma, no número logo abaixo do nome; um `Apoio 18` já denuncia o estado sem
+ * ajuda de canto nenhum.
+ *
+ * **O limiar do apoio é o `supportFloor`, e não um número novo.** O tick.ts
+ * registra que o desgaste do tempo *para* no piso: uma região abaixo dele não
+ * chegou ali sozinha — foi um evento (P7-01) ou a Inércia (P7-03) que a furou.
+ * É a diferença entre "o tempo passou" e "alguma coisa quebrou aqui", e ela já
+ * está medida no balance.json.
+ */
+function alertFor(state: GameState, id: RegionId): RegionAlert | null {
+  if (state.activeEvents.some((active) => active.target === id)) {
+    return { kind: 'event', ...ui.map.alert.event };
+  }
+  if (state.regions[id].support < balance.supportFloor) {
+    return { kind: 'support', ...ui.map.alert.support };
+  }
+  return null;
+}
 
 const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
@@ -203,28 +326,35 @@ export function mapView(state: GameState, selected: RegionId | null): MapView {
     const lines = nameLines(region.name);
     const support = whole.format(Math.round(region.support));
     const isSelected = selected === id;
+    const alert = alertFor(state, id);
 
     return {
       id,
       name: region.name,
       nameLines: lines,
       support: ui.map.support(support),
-      ariaLabel: ui.map.cell(region.name, support),
+      // O alerta entra na frase falada, e não só no canto do desenho: quem não
+      // enxerga o mapa precisa saber que a região foi atingida pelo mesmo
+      // caminho por que fica sabendo o apoio dela.
+      ariaLabel:
+        ui.map.cell(region.name, support) + (alert === null ? '' : ui.map.alert.said(alert.label)),
       selected: isSelected,
       marker: isSelected ? ui.map.selectedMarker : '',
       shape,
       text: textAnchors(shape, lines.length),
+      alert,
     };
   });
 
-  return { cells, selected };
+  const { heat, caption } = heatFor(state);
+  return { cells, selected, heat, heatCaption: caption };
 }
 
 // ------------------------------------------------------------------- DOM ---
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-type Slot = 'support' | 'marker';
+type Slot = 'support' | 'marker' | 'alert';
 
 function svg<K extends keyof SVGElementTagNameMap>(tag: K): SVGElementTagNameMap[K] {
   return document.createElementNS(SVG_NS, tag);
@@ -291,7 +421,19 @@ function regionElement(cell: RegionCell, onSelect: (id: RegionId) => void): SVGG
   support.setAttribute('text-anchor', 'middle');
   support.setAttribute('font-size', String(SUPPORT_FONT_SIZE));
 
-  group.append(shape, marker, name, support);
+  // O alerta mora no canto oposto ao marcador de seleção, e é montado sempre —
+  // vazio quando não há o que avisar. Criá-lo só quando aparece obrigaria o
+  // renderMap a reconstruir o grupo, que é justamente o que ele evita para não
+  // arrancar o foco do teclado de quem estiver navegando o mapa.
+  const alert = svg('text');
+  alert.setAttribute('class', 'map__alert');
+  alert.dataset.map = 'alert';
+  alert.setAttribute('x', String(cell.text.alertX));
+  alert.setAttribute('y', String(cell.text.alertY));
+  alert.setAttribute('text-anchor', 'end');
+  alert.setAttribute('font-size', String(ALERT_FONT_SIZE));
+
+  group.append(shape, marker, name, support, alert);
   group.addEventListener('click', () => onSelect(cell.id));
 
   group.addEventListener('keydown', (event) => {
@@ -342,7 +484,14 @@ export function mountMap(root: Element, view: MapView, onSelect: (id: RegionId) 
   scroll.className = 'map__scroll';
   scroll.append(canvas);
 
-  root.replaceChildren(intro, scroll);
+  // A legenda do aquecimento (P7-04). Fica **abaixo** do desenho: ela explica
+  // uma cor que já está na tela, e quem lê antes de olhar não tem o que ligar à
+  // frase. É também o que impede o aquecimento de ser só cor (§5).
+  const heat = document.createElement('p');
+  heat.className = 'map__heat';
+  heat.dataset.map = 'heat';
+
+  root.replaceChildren(intro, scroll, heat);
   renderMap(root, view);
 }
 
@@ -394,5 +543,23 @@ export function renderMap(root: ParentNode, view: MapView): void {
 
     const marker = slot(group, 'marker');
     if (marker !== null) marker.textContent = cell.marker;
+
+    const alert = slot(group, 'alert');
+    if (alert !== null) {
+      // Texto vazio, e não `hidden`: um <text> sem conteúdo não pinta nada, e
+      // assim o elemento continua no lugar para o próximo mês reaproveitar.
+      alert.textContent = cell.alert === null ? '' : `${cell.alert.icon} ${cell.alert.label}`;
+      if (cell.alert === null) alert.removeAttribute('data-alert');
+      else alert.setAttribute('data-alert', cell.alert.kind);
+    }
   }
+
+  // O aquecimento vive no <svg>, e não no grupo de cada região: são oito formas
+  // lendo a mesma faixa, e escrevê-la oito vezes seria oito lugares para ela
+  // ficar dessincronizada por um quadro.
+  const canvas = root.querySelector('.map__canvas');
+  if (canvas !== null) canvas.setAttribute('data-heat', view.heat);
+
+  const heat = root.querySelector('[data-map="heat"]');
+  if (heat !== null) heat.textContent = view.heatCaption;
 }
