@@ -79,6 +79,7 @@ import './ui/outcome.css';
 import './ui/region-panel.css';
 import './ui/screens.css';
 import './ui/session.css';
+import './ui/timeline-chart.css';
 import './ui/title.css';
 import './ui/tree.css';
 

@@ -28,6 +28,115 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — A tela de fim ganhou a curva da partida
+
+- **Parte / tarefa:** `P7-06` — **parte A de duas.** O gráfico. O "poderia ter feito diferente" e as
+  3 ações do mundo real são a parte B, e o `P7-06` só fecha lá.
+- **O que mudou:**
+  - `src/engine/review.ts` **criado** — `turningPoint`: o ano em que a emissão parou de subir.
+  - `src/ui/timeline-chart.ts` e `.css` **criados** — o SVG, sem biblioteca nenhuma.
+  - `src/ui/outcome.ts` — o gráfico entra no cartão, entre os números e os botões.
+  - `src/data/i18n.ts` — o bloco `timelineChart`.
+  - `src/main.ts` — o import da folha.
+  - `tests/review.test.ts` (8), `timeline-chart.test.ts` (17) e `timeline-chart.dom.test.ts` (13)
+    **criados**; `outcome.dom.test.ts` (+2). Suíte: 520 → **560**.
+
+### O contrato do `§3` não precisou mudar, e essa era a pergunta em aberto
+
+A entrega anterior deixou registrado que o "poderia ter feito diferente" ia querer saber **quando**
+cada habilidade foi comprada, e que isso não está no `Snapshot`. A saída não foi pedir campo novo:
+**a curva do mundo já guarda o quando.** O pico de emissão é o ano em que o jogador virou o jogo, e
+ele sai da linha do tempo que o `history` grava — sem tocar no contrato, sem `§12`.
+
+É também, literalmente, o nome do jogo. A marca no desenho diz `Pico de emissões · 2037`.
+
+### Uma curva só
+
+A da temperatura, porque é ela que dá a medalha e é ela que o `§2.7` chama de catraca de mão única.
+Uma segunda curva de emissões contaria a mesma história com o dobro de tinta; o que a emissão tem de
+único — o ano da virada — cabe numa marca sobre a curva que já está lá.
+
+O que o desenho ganha com os quatro limiares tracejados é o que nenhum número no cartão dá: **dá para
+ver o ano em que o ouro foi perdido, e o ano em que a prata foi perdida.** Na partida da evidência
+isso é 2032 e 2057.
+
+### Domínio fixo, não ajustado à partida
+
+O piso é sempre a temperatura de 2025 e o teto é sempre o limiar de derrota. É o que torna dois
+gráficos comparáveis: uma curva que para na metade da altura parou na metade do caminho para a
+derrota, **em qualquer partida**. Escalar ao máximo de cada uma faria toda curva encher o desenho, e
+a que quase perdeu ficaria com exatamente a mesma cara da que ganhou ouro.
+
+O eixo do tempo é fixo pela mesma razão, e é isso que faz a derrota ser **legível como derrota**: a
+linha simplesmente acaba em 2089 e o resto do século fica vazio (segunda evidência).
+
+### O último ponto não está guardado — e aqui foi ele que salvou o desenho
+
+Uma partida que perde em julho de 2089 tem, no `history`, retratos só até janeiro. É o `timeline` do
+`history.ts` que acrescenta o instante em que ela acabou — e sem ele a curva terminaria no janeiro
+anterior, contando uma partida até sete meses mais fria do que a que o HUD mostra a dois centímetros
+dali. Conferido no navegador: a curva termina exatamente na linha de derrota, `y = 30`, que é o topo
+da caixa.
+
+### Dois defeitos que só o navegador pegou
+
+Os 38 testes novos passaram antes de eu abrir a página, e nenhum deles pegava isto:
+
+1. **"Início · 1,37 °C" encostava em "Ouro · 1,5 °C".** O teto do ouro fica a **8% do piso** — 26
+   unidades num desenho de 330 —, e dois rótulos de 24px não cabem nisso. O piso saiu do SVG e foi
+   para a legenda: *"A temperatura ano a ano, a partir de 1,37 °C em 2025."* O número não se perdeu,
+   e agora não disputa espaço com nada.
+2. **O rótulo da virada atravessava a tracejada do ouro e vazava pela margem esquerda.** Duas
+   correções: a margem de ancoragem subiu para 130 (que é a metade da largura do rótulo — o número
+   agora *quer dizer* alguma coisa), e o texto ganhou **halo**: contorno da cor do fundo com
+   `paint-order: stroke fill`, que apaga a linha atrás dele. A alternativa era a geometria desviar de
+   quatro alturas fixas que mudam junto com o `balance.json`.
+
+O `paint-order` é o que faz o halo funcionar. Sem ele o contorno vai por cima das letras e engorda o
+texto até fechar os buracos do "o" e do "e".
+
+### O que impede o gráfico e o HUD de discordarem
+
+O gráfico formata um `Snapshot` e o HUD formata um `GameState` — duas formatações da mesma
+temperatura, no mesmo cartão. Existe um teste com nome de aceite para isso: `o fim da curva é o mesmo
+número que o HUD mostra`. O comentário no arquivo não impede nada; o teste impede.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 560 testes em 33 arquivos
+  ```
+  Os aceites são o `o fim da curva é o mesmo número que o HUD mostra` e o `só sobe, nunca desce — a
+  catraca do §2.7 desenhada`, em `tests/timeline-chart.test.ts`.
+
+  **Conferido no navegador**, com duas partidas escritas no `localStorage` pelo próprio engine (por
+  `import()` dinâmico das fontes que o Vite serve — nenhum save montado à mão):
+
+  - **Bronze, 2,50 °C em 2100**, de um jogador guloso que compra o nó mais barato ao alcance a cada
+    mês: 12 de 20 nós, virada em 2037. A curva cruza o ouro, cruza a prata e para sob o bronze.
+  - **Derrota por temperatura em 2089**, sem compra nenhuma: a curva sobe reta até a linha de
+    derrota, para ali, e a marca de virada some — as emissões nunca pararam de subir.
+
+- **Pendente:**
+  - **A parte B do `P7-06`:** o "o que você poderia ter feito diferente" e as 3 ações do mundo real
+    escolhidas pelo ramo mais negligenciado, com as fontes em `docs/CIENCIA.md`. **A tarefa continua
+    aberta.**
+  - **"Prata · 2 °C", e não "2,0 °C".** É o mesmo formatador do cartão, que já escreve "Abaixo de
+    2 °C" duas linhas acima — trocar aqui faria os dois discordarem. Numa pilha vertical ao lado de
+    "1,5" e "2,55", porém, o "2" sozinho parece erro de digitação. Vale reavaliar junto com o
+    `P8-04`, decidindo para os dois lugares de uma vez.
+  - **O gráfico não sabe quando cada habilidade foi comprada.** Segue verdade, e a parte B vai
+    esbarrar nisso de novo se quiser marcar as compras no eixo. Hoje o que existe é a virada.
+  - **`TURN_LABEL_MARGIN` é largura de texto estimada, não medida.** 130 unidades saem de olhar o
+    rótulo mais largo; se o `[D-Historia]` reescrever a frase para algo bem maior, o rótulo volta a
+    vazar. Medir de verdade exigiria `getComputedTextLength`, que só existe com um SVG já na tela —
+    e o `timelineChartView` é puro de propósito.
+  - `P1-04` segue aberto; a semente continua fixa em 2025.
+- **Evidência:** `docs/evidencias/2026-08-26-p7-06-grafico-da-linha-do-tempo.jpg` (bronze, virada em
+  2037) e `2026-08-26-p7-06-curva-interrompida-na-derrota.jpg` (a curva parando em 2089)
+
+---
+
 ## 2026-08-26 — A partida passou a guardar o que aconteceu com ela
 
 - **Parte / tarefa:** `P7-06` — **parcial.** Só a base de dados do gráfico; a tela é a próxima metade.

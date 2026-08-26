@@ -345,6 +345,46 @@ export const ui = {
     },
   },
 
+  // O gráfico da linha do tempo da tela final (P7-06, docs/GDD.md §2.7).
+  //
+  // **Os nomes das medalhas não estão aqui.** Eles vêm do `outcome.result`, que
+  // já os escreve para o cartão logo acima do gráfico — dois lugares para a
+  // mesma palavra é como a legenda de uma linha e o título do resultado passam
+  // a discordar. Este bloco só tem o que é do gráfico.
+  timelineChart: {
+    label: 'Linha do tempo da partida',
+
+    /**
+     * A legenda, e é ela que carrega a temperatura de partida.
+     *
+     * O piso do desenho já teve rótulo próprio dentro do SVG, e ele **não
+     * cabia**: o teto do ouro fica a 8% do piso, então os dois textos nasciam
+     * a 26 unidades um do outro e se encostavam em qualquer partida. Aqui
+     * embaixo o número não disputa espaço com nada, e quem lê a legenda
+     * descobre de onde a curva parte antes de olhar para ela.
+     */
+    intro: (start: string) =>
+      `A temperatura ano a ano, a partir de ${start} em 2025. As linhas tracejadas são os tetos das medalhas: onde a curva cruza cada uma é o ano em que aquela medalha ficou para trás.`,
+
+    /** "Ouro · 1,5 °C" — o rótulo de uma linha tracejada, na margem direita. */
+    threshold: (name: string, value: string) => `${name} · ${value}`,
+
+    /** A marca sobre a curva, no ano em que a emissão global parou de subir. */
+    turn: (year: string) => `Pico de emissões · ${year}`,
+
+    /**
+     * O que o leitor de tela lê no lugar do desenho.
+     *
+     * Não é uma descrição do gráfico ("uma linha que sobe"), é o **conteúdo**
+     * dele: os dois extremos da curva e o ano da virada. Quem não enxerga o
+     * desenho fica sabendo a mesma coisa que quem enxerga.
+     */
+    summary: (from: string, fromYear: string, to: string, toYear: string) =>
+      `A temperatura foi de ${from} em ${fromYear} a ${to} em ${toYear}.`,
+    summaryTurn: (year: string) => `As emissões pararam de subir em ${year}.`,
+    summaryNoTurn: 'As emissões ainda subiam quando a partida acabou.',
+  },
+
   hudLabel: 'Indicadores da partida',
 
   units: {

@@ -1,0 +1,127 @@
+/* O gráfico da linha do tempo da tela final (P7-06).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
+   encostar aqui. Nenhuma cor nova entra — o desenho inteiro se pinta com a
+   paleta que já existe.
+
+   **Sobre o §5 e as quatro linhas tracejadas.** A regra proíbe comunicar estado
+   do jogo só por cor, e um gráfico é justamente onde a tentação mora. Aqui cada
+   linha tracejada carrega o nome dela escrito ao lado — "Ouro · 1,5 °C" — na
+   calha da direita, e o traço da derrota é o único em cor de alerta. Tire as
+   cores da tela e o gráfico continua dizendo qual linha é qual. A cor é
+   reforço; quem carrega o recado é o texto. */
+
+.chart {
+  /* <figure> vem com margem lateral do navegador. */
+  margin: 1.25rem 0 0;
+}
+
+/* Rola de lado em vez de deixar o desenho encolher. É o mesmo do map.css e pelo
+   mesmo motivo do §5: o texto dentro do SVG diminui junto com o SVG, e 16px é
+   piso, não sugestão. */
+.chart__scroll {
+  overflow-x: auto;
+}
+
+.chart__canvas {
+  display: block;
+  width: 100%;
+  /* 44rem é o piso que mantém a fonte de 24 unidades acima de 16px na tela:
+     704px / 1000 unidades = 0,704, e 24 × 0,704 = 16,9px. É a mesma conta do
+     map.css, com a mesma largura de viewBox de propósito — quem mexer numa das
+     duas folhas não precisa refazer a aritmética da outra. Mexer aqui é mexer
+     nas constantes de fonte do timeline-chart.ts. */
+  min-width: 44rem;
+  max-width: var(--largura-mundo, 54rem);
+  height: auto;
+}
+
+/* A curva da temperatura: o traço mais grosso e a única cor de destaque do
+   desenho, porque é a única coisa aqui que é a partida em si. */
+.chart__curve {
+  stroke: var(--cor-destaque, #7fd1a8);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* O eixo do tempo. Contínuo, para não se confundir com as tracejadas. */
+.chart__axis {
+  stroke: var(--cor-borda, #4c8069);
+  stroke-width: 2;
+}
+
+.chart__threshold {
+  stroke: var(--cor-borda, #4c8069);
+  stroke-width: 2;
+  stroke-dasharray: 10 8;
+}
+
+/* A derrota é a única linha em cor de alerta, e ela é o teto do desenho. O
+   rótulo ao lado diz "Derrota · 3 °C" — a cor não está sozinha. */
+.chart__threshold[data-threshold='lose'],
+.chart__threshold-label[data-threshold='lose'] {
+  stroke: var(--cor-alerta, #f2a65a);
+  fill: var(--cor-alerta, #f2a65a);
+}
+
+.chart__threshold-label {
+  fill: var(--cor-rotulo, #a7c0b4);
+  font-family: inherit;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart__year {
+  fill: var(--cor-rotulo, #a7c0b4);
+  font-family: inherit;
+  font-size: 24px;
+  /* Tabular: os dígitos têm todos a mesma largura, então as marcas do eixo
+     ficam alinhadas entre si. Mesma razão do HUD e do mapa. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* A marca do ano em que a emissão parou de subir. Em cor de valor, e não de
+   destaque: ela precisa se separar da curva, que já é da cor de destaque. */
+.chart__turn {
+  fill: var(--cor-valor, #f2f7f4);
+  stroke: var(--cor-fundo, #0f1c17);
+  stroke-width: 3;
+}
+
+/* O rótulo da virada cai onde as tracejadas passam — o espaço debaixo da curva
+   é o único livre em qualquer partida, e é justamente ali que moram as quatro
+   linhas de limiar. Em vez de a geometria desviar de quatro alturas fixas (que
+   mudariam junto com o balance.json), o texto recebe um halo: um contorno da
+   cor do fundo, pintado ANTES do preenchimento, que apaga a linha atrás dele.
+
+   `paint-order` é o que faz o truque funcionar. Sem ele o contorno vai por
+   cima das letras e engorda o texto até ele fechar os buracos do "o" e do "e".
+   Conferido no navegador em cima da tracejada do ouro. */
+.chart__turn-label {
+  fill: var(--cor-valor, #f2f7f4);
+  stroke: var(--cor-fundo, #0f1c17);
+  stroke-width: 6;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* O `hidden` do HTML não vale dentro de um SVG: a regra de folha do navegador
+   que esconde `[hidden]` é escrita para elementos de HTML, e quem depende dela
+   aqui descobre a diferença num navegador só. A marca da virada some por esta
+   regra, que é nossa e vale em qualquer lugar. */
+.chart__turn[hidden],
+.chart__turn-label[hidden] {
+  display: none;
+}
+
+.chart__caption {
+  margin: 0.75rem 0 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  max-width: 70ch;
+}

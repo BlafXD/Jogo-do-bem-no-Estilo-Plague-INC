@@ -223,6 +223,24 @@ describe('o cartão na tela', () => {
     expect(onPlayAgain).toHaveBeenCalledTimes(1);
   });
 
+  it('o gráfico da linha do tempo entra entre os números e os botões (P7-06)', () => {
+    // A ordem é a leitura que o §2.7 quer: o resultado diz o que aconteceu, os
+    // números dizem onde o mundo parou, e a curva diz quando cada coisa foi
+    // decidida. Os botões são a saída da tela, não parte do que se lê.
+    const root = show(mount(), ended(2.4));
+    const card = root.querySelector('.outcome__card');
+    const ordem = [...(card?.children ?? [])].map((node) => node.className);
+
+    expect(ordem).toEqual(['outcome__said', 'outcome__stats', 'chart', 'outcome__actions']);
+  });
+
+  it('o gráfico é redesenhado junto com o cartão', () => {
+    const root = show(mount(), ended(2.4));
+    const curva = root.querySelector('[data-chart="curve"]');
+
+    expect(curva?.getAttribute('d')?.length ?? 0).toBeGreaterThan(0);
+  });
+
   it('o texto do cartão é anunciado por leitor de tela, o botão não', () => {
     const root = mount();
     const live = root.querySelector('[aria-live]');

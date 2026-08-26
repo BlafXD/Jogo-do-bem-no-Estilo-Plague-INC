@@ -25,6 +25,12 @@ import { ui } from '../data/i18n';
 import { MEDAL_CEILING, outcomeOf, type Outcome } from '../engine/outcome';
 import { balance, skills, type GameState } from '../engine/state';
 import { hudView } from './hud';
+import {
+  mountTimelineChart,
+  renderTimelineChart,
+  timelineChartView,
+  type TimelineChartView,
+} from './timeline-chart';
 
 /** Um par rótulo/valor do rodapé do cartão. */
 export type OutcomeStat = {
@@ -54,6 +60,15 @@ export type OutcomeView = {
   /** O que esse resultado significa, uma frase. */
   readonly verdict: string;
   readonly stats: readonly OutcomeStat[];
+  /**
+   * A geometria do gráfico da linha do tempo (P7-06).
+   *
+   * Entra na mesma vista, e não num segundo cálculo do lado do DOM, para o
+   * `outcomeView` continuar sendo o que este arquivo diz que ele é: uma função
+   * pura que recebe o estado e devolve o cartão inteiro. Quem monta a tela
+   * nunca precisa do `GameState`.
+   */
+  readonly chart: TimelineChartView;
 };
 
 /**
@@ -138,6 +153,7 @@ export function outcomeView(state: GameState): OutcomeView | null {
 
   return {
     ...resultFor(outcome),
+    chart: timelineChartView(state),
     stats: [
       { label: ui.hud.year.label, value: hud.year },
       { label: ui.hud.temperature.label, value: hud.temperature },
@@ -244,7 +260,11 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
     actions.append(review);
   }
 
-  card.append(said, stats, actions);
+  // O gráfico entra entre os números e os botões, e a ordem é a leitura que o
+  // §2.7 quer: o resultado diz o que aconteceu, os números dizem em que ponto o
+  // mundo parou, e a curva diz **quando** cada coisa foi decidida. Os botões
+  // ficam por último porque são a saída da tela, não parte do que se lê.
+  card.append(said, stats, mountTimelineChart(), actions);
   root.replaceChildren(card);
   renderOutcome(root, null);
 }
@@ -270,6 +290,8 @@ export function renderOutcome(root: Element, view: OutcomeView | null, reviewing
 
   const card = slot(root, 'card');
   if (card !== null) card.dataset.tone = view.tone;
+
+  renderTimelineChart(root, view.chart);
 
   for (const [name, text] of [
     ['icon', view.icon],
