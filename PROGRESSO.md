@@ -28,6 +28,57 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — O jogo se chama Ponto de Virada, e agora está escrito
+
+- **Parte / tarefa:** `P1-04` ✔
+- **O que mudou:** só o checkbox do `PLANO.md`. Nenhum arquivo de código foi tocado, porque não
+  havia o que trocar.
+
+### A decisão já estava tomada — faltava ratificá-la
+
+O nome aparece em **cinco** lugares desde o `SETUP-02`, e nunca houve um segundo candidato:
+
+| Onde | O quê |
+|---|---|
+| `index.html` `<title>` | Ponto de Virada |
+| `index.html` `<h1 class="title__name">` | Ponto de Virada |
+| `index.html` `<h1 class="topo__titulo">` | Ponto de Virada |
+| `package.json` `name` | `ponto-de-virada` |
+| `src/ui/storage.ts` `SAVE_KEY` | `ponto-de-virada:partida` |
+
+O `P1-04` ficou aberto por inércia de backlog, não por indecisão: ele aparece como pendência em
+**17 entradas** deste diário, sempre na forma "o `P1-04` troca os três de uma vez" — uma promessa de
+troca que ninguém nunca quis fazer.
+
+### Por que o nome é bom, já que agora é oficial
+
+Ele **descreve a mecânica**, não o tema. O `§2.7` registra que o TCRE faz da temperatura uma catraca
+de mão única: o CO₂ acumulado só cresce, nenhuma compra faz a temperatura descer, e por isso o que
+decide a partida é **quando** o jogador agiu. O `P7-06` transformou isso em número — o `turningPoint`
+do `engine/review.ts` marca no gráfico o ano em que a curva de emissões virou, e a tela de fim diz
+"Pico de emissões · 2037" em cima da curva.
+
+Ou seja: o jogo se chama exatamente aquilo que ele mede.
+
+### O preço de trocar, se um dia quiser
+
+Trocar o nome hoje custa mais do que os três `<h1>`: o `SAVE_KEY` leva o nome, e mudá-lo **invalida
+toda partida guardada** de quem já jogou — sem aviso e sem recusa, porque o jogo simplesmente não
+acharia a chave antiga e abriria em 2025. Se a troca acontecer, ou a chave fica como está (e o
+código passa a ter um nome velho escondido), ou ela muda junto com um `SAVE_VERSION` novo e uma
+linha no `PROGRESSO.md` explicando por que as partidas sumiram.
+
+- **Como verificar:** `grep -rn "Ponto de Virada\|ponto-de-virada" index.html package.json src/` —
+  cinco ocorrências, todas coerentes.
+- **Pendente:**
+  - **O `P1-01` (one-pager) e o `P1-05` (APS 1) continuam abertos**, e são deles que sai o pitch
+    definitivo. O pitch da tela de título ainda é o do `P5-06`: comprimido do `§1` do GDD, sem frase
+    inventada, esperando o `[D-Historia]`.
+  - A semente continua fixa em 2025.
+- **Evidência:** — (tarefa de decisão; a evidência é o próprio `grep` acima)
+
+---
+
 ## 2026-08-26 — O playtest ganhou instrumento; falta ele acontecer
 
 - **Parte / tarefa:** `P8-01` `[~]` — **o instrumento está pronto, as cinco sessões não.** A tarefa

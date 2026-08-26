@@ -94,7 +94,7 @@ Objetivo: **provar que a ideia é divertida antes de escrever código.**
 - [ ] `P1-01` One-pager do conceito: pitch de 5 linhas, fantasia do jogador, dilema central — **P**
 - [ ] `P1-02` Protótipo de papel *print and play*: 12 cartas de habilidade, 8 cartas de evento, ficha de indicadores — **M**
 - [ ] `P1-03` Playtest do protótipo com 2 pessoas quaisquer (colega, família) — **M** — aceite: `docs/playtests/01-papel.md` com 3 problemas encontrados
-- [ ] `P1-04` Escolher o nome do jogo — **P**
+- [x] `P1-04` Escolher o nome do jogo — **P** — **Ponto de Virada**
 - [ ] `P1-05` (APS 1) Levantamento sobre *Plague Inc*: propagação, DNA, árvore de upgrades, curva de dificuldade — **M**
 
 ---
