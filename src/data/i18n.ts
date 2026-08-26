@@ -453,6 +453,44 @@ export const ui = {
     summaryNoTurn: 'As emissões ainda subiam quando a partida acabou.',
   },
 
+  // Os dois tutoriais (P7-08).
+  //
+  // **Nenhum destes textos ensina o dilema do jogo.** O docs/GDD.md §2.1 fecha
+  // dizendo que a mensagem do ODS 13 está "embutida na mecânica — não em um
+  // texto de tutorial", e isso é trava, não conselho. Aqui só se ensina a
+  // operar: que tecla pausa, onde clicar para comprar. Escrever "quem só adapta
+  // perde no longo prazo" entregaria de graça a descoberta que o jogo inteiro
+  // existe para provocar.
+  tutorial: {
+    label: 'Como jogar',
+    next: 'Entendi',
+    nextHint: 'Fecha esta dica. A próxima aparece quando fizer sentido.',
+    skip: 'Pular tutorial',
+    skipHint: 'Fecha as dicas desta partida. Elas não voltam.',
+
+    // Um passo por assunto, e cada frase diz **o que fazer**, não o que sentir.
+    steps: {
+      time: 'O tempo corre sozinho, um mês por vez, até 2100. A barra de espaço pausa; as teclas 1, 2 e 4 mudam a velocidade.',
+      tree: 'Você já tem PAC para comprar. Clique num nó da árvore, aqui embaixo — cada um libera os que vêm depois dele.',
+      event: 'Caiu um evento. O cartão diz o que aconteceu, e o mapa marca a região onde doeu.',
+      inertia:
+        'A Inércia agiu. Ela cresce quanto mais você corta, e o botão de contenção a segura por um tempo.',
+    },
+
+    // O Modo Feira: duas frases e um botão. Quem está de pé num estande não lê
+    // o terceiro parágrafo, e o mapa, os eventos e a Inércia se explicam
+    // acontecendo.
+    fair: {
+      title: 'Como jogar, em duas frases',
+      lines: [
+        'O tempo corre sozinho até 2100, e você acumula PAC a cada mês.',
+        'Gaste o PAC comprando habilidades na árvore, lá embaixo. É só isso.',
+      ],
+      start: 'Começar',
+      startHint: 'Fecha este aviso e põe o tempo para correr.',
+    },
+  },
+
   hudLabel: 'Indicadores da partida',
 
   units: {

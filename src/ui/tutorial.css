@@ -1,0 +1,125 @@
+/* Os dois tutoriais (P7-08).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
+   encostar aqui. Nenhuma cor nova entra.
+
+   **Sobre o §5.** Nada aqui comunica estado do jogo — é texto de instrução, e
+   texto é o próprio recado. A borda de destaque à esquerda é o que separa a
+   dica do conteúdo da seção em que ela pousa; tire a cor e a dica continua
+   sendo um parágrafo com dois botões, que é o que ela é. */
+
+/* O balão dos 4 passos. Ele se move de seção em seção, então não pode assumir
+   nada sobre onde está — daí a margem de baixo e nenhuma de cima: quem o
+   recebe é sempre o topo de uma seção.
+
+   **As duas linhas de "ocupe a fileira inteira" não são enfeite.** As quatro
+   seções em que ele pousa têm layouts diferentes: `.ctl` é flex em fileira,
+   `#eventos` e `#arvore` são grade, e `#contencao` é bloco. Sem elas o balão
+   vira mais um item da fileira — foi o que aconteceu no navegador: ele entrou
+   **ao lado** de "Pausar / 1× / 2× / 4×" e espremeu os quatro botões contra a
+   borda, em vez de ficar acima deles. Numa grade, `1 / -1` faz o mesmo pela
+   outra sintaxe; num bloco, as duas são ignoradas e nada muda. */
+.tutorial {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  flex: 1 0 100%;
+  grid-column: 1 / -1;
+  /* Sem isto o balão vaza 36 px da seção: o projeto não tem reset global de
+     box-sizing, então o flex-basis de 100% é 100% do **conteúdo** e o padding
+     mais a barra da esquerda entram por cima. Medido no navegador. */
+  box-sizing: border-box;
+  margin: 0 0 1rem;
+  padding: 0.875rem 1rem;
+  /* Barra à esquerda em vez de caixa fechada: a dica pertence à seção em que
+     está, e uma moldura inteira a faria parecer um bloco à parte. */
+  border-left: 4px solid var(--cor-destaque, #7fd1a8);
+  border-radius: 0 var(--raio-pequeno, 0.375rem) var(--raio-pequeno, 0.375rem) 0;
+  background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
+}
+
+.tutorial__text {
+  margin: 0;
+  /* Cresce e encolhe, mas nunca fica tão estreito que quebre em duas palavras
+     por linha quando os botões descem. */
+  flex: 1 1 20rem;
+  max-width: 60ch;
+}
+
+.tutorial__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tutorial__button {
+  /* O alvo de toque do §5 vale aqui como em qualquer botão: a dica aparece no
+     meio da partida e é clicada com pressa. */
+  min-height: var(--alvo-toque, 2.75rem);
+  padding: 0 1rem;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tutorial__button:hover {
+  border-color: var(--cor-destaque, #7fd1a8);
+}
+
+.tutorial__button:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+/* "Pular tutorial" é a saída, não a ação principal: ele fica visível e
+   alcançável, mas não disputa o olho com "Entendi". A diferença é de peso e de
+   cor de texto — os dois continuam sendo botões com rótulo escrito. */
+.tutorial__button--quiet {
+  border-color: transparent;
+  color: var(--cor-rotulo, #a7c0b4);
+  text-decoration: underline;
+}
+
+.tutorial__button--quiet:hover {
+  color: var(--cor-valor, #f2f7f4);
+}
+
+.tutorial__button--primary {
+  border-color: var(--cor-destaque, #7fd1a8);
+  font-weight: 600;
+}
+
+/* O painel do Modo Feira. Maior que o balão porque é a primeira coisa que o
+   visitante lê, e some no primeiro clique. */
+.tutorial-panel {
+  display: block;
+  box-sizing: border-box;
+  margin: 0 0 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 2px solid var(--cor-destaque, #7fd1a8);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
+  max-width: var(--largura-mundo, 54rem);
+}
+
+.tutorial-panel__title {
+  margin: 0 0 0.75rem;
+  font-size: var(--texto-medio, 1.125rem);
+  color: var(--cor-destaque, #7fd1a8);
+}
+
+.tutorial-panel__line {
+  margin: 0 0 0.5rem;
+  max-width: 60ch;
+  /* 16px é o piso do §5, e este texto é lido de pé, a um metro da tela. */
+  font-size: var(--texto-medio, 1.125rem);
+}
+
+.tutorial-panel .tutorial__actions {
+  margin-top: 1rem;
+}

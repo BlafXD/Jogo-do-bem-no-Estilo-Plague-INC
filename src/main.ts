@@ -16,8 +16,8 @@
 import { ui } from './data/i18n';
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
-import { unlockSkill } from './engine/skills';
-import { createInitialState, type RegionId, type SkillId } from './engine/state';
+import { canUnlock, unlockSkill } from './engine/skills';
+import { createInitialState, skills, type RegionId, type SkillId } from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
 import {
   applyCommand,
@@ -66,6 +66,20 @@ import {
   renderTitle,
   titleView,
 } from './ui/title';
+import {
+  completeStep,
+  createTutorial,
+  dismissPanel,
+  mountTutorial,
+  mountTutorialPanel,
+  renderTutorial,
+  renderTutorialPanel,
+  showsPanel,
+  skipTutorial,
+  tutorialView,
+  type TutorialAnchor,
+  type TutorialCues,
+} from './ui/tutorial';
 import { mountTree, renderTree, treeView } from './ui/tree';
 // O tema vem primeiro por leitura, não por necessidade: custom property é
 // resolvida no valor computado, então um `:root` declarado por último valeria
@@ -84,6 +98,7 @@ import './ui/session.css';
 import './ui/timeline-chart.css';
 import './ui/title.css';
 import './ui/tree.css';
+import './ui/tutorial.css';
 
 /**
  * Semente das partidas novas. Continua fixa: a mesma partida a cada reinício é
@@ -184,7 +199,42 @@ let selectedRegion: RegionId | null = null;
 let screens = createScreens();
 let title = createTitle();
 
+/**
+ * O tutorial (P7-08).
+ *
+ * Como a região escolhida e o roteador de telas, é estado **da sessão** e não
+ * entra no save: quem retomar amanhã retoma sabendo jogar. Começa desligado
+ * porque a página abre no título — quem o liga é a entrada na partida, e é lá
+ * que se decide qual dos dois roda.
+ */
+let tutorial = createTutorial('continue');
+
 const layout: ScreenLayout = { title: telaTitulo, chrome: topo, board: tabuleiro };
+
+/** As quatro seções em que o balão do tutorial pousa. */
+const tutorialAnchors: Readonly<Record<TutorialAnchor, Element>> = {
+  controls,
+  tree,
+  events: eventos,
+  contain: contencao,
+};
+
+/**
+ * O que a partida já tem para ensinar.
+ *
+ * O engine não sabe que existe tutorial, então quem traduz estado em pistas é
+ * este arquivo — a mesma divisão do `isFinished` que o roteador de telas
+ * recebe pronto.
+ */
+function tutorialCues(): TutorialCues {
+  return {
+    canBuy: skills.some((skill) => canUnlock(state, skill.id).ok),
+    hasEvent: state.activeEvents.length > 0,
+    // 1 é onde o botão de contenção deixa de recusar — abaixo disso não há o
+    // que conter, e ensinar a conter o nada seria pior do que não ensinar.
+    inertiaActed: state.inertia >= 1,
+  };
+}
 
 /**
  * O ano da partida **guardada** — não o da partida em curso.
@@ -321,6 +371,8 @@ function handleCloseRegion(): void {
 function handleStart(newGame: boolean): void {
   screens = startGame();
   title = cancelNewGame(title);
+  // Quem clica "Continuar de 2043" já sabe jogar; quem começa do zero, não.
+  tutorial = createTutorial(newGame ? 'new' : 'continue');
 
   if (newGame) {
     // O `handleReset` redesenha por conta própria, e já com o `screens`
@@ -359,8 +411,13 @@ function handleFair(): void {
   pausedForTick = state.tick;
   autoPaused = false;
 
+  tutorial = createTutorial('fair');
+
+  // 4x já marcado, mas **parado**: o painel do P7-08 é lido com o mundo quieto,
+  // e o botão dele é que solta o tempo. Sem isto a pessoa leria duas frases com
+  // o ano subindo atrás delas.
   handleCommand({ kind: 'setSpeed', speed: 4 });
-  if (control.paused) handleCommand({ kind: 'togglePause' });
+  handleCommand({ kind: 'pause' });
 
   renderGame();
   renderSessionBar();
@@ -383,6 +440,7 @@ function handleBackToTitle(): void {
   fairMode = false;
   screens = backToTitle();
   title = cancelNewGame(title);
+  tutorial = createTutorial('continue');
 
   const saved = loadGame();
   state = saved ?? createInitialState(SEED);
@@ -427,6 +485,16 @@ function renderGame(): void {
   renderOutcome(resultado, screen === 'title' ? null : outcomeView(state), screens.reviewing);
   renderEvents();
   renderContain(contencao, containView(state));
+
+  // O tutorial depois das seções em que ele pousa: o balão é prependido no
+  // container, e um render que o pusesse antes teria o `replaceChildren` do
+  // vizinho arrancando-o no mesmo quadro.
+  renderTutorialPanel(tutorialPanel, tabuleiro, screen === 'game' && showsPanel(tutorial));
+  renderTutorial(
+    tutorialCallout,
+    tutorialAnchors,
+    screen === 'game' ? tutorialView(tutorial, tutorialCues()) : null,
+  );
   // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só
   // existe para o CSS: quem de fato recusa é o `handleUnlock` e o
   // `handleContain`.
@@ -463,6 +531,10 @@ function handleReset(): void {
   state = createInitialState(SEED);
   clock = createClock();
   session = fairMode ? createSession(null, true) : afterReset();
+  // Uma partida nova é uma partida nova: no Modo Feira o painel volta, e fora
+  // dele voltam os 4 passos. Quem já os dispensou vai dispensá-los de novo em
+  // dois cliques, e quem chegou agora ao computador precisa deles.
+  tutorial = createTutorial(fairMode ? 'fair' : 'new');
   shownTick = state.tick;
   pausedForTick = state.tick;
 
@@ -581,6 +653,39 @@ mountSession(partida, {
   },
   onReset: handleBackToTitle,
 });
+/**
+ * Dispensa o passo que está na tela.
+ *
+ * Pergunta qual é em vez de guardar: o passo visível é função pura do estado do
+ * jogo, e um índice guardado ficaria errado no instante em que um evento
+ * entrasse na frente da dica da árvore.
+ */
+const tutorialCallout = mountTutorial(
+  () => {
+    const view = tutorialView(tutorial, tutorialCues());
+    if (view !== null) tutorial = completeStep(tutorial, view.step);
+    renderGame();
+  },
+  () => {
+    tutorial = skipTutorial(tutorial);
+    renderGame();
+  },
+);
+
+/**
+ * O painel do Modo Feira, e o clique que põe o mundo para andar.
+ *
+ * O tempo entra **parado** no Modo Feira (P7-07 o punha a correr direto), e é
+ * este botão que o solta: a pessoa lê as duas frases com o mundo quieto e vê a
+ * simulação começar quando ela manda. Um painel por cima de um jogo já em
+ * movimento faria a leitura competir com o ano subindo atrás dela.
+ */
+const tutorialPanel = mountTutorialPanel(() => {
+  tutorial = dismissPanel(tutorial);
+  if (control.paused) handleCommand({ kind: 'togglePause' });
+  renderGame();
+});
+
 mountTree(tree, treeView(state), handleUnlock);
 
 renderGame();

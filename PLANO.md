@@ -170,7 +170,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [ ] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P**
 - [x] `P7-06` Telas de fim com gráfico da linha do tempo da partida — **G**
 - [x] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**
-- [ ] `P7-08` Tutorial de 4 passos contextuais (sem modal gigante) — **M**
+- [x] `P7-08` Tutorial: **4 passos contextuais** no modo padrão e **um painel curto** no Modo Feira, com "Pular" nos dois — **M** — *o painel da feira foi decidido no chat em 2026-08-26; ele substitui os 4 passos, não soma com eles*
 
 ---
 
@@ -197,6 +197,21 @@ Não puxar nada daqui antes do **M3**.
 - Ranking local de melhores partidas
 - Tradução para inglês
 - Clima animado no mapa
+- **Personagens jogáveis com bônus de ramo** — ideia de 2026-08-26, do chat. Escolher um personagem
+  no título, cada um com um bônus para um ramo da árvore (ex.: Engenheira Elétrica barateia ou
+  reforça o ramo **Energia**). Arte desenhada pela equipe. **Três coisas a resolver antes de
+  escrever código:**
+  - **São 5 ramos, não 4** (`§2.4`: Energia, Transporte, Natureza, Indústria, Sociedade). Ou são 5
+    personagens, ou os 4 não mapeiam 1:1 e a regra de qual bônus cobre o quê precisa ser escrita.
+  - **Bônus é balanceamento, e mexe no que já foi medido.** O `docs/BALANCEAMENTO.md` mediu que a
+    árvore inteira custa ~35% mais do que uma partida rende, e o teto do bronze subiu para 2,55 °C
+    no `P7-03` porque **nenhuma estratégia alcançava medalha nenhuma**. Um bônus de ramo desloca as
+    duas contas. Refazer a planilha do `P3-02` faz parte da tarefa, não é passo opcional.
+  - **O personagem escolhido entra no `GameState`** (o engine precisa dele para aplicar o efeito), o
+    que é mudança do contrato do `§3` — pede aprovação pelo `§12` — e sobe o `SAVE_VERSION`.
+  - **Contrato de arte, para não travar ninguém:** `assets/characters/*.png` ou `.svg`, proporção e
+    tamanho a definir junto com o `[D-Design]`, e os textos (`name`, `description`, `bonus`) num
+    `src/data/characters.json` no mesmo formato do `actions.json` — editável sem tocar em `.ts`.
 
 ---
 

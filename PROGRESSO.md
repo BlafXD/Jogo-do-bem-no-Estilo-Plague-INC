@@ -28,6 +28,123 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — O jogo passou a se explicar, de dois jeitos
+
+- **Parte / tarefa:** `P7-08` ✔ — **a Parte 7 fechou 7 de 8; só o `P7-05` (áudio) fica esperando
+  arquivos CC0.**
+- **O que mudou:**
+  - `src/ui/tutorial.ts` e `.css` **criados** — os dois tutoriais.
+  - `src/data/i18n.ts` — o bloco `tutorial`.
+  - `src/main.ts` — as pistas, os dois elementos e a ligação com os três jeitos de começar.
+  - `PLANO.md` — a linha do `P7-08` **reescrita**, com aviso e ok no chat.
+  - `tests/tutorial.test.ts` (17) e `tutorial.dom.test.ts` (12) **criados**. Suíte: 609 → **638**.
+  - Nenhum arquivo do engine foi tocado.
+
+### São dois tutoriais, e a diferença veio do chat
+
+O `PLANO.md` pedia "4 passos contextuais (sem modal gigante)". Pedido novo: **o Modo Feira devia ter
+um painel único, mais raso**. Isso contradiz a linha do backlog ao pé da letra, então avisei antes de
+escrever — e a linha foi reescrita para registrar os dois, com ok explícito. Deixar o `PLANO.md`
+dizendo "sem modal gigante" enquanto a tela tem um painel faria os dois se contradizerem em três
+semanas, e ninguém saberia qual venceu.
+
+**A leitura que concilia os dois:** o "modal gigante" proibido é o paredão de texto que se atravessa
+**antes de poder jogar**. O painel da feira some no primeiro clique e **substitui** os 4 passos em
+vez de somar com eles.
+
+| | modo padrão | Modo Feira |
+|---|---|---|
+| formato | 4 balões contextuais | 1 painel |
+| quando | cada um no instante em que o assunto vira acionável | tudo de uma vez, na entrada |
+| profundidade | tempo, árvore, evento, Inércia | as duas ações que existem |
+| tempo parado? | não | **sim, até o clique** |
+| pular | "Pular tutorial" em todo balão | o próprio "Começar" |
+
+### O que o tutorial deliberadamente não ensina
+
+O `§2.1` do GDD fecha dizendo que a mensagem do ODS 13 está *"embutida na mecânica — não em um texto
+de tutorial"*. **É trava, não conselho.** Aqui só se ensina a operar: que tecla pausa, onde clicar
+para comprar. Escrever "quem só adapta perde no longo prazo" entregaria de graça a descoberta que o
+jogo inteiro existe para provocar.
+
+E isso virou teste, não boa intenção: `nenhum texto do tutorial ensina o dilema do jogo` varre todos
+os textos atrás das palavras do próprio dilema — *mitigar*, *adaptar*, *dilema*, *urgente*,
+*planeta*, *salvar*. Se o `[D-Historia]` reescrever uma dica e escorregar, o teste avisa.
+
+### A ordem dos passos é do estado do jogo, não de um contador
+
+O passo visível é **função pura** do que já foi dispensado mais o que a partida já tem para ensinar.
+Guardar a lista de dispensados em vez de um índice tem consequência prática: **se um evento cair
+antes de o jogador ter PAC, a dica do evento entra na frente da da árvore** — e a da árvore ainda
+aparece depois, porque continua por dispensar. Um índice teria que ser reordenado à mão.
+
+Um balão de cada vez, sempre. Dois abertos em cantos diferentes é o oposto de contextual.
+
+### O tempo entra parado no Modo Feira
+
+O `P7-07` punha a demo a correr direto. Agora ela entra **pausada**, e é o "Começar" do painel que
+solta o relógio: a pessoa lê duas frases com o mundo quieto e vê a simulação começar quando ela
+manda. Um painel por cima de um jogo já em movimento faria a leitura competir com o ano subindo
+atrás dela.
+
+### Dois defeitos de layout que os 29 testes novos não pegariam
+
+O balão **muda de seção**, e as quatro seções em que ele pousa têm layouts diferentes: `.ctl` é flex
+em fileira, `#eventos` e `#arvore` são grade, `#contencao` é bloco. No navegador:
+
+1. **Ele virou item da fileira flex** e entrou *ao lado* de "Pausar / 1× / 2× / 4×", espremendo os
+   quatro botões contra a borda. Conserto: `flex: 1 0 100%` **mais** `grid-column: 1 / -1` — uma
+   sintaxe para cada tipo de container, e as duas ignoradas no bloco.
+2. **Vazou 36 px da seção.** O projeto não tem reset global de `box-sizing`, então o `flex-basis` de
+   100% é 100% do *conteúdo* e o padding mais a barra da esquerda entram por cima. `box-sizing:
+   border-box` no balão e no painel.
+
+Medido depois nos quatro containers: **1441 de 1441 em todos, sem vazar em nenhum.**
+
+Ainda assim, uma armadilha de medição repetiu a lição do `P7-04`: a primeira sonda perguntou por
+`#controles button` e pegou o botão **do próprio balão**, que agora vive lá dentro — e concluiu que a
+dica continuava sobre os controles. O seletor certo era `.ctl__button`.
+
+### Por que os `replaceChildren` não apagam o balão
+
+Ele é prependido dentro de seções que outros módulos também escrevem. Conferido antes de confiar:
+todos os `replaceChildren` daquelas seções estão nos **mounts**, que rodam uma vez — o único que está
+num render é o do `event-cards.ts`, e ele troca os filhos de uma `<ul>` interna, não os da seção.
+Fosse diferente, o balão seria removido e recriado a cada quadro, e os botões dele perderiam o foco
+sessenta vezes por segundo.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 638 testes em 35 arquivos
+  ```
+  Os aceites são o `nenhum texto do tutorial ensina o dilema do jogo` e o `o painel da feira é mais
+  raso que os 4 passos`, ambos em `tests/tutorial.test.ts`.
+
+  **Conferido no navegador:** o painel da feira com o tempo parado de verdade (o ano não anda em
+  1,5 s) e o botão soltando o relógio; o balão do primeiro passo ancorado em `#controles`, acima dos
+  botões e sem vazar; o "Entendi" fazendo o balão sumir enquanto não há PAC — que é o comportamento
+  contextual certo, e não um sumiço; e o balão medido nos quatro containers.
+
+- **Pendente:**
+  - **O tutorial volta a cada partida nova, inclusive para você.** É de propósito — no estande cada
+    visitante é uma partida nova —, mas durante o desenvolvimento significa dois cliques a cada
+    reinício. Se incomodar, o lugar de mexer é o `createTutorial` do `main.ts`.
+  - **Os passos 3 e 4 não foram vistos no navegador**, só em teste: eles dependem de um evento cair e
+    da Inércia agir, o que leva anos de jogo. A geometria foi medida injetando o balão nas quatro
+    seções; o gatilho está coberto pelos testes puros.
+  - **"Pular tutorial" não some quando é o último passo.** Pular o que já é o fim é inofensivo, mas
+    é um botão que não faz nada de diferente do "Entendi" naquele instante.
+  - **O painel da feira não tem "Pular"** — o "Começar" já é a saída, e dois botões que fazem a mesma
+    coisa seria pior. Vale conferir no `P8-01` se alguém procura por um.
+  - **O balão nunca foi visto em tela estreita.** Ele quebra em duas linhas por CSS, mas o `P8-04`
+    (acessibilidade) é onde isso deve ser medido de verdade.
+  - `P1-04` segue aberto; a semente continua fixa em 2025.
+- **Evidência:** `docs/evidencias/2026-08-26-p7-08-painel-do-modo-feira.jpg` e
+  `2026-08-26-p7-08-passo-contextual.jpg`
+
+---
+
 ## 2026-08-26 — O estande passou a girar sozinho
 
 - **Parte / tarefa:** `P7-07` ✔ — **a Parte 7 vai a 7 de 8.**
