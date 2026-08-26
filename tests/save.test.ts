@@ -150,6 +150,56 @@ describe('o formato do save', () => {
     expect(result.state.year).not.toBe(2099);
   });
 
+  it('leva a linha do tempo junto — ela não dá para reconstruir depois', () => {
+    // O registro depende de quando cada habilidade foi comprada, de quais
+    // eventos caíram e do que a Inércia fez. Perdê-lo no F5 é perder o gráfico
+    // da tela final (§2.7) da partida inteira até ali.
+    const antes = partidaEmAndamento();
+    const depois = idaEVolta(antes);
+
+    expect(antes.history.map((retrato) => retrato.year)).toEqual([2025, 2026, 2027]);
+    expect(depois.history).toEqual(antes.history);
+  });
+
+  it('recusa um retrato com número faltando', () => {
+    const envelope = toSave(partidaEmAndamento());
+
+    for (const campo of ['tick', 'year', 'temperature', 'emissions', 'averageSupport'] as const) {
+      const [primeiro, ...resto] = envelope.state.history;
+      const { [campo]: _fora, ...semCampo } = primeiro ?? { tick: 0 };
+      const quebrado = {
+        ...envelope,
+        state: { ...envelope.state, history: [semCampo, ...resto] },
+      };
+
+      expect(fromSave(quebrado)).toEqual({ ok: false, reason: 'badHistory' });
+    }
+  });
+
+  it('recusa uma linha do tempo fora de ordem', () => {
+    // O gráfico é a única parte da tela que lê a ordem da lista e não só o
+    // conteúdo: embaralhada, ela não quebra nada — vira um ziguezague desenhado
+    // com toda a confiança.
+    const envelope = toSave(partidaEmAndamento());
+    const quebrado = {
+      ...envelope,
+      state: { ...envelope.state, history: [...envelope.state.history].reverse() },
+    };
+
+    expect(fromSave(quebrado)).toEqual({ ok: false, reason: 'badHistory' });
+  });
+
+  it('recusa um history que não é lista de retratos', () => {
+    const envelope = toSave(partidaEmAndamento());
+
+    for (const lixo of [null, 'texto', 42, {}, [1, 2, 3], [null]]) {
+      expect(fromSave({ ...envelope, state: { ...envelope.state, history: lixo } })).toEqual({
+        ok: false,
+        reason: 'badHistory',
+      });
+    }
+  });
+
   it('ACEITE: salvar no meio da partida e carregar devolve a mesma partida', () => {
     const antes = partidaEmAndamento();
     const depois = idaEVolta(antes);

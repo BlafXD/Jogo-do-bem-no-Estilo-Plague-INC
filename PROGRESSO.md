@@ -28,6 +28,117 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — A partida passou a guardar o que aconteceu com ela
+
+- **Parte / tarefa:** `P7-06` — **parcial.** Só a base de dados do gráfico; a tela é a próxima metade.
+- **O que mudou:**
+  - `src/engine/history.ts` **criado** — `snapshotOf`, `recordSnapshot` e `timeline`.
+  - `src/engine/tick.ts` — uma linha: o `recordSnapshot` no começo do `advanceTick`.
+  - `src/engine/save.ts` — o `readHistory` valida a linha do tempo na carga; `SAVE_VERSION` foi a 2.
+  - `src/ui/storage.ts` — a mensagem de console da recusa nova (o `tsc` cobrou: o mapa é exaustivo).
+  - `src/ui/outcome.ts` — o comentário que dizia "nenhuma partida preenche" deixou de ser verdade.
+  - `tests/history.test.ts` **criado** (16) e `tests/save.test.ts` (+4). Suíte: 500 → **520**.
+
+O `Snapshot` está no contrato do `§3` desde o começo e ninguém escrevia nele. Agora escreve.
+
+### O retrato é do mês que começa, não do que termina
+
+Parece detalhe e é o que faz o ponto de **2025** existir. O tick 0 é o único instante em que a
+partida está intocada — 1,37 °C, CO₂ acumulado zero, nenhuma compra —, e é essa a linha de base
+contra a qual o jogador é lido no fim. Fotografar depois do `advanceClimate` a perderia para sempre.
+
+A alternativa óbvia era semear o retrato dentro do `createInitialState`, e ela **esbarra na
+arquitetura**: o `state.ts` teria de importar o `globalEmissions` do `climate.ts`, que importa o
+`state.ts` de volta. É o mesmo ciclo que o `inertia.ts` registrou estar evitando quando duplicou a
+conta do apoio médio. Gravar na entrada do tick resolve sem ciclo e sem duplicata.
+
+### O último ponto não está guardado, e é de propósito
+
+O `history` guarda só os aniversários; quem acrescenta o instante atual é o `timeline`. Duas razões,
+e as duas são casos reais:
+
+- **o tick 900 nunca entra no `history`** — o `advanceTick` para antes de rodá-lo, então o registro
+  guardado termina em 2099;
+- **uma partida pode acabar no meio do ano.** Derrota por apoio zero em julho é o caso comum. Sem o
+  ponto vivo, a curva pararia no janeiro anterior e o gráfico contaria uma partida que termina até
+  sete meses antes daquela que o HUD, a dois centímetros dali, está mostrando.
+
+O engine continua sem saber o que faz uma partida acabar — quem sabe é o `outcome.ts`, e o `tick.ts`
+já tinha registrado por que não o importa. Guardar os aniversários e deixar a ponta por conta de
+quem lê resolve os dois casos sem que o `history` precise saber de nenhum.
+
+### Um por ano, e o número que decidiu isso
+
+**Medido, com uma partida inteira de 900 ticks:**
+
+| cadência | save completo | retratos |
+|---|---|---|
+| **um por ano** | **13 363 B** | 75 |
+| um por mês | 141 684 B | 901 |
+
+O save sem `history` nenhum tem 1 761 B, então o registro é o grosso do arquivo de qualquer jeito —
+mas doze vezes mais números para desenhar exatamente a mesma curva num eixo de 75 anos de largura
+não paga. 76 pontos (75 guardados + o vivo) é um por ano de 2025 a 2100, que é a resolução do eixo
+que o `§2.7` pede.
+
+### O save de 2056 foi recusado, e isso foi uma escolha
+
+O `history` já existia na versão 1 do formato — vazio. Um save v1 passaria por toda a validação e
+chegaria na tela final com um gráfico **começando no ano em que foi carregado**, sem nada antes e
+sem nenhum sinal de que falta metade. E não dá para reconstruir depois: o registro depende de quando
+cada habilidade foi comprada, de quais eventos caíram e do que a Inércia fez.
+
+É exatamente a "partida meio remendada" que o comentário do `SAVE_VERSION` descreve desde o `P6-07`.
+Subiu para 2. **A partida de 2056 foi embora** — decisão tomada no chat antes de escrever o código.
+
+Uma coisa que a conferência no navegador mostrou e que vale guardar: **o jogo não sobrescreve o save
+recusado na hora.** Ele fica no `localStorage` intacto até uma partida nova salvar por cima. Antes de
+jogar, copiei o de 2056 para a chave `ponto-de-virada:partida-v1-backup` — ele ainda está lá, e
+voltar o `SAVE_VERSION` para 1 e renomear a chave o traria de volta, se um dia fizer falta.
+
+### O `activeEvents` ficou para trás de propósito
+
+O `readHistory` valida retrato a retrato, inclusive **que os ticks crescem** — um gráfico é a única
+parte da tela que lê a *ordem* da lista e não só o conteúdo, e uma linha do tempo embaralhada não
+quebraria nada: viraria um ziguezague desenhado com toda a confiança.
+
+Do `activeEvents` ainda só se confere que é uma lista, e o comentário do `save.ts` que dizia "nasce
+vazio em toda partida" estava velho desde o `P7-01`. Trocado por qual é a dívida de verdade: um id
+inventado num save é vitrine com `ticksRemaining` contado para trás e some da tela no tick seguinte
+sem levar nada junto. É pequeno, mas é dívida, não decisão.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 520 testes em 30 arquivos
+  npm run dev   # o save antigo é recusado no console; o título vem com "Começar"
+  ```
+  Os aceites são o `o gráfico da tela final tem um ponto por ano, de 2025 a 2100` e o `a curva sobe
+  de temperatura e os ticks nunca voltam`, ambos em `tests/history.test.ts`.
+
+  **Conferido no navegador:** o save v1 de 2056 recusado com o aviso *"o save é de outra versão do
+  jogo"* e o título caindo em "Começar" em vez de "Continuar"; partida nova a 4× até 2027; no tick 24
+  o `localStorage` com `version: 2` e dois retratos — `2025 (tick 0): 1,370 °C, 40,75 Gt, apoio 50,0`
+  e `2026 (tick 12): 1,388 °C, 41,13 Gt, apoio 48,5` —; e o F5 devolvendo "Continuar de 2027" com os
+  dois retratos inteiros e nenhum aviso novo no console.
+
+- **Pendente:**
+  - **O `P7-06` não acabou** — isto é a metade de baixo. Falta a tela: o gráfico, o "o que você
+    poderia ter feito diferente" e as 3 ações do mundo real do `§2.7`. O `timeline` entrega a curva
+    pronta; ninguém a desenha ainda.
+  - **O `timeline` é a única função do engine sem chamador.** Ela existe porque sem ela o ponto de
+    2100 não existe em lugar nenhum — mas até o `P7-06` desenhar, quem a exercita são só os testes.
+  - **O `history` não guarda o que o jogador fez, só o que o mundo virou.** Para o "poderia ter feito
+    diferente" o gráfico vai querer marcar *quando* cada habilidade foi comprada, e isso não está no
+    `Snapshot` do `§3`. Dá para derivar do `unlockedSkills`? Não: a lista tem o quê, não o quando.
+    Ou o `P7-06` marca só os eventos (que também não estão guardados), ou o contrato do `§3` ganha um
+    campo — e mexer nele precisa de pedido (`§12`).
+  - **A validação do `activeEvents` no save continua sendo só `Array.isArray`.**
+  - `P1-04` segue aberto; a semente continua fixa em 2025.
+- **Evidência:** — (tarefa de engine; o registro só fica visível quando o `P7-06` desenhar o gráfico)
+
+---
+
 ## 2026-08-25 — O jogo ganhou começo e fim, e o relógio parou de correr sozinho
 
 - **Parte / tarefa:** `P5-06` ✔ — **a Parte 5 fechou: 6 de 6**

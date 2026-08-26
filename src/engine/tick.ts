@@ -15,6 +15,7 @@
 
 import { advanceClimate } from './climate';
 import { advanceEvents } from './events';
+import { recordSnapshot } from './history';
 import { advanceInertia } from './inertia';
 import { pointsPerYear } from './skills';
 import { balance, REGION_IDS, type GameState, type Region, type RegionId } from './state';
@@ -95,9 +96,15 @@ export function advanceTick(state: GameState): GameState {
   }
 
   const nextTick = state.tick + 1;
+  // O retrato do ano entra **antes** de o mês acontecer, e nos outros onze meses
+  // isto devolve o mesmo estado sem tocar em nada. A razão de ser aqui e não no
+  // fim do tick está no history.ts: é o que faz o ponto de 2025 — a partida
+  // intocada — existir no gráfico da tela final.
+  const opened = recordSnapshot(state);
+
   // O clima roda primeiro porque é ele que faz as regiões crescerem em emissão;
   // o desgaste do apoio entra em cima do mapa que sai de lá, e não no lugar dele.
-  const afterClimate = advanceClimate(state);
+  const afterClimate = advanceClimate(opened);
 
   const afterTime: GameState = {
     ...afterClimate,

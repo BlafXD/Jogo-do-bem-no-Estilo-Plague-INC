@@ -33,6 +33,7 @@ const REFUSAL_MESSAGES: Readonly<Record<SaveRefusal, string>> = {
   badNumber: 'o save tem um número inválido.',
   badRegions: 'as regiões do save não fecham.',
   badSkills: 'o save cita uma habilidade que não existe mais na árvore.',
+  badHistory: 'a linha do tempo do save está incompleta ou fora de ordem.',
 };
 
 /**

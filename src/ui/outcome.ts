@@ -16,8 +16,10 @@
 //
 // **O que este cartão deliberadamente não tem:** o gráfico da linha do tempo, o
 // "o que você poderia ter feito diferente" e as 3 ações do mundo real que o
-// docs/GDD.md §2.7 pede. Os três são do P7-06, que é dono das telas de fim — e
-// os dois primeiros dependem do `history`, que nenhuma partida preenche ainda.
+// docs/GDD.md §2.7 pede. Os três são do P7-06, que é dono das telas de fim. Os
+// dois primeiros dependiam do `history`, e **ele já está preenchido**: toda
+// partida guarda um retrato por ano, e o `timeline` do engine/history.ts
+// entrega a curva pronta, terminando no mês em que a partida acabou.
 
 import { ui } from '../data/i18n';
 import { MEDAL_CEILING, outcomeOf, type Outcome } from '../engine/outcome';
