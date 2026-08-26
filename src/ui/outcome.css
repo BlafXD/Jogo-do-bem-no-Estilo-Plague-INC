@@ -175,3 +175,71 @@
 #app[data-finished='true'] .tree {
   opacity: 0.55;
 }
+
+/* ------------------------ o que ficou para trás e as 3 ações (P7-06) ------ */
+
+/* Título de seção dentro do cartão. É <h2> de verdade no HTML — o que muda aqui
+   é só o tamanho, para ele não competir com o nome do resultado lá em cima. */
+.outcome__section-title {
+  margin: 1.75rem 0 0;
+  font-size: var(--texto-medio, 1.125rem);
+  font-weight: 600;
+  color: var(--cor-valor, #f2f7f4);
+}
+
+.outcome__lookback-list,
+.outcome__realworld-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  /* Sem marcador: cada item já começa com uma frase completa, e o ponto redondo
+     do navegador só empurraria o texto para dentro sem acrescentar nada. */
+  list-style: none;
+}
+
+.outcome__lookback-item {
+  margin-top: 0.375rem;
+  max-width: 60ch;
+  /* Tabular porque quase toda frase daqui termina num ano: "Ouro em 2032 e
+     Prata em 2057". Mesma razão do HUD. */
+  font-variant-numeric: tabular-nums;
+}
+
+.outcome__realworld-intro {
+  margin: 0.375rem 0 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  max-width: 60ch;
+}
+
+/* As três ações lado a lado quando há largura, empilhadas quando não há.
+   `auto-fit` resolve isso sem media query, como na grade dos indicadores. */
+.outcome__realworld-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.outcome__action {
+  /* Barra à esquerda em vez de caixa fechada: separa as três colunas sem
+     desenhar mais três molduras dentro de uma moldura que já existe. */
+  border-left: 3px solid var(--cor-borda, #4c8069);
+  padding-left: 0.75rem;
+}
+
+.outcome__action-name {
+  margin: 0;
+  font-weight: 600;
+  color: var(--cor-destaque, #7fd1a8);
+}
+
+.outcome__action-description {
+  margin: 0.25rem 0 0;
+}
+
+/* O fato verificado, um degrau abaixo da ação: quem lê rápido leva a ação, quem
+   quiser o porquê tem a fonte em docs/CIENCIA.md. Não é cor sozinha carregando
+   a diferença — o tamanho e a posição também mudam (§5). */
+.outcome__action-fact {
+  margin: 0.375rem 0 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-size: var(--tamanho-base, 1rem);
+}

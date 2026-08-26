@@ -299,6 +299,37 @@ export const ui = {
     skillsLabel: 'Habilidades',
     skillsValue: (bought: string, total: string) => `${bought} de ${total}`,
 
+    // O "o que você poderia ter feito diferente" do §2.7 (P7-06).
+    //
+    // **Chama-se "o que ficou para trás", e a diferença não é de estilo.** O
+    // §2.7 fecha pedindo "curto, sem sermão", e "o que você poderia ter feito"
+    // convida a um parágrafo de conselho. O que a mecânica de fato sabe dizer é
+    // mais duro e mais curto: em que ano cada medalha deixou de ser alcançável.
+    // Depois daquele ano, nada que o jogador fizesse a traria de volta — é a
+    // catraca do TCRE, não uma opinião sobre a partida dele.
+    lookBack: {
+      label: 'O que ficou para trás',
+      // A conjunção fica deste lado: o comentário do listOfNames registra que
+      // juntar nomes é regra do idioma, não do jogo.
+      lost: (items: readonly string[]) => `Ficou para trás: ${listOfNames.format(items)}.`,
+      lostItem: (medal: string, year: string) => `${medal} em ${year}`,
+      keptAll: (limit: string) => `Nada ficou para trás — a partida fechou abaixo de ${limit}.`,
+      tree: (unbought: string, total: string) => `${unbought} de ${total} nós ficaram na árvore.`,
+      treeComplete: 'A árvore inteira foi comprada.',
+      untouched: (branches: readonly string[]) =>
+        `Nenhuma compra em ${listOfNames.format(branches)}.`,
+    },
+
+    // As 3 ações do mundo real do §2.7 (P7-06).
+    //
+    // Os textos das ações **não estão aqui**: eles moram em `src/data/actions.json`,
+    // que é o formato que o pacote `[D-Historia]` edita sem tocar em `.ts`. Aqui
+    // fica só o que é moldura.
+    realWorld: {
+      label: 'Três coisas que funcionam fora do jogo',
+      intro: 'Escolhidas pelos ramos que esta partida deixou de lado.',
+    },
+
     // Como a partida acabou — a linha de cima do cartão.
     ending: {
       netZero: (limit: string) => `As emissões líquidas caíram abaixo de ${limit} antes de 2100.`,

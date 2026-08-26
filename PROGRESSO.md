@@ -28,6 +28,124 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — A tela de fim diz o que ficou para trás, e aponta para fora do jogo
+
+- **Parte / tarefa:** `P7-06` ✔ — **parte B de duas. A tarefa fechou.**
+- **O que mudou:**
+  - `src/data/actions.json` **criado** — 5 ações do mundo real, uma por ramo.
+  - `src/engine/review.ts` — `crossings`, `purchasesByBranch`, `unboughtCount`, `parseActions` e
+    `suggestedActions`.
+  - `src/ui/outcome.ts` e `.css` — as seções "O que ficou para trás" e "Três coisas que funcionam
+    fora do jogo".
+  - `src/data/i18n.ts` — os blocos `lookBack` e `realWorld`.
+  - `docs/CIENCIA.md` — a tabela de fontes das 5 ações.
+  - `tests/review.test.ts` (8 → 19) e `outcome.dom.test.ts` (+9). Suíte: 560 → **579**.
+
+Com isso o cartão tem as três coisas que o `§2.7` pede: gráfico, o que poderia ter sido diferente, e
+3 ações reais.
+
+### "O que ficou para trás", e não "o que você poderia ter feito diferente"
+
+O nome da seção mudou de propósito. O `§2.7` fecha pedindo *"curto, sem sermão"*, e "o que você
+poderia ter feito" convida a um parágrafo de conselho — o texto que seria igual para todo mundo.
+
+O que a mecânica de fato sabe dizer é mais duro e mais curto: **em que ano cada medalha deixou de ser
+alcançável.** Depois daquele ano, nada que o jogador fizesse a traria de volta. Não é opinião sobre a
+partida dele, é a catraca do TCRE lida em datas. Na partida da evidência: *"Ficou para trás: Ouro em
+2032 e Prata em 2059."*
+
+E o ano vem da **mesma linha do tempo que o gráfico desenha**, então o texto aponta exatamente o ano
+em que a curva cruza a tracejada logo acima dele. Há um teste com nome de aceite para isso.
+
+### Frase que só existe para dizer que não há nada a dizer não entra
+
+Cada linha da seção só aparece quando tem conteúdo. A partida de ouro não lê "0 medalhas perdidas" —
+lê *"Nada ficou para trás — a partida fechou abaixo de 1,5 °C"*. Quem comprou a árvore inteira não lê
+"0 nós ficaram na árvore".
+
+O caso que exigiu regra explícita: **os ramos intocados só são nomeados quando algum foi tocado.**
+Numa partida sem compra nenhuma os cinco estão zerados, e listar os cinco só repetiria, com mais
+palavras, o que a linha da árvore acabou de dizer.
+
+### As 3 ações são escolhidas pelo que o jogador não fez
+
+Do ramo mais abandonado para o menos. É o que separa a tela de fim de um cartaz: quem nunca comprou
+nada em Transporte lê sobre transporte, e quem cobriu o ramo inteiro não recebe conselho sobre ele.
+
+O empate é desfeito pela ordem do `SKILL_BRANCHES`, e isso **precisou de regra escrita**: a partida
+em que ninguém comprou nada é a mais comum de todas, e nela os cinco ramos empatam em zero. Sem
+regra, a resposta dependeria de como o `sort` do motor trata empates.
+
+### Nenhuma fonte nova entrou, e isso é a regra e não a economia
+
+Cada `fact` das 5 ações **já sustentava um nó da árvore** no `docs/CIENCIA.md` — mesmo número, mesma
+publicação, mesma consulta de 2026-08-18. A tabela nova aponta para as chaves que já existiam:
+`[IRENA24]`, `[BRAND21]`, `[SRCCL]`, `[IRP24]` e `[UNESCO21]`.
+
+Escrever fato novo aqui abriria uma segunda frente de verificação para o texto que o jogador lê **por
+último** — que é justamente o que ele leva para casa. Ficou registrado também o que estas ações
+deliberadamente **não** fazem: nenhuma promete efeito quantificado da escolha individual sobre a
+temperatura global. Multiplicar a meia tonelada do `[BRAND21]` por uma população para anunciar um
+resultado seria inventar ciência com números verdadeiros, que é pior do que com números falsos —
+parece conferível.
+
+### Uma colisão de nome que o CSS não teria denunciado
+
+Batizei a seção nova de `outcome__actions`. **Essa classe já existia**: é a fileira de botões
+"Jogar de novo" / "Ver o mundo". A seção teria herdado o `display: flex` deles e nada teria quebrado
+alto — os três blocos de ação viravam uma fileira torta e a página continuaria carregando.
+Renomeada para `realworld` antes de chegar ao navegador.
+
+Quem apontou a mudança de estrutura foi **o teste de ordem dos filhos do cartão**, escrito na parte
+A: ele ficou vermelho no instante em que as duas seções entraram. Era exatamente para isso.
+
+### O responsivo, medido em quatro larguras
+
+A grade das 3 ações é `auto-fit` com mínimo de 14rem, sem media query. Medido no navegador,
+estreitando o contêiner:
+
+| Largura do cartão | Colunas | Gráfico | Página rola de lado? |
+|---|---|---|---|
+| 820 px | 3 | cabe | não |
+| 600 px | 2 | rola na própria caixa | não |
+| 420 px | 1 | rola na própria caixa | não |
+| 320 px | 1 | rola na própria caixa | não |
+
+Nenhuma ação vaza do cartão em nenhuma das quatro, e a página **nunca** rola de lado — o gráfico
+resolve o aperto dentro do rolador dele, que é o que o `§5` pede.
+
+- **Como verificar:**
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  # 579 testes em 33 arquivos
+  ```
+  Os aceites são o `o ano do cruzamento não pode discordar do gráfico` (`tests/review.test.ts`) e o
+  `quem cobriu um ramo inteiro não recebe conselho sobre ele` (`tests/outcome.dom.test.ts`).
+
+  **Conferido no navegador** sobre a mesma partida gulosa da parte A (bronze, 2,499 °C em 2100, 12 de
+  20 nós): `Ouro em 2032 e Prata em 2059`, `8 de 20 nós ficaram na árvore`, os dois títulos como
+  `<h2>` de verdade, e as três ações vindo de Sociedade (1 compra), Indústria (2) e Energia (3) —
+  os três ramos menos atendidos, na ordem certa.
+
+- **Pendente:**
+  - **"Prata · 2 °C" no gráfico**, sem a casa decimal. Segue de pé da parte A: é o mesmo formatador
+    do veredito do cartão, e trocar num lugar só faria os dois discordarem. Decidir para os dois de
+    uma vez, no `P8-04`.
+  - **A frase das medalhas cresce até três itens** ("Ouro em 2032, Prata em 2059 e Bronze em 2081").
+    Cabe, mas é a linha mais longa da seção — vale um olhar no `P8-01`, com gente de fora lendo.
+  - **As 5 ações são texto provisório de programador.** O `fact` de cada uma tem fonte; a frase de
+    ação é escolha editorial, e é exatamente o que o pacote `[D-Historia]` deve reescrever. O
+    contrato está pronto: `src/data/actions.json`, campos `name`, `description` e `fact`, sem tocar
+    em `.ts`.
+  - **`unboughtCount` conta nós, não PAC.** "8 de 20 nós ficaram na árvore" não diz se faltou pouco
+    ou muito — os 8 podem ser os mais caros da árvore. Dizer isso exigiria somar custo, e o número
+    que o jogador entende ali é o de nós.
+  - `P1-04` segue aberto; a semente continua fixa em 2025. **A Parte 7 está em 5 de 8** — faltam
+    `P7-04`, `P7-05`, `P7-07` e `P7-08`.
+- **Evidência:** `docs/evidencias/2026-08-26-p7-06-ficou-para-tras-e-3-acoes.jpg`
+
+---
+
 ## 2026-08-26 — A tela de fim ganhou a curva da partida
 
 - **Parte / tarefa:** `P7-06` — **parte A de duas.** O gráfico. O "poderia ter feito diferente" e as

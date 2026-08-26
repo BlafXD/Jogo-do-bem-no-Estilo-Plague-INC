@@ -269,6 +269,40 @@ mora em `docs/BALANCEAMENTO.md`. Misturar as duas coisas seria dar aparência de
 escolha de jogo — o corte de 0,5% ao ano da solar não sai de lugar nenhum do IRENA, é número de
 desenho. O fato é verdade sobre o mundo; o efeito é verdade sobre o jogo.
 
+## Fatos das 3 ações do mundo real
+
+A tela final do `docs/GDD.md §2.7` fecha com três ações que existem fora do jogo, escolhidas pelos
+ramos que a partida deixou de lado. Preenchido em `P7-06`, com as 5 ações de `src/data/actions.json`
+— uma por ramo, três mostradas.
+
+**Nenhuma fonte nova entrou por causa desta tela, e isso é a regra e não a economia.** Cada `fact`
+aqui já sustentava um nó da árvore na tabela acima: o mesmo número, a mesma publicação, a mesma
+consulta de 2026-08-18. Escrever fato novo para a tela de fim significaria abrir uma segunda frente
+de verificação para o texto que o jogador lê **por último** — que é justamente o que ele leva para
+casa. Reaproveitar o que já foi conferido é o caminho mais honesto e o mais barato ao mesmo tempo.
+
+| Ramo | Ação como o jogador lê | Fato | Fonte | Nó que já usava o mesmo fato |
+|---|---|---|---|---|
+| `energy` | Descubra de onde vem a eletricidade que você usa e o que custa trocá-la. | O custo da eletricidade solar caiu 90% entre 2010 e 2023, de US$ 0,460 para US$ 0,044 por kWh. | **[IRENA24]** | `solar` |
+| `transport` | Troque uma viagem de carro por dia por bicicleta, caminhada ou transporte público. | Trocar uma viagem de carro por dia pela bicicleta corta cerca de meia tonelada de CO₂ por ano, por pessoa. | **[BRAND21]** | `active-travel` |
+| `nature` | Olhe para uma refeição por dia: de onde ela veio e quanto dela vai para o lixo. | Os sistemas alimentares respondem por algo entre 21% e 37% das emissões humanas de gases de efeito estufa. | **[SRCCL]** | `regen-agriculture` |
+| `industry` | Conserte, empreste e recuse o descartável antes de comprar de novo. | Extrair e processar materiais responde por mais de 60% das emissões que aquecem o planeta. | **[IRP24]** | `circular-economy` |
+| `society` | Cobre o assunto de quem decide: na escola, no trabalho, na sua cidade. | Só 53% dos currículos escolares nacionais do mundo mencionam mudança do clima em algum ponto. | **[UNESCO21]** | `climate-education` |
+
+**A ação não é fonte, o fato é.** A coluna "ação" é escolha editorial — o que uma pessoa pode fazer
+na segunda-feira de manhã —, e é a única coisa desta tabela que o pacote `[D-Historia]` pode
+reescrever livremente. A coluna "fato" carrega o número, e um número sem a fonte ao lado não entra:
+é a mesma separação da tabela das habilidades, onde o `fact` é verdade sobre o mundo e o efeito é
+verdade sobre o jogo.
+
+**O que estas ações deliberadamente não fazem:** nenhuma promete efeito quantificado da escolha
+individual sobre a temperatura global. O `[BRAND21]` é a única que traz um número por pessoa, e ele
+é o do próprio estudo — deslocamento diário, sete cidades europeias —, não uma extrapolação nossa.
+Somar meia tonelada por pessoa vezes uma população para anunciar um resultado seria inventar
+ciência com números verdadeiros, que é pior do que inventá-la com números falsos: parece conferível.
+
+---
+
 ## Fatos dos eventos
 
 Mesma regra para o `fact` de cada evento climático (`docs/GDD.md §2.5`). Preenchido em `P7-01`,

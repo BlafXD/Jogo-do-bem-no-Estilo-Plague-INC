@@ -1,0 +1,32 @@
+[
+  {
+    "branch": "energy",
+    "name": "Energia",
+    "description": "Descubra de onde vem a eletricidade que você usa e o que custa trocá-la.",
+    "fact": "O custo da eletricidade solar caiu 90% entre 2010 e 2023, de US$ 0,460 para US$ 0,044 por kWh."
+  },
+  {
+    "branch": "transport",
+    "name": "Transporte",
+    "description": "Troque uma viagem de carro por dia por bicicleta, caminhada ou transporte público.",
+    "fact": "Trocar uma viagem de carro por dia pela bicicleta corta cerca de meia tonelada de CO₂ por ano, por pessoa."
+  },
+  {
+    "branch": "nature",
+    "name": "Natureza",
+    "description": "Olhe para uma refeição por dia: de onde ela veio e quanto dela vai para o lixo.",
+    "fact": "Os sistemas alimentares respondem por algo entre 21% e 37% das emissões humanas de gases de efeito estufa."
+  },
+  {
+    "branch": "industry",
+    "name": "Indústria",
+    "description": "Conserte, empreste e recuse o descartável antes de comprar de novo.",
+    "fact": "Extrair e processar materiais responde por mais de 60% das emissões que aquecem o planeta."
+  },
+  {
+    "branch": "society",
+    "name": "Sociedade",
+    "description": "Cobre o assunto de quem decide: na escola, no trabalho, na sua cidade.",
+    "fact": "Só 53% dos currículos escolares nacionais do mundo mencionam mudança do clima em algum ponto."
+  }
+]

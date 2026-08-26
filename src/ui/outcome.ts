@@ -14,16 +14,27 @@
 // da tela. Formatá-los de novo aqui abriria a porta para o cartão dizer 2,48 °C
 // enquanto o HUD, a dois centímetros de distância, diz outra coisa.
 //
-// **O que este cartão deliberadamente não tem:** o gráfico da linha do tempo, o
-// "o que você poderia ter feito diferente" e as 3 ações do mundo real que o
-// docs/GDD.md §2.7 pede. Os três são do P7-06, que é dono das telas de fim. Os
-// dois primeiros dependiam do `history`, e **ele já está preenchido**: toda
-// partida guarda um retrato por ano, e o `timeline` do engine/history.ts
-// entrega a curva pronta, terminando no mês em que a partida acabou.
+// **O cartão tem as três partes que o docs/GDD.md §2.7 pede** (P7-06): o
+// gráfico da linha do tempo, o que ficou para trás e as 3 ações do mundo real.
+// As três se apoiam no `history`, que toda partida preenche a um retrato por
+// ano desde a entrega anterior.
+//
+// **Nenhuma das três é decidida aqui.** O gráfico sai do `timeline-chart.ts`, e
+// o que ficou para trás e a escolha das ações saem do `engine/review.ts`. Este
+// arquivo é o que junta e escreve — se ele passasse a decidir em que ano o ouro
+// ficou para trás, essa conta existiria em dois lugares e o gráfico e o texto
+// logo abaixo dele poderiam apontar anos diferentes.
 
 import { ui } from '../data/i18n';
-import { MEDAL_CEILING, outcomeOf, type Outcome } from '../engine/outcome';
-import { balance, skills, type GameState } from '../engine/state';
+import { MEDALS, MEDAL_CEILING, outcomeOf, type Outcome } from '../engine/outcome';
+import {
+  crossings,
+  purchasesByBranch,
+  suggestedActions,
+  unboughtCount,
+  type RealWorldAction,
+} from '../engine/review';
+import { balance, skills, SKILL_BRANCHES, type GameState } from '../engine/state';
 import { hudView } from './hud';
 import {
   mountTimelineChart,
@@ -69,6 +80,10 @@ export type OutcomeView = {
    * nunca precisa do `GameState`.
    */
   readonly chart: TimelineChartView;
+  /** O "o que ficou para trás" do §2.7, uma frase por linha. */
+  readonly lookBack: readonly string[];
+  /** As 3 ações do mundo real, já escolhidas pelo que esta partida deixou de lado. */
+  readonly realWorld: readonly RealWorldAction[];
 };
 
 /**
@@ -138,6 +153,42 @@ function resultFor(outcome: Outcome): Headline {
 }
 
 /**
+ * As frases do "o que ficou para trás".
+ *
+ * São até três, e cada uma só entra quando tem o que dizer. A partida de ouro
+ * não lê "0 medalhas perdidas"; a partida que comprou a árvore inteira não lê
+ * "0 nós ficaram na árvore". Frase que só existe para dizer que não há nada a
+ * dizer é o oposto do "curto, sem sermão" do §2.7.
+ */
+function lookBackFor(state: GameState): readonly string[] {
+  const text = ui.outcome.lookBack;
+  const lines: string[] = [];
+
+  // A ordem de MEDALS é a do engine — do mais exigente para o menos —, então a
+  // frase sai na ordem em que as medalhas foram sendo perdidas.
+  const crossed = crossings(state);
+  const lost = MEDALS.filter((medal) => crossed[medal] !== null).map((medal) =>
+    text.lostItem(ui.outcome.result[medal].title, String(crossed[medal])),
+  );
+
+  lines.push(lost.length === 0 ? text.keptAll(celsius(MEDAL_CEILING.gold)) : text.lost(lost));
+
+  const left = unboughtCount(state);
+  if (left > 0) lines.push(text.tree(String(left), String(skills.length)));
+
+  // Só vale a pena nomear os ramos intocados quando **algum** foi tocado. Numa
+  // partida sem nenhuma compra os cinco estão zerados, e listar os cinco só
+  // repete, com mais palavras, o que a linha da árvore acabou de dizer.
+  const bought = purchasesByBranch(state);
+  const untouched = SKILL_BRANCHES.filter((branch) => bought[branch] === 0);
+  if (untouched.length > 0 && untouched.length < SKILL_BRANCHES.length) {
+    lines.push(text.untouched(untouched.map((branch) => ui.tree.branches[branch])));
+  }
+
+  return lines;
+}
+
+/**
  * O cartão de fim, ou `null` enquanto a partida está em curso.
  *
  * O `null` é o que faz o `renderOutcome` esconder a seção inteira, e é
@@ -154,6 +205,8 @@ export function outcomeView(state: GameState): OutcomeView | null {
   return {
     ...resultFor(outcome),
     chart: timelineChartView(state),
+    lookBack: lookBackFor(state),
+    realWorld: suggestedActions(state),
     stats: [
       { label: ui.hud.year.label, value: hud.year },
       { label: ui.hud.temperature.label, value: hud.temperature },
@@ -171,10 +224,50 @@ export function outcomeView(state: GameState): OutcomeView | null {
 
 // ------------------------------------------------------------------ DOM ---
 
-type Slot = 'card' | 'icon' | 'title' | 'lead' | 'verdict' | 'stats' | 'review';
+type Slot =
+  'card' | 'icon' | 'title' | 'lead' | 'verdict' | 'stats' | 'review' | 'lookback' | 'realworld';
 
 function slot(root: ParentNode, name: Slot): HTMLElement | null {
   return root.querySelector<HTMLElement>(`[data-outcome="${name}"]`);
+}
+
+/**
+ * Uma seção do cartão: título de verdade mais a lista que o render preenche.
+ *
+ * **`<h2>` e não uma `<p>` com cara de título**, como no tree.ts e pelo mesmo
+ * motivo: é o que faz um leitor de tela oferecer as seções na navegação por
+ * cabeçalhos, em vez de obrigar quem usa a atravessar o cartão inteiro de cima
+ * a baixo. O `<h1>` da página é o nome do jogo, então este é o nível certo.
+ */
+function section(name: Extract<Slot, 'lookback' | 'realworld'>, title: string): HTMLElement {
+  const block = document.createElement('section');
+  block.className = `outcome__${name}`;
+
+  const heading = document.createElement('h2');
+  heading.className = 'outcome__section-title';
+  heading.textContent = title;
+
+  // <ul> e não parágrafos soltos: são itens de uma lista, e é o que faz o
+  // leitor de tela anunciar "lista de 3 itens" antes de começar a ler.
+  const list = document.createElement('ul');
+  list.className = `outcome__${name}-list`;
+  list.dataset.outcome = name;
+
+  block.append(heading, list);
+  return block;
+}
+
+/** A seção das 3 ações, que leva uma linha de contexto entre o título e a lista. */
+function realWorldSection(): HTMLElement {
+  const block = section('realworld', ui.outcome.realWorld.label);
+
+  const intro = document.createElement('p');
+  intro.className = 'outcome__realworld-intro';
+  intro.textContent = ui.outcome.realWorld.intro;
+
+  // Entre o <h2> e a <ul> — o contexto vem antes da lista que ele explica.
+  block.querySelector('h2')?.after(intro);
+  return block;
 }
 
 /**
@@ -260,11 +353,19 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
     actions.append(review);
   }
 
-  // O gráfico entra entre os números e os botões, e a ordem é a leitura que o
-  // §2.7 quer: o resultado diz o que aconteceu, os números dizem em que ponto o
-  // mundo parou, e a curva diz **quando** cada coisa foi decidida. Os botões
-  // ficam por último porque são a saída da tela, não parte do que se lê.
-  card.append(said, stats, mountTimelineChart(), actions);
+  // A ordem é a leitura que o §2.7 quer, e ela vai do jogo para fora dele: o
+  // resultado diz o que aconteceu, os números dizem em que ponto o mundo parou,
+  // a curva diz **quando** cada coisa foi decidida, o "ficou para trás" põe isso
+  // em palavras, e só então a tela fala do mundo real. Os botões ficam por
+  // último porque são a saída, não parte do que se lê.
+  card.append(
+    said,
+    stats,
+    mountTimelineChart(),
+    section('lookback', ui.outcome.lookBack.label),
+    realWorldSection(),
+    actions,
+  );
   root.replaceChildren(card);
   renderOutcome(root, null);
 }
@@ -292,6 +393,47 @@ export function renderOutcome(root: Element, view: OutcomeView | null, reviewing
   if (card !== null) card.dataset.tone = view.tone;
 
   renderTimelineChart(root, view.chart);
+
+  const lookBack = slot(root, 'lookback');
+  if (lookBack !== null) {
+    lookBack.replaceChildren(
+      ...view.lookBack.map((line) => {
+        const item = document.createElement('li');
+        item.className = 'outcome__lookback-item';
+        item.textContent = line;
+        return item;
+      }),
+    );
+  }
+
+  const realWorld = slot(root, 'realworld');
+  if (realWorld !== null) {
+    realWorld.replaceChildren(
+      ...view.realWorld.map((action) => {
+        const item = document.createElement('li');
+        item.className = 'outcome__action';
+        item.dataset.branch = action.branch;
+
+        const name = document.createElement('p');
+        name.className = 'outcome__action-name';
+        name.textContent = action.name;
+
+        const description = document.createElement('p');
+        description.className = 'outcome__action-description';
+        description.textContent = action.description;
+
+        // O fato é o que separa a tela de fim de um cartaz de campanha: cada um
+        // deles tem fonte registrada em docs/CIENCIA.md, e nenhum foi escrito
+        // para esta tela — todos já sustentavam um nó da árvore.
+        const fact = document.createElement('p');
+        fact.className = 'outcome__action-fact';
+        fact.textContent = action.fact;
+
+        item.append(name, description, fact);
+        return item;
+      }),
+    );
+  }
 
   for (const [name, text] of [
     ['icon', view.icon],

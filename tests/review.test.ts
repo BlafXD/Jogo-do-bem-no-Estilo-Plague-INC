@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { turningPoint } from '../src/engine/review';
+import { timeline } from '../src/engine/history';
+import { MEDAL_CEILING } from '../src/engine/outcome';
+import {
+  crossings,
+  parseActions,
+  purchasesByBranch,
+  realWorldActions,
+  suggestedActions,
+  turningPoint,
+  unboughtCount,
+} from '../src/engine/review';
 import {
   balance,
   createInitialState,
   skills,
+  SKILL_BRANCHES,
   type GameState,
   type Snapshot,
 } from '../src/engine/state';
@@ -92,5 +103,112 @@ describe('turningPoint', () => {
     expect(virada).not.toBeNull();
     expect(virada?.year).toBeLessThan(balance.endYear);
     expect(virada?.year).toBeGreaterThanOrEqual(balance.startYear);
+  });
+});
+
+describe('crossings', () => {
+  /** Uma partida cuja curva de temperatura passa pelos anos pedidos. */
+  function comTemperaturas(...temperatures: readonly number[]): GameState {
+    const history: Snapshot[] = temperatures.map((value, index) => ({
+      tick: index * balance.ticksPerYear,
+      year: balance.startYear + index,
+      temperature: value,
+      emissions: 40,
+      cumulativeCO2: index * 40,
+      averageSupport: 50,
+    }));
+
+    return { ...createInitialState(1), history };
+  }
+
+  it('diz em que ano cada teto foi cruzado', () => {
+    const partida = comTemperaturas(1.4, 1.6, 1.9, 2.1, 2.6);
+
+    expect(crossings(partida).gold).toBe(balance.startYear + 1);
+    expect(crossings(partida).silver).toBe(balance.startYear + 3);
+    expect(crossings(partida).bronze).toBe(balance.startYear + 4);
+  });
+
+  it('devolve null para o teto que a partida nunca cruzou', () => {
+    const partida = comTemperaturas(1.4, 1.6, 1.7);
+
+    expect(crossings(partida).gold).not.toBeNull();
+    expect(crossings(partida).silver).toBeNull();
+    expect(crossings(partida).bronze).toBeNull();
+  });
+
+  it('parar exatamente no teto já é tê-lo perdido', () => {
+    // Espelho do `<` estrito do medalFor: o §2.7 dá ouro a quem fica **abaixo**
+    // de 1,5 °C. Se este teste inverter, o cartão dirá que o ouro foi perdido
+    // numa partida que o ganhou.
+    expect(crossings(comTemperaturas(1.4, MEDAL_CEILING.gold)).gold).toBe(balance.startYear + 1);
+  });
+
+  it('ACEITE: o ano do cruzamento não pode discordar do gráfico', () => {
+    // Os dois leem a mesma linha do tempo, e é isso que este teste protege: se
+    // um passar a interpolar entre os anos e o outro não, o texto apontaria um
+    // ano e a curva cruzaria a tracejada em outro, na mesma tela.
+    const partida = ateOFim(createInitialState(2025));
+    const ano = crossings(partida).gold;
+    const retrato = timeline(partida).find((ponto) => ponto.year === ano);
+
+    expect(retrato?.temperature).toBeGreaterThanOrEqual(MEDAL_CEILING.gold);
+  });
+});
+
+describe('as 3 ações do mundo real', () => {
+  it('há exatamente uma ação por ramo, e nenhum campo em branco', () => {
+    expect(realWorldActions).toHaveLength(SKILL_BRANCHES.length);
+    for (const branch of SKILL_BRANCHES) {
+      const action = realWorldActions.find((item) => item.branch === branch);
+      expect(action?.name.trim()).toBeTruthy();
+      expect(action?.description.trim()).toBeTruthy();
+      expect(action?.fact.trim()).toBeTruthy();
+    }
+  });
+
+  it('mostra três', () => {
+    expect(suggestedActions(createInitialState(1))).toHaveLength(3);
+  });
+
+  it('escolhe os ramos que a partida deixou de lado', () => {
+    // Quem cobriu Energia inteira não deve receber conselho sobre energia.
+    const energia = skills.filter((skill) => skill.branch === 'energy').map((skill) => skill.id);
+    const partida: GameState = { ...createInitialState(1), unlockedSkills: energia };
+
+    expect(suggestedActions(partida).map((action) => action.branch)).not.toContain('energy');
+  });
+
+  it('sem compra nenhuma, o desempate é a ordem do §2.4 — não a do motor', () => {
+    // A partida em que ninguém comprou nada é a mais comum de todas, e nela os
+    // cinco ramos empatam em zero.
+    expect(suggestedActions(createInitialState(1)).map((action) => action.branch)).toEqual(
+      SKILL_BRANCHES.slice(0, 3),
+    );
+  });
+
+  it('o parse recusa um actions.json que não fecha', () => {
+    const valido = { branch: 'energy', name: 'a', description: 'b', fact: 'c' };
+
+    expect(() => parseActions([{ ...valido, branch: 'nuclear' }])).toThrow(/ramo desconhecido/);
+    expect(() => parseActions([valido, valido])).toThrow(/mais de uma vez/);
+    expect(() => parseActions([{ ...valido, fact: '   ' }])).toThrow(/está sem fact/);
+    expect(() => parseActions([valido])).toThrow(/falta a ação/);
+  });
+});
+
+describe('purchasesByBranch e unboughtCount', () => {
+  it('conta por ramo', () => {
+    const partida: GameState = { ...createInitialState(1), unlockedSkills: ['solar', 'wind'] };
+
+    expect(purchasesByBranch(partida).energy).toBe(2);
+    expect(purchasesByBranch(partida).society).toBe(0);
+  });
+
+  it('o que sobrou na árvore é o total menos o comprado', () => {
+    const partida: GameState = { ...createInitialState(1), unlockedSkills: ['solar'] };
+
+    expect(unboughtCount(createInitialState(1))).toBe(skills.length);
+    expect(unboughtCount(partida)).toBe(skills.length - 1);
   });
 });

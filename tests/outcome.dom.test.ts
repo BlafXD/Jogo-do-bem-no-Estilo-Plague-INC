@@ -231,7 +231,14 @@ describe('o cartão na tela', () => {
     const card = root.querySelector('.outcome__card');
     const ordem = [...(card?.children ?? [])].map((node) => node.className);
 
-    expect(ordem).toEqual(['outcome__said', 'outcome__stats', 'chart', 'outcome__actions']);
+    expect(ordem).toEqual([
+      'outcome__said',
+      'outcome__stats',
+      'chart',
+      'outcome__lookback',
+      'outcome__realworld',
+      'outcome__actions',
+    ]);
   });
 
   it('o gráfico é redesenhado junto com o cartão', () => {
@@ -239,6 +246,86 @@ describe('o cartão na tela', () => {
     const curva = root.querySelector('[data-chart="curve"]');
 
     expect(curva?.getAttribute('d')?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('as duas seções novas têm cabeçalho de verdade, não parágrafo com cara de título', () => {
+    // É o que faz um leitor de tela oferecer as seções na navegação por
+    // cabeçalhos, em vez de obrigar a atravessar o cartão inteiro de cima a
+    // baixo. Mesma regra do tree.ts.
+    const root = show(mount(), ended(2.4));
+    const titulos = [...root.querySelectorAll('.outcome__section-title')];
+
+    expect(titulos).toHaveLength(2);
+    for (const titulo of titulos) expect(titulo.tagName).toBe('H2');
+  });
+
+  it('lista as medalhas perdidas com o ano de cada uma', () => {
+    const root = show(mount(), ended(2.4));
+    const linha = root.querySelector('.outcome__lookback-item')?.textContent ?? '';
+
+    expect(linha).toContain(ui.outcome.result.gold.title);
+    expect(linha).toContain(ui.outcome.result.silver.title);
+    expect(linha).toContain(String(balance.endYear));
+    // 2,4 °C fica abaixo do teto do bronze: essa não foi perdida.
+    expect(linha).not.toContain(ui.outcome.result.bronze.title);
+  });
+
+  it('a partida de ouro não lê "0 medalhas perdidas"', () => {
+    // Frase que só existe para dizer que não há nada a dizer é o oposto do
+    // 'curto, sem sermão' do §2.7.
+    const root = show(mount(), ended(MEDAL_CEILING.gold - 0.01));
+    const linha = root.querySelector('.outcome__lookback-item')?.textContent ?? '';
+
+    expect(linha).toBe(ui.outcome.lookBack.keptAll('1,5 °C'));
+  });
+
+  it('não nomeia os ramos intocados quando nenhum foi tocado', () => {
+    // Sem compra nenhuma os cinco estão zerados, e listar os cinco só repete,
+    // com mais palavras, o que a linha da árvore acabou de dizer.
+    const root = show(mount(), ended(2.4));
+    const linhas = [...root.querySelectorAll('.outcome__lookback-item')].map((n) => n.textContent);
+
+    expect(linhas.some((linha) => linha?.startsWith('Nenhuma compra'))).toBe(false);
+  });
+
+  it('nomeia os ramos intocados quando algum foi tocado', () => {
+    const root = show(mount(), { ...ended(2.4), unlockedSkills: ['solar'] });
+    const linhas = [...root.querySelectorAll('.outcome__lookback-item')].map((n) => n.textContent);
+    const intocados = linhas.find((linha) => linha?.startsWith('Nenhuma compra')) ?? '';
+
+    expect(intocados).toContain(ui.tree.branches.society);
+    expect(intocados).not.toContain(ui.tree.branches.energy);
+  });
+
+  it('mostra três ações, cada uma com nome, o que fazer e o fato', () => {
+    const root = show(mount(), ended(2.4));
+    const acoes = [...root.querySelectorAll('.outcome__action')];
+
+    expect(acoes).toHaveLength(3);
+    for (const acao of acoes) {
+      expect(acao.querySelector('.outcome__action-name')?.textContent?.trim()).toBeTruthy();
+      expect(acao.querySelector('.outcome__action-description')?.textContent?.trim()).toBeTruthy();
+      expect(acao.querySelector('.outcome__action-fact')?.textContent?.trim()).toBeTruthy();
+    }
+  });
+
+  it('quem cobriu um ramo inteiro não recebe conselho sobre ele', () => {
+    const energia = skills.filter((skill) => skill.branch === 'energy').map((skill) => skill.id);
+    const root = show(mount(), { ...ended(2.4), unlockedSkills: energia });
+    const ramos = [...root.querySelectorAll('.outcome__action')].map((n) =>
+      n.getAttribute('data-branch'),
+    );
+
+    expect(ramos).not.toContain('energy');
+  });
+
+  it('redesenhar não empilha as seções novas', () => {
+    const root = mount();
+
+    for (let i = 0; i < 5; i++) show(root, ended(2.4));
+
+    expect(root.querySelectorAll('.outcome__action')).toHaveLength(3);
+    expect(root.querySelectorAll('.outcome__section-title')).toHaveLength(2);
   });
 
   it('o texto do cartão é anunciado por leitor de tela, o botão não', () => {
