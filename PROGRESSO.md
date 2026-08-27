@@ -28,6 +28,87 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — O texto da interface passou a ser verificado, e não só lido
+
+- **Parte / tarefa:** sem ID — é a proposta que ficou aberta na entrada de baixo, aprovada no chat.
+- **O que mudou:**
+  - `tests/i18n.test.ts` **criado** (6 testes). Suíte: 650 → **656**.
+  - Nenhum arquivo de `src/` foi tocado.
+
+### Ele lê o objeto, não o arquivo
+
+O `i18n.ts` está cheio de comentários que citam `P7-03` e `docs/GDD.md §2.6` — e citam **com razão**,
+porque é assim que se sabe de onde cada texto veio. Um teste que lesse o código-fonte acusaria todos
+eles e seria desligado na primeira semana.
+
+Então quem é varrido é o `ui` já montado: textos soltos, listas, objetos aninhados e **as funções,
+chamadas de verdade**. O que importa é o que chega ao `textContent`.
+
+| padrão proibido | exemplo do que pega |
+|---|---|
+| `P<n>-<nn>` | *"o painel de detalhe entra no P5-04"* — o caso que originou isto |
+| `SETUP-<nn>` | idem, para as tarefas de fundação |
+| `§` | *"a regra do §2.6"* |
+| `docs/`, `src/`, `tests/`, `.md` | *"está escrito no docs/GDD.md"* |
+
+### As funções precisaram de um truque
+
+Metade das entradas do `i18n` é função, e elas esperam duas coisas diferentes: umas recebem `string`
+(`(year) => \`Continuar de ${year}\``), outras recebem `readonly string[]` (`(branches) =>` …
+`listOfNames.format(branches)`). Passar um texto sozinho quebraria o segundo grupo no
+`Intl.ListFormat`.
+
+O que entra em todo parâmetro é **uma lista**, `['ALFA', 'BETA']`: quem espera texto recebe
+`ALFA,BETA` na interpolação, e quem espera lista recebe uma lista. Um placeholder serve aos dois.
+
+### Dois dos seis testes existem só para os outros quatro significarem algo
+
+**Uma varredura que não varre nada passa para sempre.** É a falha mais silenciosa que um teste desses
+pode ter, e seria invisível numa suíte verde — exatamente o problema que ele veio consertar.
+
+Contra isso: um teste exige que a varredura alcance cinco caminhos conhecidos, escolhidos em
+profundidades diferentes (`ui.title.start`, `ui.title.pitch[0]`, `ui.map.support()`,
+`ui.map.heat.caption()`, `ui.tutorial.fair.lines[0]`); outro exige mais de 120 textos, nenhum vazio.
+E o `coletar` **lança** ao encontrar um valor que não seja texto, lista, objeto ou função, em vez de
+pular em silêncio.
+
+### Provado que ele morde
+
+Passar em dado limpo não prova nada. A frase foi reposta de propósito:
+
+```ts
+hudLabel: 'Indicadores da partida P5-04 SETUP-02 §2.2 docs/GDD.md',
+```
+
+Os quatro aceites falharam de uma vez, e a mensagem foi:
+
+```
+AssertionError: expected [ Array(1) ] to deeply equal []
++   "ui.hudLabel → Indicadores da partida P5-04 SETUP-02 §2.2 docs/GDD.md"
+```
+
+Caminho e texto inteiro, que é o que quem for consertar precisa saber. Revertido em seguida.
+
+- **Como verificar:**
+
+  ```bash
+  npx vitest run tests/i18n.test.ts     # 6 passando
+  ```
+
+  E para conferir que ele morde: ponha `P5-04` em qualquer texto do `i18n.ts` e rode de novo.
+
+- **Pendente:**
+  - **Os `src/data/*.json` ficaram de fora.** Os `name`, `description` e `fact` de regiões,
+    habilidades, eventos e ações também vão para a tela — e são justamente os arquivos que o
+    `[D-Historia]` tem contrato para editar. Conferidos **à mão** hoje: limpos, nenhum código de
+    tarefa em nenhum dos quatro. Mas à mão, e não pelo teste. O `coletar` já sabe andar em objeto e
+    em lista, então fechar isso é importar os quatro e somá-los à varredura.
+  - **A lista de padrões é minha.** Cobre o que já vazou ou quase vazou. Não cobre, por exemplo, um
+    `TODO` escrito no meio de uma frase, nem texto em inglês esquecido numa string.
+- **Evidência:** — (tarefa de teste; a evidência é a falha reproduzida acima)
+
+---
+
 ## 2026-08-26 — Um texto de andaime saiu da tela antes de a feira ler
 
 - **Parte / tarefa:** sem ID — conserto proposto e aprovado no chat, a partir de um achado da
