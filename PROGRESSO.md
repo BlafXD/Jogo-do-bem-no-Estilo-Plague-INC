@@ -28,6 +28,153 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — A feira cabe num arquivo, e o build que existia não abria
+
+- **Parte / tarefa:** `P8-05` ✔ — **e o aceite estava falhando desde o `SETUP-02`, sem ninguém ter
+  medido.**
+- **O que mudou:**
+  - `vite.config.ts` — o plugin `feira-arquivo-unico`, a função pura `inlineIntoHtml`, e o
+    comentário do `base: './'` **corrigido**: ele afirmava o contrário do que o navegador faz.
+  - `package.json` — o script `build:feira`.
+  - `.gitignore`, `.prettierignore`, `eslint.config.js` — `dist-feira/` fora do versionamento e das
+    ferramentas, pelo mesmo motivo do `dist/`.
+  - `tests/build-feira.test.ts` **criado** (12 testes). Suíte: 638 → **650**.
+  - `tests/node-io.d.ts` — três funções a mais (`readdirSync`, `unlinkSync`, `rmdirSync`) e o
+    cabeçalho atualizado, porque agora ele serve o `vite.config.ts` também.
+  - **Nenhum arquivo de `src/` foi tocado.** O jogo não mudou; mudou como ele é empacotado.
+
+### O que o `dist/` faz quando você clica nele: nada
+
+O comentário do `vite.config.ts` dizia, desde o `SETUP-02`, que `base: './'` resolvia duas coisas —
+o GitHub Pages e o *"build abre direto do disco, sem servidor — que é o aceite do `P8-05`"*. A
+primeira metade é verdade. A segunda nunca foi.
+
+Aberto em `file://` no Chromium (Edge 151), o navegador recusa o build inteiro:
+
+```
+Access to script at 'file:///.../assets/index-BU7p87Z4.js' from origin 'null'
+has been blocked by CORS policy: Cross origin requests are only supported for
+protocol schemes: chrome-extension, chrome-untrusted, data, edge, http, https,
+isolated-app.
+```
+
+E recusa a folha de estilo **pela mesma razão** — o Vite marca as duas tags com `crossorigin`, e um
+arquivo local tem origem `null`. O resultado está na evidência do "antes": página branca, dois
+títulos em Times New Roman, e nada mais. Sem HUD, sem mapa, sem botão.
+
+Caminho relativo resolve o Pages. Não resolve o disco. **São problemas diferentes, e a nota de
+2026-08-26 do `P8-01` já suspeitava disso** — ela registrou que o mecanismo tinha sido conferido,
+mas o resultado não. O mecanismo estava certo e o resultado, errado.
+
+### O conserto não é convencer o `file://`; é não precisar dele
+
+Se não há requisição, não há o que bloquear. O JS e o CSS entram embutidos no HTML. Medido antes de
+escrever o plugin: um `<script type="module">` **embutido** roda em `file://` sem um erro sequer,
+porque nada é buscado. Três coisas já estavam a favor:
+
+| | situação |
+|---|---|
+| Fontes | pilha de sistema, sem `@font-face` e sem `url()` — nada a baixar |
+| `fetch` / `XMLHttpRequest` | não existe nenhum no projeto |
+| `localStorage` em `file://` | **funciona** (medido) — o save do `P6-07` sobrevive no estande |
+
+### Dois builds, e por que não um só
+
+| | `npm run build` | `npm run build:feira` |
+|---|---|---|
+| saída | `dist/` — html + `assets/` | `dist-feira/index.html`, e nada mais |
+| tamanho | 4,3 kB + 73,1 kB + 18,8 kB | **95,5 kB** num arquivo (27,3 kB comprimido) |
+| serve para | CI e GitHub Pages (`SETUP-04`) | o pendrive do estande |
+| abre de `file://` | **não** | sim |
+
+O build normal saiu **byte a byte igual** ao de antes desta tarefa — mesmos nomes de arquivo, mesmos
+hashes (`index-BU7p87Z4.js`, `index-IlMoM3sy.css`). Era esse o ponto de separar os dois: o `M1` está
+publicado e não tinha por que entrar no risco.
+
+### O rolldown ignora o `delete`, e não avisa
+
+O caminho documentado do Rollup para tirar um arquivo da saída é `delete bundle[nome]`. O Vite 8
+roda em cima do rolldown, e lá esse objeto é um proxy. Medido:
+
+| operação | resultado |
+|---|---|
+| `delete bundle[nome]` | devolve **`true`** |
+| `nome in bundle` depois | ainda **`true`** — não apagou nada |
+| `htmlFile.source = ...` | **propaga** normalmente |
+
+Ou seja: escrever funciona, remover falha em silêncio. O primeiro `build:feira` gerou o HTML
+embutido **e** manteve o JS e o CSS ao lado, e quem avisou foi o guarda-corpo que eu já tinha
+escrito — não o Vite.
+
+A limpeza foi para o `writeBundle`, que apaga do disco exatamente os dois arquivos embutidos e a
+pasta que ficou vazia. Menos elegante que mexer no bundle; verificável, que é o que importa.
+
+### O guarda-corpo existe por causa do `P7-05`
+
+São duas conferências, e elas pegam coisas diferentes:
+
+1. **No bundle, antes de escrever qualquer coisa:** qualquer arquivo que não seja o HTML, o JS ou o
+   CSS derruba o build com o nome dele na mensagem.
+2. **No disco, depois de escrever:** o que sobrou em `dist-feira/` tem que ser `index.html` e mais
+   nada. Esta segunda existe porque **o Vite copia a pasta `public/` direto para a saída, sem passar
+   pelo bundle** — a primeira conferência é cega para isso.
+
+O caso concreto que isto antecipa é o `P7-05`: três efeitos sonoros CC0. O `assetsInlineLimit`
+infinito do modo feira deve transformá-los em `data:` URI; se algum escapar, o build para com o nome
+do arquivo na tela, em vez de o botão de som falhar calado na frente de quem estiver no estande.
+
+### O que "testado em máquina limpa" quer dizer aqui, e o que não quer
+
+O que foi feito, e é mais forte do que puxar o cabo da tomada:
+
+- **A rede foi desligada pelo próprio navegador** (`Network.emulateNetworkConditions`, `offline:
+  true`) **antes** de a página carregar. Nenhum acesso externo era possível.
+- **Perfil de navegador novo**, sem cache, sem extensão, sem `localStorage` anterior.
+- **Dois caminhos diferentes**, um deles fora da pasta do projeto — e o outro com acento e espaços
+  (`.../Programação/Jogo do bem no Estilo Plague INC/...`), que era um risco real de `file://`.
+- **Requisições observadas: uma.** O próprio `index.html`. Zero falhas de rede, zero erro de console.
+- E o jogo foi **jogado**, não só carregado: clique no "Modo Feira", clique no "Começar" do painel, e
+  o HUD andou sozinho de `2025` para `2026`, com `1,39 °C`, `41,2 Gt/ano`, `PAC 10`, `apoio 48`.
+
+O que **não** foi feito, e continua em aberto: outra máquina física, e outro navegador que não seja
+Chromium. O Firefox trata cada arquivo local como origem própria desde a versão 68, então a
+expectativa é que passe — **mas expectativa não é medição**, e foi exatamente uma expectativa dessas
+que criou este `P8-05`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npm run build:feira
+  ls dist-feira            # tem que sair index.html, e só
+  ```
+
+  Depois, **abra `dist-feira/index.html` com dois cliques**, offline: a tela de título aparece
+  pintada, o "Modo Feira (5 min)" abre o painel, e o "Começar" faz o ano correr.
+
+  **Atenção ao resumo do Vite:** ele ainda imprime as três linhas (`index.html`, o `.css` e o `.js`)
+  porque é impresso antes da limpeza. O que fica no disco é um arquivo. Quem manda é o `ls`.
+
+- **Pendente:**
+  - **O texto do `#pendente` é andaime, e a feira vai lê-lo.** O `ui.app.pending` diz *"O painel de
+    detalhe entra no `P5-04`, e o mapa passa a reagir à temperatura no `P7-04`"* — as duas tarefas
+    estão prontas desde 25 e 26 de agosto, e o visitante do estande lê os códigos do backlog na
+    tela. **Não corrigi**: é texto de UI e não build, e a regra 1 da `FORMA-DE-TRABALHO.md` manda
+    propor no chat em vez de escrever código fora da tarefa. Achado no print desta própria
+    verificação — nenhum teste olha para essa frase.
+  - **A pendência do `P8-01` fechou, e não fechou de graça.** A nota daquela tarefa dizia que valia
+    abrir o build do disco *"antes de chamar a primeira pessoa, para não descobrir na frente dela"*.
+    Foi o que se fez, e o que se descobriu foi que ele não abria.
+  - `dist-feira/` **não é versionado**, como o `dist/`. Quem for para a feira gera na hora.
+  - O `assetsInlineLimit` infinito nunca foi exercitado de verdade — hoje não há um único asset
+    binário no projeto. A primeira prova real dele será o `P7-05`.
+  - A semente continua fixa em 2025.
+- **Evidência:**
+  - `docs/evidencias/2026-08-26-p8-05-build-normal-do-disco-nao-abre.jpg` — o "antes"
+  - `docs/evidencias/2026-08-26-p8-05-feira-do-disco-sem-rede.jpg` — o "depois", em 2026, offline
+
+---
+
 ## 2026-08-26 — O jogo se chama Ponto de Virada, e agora está escrito
 
 - **Parte / tarefa:** `P1-04` ✔

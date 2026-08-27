@@ -3,6 +3,8 @@ node_modules/
 
 # Build e cache
 dist/
+# O build de arquivo único da feira (P8-05), gerado por `npm run build:feira`.
+dist-feira/
 dist-ssr/
 .vite/
 *.tsbuildinfo

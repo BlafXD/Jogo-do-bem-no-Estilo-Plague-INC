@@ -180,7 +180,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [ ] `P8-02` Rodada de balanceamento a partir do playtest → `docs/BALANCEAMENTO.md` — **G**
 - [ ] `P8-03` (APS 2) Gravar o vídeo de 1 a 3 min com opiniões positivas e negativas — **M** — *sai de graça do `P8-01`*
 - [ ] `P8-04` Passagem de acessibilidade: contraste, navegação por teclado, tamanho de fonte — **M**
-- [ ] `P8-05` Build offline para a feira, testado em máquina limpa — **M** — aceite: roda sem internet
+- [x] `P8-05` Build offline para a feira, testado em máquina limpa — **M** — aceite: roda sem internet — *`npm run build:feira` gera um `dist-feira/index.html` único; o build normal **não** abre de `file://`*
 - [ ] `P8-06` `[D]` Cartaz com o ODS 13, QR code e pitch de 60s para o estande — **M**
 - [ ] `P8-07` Slides da apresentação final — **M**
 

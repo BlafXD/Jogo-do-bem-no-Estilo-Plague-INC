@@ -5,7 +5,7 @@ import prettier from 'eslint-config-prettier';
 // A ideia aqui é que o lint cobre as regras da FORMA-DE-TRABALHO.md em vez de
 // confiar na memória de quem revisa. Cada bloco abaixo cita a regra que aplica.
 export default tseslint.config(
-  { ignores: ['dist/', 'coverage/', 'node_modules/'] },
+  { ignores: ['dist/', 'dist-feira/', 'coverage/', 'node_modules/'] },
 
   js.configs.recommended,
   tseslint.configs.recommended,
