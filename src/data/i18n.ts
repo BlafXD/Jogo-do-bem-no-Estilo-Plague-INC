@@ -498,9 +498,4 @@ export const ui = {
     emissionsPerYear: 'Gt/ano',
     millions: 'milhões',
   },
-
-  app: {
-    pending:
-      'O mapa mostra o apoio de cada região. O painel de detalhe entra no P5-04, e o mapa passa a reagir à temperatura no P7-04.',
-  },
 } as const;

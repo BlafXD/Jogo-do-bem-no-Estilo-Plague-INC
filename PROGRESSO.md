@@ -28,6 +28,84 @@ Regras curtas:
 
 ---
 
+## 2026-08-26 — Um texto de andaime saiu da tela antes de a feira ler
+
+- **Parte / tarefa:** sem ID — conserto proposto e aprovado no chat, a partir de um achado da
+  verificação do `P8-05` (entrada abaixo).
+- **O que mudou:**
+  - `src/data/i18n.ts` — o bloco `app.pending` **removido**.
+  - `src/main.ts` — a linha que o escrevia na tela, e o `import { ui }` que só existia por causa dela.
+  - `index.html` — o `<p id="pendente">`.
+  - `src/ui/hud.css` — a regra `.conteudo__pendente`.
+  - Nenhum teste mudou. A suíte segue em **650**.
+
+### A frase que ia para a feira
+
+> O mapa mostra o apoio de cada região. O painel de detalhe entra no **P5-04**, e o mapa passa a
+> reagir à temperatura no **P7-04**.
+
+O `P5-04` fechou em 25/08 e o `P7-04` em 26/08. A frase prometia o que já existia — e prometia
+citando código de backlog, que um visitante de estande lê como defeito de software, não como nota de
+desenvolvimento.
+
+### Por que remover, e não reescrever
+
+Porque a frase de baixo já dizia melhor:
+
+| elemento | texto |
+|---|---|
+| `#pendente` | "O mapa mostra o apoio de cada região. (…)" |
+| `ui.map.intro`, duas linhas abaixo | "As oito regiões do mundo. O apoio público de cada uma anda sozinho — os eventos derrubam, a Inércia corrói e o ramo Sociedade levanta. O indicador lá em cima mostra só a média das oito." |
+
+O elemento se chamava `pendente` porque **anunciava o que ainda ia chegar**. Tudo que ele anunciava
+chegou. Reescrever a frase seria inventar conteúdo novo para um lugar que não pede nenhum: o mapa já
+se apresenta, e o tutorial do `P7-08` já ensina a operar o jogo.
+
+### Duas coisas apareceram junto
+
+**1. O `tsc` achou um import órfão.** O `ui` era importado no `main.ts` **só** para essa linha —
+`noUnusedLocals` derrubou o build assim que ela saiu. Sem essa flag, o import ficaria ali para
+sempre, e o próximo a ler o arquivo suporia que o `main.ts` escreve texto na tela.
+
+**2. Ganhou-se uma dobra de tela.** Comparando os dois prints em 1440×900: com o parágrafo, a oitava
+região — a **Oceania** — ficava cortada abaixo da dobra; sem ele, o mapa inteiro cabe. Num estande,
+onde ninguém rola a página antes de decidir se aquilo ali é interessante, oitenta pixels decidem se
+o mundo aparece inteiro ou não.
+
+### Por que isso durou tanto tempo na tela
+
+**Nenhum dos 650 testes olhava para essa frase.** A suíte verde nunca disse nada sobre ela, porque
+ninguém nunca escreveu uma asserção a respeito. Quem achou foi um print — o da verificação do
+`P8-05`, tirado para provar outra coisa.
+
+Vale a lição do `P7-08`, que já tinha um teste varrendo os textos do tutorial atrás de palavras
+proibidas: **texto de UI só é verificado se alguém o verificar de propósito.**
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  grep -rn "P[1-8]-0" src/data/i18n.ts | grep "'"   # sai vazio: nenhum código de backlog em texto de UI
+  ```
+
+  Na tela: comece uma partida e olhe o topo do tabuleiro. O corpo da página começa direto no texto
+  do mapa, sem parágrafo antes dele.
+
+- **Pendente:**
+  - **Não existe teste que impeça a reincidência.** A varredura acima é um `grep` rodado à mão. Um
+    teste que percorra o `i18n.ts` atrás de `P<n>-<nn>` custaria poucas linhas e fecharia a classe
+    inteira do problema — mas é arquivo de teste novo, fora do que foi pedido aqui. Fica proposto.
+  - `ui.app` deixou de existir. Se um dia algo precisar mesmo de um texto solto no topo do
+    tabuleiro, ele volta com um nome que diga o que é, e não "pendente".
+- **Evidência:**
+  - `docs/evidencias/2026-08-26-texto-andaime-na-tela-do-jogo.jpg` — o "antes", com a frase e com a
+    Oceania cortada. É o print que era a evidência do `P8-05` até este conserto.
+  - `docs/evidencias/2026-08-26-p8-05-feira-do-disco-sem-rede.jpg` — **refeito** depois da remoção,
+    para a evidência do `P8-05` casar com o código que está no repositório. Nome sem ID de tarefa no
+    primeiro arquivo porque este conserto não tem um.
+
+---
+
 ## 2026-08-26 — A feira cabe num arquivo, e o build que existia não abria
 
 - **Parte / tarefa:** `P8-05` ✔ — **e o aceite estava falhando desde o `SETUP-02`, sem ninguém ter
@@ -161,7 +239,8 @@ que criou este `P8-05`.
     estão prontas desde 25 e 26 de agosto, e o visitante do estande lê os códigos do backlog na
     tela. **Não corrigi**: é texto de UI e não build, e a regra 1 da `FORMA-DE-TRABALHO.md` manda
     propor no chat em vez de escrever código fora da tarefa. Achado no print desta própria
-    verificação — nenhum teste olha para essa frase.
+    verificação — nenhum teste olha para essa frase. **Proposto no chat e aprovado logo em
+    seguida; o conserto está na entrada de cima.**
   - **A pendência do `P8-01` fechou, e não fechou de graça.** A nota daquela tarefa dizia que valia
     abrir o build do disco *"antes de chamar a primeira pessoa, para não descobrir na frente dela"*.
     Foi o que se fez, e o que se descobriu foi que ele não abria.

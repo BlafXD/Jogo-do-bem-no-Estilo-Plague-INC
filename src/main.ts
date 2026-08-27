@@ -13,7 +13,6 @@
 // esquecer de atualizar o `previousFrame` enquanto parado, que faria o primeiro
 // quadro depois da pausa entregar o intervalo inteiro de uma vez.
 
-import { ui } from './data/i18n';
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
 import { canUnlock, unlockSkill } from './engine/skills';
@@ -141,7 +140,6 @@ const topo = required<HTMLElement>('.topo');
 const tabuleiro = required<HTMLElement>('#tabuleiro');
 const app = required<HTMLElement>('#app');
 
-required('#pendente').textContent = ui.app.pending;
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
 
