@@ -85,6 +85,11 @@ export function hudView(state: GameState): HudView {
  * e tudo que tem número tem dica.
  */
 export function mountHud(root: Element): void {
+  // `role="group"` junto do rótulo (P8-04). Num `<div>` sem papel — que é o que
+  // o `#hud` é no index.html — a ARIA proíbe nomear, e o `aria-label` some sem
+  // aviso: o bloco mais importante da tela chegava ao leitor de tela sem nome
+  // nenhum. Conferido na árvore de acessibilidade do Chrome.
+  root.setAttribute('role', 'group');
   root.setAttribute('aria-label', ui.hudLabel);
 
   root.replaceChildren(

@@ -87,6 +87,29 @@ export function commandForKey(key: string): TimeCommand | null {
 }
 
 /**
+ * A tecla é uma das que o navegador já transforma em clique num botão em foco?
+ *
+ * **É a pergunta que separa a colisão de verdade da colisão imaginada** (P8-04).
+ *
+ * O ouvinte do main.ts sempre desistiu do atalho quando o foco estava num
+ * `<button>`, e por um motivo correto: o navegador ativa o botão sozinho com a
+ * barra de espaço, então tratar a tecla de novo alternaria a pausa duas vezes.
+ * Só que a guarda desistia de **toda** tecla, e as teclas 1, 2 e 4 não ativam
+ * botão nenhum — não havia colisão para evitar.
+ *
+ * Medido no navegador com uma partida em curso: das 35 paradas de tabulação, 27
+ * são `<button>` (a árvore sozinha tem 20). Com o foco num nó da árvore, apertar
+ * `2` não fazia nada; com o foco no corpo da página, mudava a velocidade. O
+ * atalho existia em 8 das 35 paradas.
+ *
+ * `Enter` está na lista pelo mesmo motivo da barra de espaço, embora hoje ele
+ * não seja atalho de nada: se um dia virar, a guarda já o cobre.
+ */
+export function activatesFocusedButton(key: string): boolean {
+  return key === ' ' || key === 'Spacebar' || key === 'Enter';
+}
+
+/**
  * Aplica um comando, ou devolve o controle intacto quando não há comando.
  *
  * `switch` sobre a união discriminada, e não o ternário que estava aqui: com
@@ -117,6 +140,12 @@ export function applyCommand(control: TimeControl, command: TimeCommand | null):
  * lidade sem uma linha de código.
  */
 export function mountControls(root: Element, onCommand: (command: TimeCommand) => void): void {
+  // `role="group"` junto do rótulo, e não o rótulo sozinho (P8-04). O
+  // `#controles` é um `<div>`, e num `<div>` sem papel o `aria-label` é
+  // **descartado**: a ARIA proíbe nomear o papel genérico, então o leitor de
+  // tela não anuncia nada. Conferido na árvore de acessibilidade do Chrome, que
+  // trazia `generic "Controle de tempo"` — nome escrito, papel que não o carrega.
+  root.setAttribute('role', 'group');
   root.setAttribute('aria-label', ui.controls.label);
 
   const pause = document.createElement('button');
@@ -148,7 +177,15 @@ export function mountControls(root: Element, onCommand: (command: TimeCommand) =
     return button;
   });
 
-  root.replaceChildren(pause, ...speeds);
+  // Os atalhos escritos na tela (P8-04). Até aqui eles só existiam no `title` de
+  // cada botão — invisível para quem navega por teclado, que é exatamente quem
+  // os usa — e no primeiro passo do tutorial, que aparece uma vez, some no
+  // "Entendi" e não roda no Modo Feira.
+  const shortcuts = document.createElement('p');
+  shortcuts.className = 'ctl__shortcuts';
+  shortcuts.textContent = ui.controls.shortcuts;
+
+  root.replaceChildren(pause, ...speeds, shortcuts);
 }
 
 /** Reflete o estado atual nos botões. O rótulo da pausa é texto, não cor. */

@@ -1,0 +1,84 @@
+/* O link de pulo (P8-04).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
+   encostar aqui. Nenhuma cor nova entra.
+
+   **O esconderijo é o ponto deste arquivo.** O link precisa estar fora da tela
+   e continuar focável — `display: none` e `visibility: hidden` tirariam os dois
+   links da ordem de tabulação, que é exatamente a fila que eles vieram encurtar.
+   Daí o recorte de 1px, que é a receita conhecida para isso: o elemento existe,
+   ocupa área zero visível e continua na árvore de acessibilidade.
+
+   `position: absolute` e não `fixed`: o `.topo` do index.html é o bloco que o
+   roteador liga e desliga, e um `fixed` deixaria o link pairando sobre a tela de
+   título quando o roteador escondesse o resto. */
+
+.pular {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+.pular__link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Ao receber o foco ele vira um botão de verdade, no canto superior esquerdo.
+   `:focus` e não `:focus-visible`: aqui não há dúvida sobre a intenção — só se
+   chega a este link por teclado, então todo foco dele é foco de teclado. */
+.pular__link:focus {
+  /* Sai do fluxo absoluto irmão para os dois links não se empilharem no mesmo
+     ponto: o que está em foco é o único visível, e ocupa o canto sozinho. */
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+
+  display: inline-flex;
+  align-items: center;
+  /* O alvo de toque do §5 vale aqui como em qualquer controle. */
+  min-height: var(--alvo-toque, 2.75rem);
+  margin: 0.5rem;
+  padding: 0 1rem;
+  border: 2px solid var(--cor-destaque, #7fd1a8);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  /* Fundo opaco, e não o hover translúcido das outras folhas: o link pousa por
+     cima do cabeçalho, e um fundo transparente deixaria o HUD atravessar o
+     texto. */
+  background: var(--cor-superficie, #182c24);
+  color: var(--cor-valor, #f2f7f4);
+  /* 16px é o piso do §5, e vale para o primeiro texto que a página oferece. */
+  font-size: var(--tamanho-base, 1rem);
+  text-decoration: none;
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+/* O segundo link desce uma linha para não cobrir o primeiro caso os dois
+   estejam visíveis num navegador que mantenha o foco anterior pintado. */
+.pular__link:focus ~ .pular__link:focus {
+  top: 3.5rem;
+}
+
+/* O alvo do salto, que recebe foco por código (tabindex="-1").
+
+   **Tem indicador, e tracejado de propósito.** A primeira versão apagava o anel
+   aqui, porque uma moldura em volta de uma seção inteira parece defeito. Só que
+   apagar o foco do destino do salto é justamente o que a WCAG 2.4.7 proíbe:
+   quem pulou não veria onde aterrissou, e o pulo viraria um salto no escuro.
+
+   Tracejado e sem deslocamento para não ser confundido com o anel sólido dos
+   controles: aquele diz "aperte", este diz "você está aqui". O seletor só
+   alcança quem tem `tabindex="-1"`, isto é, quem nunca é alcançado por Tab —
+   nenhum botão do jogo passa por aqui. */
+[tabindex='-1']:focus {
+  outline: 2px dashed var(--cor-destaque, #7fd1a8);
+}

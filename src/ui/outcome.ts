@@ -35,6 +35,7 @@ import {
   type RealWorldAction,
 } from '../engine/review';
 import { balance, skills, SKILL_BRANCHES, type GameState } from '../engine/state';
+import { celsius } from './format';
 import { hudView } from './hud';
 import {
   mountTimelineChart,
@@ -87,17 +88,11 @@ export type OutcomeView = {
 };
 
 /**
- * Formata um limiar de temperatura para entrar numa frase.
- *
- * Sem casa decimal fixa, ao contrário do HUD: ali o número muda a cada mês e as
- * duas casas impedem que ele trema; aqui ele é uma constante do balanceamento e
- * "abaixo de 1,50 °C" só faz a frase ficar pior de ler.
+ * As emissões de zero líquido, que não são temperatura e por isso não passam
+ * pelo `celsius` do `format.ts`. Sem mínimo de casas: "0,5 Gt/ano" é o número
+ * do `balance.json` escrito como ele é.
  */
-const threshold = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
-
-function celsius(value: number): string {
-  return `${threshold.format(value)} ${ui.units.celsius}`;
-}
+const emissions = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
 /**
  * O ícone, o título e o veredito de um desfecho.
@@ -125,7 +120,7 @@ function resultFor(outcome: Outcome): Headline {
       const lead =
         outcome.ending === 'netZero'
           ? text.ending.netZero(
-              `${threshold.format(balance.netZeroEmissions)} ${ui.units.emissionsPerYear}`,
+              `${emissions.format(balance.netZeroEmissions)} ${ui.units.emissionsPerYear}`,
             )
           : text.ending.horizon(String(balance.endYear));
 

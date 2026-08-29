@@ -23,6 +23,15 @@
          o #tabuleiro. Quem liga e desliga cada um é o src/ui/screens.ts, pelo
          atributo hidden — o porquê de cada tela mostrar o que mostra está
          escrito lá. -->
+    <!-- O link de pulo do P8-04. Primeiro elemento do corpo porque precisa ser a
+         primeira parada de tabulação da página — é essa posição que faz dele um
+         atalho e não mais um item da fila. Fica invisível até receber o foco
+         (src/ui/skip-link.css) e quem o preenche é o src/ui/skip-link.ts.
+
+         O roteador o liga e desliga junto com o tabuleiro: no título e na tela
+         de fim não há bloco nenhum para contornar. -->
+    <nav id="pular" class="pular" hidden></nav>
+
     <section id="tela-titulo" class="title">
       <h1 class="title__name">Ponto de Virada</h1>
     </section>

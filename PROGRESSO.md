@@ -28,6 +28,184 @@ Regras curtas:
 
 ---
 
+## 2026-08-29 — Passagem de acessibilidade: dois dos três eixos já passavam, e o terceiro estava furado
+
+- **Parte / tarefa:** `P8-04` ✔
+- **O que mudou:**
+  - `src/ui/skip-link.ts` e `src/ui/skip-link.css` **criados** — o link de pulo.
+  - `src/ui/format.ts` **criado** — o formatador único dos limiares de temperatura.
+  - `src/main.ts` — a guarda do teclado, o `Esc` no tutorial, a montagem do link.
+  - `src/ui/controls.ts` + `.css` — os atalhos escritos na tela, e o `role`.
+  - `src/ui/hud.ts`, `src/ui/session.ts` — o `role` que faltava.
+  - `src/ui/screens.ts` — o roteador passou a mandar no link de pulo.
+  - `src/ui/outcome.ts`, `src/ui/timeline-chart.ts` — os dois passaram a ler o `format.ts`.
+  - `index.html`, `src/data/i18n.ts` — a `<nav>` e os textos novos.
+  - `tests/acessibilidade.dom.test.ts` **criado** (15 testes); dois testes existentes ajustados.
+  - Suíte: 656 → **671**.
+
+### A auditoria mudou a forma da tarefa
+
+O `PLANO.md` pedia três eixos. Dois deles não precisavam de uma linha de código, e descobrir isso
+antes valeu mais do que qualquer conserto:
+
+| eixo | estado | como se sabe |
+|---|---|---|
+| **Contraste** | já passava | o `P5-02` mediu todas as combinações reais pela fórmula da WCAG 2.1, e o `tests/theme.test.ts` as recalcula a partir do `theme.css` |
+| **Tamanho de fonte** | já passava | o piso de 16px está aplicado em rótulo, botão, dica e etiqueta; medido com a fonte-raiz em 32px e em 64px |
+| **Navegação por teclado** | **furado em quatro lugares** | abaixo |
+
+**O refluxo foi medido, e não estimado.** Com `zoom` da raiz em 100%, 200%, 400% e 475% — este
+último equivale a uma janela de 320 px CSS, que é o teste da WCAG 1.4.10 — a página **nunca** rolou
+de lado. O único elemento que ultrapassa a largura da tela é o SVG do mapa, e ele rola dentro do
+próprio `.map__scroll`, que é o tratamento que a norma permite para conteúdo de duas dimensões. O
+projeto tem **uma** media query e ela é `prefers-reduced-motion`: o layout aguenta porque é todo
+`auto-fit`/`minmax` e `flex-wrap`, não porque alguém escreveu um ponto de quebra.
+
+### As 35 paradas de tabulação
+
+Contadas no navegador, com uma partida em curso:
+
+| bloco | paradas |
+|---|---|
+| controle de tempo | 4 |
+| barra da partida | 1 |
+| **mapa** | **8** |
+| contenção | 1 |
+| **árvore** | **20** |
+
+Vinte e oito delas são um bloco só. Sem atalho, quem navega por teclado atravessa o mapa inteiro
+para chegar à árvore e a árvore inteira para chegar a qualquer coisa depois dela — é o que a WCAG
+2.4.1 (nível A) chama de bloco que precisa ser contornável. Era a única falha de nível A da tela.
+
+O link de pulo entra como as duas primeiras paradas da página, invisível até receber o foco. Ele
+acompanha o tabuleiro no roteador, e não o cabeçalho: no título e na tela de fim não há bloco nenhum
+a contornar, e um atalho que não leva a lugar algum é pior que atalho nenhum.
+
+**`href` sozinho não bastava.** Navegar para `#arvore` rola a página e deixa o foco do teclado para
+trás, porque `<section>` não é focável — o Tab seguinte recomeçaria do topo. O alvo recebe
+`tabindex="-1"` e o clique chama `focus()` nele.
+
+### O atalho que estava morto em 27 das 35 paradas
+
+O ouvinte de teclado desistia do atalho sempre que o foco estava num `<button>`. A razão original
+era correta e está no `P5-05`: o navegador já converte a barra de espaço em clique, e tratar a tecla
+de novo alternaria a pausa duas vezes.
+
+**Só que a guarda desistia de toda tecla, e as teclas 1, 2 e 4 não ativam botão nenhum.** Medido no
+navegador:
+
+```
+foco num nó da árvore + tecla "2"  →  velocidade continua 4
+foco no corpo da página + tecla "2" →  velocidade vira 2
+```
+
+Como 27 das 35 paradas são botões — 20 só na árvore —, os atalhos de velocidade estavam mortos em
+quase toda a tela, sem colisão alguma para justificar. A guarda passou a perguntar pela tecla
+(`activatesFocusedButton`), e não pelo alvo.
+
+**A barra de espaço com o foco num nó continua comprando o nó, e isso fica.** Está aberto desde o
+`P6-06` e adiado duas vezes; a decisão agora é não mexer. `<button>` responde à barra de espaço por
+convenção, e quebrar isso para consertar uma surpresa menor cobraria o preço de quem usa leitor de
+tela. Quem estiver na árvore e quiser desacelerar tem o `1`, que **agora funciona ali**.
+
+### Três `aria-label` que o navegador jogava fora
+
+`#hud`, `#controles` e `#partida` são `<div>` no `index.html`, e os três recebiam `aria-label` do
+respectivo `mount`. Num `<div>` sem papel a ARIA **proíbe** nomear: o rótulo é descartado. A árvore
+de acessibilidade do Chrome mostrava exatamente isso —
+
+```
+generic "Indicadores da partida"
+generic "Controle de tempo"
+generic "Partida"
+```
+
+— nome escrito no atributo, papel que não o carrega. O HUD, que é o bloco mais importante da tela,
+chegava ao leitor de tela sem nome nenhum. Um `role="group"` em cada um resolve.
+
+**Nenhum teste pegaria isso**, e vale registrar por quê: os testes conferiam que o `aria-label`
+estava lá, e ele estava. O que faltava era a pergunta seguinte — se ele significa alguma coisa
+naquele elemento.
+
+### Duas pendências velhas fechadas junto
+
+**O `Esc` no tutorial.** O `§5` diz "Esc sempre fecha", e o painel do Modo Feira era o único painel
+do jogo que não fechava. Ele fecha pelo mesmo caminho do botão, e não por um atalho próprio: sair
+dele **é** o que solta o relógio, e um Esc que só o escondesse deixaria o mundo congelado sem nada
+na tela explicando por quê. No balão dos 4 passos, o Esc dispensa **o passo visível** e não o
+tutorial inteiro — um Esc distraído não deveria custar os outros três.
+
+Isso derruba a suspeita nº 3 da ficha do `P8-01` ("o painel da feira não tem como fechar antes de
+ler"). Ela sai da lista porque foi resolvida, não porque foi ignorada.
+
+**O `"2 °C"`.** O `P7-06` anotou duas vezes, sempre com a mesma conclusão: trocar num arquivo só
+faria o cartão e o gráfico discordarem, porque cada um tinha o seu `Intl.NumberFormat`. Agora é um
+formatador só, no `src/ui/format.ts`, com **uma casa no mínimo e duas no máximo**:
+
+| onde | antes | agora |
+|---|---|---|
+| gráfico | `Prata · 2 °C` | `Prata · 2,0 °C` |
+| gráfico | `Derrota · 3 °C` | `Derrota · 3,0 °C` |
+| cartão | `Abaixo de 2 °C` | `Abaixo de 2,0 °C` |
+| cartão | `O aquecimento passou de 3 °C` | `passou de 3,0 °C` |
+| — | `1,5` e `2,55` | inalterados |
+
+Duas casas fixas — `1,50 °C` — foram descartadas pela razão que o `outcome.ts` já carregava desde o
+`P6-08`: numa frase corrida a casa a mais só atrapalha. O HUD é o caso oposto e continua com as duas
+fixas, porque ali o número muda a cada mês e sem elas ele treme de largura.
+
+Isso também derruba a suspeita nº 4 da ficha do `P8-01`.
+
+### O que deu errado
+
+**Escrevi um teste que passava sem provar nada.** A asserção era `expect(board.tabIndex).toBe(-1)`,
+e um `<div>` que nunca recebeu `tabindex` já devolve `-1` nessa propriedade — o teste passaria com o
+`mountSkipLink` vazio. Trocado por `getAttribute('tabindex')`, que é o atributo de verdade.
+
+Achei porque quebrei os quatro alvos de propósito antes de aceitar a suíte verde: formatador sem
+mínimo de casas, `role` removido do HUD, guarda de volta ao `return true` e `tabIndex` removido do
+alvo do salto. Cinco testes falharam; o do `tabIndex` não estava entre eles, e era para estar.
+
+**O primeiro `outline: none` estava errado.** Eu tinha apagado o anel de foco do alvo do salto,
+porque uma moldura em volta de uma seção inteira parece defeito. Só que apagar o foco do **destino**
+de um salto é exatamente o que a WCAG 2.4.7 proíbe: quem pulou não veria onde aterrissou. Virou um
+tracejado, que se distingue do anel sólido dos controles — aquele diz "aperte", este diz "você está
+aqui".
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npx vitest run tests/acessibilidade.dom.test.ts   # 15 passando
+  ```
+
+  Na tela, com o teclado e **sem tocar no mouse**:
+  1. Comece uma partida e aperte `Tab` uma vez — o link de pulo aparece no canto superior esquerdo.
+  2. `Tab` de novo, `Enter` — o foco salta para a árvore, com o tracejado em volta dela.
+  3. Continue com `Tab` até um nó da árvore e aperte `1` — a velocidade muda. Antes não mudava.
+  4. Abra o Modo Feira e aperte `Esc` — o painel fecha e o relógio começa a andar.
+  5. Debaixo dos botões de velocidade, a linha "Atalhos: barra de espaço pausa · teclas 1, 2 e 4…".
+
+- **Pendente:**
+  - **Nenhum leitor de tela de verdade foi usado.** Tudo aqui foi conferido pela árvore de
+    acessibilidade do Chrome, que é o que a máquina expõe — não o que o NVDA ou o VoiceOver falam. O
+    `map.ts` carrega essa dúvida desde o `P5-01` (`role="button"` num `<g>` é menos garantido que um
+    `<button>`) e ela **continua aberta**: não a fechei, porque conferir sem o programa instalado
+    seria inventar. Se alguma das 5 pessoas do `P8-01` usar um, é a hora.
+  - **O link de pulo cobre o `<h1>` quando está em foco.** É o comportamento padrão de um link
+    desses e some no `Tab` seguinte, mas ninguém de fora viu isso ainda.
+  - **A barra de espaço na árvore segue comprando o nó.** Decidido acima, não esquecido.
+  - **`[tabindex='-1']:focus` é um seletor global numa folha de módulo.** Hoje ele só alcança o
+    `#tabuleiro` e a `#arvore`, que são os dois alvos do salto. Se algum dia outro elemento ganhar
+    `tabindex="-1"`, ele herda o tracejado sem pedir.
+- **Evidência:**
+  - `docs/evidencias/2026-08-29-p8-04-link-de-pulo-e-atalhos-na-tela.jpg` — o link em foco, e a
+    linha dos atalhos sob os botões de velocidade.
+  - `docs/evidencias/2026-08-29-p8-04-zoom-400-sem-rolagem-lateral.jpg` — a 400%, o HUD reflui e não
+    há barra de rolagem horizontal.
+
+---
+
 ## 2026-08-26 — O texto da interface passou a ser verificado, e não só lido
 
 - **Parte / tarefa:** sem ID — é a proposta que ficou aberta na entrada de baixo, aprovada no chat.

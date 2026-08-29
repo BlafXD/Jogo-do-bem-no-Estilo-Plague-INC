@@ -145,11 +145,19 @@ describe('o cartão na tela', () => {
     }
   });
 
+  /**
+   * "3,0 °C", e não "3 °C" — mudou no P8-04.
+   *
+   * O limiar passou a sair do formatador único do `src/ui/format.ts`, com uma
+   * casa decimal no mínimo. O número aqui é o mesmo do rótulo "Derrota · 3,0 °C"
+   * do gráfico, e antes os dois o escreviam diferente porque cada arquivo tinha
+   * o seu `Intl.NumberFormat`.
+   */
   it('a derrota por temperatura diz o que aconteceu, por escrito', () => {
     const root = show(mount(), { ...start(), temperature: balance.loseTemperature + 0.5 });
 
     expect(textOf(root, 'title')).toBe(ui.outcome.result.defeat.title);
-    expect(textOf(root, 'lead')).toBe(ui.outcome.ending.temperature(`3 ${ui.units.celsius}`));
+    expect(textOf(root, 'lead')).toBe(ui.outcome.ending.temperature(`3,0 ${ui.units.celsius}`));
   });
 
   it('a derrota por apoio tem texto próprio', () => {

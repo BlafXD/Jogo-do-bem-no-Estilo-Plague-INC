@@ -24,6 +24,7 @@ import { timeline } from '../engine/history';
 import { MEDAL_CEILING, type Medal } from '../engine/outcome';
 import { turningPoint } from '../engine/review';
 import { balance, type GameState } from '../engine/state';
+import { celsius } from './format';
 
 // ------------------------------------------------------------- geometria ---
 
@@ -99,12 +100,13 @@ const twoDecimals = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 2,
 });
 
-/** Os limiares entram na frase sem casa fixa, como no cartão: "1,5 °C", não "1,50 °C". */
-const threshold = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
-
-function celsius(value: number, format: Intl.NumberFormat): string {
-  return `${format.format(value)} ${ui.units.celsius}`;
+function hudCelsius(value: number): string {
+  return `${twoDecimals.format(value)} ${ui.units.celsius}`;
 }
+
+// Os limiares saem do `format.ts` desde o P8-04: eles são escritos igual aqui e
+// no cartão de fim, e cada arquivo tinha o seu formatador — o jeito de os dois
+// discordarem sem ninguém notar.
 
 // ------------------------------------------------------------------ vista ---
 
@@ -263,9 +265,9 @@ export function timelineChartView(state: GameState): TimelineChartView {
   const text = ui.timelineChart;
   const summary = [
     text.summary(
-      celsius(first?.temperature ?? balance.startTemperature, twoDecimals),
+      hudCelsius(first?.temperature ?? balance.startTemperature),
       String(first?.year ?? balance.startYear),
-      celsius(last?.temperature ?? balance.startTemperature, twoDecimals),
+      hudCelsius(last?.temperature ?? balance.startTemperature),
       String(last?.year ?? balance.startYear),
     ),
     turned === null ? text.summaryNoTurn : text.summaryTurn(String(turned.year)),
@@ -275,7 +277,7 @@ export function timelineChartView(state: GameState): TimelineChartView {
     path,
     thresholds: THRESHOLD_KEYS.map((key) => ({
       key,
-      label: text.threshold(THRESHOLD_NAMES[key], celsius(THRESHOLD_VALUES[key], threshold)),
+      label: text.threshold(THRESHOLD_NAMES[key], celsius(THRESHOLD_VALUES[key])),
       y: yForTemperature(THRESHOLD_VALUES[key], ceiling),
     })),
     years: yearTicks(),
@@ -368,7 +370,7 @@ export function mountTimelineChart(): HTMLElement {
 
   const caption = document.createElement('figcaption');
   caption.className = 'chart__caption';
-  caption.textContent = ui.timelineChart.intro(celsius(balance.startTemperature, threshold));
+  caption.textContent = ui.timelineChart.intro(celsius(balance.startTemperature));
 
   figure.append(scroll, caption);
   return figure;

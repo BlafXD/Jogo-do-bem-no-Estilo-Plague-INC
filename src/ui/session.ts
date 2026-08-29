@@ -97,6 +97,11 @@ export function mountSession(
     readonly onReset: () => void;
   },
 ): void {
+  // `role="group"` junto do rótulo (P8-04), pela mesma razão do HUD e do
+  // controle de tempo: `#partida` é um `<div>`, e num `<div>` sem papel o
+  // `aria-label` é descartado. Aqui pesa mais que nos outros dois — é a barra
+  // que apaga a partida salva, e ela chegava sem nome.
+  root.setAttribute('role', 'group');
   root.setAttribute('aria-label', ui.session.label);
 
   const reset = button('session__button', 'arm', ui.session.leave, ui.session.leaveHint);

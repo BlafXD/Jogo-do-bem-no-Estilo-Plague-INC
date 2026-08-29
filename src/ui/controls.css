@@ -71,3 +71,20 @@
 .ctl__button.is-active .ctl__marker {
   visibility: visible;
 }
+
+/* Os atalhos escritos na tela (P8-04).
+
+   Ocupa a fileira inteira em vez de virar mais um item do flex — pela mesma
+   razão do balão do tutorial, registrada no tutorial.css: sem isto ele entra ao
+   lado de "Pausar / 1× / 2× / 4×" e espreme os quatro botões contra a borda.
+
+   Cor de rótulo, e não de valor: é apoio, não controle. O contraste dela sobre
+   o fundo é 9,04:1, medido no theme.css — bem acima do 4,5:1 que o §5 exige. */
+.ctl__shortcuts {
+  flex: 1 0 100%;
+  margin: 0;
+  /* 16px é o piso do §5 e vale para esta linha também: ela é a única fonte
+     visível dos atalhos depois que o tutorial some. */
+  font-size: var(--tamanho-base, 1rem);
+  color: var(--cor-rotulo, #a7c0b4);
+}

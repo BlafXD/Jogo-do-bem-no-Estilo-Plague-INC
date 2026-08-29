@@ -16,6 +16,7 @@ function montar(): ScreenLayout & { readonly botao: HTMLButtonElement } {
   const title = document.createElement('section');
   const chrome = document.createElement('header');
   const board = document.createElement('div');
+  const skip = document.createElement('nav');
 
   // Um botão dentro da tela de título, para medir a ordem de tabulação. Na
   // página de verdade este é o "Apagar e recomeçar".
@@ -23,8 +24,8 @@ function montar(): ScreenLayout & { readonly botao: HTMLButtonElement } {
   botao.type = 'button';
   title.append(botao);
 
-  document.body.replaceChildren(title, chrome, board);
-  return { title, chrome, board, botao };
+  document.body.replaceChildren(skip, title, chrome, board);
+  return { title, chrome, board, skip, botao };
 }
 
 /**
@@ -51,6 +52,7 @@ function visiveis(layout: ScreenLayout, screen: Screen): readonly string[] {
       ['title', layout.title],
       ['chrome', layout.chrome],
       ['board', layout.board],
+      ['skip', layout.skip],
     ] as const
   )
     .filter(([, element]) => !element.hidden)
@@ -62,8 +64,13 @@ describe('cada tela mostra o que precisa', () => {
     expect(visiveis(montar(), 'title')).toEqual(['title']);
   });
 
-  it('na partida, o topo e o tabuleiro', () => {
-    expect(visiveis(montar(), 'game')).toEqual(['chrome', 'board']);
+  /**
+   * O link de pulo entra e sai com o tabuleiro (P8-04): ele existe para
+   * contornar as 28 paradas de tabulação do mapa e da árvore, e nas outras duas
+   * telas não há bloco nenhum a contornar.
+   */
+  it('na partida, o topo, o tabuleiro e o link de pulo', () => {
+    expect(visiveis(montar(), 'game')).toEqual(['chrome', 'board', 'skip']);
   });
 
   /**

@@ -118,6 +118,15 @@ export type ScreenLayout = {
   readonly chrome: HTMLElement;
   /** O invólucro do tabuleiro: eventos, mapa, painel, contenção e árvore. */
   readonly board: HTMLElement;
+  /**
+   * Os links de pulo (P8-04).
+   *
+   * Acompanham o tabuleiro, e não o cabeçalho: eles existem para contornar as
+   * 28 paradas de tabulação do mapa e da árvore, e nas outras duas telas não há
+   * bloco nenhum a contornar. Um atalho oferecido onde ele não leva a lugar
+   * algum é pior que atalho nenhum — quem o segue perde o foco no vazio.
+   */
+  readonly skip: HTMLElement;
 };
 
 /**
@@ -132,4 +141,5 @@ export function renderScreens(layout: ScreenLayout, screen: Screen): void {
   layout.title.hidden = screen !== 'title';
   layout.chrome.hidden = screen === 'title';
   layout.board.hidden = screen !== 'game';
+  layout.skip.hidden = screen !== 'game';
 }

@@ -19,6 +19,7 @@ import { canUnlock, unlockSkill } from './engine/skills';
 import { createInitialState, skills, type RegionId, type SkillId } from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
 import {
+  activatesFocusedButton,
   applyCommand,
   commandForKey,
   createTimeControl,
@@ -56,6 +57,7 @@ import {
   mountSession,
   renderSession,
 } from './ui/session';
+import { mountSkipLink } from './ui/skip-link';
 import { clearGame, loadGame, saveGame } from './ui/storage';
 import {
   armNewGame,
@@ -94,6 +96,7 @@ import './ui/outcome.css';
 import './ui/region-panel.css';
 import './ui/screens.css';
 import './ui/session.css';
+import './ui/skip-link.css';
 import './ui/timeline-chart.css';
 import './ui/title.css';
 import './ui/tree.css';
@@ -134,11 +137,12 @@ const eventos = required('#eventos');
 const mapa = required('#mapa');
 const regiao = required('#regiao');
 const contencao = required('#contencao');
-const tree = required('#arvore');
+const tree = required<HTMLElement>('#arvore');
 const telaTitulo = required<HTMLElement>('#tela-titulo');
 const topo = required<HTMLElement>('.topo');
 const tabuleiro = required<HTMLElement>('#tabuleiro');
 const app = required<HTMLElement>('#app');
+const pular = required<HTMLElement>('#pular');
 
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
@@ -207,7 +211,12 @@ let title = createTitle();
  */
 let tutorial = createTutorial('continue');
 
-const layout: ScreenLayout = { title: telaTitulo, chrome: topo, board: tabuleiro };
+const layout: ScreenLayout = {
+  title: telaTitulo,
+  chrome: topo,
+  board: tabuleiro,
+  skip: pular,
+};
 
 /** As quatro seções em que o balão do tutorial pousa. */
 const tutorialAnchors: Readonly<Record<TutorialAnchor, Element>> = {
@@ -597,6 +606,10 @@ function handleContain(): void {
   persist();
 }
 
+// Antes de tudo: ele é a primeira parada de tabulação da página, e a ordem em
+// que se monta não muda isso (a ordem é a do DOM), mas a leitura deste bloco
+// fica honesta com o que a pessoa encontra primeiro.
+mountSkipLink(pular, tabuleiro, tree);
 mountHud(hud);
 mountControls(controls, handleCommand);
 mountEventCards(eventos);
@@ -678,11 +691,13 @@ const tutorialCallout = mountTutorial(
  * simulação começar quando ela manda. Um painel por cima de um jogo já em
  * movimento faria a leitura competir com o ano subindo atrás dela.
  */
-const tutorialPanel = mountTutorialPanel(() => {
+function handleDismissPanel(): void {
   tutorial = dismissPanel(tutorial);
   if (control.paused) handleCommand({ kind: 'togglePause' });
   renderGame();
-});
+}
+
+const tutorialPanel = mountTutorialPanel(handleDismissPanel);
 
 mountTree(tree, treeView(state), handleUnlock);
 
@@ -706,24 +721,57 @@ document.addEventListener('keydown', (event) => {
       return;
     }
 
-    // Depois dela, o painel de detalhe (P5-04).
+    // Depois dela, o painel do Modo Feira (P7-08). Ele é a coisa mais à frente
+    // da tela — cobre o topo do tabuleiro e segura o relógio parado — e era o
+    // único painel do jogo que o Esc não fechava, contra o §5 do GDD. Fecha
+    // pelo mesmo caminho do botão, e não por um atalho próprio: sair dele **é**
+    // o que solta o tempo, e um Esc que só o escondesse deixaria o mundo
+    // congelado sem nada na tela explicando por quê.
+    if (showsPanel(tutorial)) {
+      event.preventDefault();
+      handleDismissPanel();
+      return;
+    }
+
+    // Depois dele, o painel de detalhe (P5-04).
     if (selectedRegion !== null) {
       event.preventDefault();
       handleCloseRegion();
+      return;
+    }
+
+    // Por último o balão dos 4 passos, que é a dica mais discreta da tela.
+    //
+    // Esc dispensa **o passo visível**, e não o tutorial inteiro: fechar o que
+    // está na tela é o que a tecla promete, e "Pular tutorial" continua sendo a
+    // decisão explícita de não ver os outros três. Um Esc distraído não deveria
+    // custar o tutorial inteiro.
+    const step = tutorialView(tutorial, tutorialCues());
+    if (step !== null) {
+      event.preventDefault();
+      tutorial = completeStep(tutorial, step.step);
+      renderGame();
     }
 
     return;
   }
 
-  // Com o foco num botão, o navegador já transforma Espaço e Enter em clique.
-  // Tratar a tecla aqui também alternaria a pausa duas vezes, e ela pareceria
-  // não funcionar — que é o jeito mais irritante de um atalho quebrar.
+  // Com o foco num botão, o navegador já transforma a barra de espaço em
+  // clique. Tratar a tecla aqui também alternaria a pausa duas vezes, e ela
+  // pareceria não funcionar — que é o jeito mais irritante de um atalho quebrar.
   //
-  // Com a árvore do P6-06 na tela isso passou a valer para 20 botões a mais, e
-  // com uma consequência nova: quem acabou de clicar num nó e aperta Espaço
-  // reclica o nó em vez de pausar. É inofensivo (o nó já é seu, o `unlockSkill`
-  // devolve o estado intacto), mas é surpresa. Anotado no PROGRESSO.md.
-  if (event.target instanceof HTMLButtonElement) return;
+  // **A guarda era ampla demais, e o P8-04 mediu o estrago.** Ela desistia de
+  // toda tecla com o foco num botão, mas só a barra de espaço colide; as teclas
+  // 1, 2 e 4 não ativam botão nenhum. Como 27 das 35 paradas de tabulação de uma
+  // partida são botões — 20 só na árvore —, os atalhos de velocidade estavam
+  // mortos em quase toda a tela, sem colisão alguma para justificar.
+  //
+  // A barra de espaço com o foco num nó da árvore continua comprando o nó em vez
+  // de pausar, e isso fica: `<button>` responde à barra de espaço por
+  // convenção, e tirar isso quebraria a expectativa de quem usa leitor de tela
+  // para consertar uma surpresa menor. Quem estiver na árvore e quiser desacelerar
+  // tem o `1`, que agora funciona ali.
+  if (activatesFocusedButton(event.key) && event.target instanceof HTMLButtonElement) return;
 
   const command = commandForKey(event.key);
   if (command === null) return;

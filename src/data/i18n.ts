@@ -53,6 +53,33 @@ export const ui = {
     resume: 'Retomar',
     pauseHint: 'Pausa e retoma a passagem do tempo. Atalho: barra de espaço.',
     speedHint: 'Velocidade da simulação. Atalhos: as teclas 1, 2 e 4.',
+    /**
+     * Os atalhos escritos na tela, e não só no `title` de cada botão (P8-04).
+     *
+     * O primeiro passo do tutorial já os ensina, mas ele aparece uma vez, some
+     * no "Entendi" e não roda no Modo Feira — que é justamente onde entra quem
+     * nunca viu o jogo. Um `title` só existe para quem tem mouse e paciência
+     * de parar em cima; quem navega por teclado nunca o encontra.
+     */
+    shortcuts: 'Atalhos: barra de espaço pausa · teclas 1, 2 e 4 mudam a velocidade.',
+  },
+
+  /**
+   * O link de pulo (P8-04).
+   *
+   * Medido no navegador: uma partida em curso tem **35 paradas de tabulação**,
+   * e 28 delas são as 8 regiões do mapa mais os 20 nós da árvore. Sem um jeito
+   * de saltar esse bloco, quem navega por teclado atravessa o mapa inteiro para
+   * chegar à árvore, e a árvore inteira para chegar a qualquer coisa depois
+   * dela. É o que a WCAG 2.4.1 (nível A) chama de bloco a ser contornável.
+   *
+   * Fica invisível até receber o foco: é a primeira parada da página, e a
+   * primeira tecla Tab de quem chega o revela.
+   */
+  skipLink: {
+    label: 'Atalhos de navegação',
+    toContent: 'Pular para o conteúdo',
+    toTree: 'Pular para a árvore de habilidades',
   },
 
   // A tela de título (P5-06).
