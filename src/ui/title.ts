@@ -20,7 +20,29 @@
 // A confirmação só aparece quando **existe** save. Sem partida guardada não há
 // nada para destruir, e um segundo clique ali seria cerimônia à toa.
 
+import anaLuiza from '../assets/characters/ana-luiza.jpg';
+import carlosMendes from '../assets/characters/carlos-mendes.jpg';
+import julianaAlmeida from '../assets/characters/juliana-almeida.jpg';
+import ricardoSouza from '../assets/characters/ricardo-souza.jpg';
 import { ui } from '../data/i18n';
+
+/**
+ * Os quatro rostos da agência, na ordem em que aparecem.
+ *
+ * O `src` vem de `import`, e não de um caminho escrito à mão, porque é o que
+ * faz o Vite processar o arquivo: no build normal ele vira um asset com hash,
+ * e no `--mode feira` o `assetsInlineLimit: Infinity` o transforma em `data:`
+ * dentro do HTML único. Um caminho literal escaparia dos dois e o plugin da
+ * feira falharia o build — que é exatamente o aviso que ele existe para dar.
+ *
+ * O texto fica no i18n (regra 8); aqui só o pareamento com o arquivo.
+ */
+const TEAM: readonly { readonly src: string; readonly alt: string }[] = [
+  { src: anaLuiza, alt: ui.title.team.alt.anaLuiza },
+  { src: carlosMendes, alt: ui.title.team.alt.carlosMendes },
+  { src: ricardoSouza, alt: ui.title.team.alt.ricardoSouza },
+  { src: julianaAlmeida, alt: ui.title.team.alt.julianaAlmeida },
+];
 
 export type TitleState = {
   /** O jogador pediu "Nova partida" por cima de um save, e a tela pergunta. */
@@ -122,6 +144,35 @@ export function mountTitle(root: Element, handlers: TitleHandlers): void {
     }),
   );
 
+  // A equipe entra **depois** do pitch e **antes** dos botões: ela ilustra quem
+  // o jogador dirige, e quem chega de pé num estande lê o pitch, olha os rostos
+  // e só então procura o que clicar. Pô-la acima do pitch empurraria a primeira
+  // frase — a que diz quem você é — para fora da primeira olhada.
+  const team = document.createElement('figure');
+  team.className = 'title__team';
+  team.dataset.title = 'team';
+
+  const caption = document.createElement('figcaption');
+  caption.className = 'title__team-caption';
+  caption.textContent = ui.title.team.heading;
+
+  const faces = document.createElement('div');
+  faces.className = 'title__faces';
+  faces.append(
+    ...TEAM.map(({ src, alt }) => {
+      const face = document.createElement('img');
+      face.className = 'title__face';
+      face.src = src;
+      face.alt = alt;
+      // `lazy` não serve aqui — a tela de título é a primeira coisa que abre, e
+      // um retrato que chega depois faria o layout pular debaixo do cursor.
+      face.decoding = 'async';
+      return face;
+    }),
+  );
+
+  team.append(caption, faces);
+
   const actions = document.createElement('div');
   actions.className = 'title__actions';
 
@@ -179,7 +230,7 @@ export function mountTitle(root: Element, handlers: TitleHandlers): void {
   // vezes dá o mesmo resultado — em vez de apagar o nome na segunda.
   const name = root.querySelector('.title__name');
 
-  root.replaceChildren(...(name === null ? [] : [name]), pitch, actions, confirm);
+  root.replaceChildren(...(name === null ? [] : [name]), pitch, team, actions, confirm);
 }
 
 function slot(root: ParentNode, name: Slot | 'confirm-box'): HTMLElement | null {

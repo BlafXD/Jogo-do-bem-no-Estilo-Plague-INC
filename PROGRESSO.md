@@ -28,6 +28,111 @@ Regras curtas:
 
 ---
 
+## 2026-09-06 — A equipe da agência chegou à tela de título
+
+- **Parte / tarefa:** continuação da proposta do chat — a metade narrativa do item "Personagens
+  jogáveis". **Nenhum checkbox mudou**, e o item segue no Gelo com a metade mecânica.
+- **O que mudou:**
+  - `src/assets/characters/*.jpg` **criados** — quatro retratos, 312 × 410, ~34 KB cada. **A
+    primeira imagem que este projeto embarca.**
+  - `src/data/i18n.ts` — o rótulo "A equipe da agência" e os quatro `alt`.
+  - `src/ui/title.ts` + `.css` — a faixa de retratos.
+  - `tests/title.dom.test.ts` — 5 testes novos. Suíte: 672 → **677**.
+  - `docs/CREDITOS.md`, `docs/PERSONAGENS.md`.
+
+### O recorte tem uma decisão de design dentro
+
+O `System.Drawing` do Windows já vem instalado e recorta JPEG sem custar dependência nova — foi o
+que destravou o "não tenho ferramenta de imagem" da entrada anterior. A folha é 1408 × 768 em passo
+exato de 352 px; cada retrato saiu de `(24 + i × 352, 54)`, com 312 × 410 e qualidade 82.
+
+**O corte para de propósito antes do bloco de atributos.** Ele ocupa metade de cada carta e anuncia
+bônus que o jogo não tem — "−15% de consumo de água", "5/5". Mostrá-lo **dentro do jogo** prometeria
+mecânica inexistente a quem está jogando, que é pior do que não mostrar arte nenhuma. Retrato e nome
+sobem; a ficha inteira fica para o cartaz e os slides, onde é material de apresentação e não
+interface.
+
+### O `alt` não é decorativo, e há um teste para impedir que vire
+
+O nome e o cargo estão desenhados **dentro** da imagem, em pixels. Um `alt=""` — que seria o certo
+para arte ornamental — esconderia de quem usa leitor de tela exatamente o que a arte existe para
+dizer. Os quatro carregam nome e cargo, e um teste compara a lista inteira contra o `i18n`, para que
+uma "limpeza" futura falhe em vez de passar despercebida.
+
+### O build da feira aguentou, e era a dúvida real
+
+O `dist-feira/index.html` é **um arquivo só**, e o plugin do `vite.config.ts` falha se sobrar
+qualquer arquivo externo — o comentário dele até prevê isto, dizendo que é por ali que os efeitos
+do `P7-05` iriam avisar. Com `assetsInlineLimit: Infinity`, os quatro JPEG viraram `data:` dentro do
+bundle:
+
+| | antes | depois |
+|---|---|---|
+| `dist-feira/index.html` | 95 KB | **286 KB** |
+| `dist/` | 1 JS + 1 CSS | + 4 JPEG servidos à parte |
+
+`find dist-feira -type f` devolve **um** arquivo. 286 KB num pendrive é irrelevante.
+
+### Duas medidas que nenhum teste teria dado
+
+Abri a build no navegador em vez de confiar no CSS, e os dois problemas apareceram na tela:
+
+**1. Os retratos herdaram o `max-width: 60ch` do pitch.** Aquela medida existe para conforto de
+leitura de **texto corrido**. Aplicada a quatro imagens, espremeu cada uma a ~130 px e o nome
+desenhado dentro do quadro ficou ilegível — a única informação que o retrato carrega além do rosto.
+**Imagem não se mede em `ch`.**
+
+**2. Soltos para crescer pela largura, empurraram os botões para fora da dobra.** Numa janela de
+717 px, "Começar" e "Modo Feira" saíram da primeira tela. Num estande isso é fatal: quem chega de pé
+não rola a página, vai embora. A correção foi inverter quem manda — a altura, com
+`clamp(9rem, 28vh, 15rem)` e `width: auto` sobre a `aspect-ratio`. Numa tela baixa os retratos
+encolhem para caber junto dos botões; numa alta param de crescer antes de dominar a tela.
+
+É o mesmo raciocínio do `100dvh` que a folha já usava desde o `P5-06`: **no título, quem manda é a
+altura disponível.**
+
+### O que deu errado
+
+**Escrevi um teste que o `tsc` reprovou e o Vitest aprovou.** O `querySelectorAll('img.title__face')`
+devolve `NodeListOf<Element>`, não `HTMLImageElement`, e eu tipei o retorno como
+`HTMLImageElement[]`. O `npx vitest run` passou — ele não checa tipo —, e quem pegou foi o
+`npm run build`, que roda `tsc --noEmit` antes do Vite:
+
+```
+tests/title.dom.test.ts(292,5): error TS2322: Type 'Element[]' is not assignable to type 'HTMLImageElement[]'.
+```
+
+Vale como lembrete de que a suíte verde não substitui o typecheck, e que a ordem dos cinco comandos
+da regra 5 não é decorativa.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run build:feira && npm run format:check
+  find dist-feira -type f    # um arquivo só
+  ```
+
+  Na tela: `npm run dev` e abrir o título — quatro retratos sob "A equipe da agência", com
+  "Começar" e "Modo Feira" visíveis sem rolar. Encolha a janela: eles reflui para duas linhas
+  sozinhos, sem media query.
+
+- **Pendente:**
+  - **A folha original continua fora do repositório.** Só os quatro recortes entraram. Para o
+    cartaz (`P8-06`) as cartas inteiras — com atributos e habilidades — provavelmente servem melhor,
+    e aí ela precisa entrar em algum lugar, ou ficar guardada fora do git.
+  - **O diagrama que o Ricardo segura tem texto ilegível** ("WATER RECYCLING / RECYCLING PLANT" e
+    rótulos borrados abaixo). No tamanho da tela de título não se nota; **num cartaz impresso em
+    tamanho grande, nota.** Vale olhar antes de mandar para a gráfica.
+  - **O texto dentro das imagens está em inglês**, num jogo cuja interface é pt-BR por regra (`§12`).
+    Mesma observação: irrelevante na miniatura, visível no cartaz.
+  - **Nenhum leitor de tela de verdade leu os `alt` novos** — mesma pendência aberta desde o
+    `P8-04`.
+- **Evidência:** `docs/evidencias/2026-09-06-equipe-da-agencia-na-tela-de-titulo.jpg` — a tela de
+  título com os quatro retratos e os dois botões na primeira dobra, capturada da build de produção
+  servida pelo `vite preview`.
+
+---
+
 ## 2026-09-06 — Os quatro personagens entram como equipe, e não como mecânica
 
 - **Parte / tarefa:** nenhuma do `PLANO.md` — proposta trazida no chat, com a metade narrativa do

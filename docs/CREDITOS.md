@@ -20,12 +20,18 @@ Assets feitos pela equipe não precisam de linha aqui — mas se for um pacote i
 
 ## Ícones e imagens
 
-Nenhum ainda. A interface começa na Parte 5; até lá o jogo usa formas geométricas.
-Pacote delegável `[D-Design]`.
+Os ícones de estado da interface são **caracteres Unicode** (`✔`, `●`, `◌`, `✕`, `▲`, `◉`) escritos
+no `src/data/i18n.ts` — não há arquivo de ícone, e por isso não há licença a registrar. O pacote
+delegável `[D-Design]` segue previsto.
+
+**Os quatro retratos da equipe são da casa.** Conceito, personagens e o logotipo fictício
+**ECO-GRID**, que aparece no crachá da Ana Luiza e na jaqueta do Carlos, são criação do autor do
+projeto — confirmado no chat em 2026-09-06. Nenhuma marca, empresa ou ONG real aparece na arte, que
+é o que a regra 10 barra.
 
 | Arquivo | Autor | Licença | Origem |
 |---|---|---|---|
-| — | — | — | — |
+| `src/assets/characters/*.jpg` (4 retratos) | autor do projeto | própria | recortados de uma folha única de 1408 × 768, em 2026-09-06 |
 
 ## Áudio
 

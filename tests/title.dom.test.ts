@@ -286,3 +286,58 @@ describe('o Modo Feira no título (P7-07)', () => {
     expect(fair(root)?.hidden).toBe(true);
   });
 });
+
+describe('a equipe da agência', () => {
+  function faces(root: ParentNode): HTMLImageElement[] {
+    return [...root.querySelectorAll<HTMLImageElement>('img.title__face')];
+  }
+
+  it('mostra os quatro rostos', () => {
+    expect(faces(mount())).toHaveLength(4);
+  });
+
+  /**
+   * **O `alt` não pode ser decorativo, e é por uma razão concreta.**
+   *
+   * O nome e o cargo estão desenhados *dentro* da imagem, em pixels. Um
+   * `alt=""` — que seria o certo para arte puramente ornamental — esconderia de
+   * quem usa leitor de tela justamente o que a arte existe para dizer. Este
+   * teste é o que impede alguém de "limpar" isso mais tarde.
+   */
+  it('dá a cada rosto um alt com nome e cargo', () => {
+    const alts = faces(mount()).map((img) => img.alt);
+
+    expect(alts).toEqual([
+      ui.title.team.alt.anaLuiza,
+      ui.title.team.alt.carlosMendes,
+      ui.title.team.alt.ricardoSouza,
+      ui.title.team.alt.julianaAlmeida,
+    ]);
+    expect(alts.every((a) => a.length > 0)).toBe(true);
+  });
+
+  /**
+   * O `src` precisa vir do `import`, que o Vite resolve. Se alguém trocar por um
+   * caminho literal, o build da feira falha — o plugin recusa arquivo externo —
+   * e falha longe daqui, no `npm run build:feira`. Este teste puxa a falha para
+   * perto: um `src` vazio é o sintoma de import quebrado.
+   */
+  it('aponta cada rosto para um arquivo de verdade', () => {
+    expect(faces(mount()).every((img) => img.getAttribute('src') !== '')).toBe(true);
+  });
+
+  it('escreve o rótulo da equipe', () => {
+    expect(mount().querySelector('.title__team-caption')?.textContent).toBe(ui.title.team.heading);
+  });
+
+  /**
+   * O mount é idempotente por contrato — o `<h1>` do index.html sobrevive a ele.
+   * Montar duas vezes não pode empilhar oito rostos.
+   */
+  it('não duplica os rostos quando a tela é montada de novo', () => {
+    const root = mount();
+    mountTitle(root, handlers());
+
+    expect(faces(root)).toHaveLength(4);
+  });
+});

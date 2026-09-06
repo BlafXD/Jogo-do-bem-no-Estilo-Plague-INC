@@ -113,3 +113,59 @@
   margin: 0;
   color: var(--cor-alerta, #f2a65a);
 }
+
+/* A equipe da agência (2026-09-06).
+
+   Quatro retratos, sem mecânica nenhuma por trás: eles dizem quem o jogador
+   dirige. O porquê de serem quatro e não um está no i18n, junto do texto.
+
+   `auto-fit` com `minmax` e não uma grade de 4 colunas fixas: numa janela
+   estreita eles reflui para duas linhas sozinhos, que é a mesma regra que fez
+   o P8-04 medir zero rolagem lateral a 400% de zoom. Nenhuma media query
+   entra por causa disto. */
+.title__team {
+  /* `<figure>` vem com margem do agente de usuário; ela desalinharia o bloco
+     dos outros, que são todos margem zero. */
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  /* **Não** os 60ch do pitch. Aquela medida existe para conforto de leitura de
+     texto corrido; aplicada aqui, ela espremia os quatro retratos a ~130px e o
+     nome desenhado dentro de cada quadro ficava ilegível — que é justamente a
+     informação que eles carregam. Imagem não se mede em `ch`. */
+  max-width: 56rem;
+}
+
+.title__team-caption {
+  color: var(--cor-rotulo, #a7c0b4);
+  font-size: var(--tamanho-base, 1rem);
+}
+
+.title__faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* **O retrato é dimensionado pela altura, e não pela largura.** Medido no
+   navegador, numa janela de 717px: com os quadros crescendo pela largura, os
+   botões "Começar" e "Modo Feira" saíam da primeira dobra. Numa feira isso é
+   fatal — quem chega de pé não rola a página, vai embora.
+
+   O `clamp` prende a altura entre 9rem e 15rem, com 28vh no meio: numa tela
+   baixa os retratos encolhem para caber junto dos botões, e numa alta param de
+   crescer antes de dominar a tela. É o mesmo raciocínio do `100dvh` acima —
+   quem manda no título é a altura disponível. */
+.title__face {
+  height: clamp(9rem, 28vh, 15rem);
+  width: auto;
+  /* A proporção é a do recorte (312 × 410). Declará-la junto com `width: auto`
+     é o que deixa a altura mandar na largura, e reserva o espaço antes de a
+     imagem chegar: sem isto o bloco de botões pula no meio do carregamento,
+     debaixo do cursor de quem já ia clicar. */
+  aspect-ratio: 312 / 410;
+  object-fit: cover;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio, 0.5rem);
+}

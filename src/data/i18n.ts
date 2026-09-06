@@ -123,6 +123,30 @@ export const ui = {
     newGame: 'Nova partida',
     newGameHint: 'Apaga a partida salva e recomeça em 2025.',
 
+    // A equipe da agência (2026-09-06, decidido no chat).
+    //
+    // **Eles são identidade, não mecânica.** Nenhum dá bônus, nenhum entra no
+    // `GameState` e nenhum é escolhido pelo jogador — o `docs/PERSONAGENS.md`
+    // registra a decisão e traduz as fichas para o vocabulário do engine, caso
+    // um dia a versão com bônus saia do Gelo.
+    //
+    // **Por que os quatro, e não um.** O `docs/GDD.md §1` diz que o jogador é o
+    // Gerente, *coordenador* de uma agência. Um rosto só ali significaria "este
+    // é você", e aí os outros três sobrariam sem explicação.
+    //
+    // **O `alt` repete o nome porque a imagem o desenha.** O nome e o cargo
+    // estão dentro do quadro, em pixels: um `alt=""` decorativo esconderia de
+    // quem usa leitor de tela exatamente o que a arte existe para dizer.
+    team: {
+      heading: 'A equipe da agência',
+      alt: {
+        anaLuiza: 'Ana Luiza, engenheira elétrica',
+        carlosMendes: 'Carlos Mendes, engenheiro ambiental',
+        ricardoSouza: 'Ricardo Souza, gestor de recursos hídricos',
+        julianaAlmeida: 'Juliana Almeida, auditora de sustentabilidade corporativa',
+      },
+    },
+
     // Diz o que vai acontecer, e não "Sim" nem "OK": quem clica rápido precisa
     // ler a consequência no próprio botão. É a regra do session.ts.
     confirmNew: 'Apagar e recomeçar',

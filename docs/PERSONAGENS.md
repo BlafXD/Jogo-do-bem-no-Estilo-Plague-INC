@@ -124,9 +124,9 @@ Nada disso precisa ser decidido agora. Como identidade visual, quatro é um núm
 
 | Onde | Estado |
 |---|---|
+| **Tela de título** | ✔ **no ar** — os quatro, sob o rótulo "A equipe da agência" |
 | **Cartaz da feira** (`P8-06`) | previsto — é o uso mais forte: quatro rostos vendem um estande melhor que um mapa |
 | **Slides** (`P8-07`) | previsto |
-| **Tela de título** | possível, e depende do §5 |
 | **Dentro da partida** | **não.** Nenhuma tela de jogo muda |
 
 **Sobre a tela de título:** se entrarem, entram como **a equipe**, não como escolha. O jogador é o
@@ -135,21 +135,42 @@ Gerente; estes são os quatro especialistas que ele dirige. Pôr um rosto só im
 
 ---
 
-## 5. O que falta para a arte entrar no repositório
+## 5. Como a arte entrou
 
-Três coisas, nenhuma delas grande:
+As três pendências que travavam a imagem foram resolvidas em 2026-09-06.
 
-1. **Uma linha de origem para o `docs/CREDITOS.md`.** A regra 10 exige registrar de onde veio todo
-   asset. Para pacote feito pela equipe, o `CREDITOS.md` pede só "de quem é" — mas se a imagem foi
-   produzida com alguma ferramenta, é isso que a linha precisa dizer.
-2. **Confirmar que o logotipo "ECO-GRID"** — no crachá da Ana Luiza e na jaqueta do Carlos — é
-   fictício. A regra 10 barra logotipo de marca, empresa ou ONG real.
-3. **Os quatro recortes.** A imagem original é uma folha única de 1408 × 768 com as quatro cartas
-   lado a lado (≈352 px de largura cada). Não há ferramenta de imagem nesta máquina — o `convert`
-   disponível é o do Windows, não o ImageMagick —, então os recortes precisam vir prontos.
+**Origem e licença.** Conceito, personagens e o logotipo fictício ECO-GRID são criação do autor do
+projeto — confirmado no chat, e registrado em `docs/CREDITOS.md`. Nenhuma marca real na arte.
 
-**Sobre peso, que aqui não é detalhe:** a build da feira é **um arquivo só**, e o `vite.config.ts`
-usa `assetsInlineLimit: Infinity` para embutir tudo em base64 — o plugin **falha o build** se sobrar
-qualquer arquivo externo. A folha inteira tem 279 KB, que viram **372 KB** em base64, contra os
-95 KB que o `dist-feira/index.html` tem hoje. Quadruplica, e ainda assim cabe folgado num pendrive.
-Se os quatro recortes vierem redimensionados para a altura em que serão exibidos, o custo cai muito.
+**Os recortes.** A folha original é 1408 × 768 com as quatro cartas lado a lado, em passo exato de
+352 px. Cada retrato foi cortado em `(24 + i × 352, 54)`, com 312 × 410 e qualidade JPEG 82 — pelo
+`System.Drawing` do Windows, que já vem instalado e não custou dependência nova (o `convert` do
+`PATH` é o do Windows, não o ImageMagick).
+
+**O corte exclui o bloco de atributos e habilidades, de propósito.** Ele ocupa metade de cada carta
+e anuncia bônus que o jogo não tem — "−15% de consumo de água", "5/5" — e mostrá-lo dentro do jogo
+prometeria mecânica que não existe. Retrato e nome sobem; a ficha completa fica para o cartaz e os
+slides, onde é material de apresentação e não interface.
+
+### O peso, medido nos dois builds
+
+| | antes | depois |
+|---|---|---|
+| `dist/` (Pages) | 1 JS + 1 CSS | + **4 JPEG** de ~34 KB, servidos à parte |
+| `dist-feira/index.html` (arquivo único) | 95 KB | **286 KB** |
+
+A build da feira embute tudo em base64 (`assetsInlineLimit: Infinity`) e o plugin **falha** se sobrar
+arquivo externo — ele passou, e o `dist-feira/` continua com um arquivo só. 286 KB num pendrive é
+irrelevante.
+
+### Duas medidas que só o navegador deu
+
+O layout foi ajustado **duas vezes** contra a tela, e nenhum dos dois ajustes teria aparecido em
+teste:
+
+1. Os retratos herdaram o `max-width: 60ch` do pitch — medida de conforto de **leitura**, que os
+   espremeu a ~130 px e deixou o nome desenhado dentro do quadro ilegível. **Imagem não se mede em
+   `ch`.**
+2. Soltos para crescer pela largura, empurraram "Começar" e "Modo Feira" para fora da primeira
+   dobra numa janela de 717 px. Numa feira isso é fatal: quem chega de pé não rola a página. Agora
+   a altura manda — `clamp(9rem, 28vh, 15rem)` —, e os botões voltaram para dentro.
