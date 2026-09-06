@@ -224,6 +224,7 @@ Estão inteiras na `FORMA-DE-TRABALHO.md`. Estas são as que mais pegam quem che
 | `PLANO.md`                    | O backlog, uma tarefa por vez, com o corte de escopo assumido                   |
 | `PROGRESSO.md`                | O diário datado: o que entrou, como conferir, o que ficou aberto                |
 | `docs/CONCEITO.md`            | O one-pager: pitch em 5 linhas, fantasia do jogador, dilema central             |
+| `docs/PERSONAGENS.md`         | A equipe da agência: as quatro fichas e a tradução delas para o engine          |
 | `docs/ESCOPO.md`              | O escopo travado — e, principalmente, a lista do que o jogo **não** vai ter     |
 | `docs/CRONOGRAMA.md`          | O que aconteceu dia a dia, e o que falta em ordem de dependência                |
 | `docs/CUSTO.md`               | Quanto custaria contratar este trabalho, e quanto ele custou de fato            |

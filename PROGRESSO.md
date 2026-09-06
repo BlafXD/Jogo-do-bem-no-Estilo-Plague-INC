@@ -28,6 +28,107 @@ Regras curtas:
 
 ---
 
+## 2026-09-06 — Os quatro personagens entram como equipe, e não como mecânica
+
+- **Parte / tarefa:** nenhuma do `PLANO.md` — proposta trazida no chat, com a metade narrativa do
+  item "Personagens jogáveis" saindo do Gelo. **Nenhum checkbox mudou.**
+- **O que mudou:**
+  - `docs/PERSONAGENS.md` **criado** — 5 seções.
+  - `PLANO.md` — o item do Gelo ganhou o que as fichas ensinaram sobre os próprios bloqueios.
+  - `README.md` — o arquivo novo no índice.
+  - **Nenhum arquivo de código, nenhum número de balanceamento, nenhuma imagem no repositório.**
+
+### O portão do Gelo estava aberto, e eu não sabia
+
+A regra do Gelo é *"não puxar nada daqui antes do **M3**"*. **O M3 fechou em 26/08** (`P8-05`, build
+da feira testada em máquina limpa). Ou seja: personagens deixaram de ser ideia fora de escopo em
+26/08 e ninguém percebeu — nem eu, que escrevi o `docs/ESCOPO.md` hoje de manhã listando o item
+como cortado.
+
+O `ESCOPO.md §3.1` diz que a resposta para o Gelo é *"depois do M3", e não "não"*. Estamos depois.
+
+### As fichas descrevem, em boa parte, um jogo diferente
+
+Este é o achado, e ele não é crítica ao conceito — é a distância medida entre um jogo de gestão
+ambiental e um jogo de orçamento climático global.
+
+O engine conhece **cinco tipos de efeito**: `emissionCut`, `pointsPerYear`, `resilience`, `support`,
+`inertiaCut`. Das oito habilidades das quatro fichas:
+
+| | quantas | quais |
+|---|---|---|
+| ✅ encaixa direto | **1** | Biodiversidade Urbana → `support` |
+| ✅ encaixa em dois efeitos | **1** | Certificação Verde → `pointsPerYear` + `support` |
+| 🟡 exige campo novo, mas há precedente | **2** | Desconto de Rede · Mitigação de Risco |
+| ❌ descreve sistema inexistente | **4** | produção de energia · limpeza de contaminação · água (×2) |
+
+Conferido por busca: não há `water`, `reputation`, `financing` nem contaminação em lugar nenhum de
+`src/engine/`. O único acerto do `grep` foi um comentário sobre "contaminar a aritmética" no
+`rng.ts`.
+
+**O precedente dos 🟡 vale registrar:** "Desconto de Rede" (−10% no custo dos nós) parece exigir
+mecânica nova, mas o `containDiscountPerNode` **já desconta** o custo da contenção por nó de
+Sociedade comprado. O caminho existe.
+
+### O 4-contra-5-ramos tem nome agora
+
+O `PLANO.md` avisava disso desde 26/08, em abstrato. Com as fichas:
+
+- Ana Luiza → **Energia** · Carlos Mendes → **Natureza** · Juliana Almeida → **Sociedade**
+- **Ricardo Souza é de recursos hídricos, e água não é ramo deste jogo**
+- **Transporte e Indústria ficam sem ninguém**
+
+Três cobertos, dois vazios, um órfão. Registrei as três saídas possíveis no `§3` do arquivo novo,
+sem escolher nenhuma — como identidade visual, quatro é um número perfeitamente bom, e a escolha só
+importa se a versão mecânica for adiante.
+
+### Por que "a equipe" e não "escolha seu personagem"
+
+O `docs/GDD.md §1` diz que o jogador é **o Gerente, coordenador de uma agência climática global**.
+Um coordenador coordena alguém. Os quatro são a agência — o que os faz funcionar **sem mecânica
+nenhuma**, porque não precisam ser jogáveis para existirem.
+
+Consequência prática para a tela de título: se entrarem, entram os quatro. Pôr um rosto só implica
+que aquele é o Gerente, e aí os outros três sobram.
+
+### Três coisas travam a imagem, e nenhuma é decisão de design
+
+1. **Falta a linha de origem para o `docs/CREDITOS.md`** (regra 10). Perguntei no chat e ainda não
+   tenho resposta; **por isso a imagem não entrou no repositório.** Registrar depois de commitar
+   seria fazer na ordem errada.
+2. **O logotipo "ECO-GRID"** aparece no crachá da Ana Luiza e na jaqueta do Carlos. Se for marca
+   real, a regra 10 barra. Provavelmente é fictício, mas "provavelmente" não é registro.
+3. **Não há ferramenta de imagem nesta máquina.** A folha é uma imagem única de 1408 × 768 com as
+   quatro cartas lado a lado; os recortes precisam vir prontos. O `convert` que existe no `PATH` é o
+   do Windows, não o ImageMagick — descobri tentando recortar e recebendo
+   `Especificação de unidade inválida`.
+
+**E uma conta de peso que vale saber antes:** a build da feira é um arquivo só, com
+`assetsInlineLimit: Infinity`, e o plugin **falha o build** se sobrar arquivo externo. A folha
+inteira tem 279 KB e vira **372 KB** em base64, contra os 95 KB do `dist-feira/index.html` de hoje.
+Quadruplica. Cabe folgado num pendrive, mas recortes já redimensionados para a altura de exibição
+custam uma fração disso.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run format:check
+  ```
+
+  Nada de código mudou, então os 672 continuam 672. O entregável é o `docs/PERSONAGENS.md`.
+
+- **Pendente:**
+  - **As três da `§5` do arquivo novo** — origem para o `CREDITOS.md`, confirmação do ECO-GRID, e
+    os quatro recortes. Enquanto não vierem, a arte fica fora do repositório.
+  - **A versão com bônus continua no Gelo**, agora com a tradução das oito habilidades pronta. Se
+    um dia for adiante, o custo estimado é 3 M + 1 G (~16 a 22 h) — **entre um terço e metade de
+    tudo o que ainda falta no projeto** —, e refazer a planilha do `P3-02` faz parte.
+  - **O `docs/ESCOPO.md §3.1` continua listando personagens como cortado**, sem dizer que o portão
+    do M3 já abriu. Não mexi: o item de fato continua no Gelo: só a metade narrativa saiu.
+- **Evidência:** nenhuma — a imagem original está fora do repositório, na pasta acima dele.
+
+---
+
 ## 2026-09-06 — O one-pager, e as duas frases bonitas que eu inventei antes de conferir
 
 - **Parte / tarefa:** `P1-01` ✔

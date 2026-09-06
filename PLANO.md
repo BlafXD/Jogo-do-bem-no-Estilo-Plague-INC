@@ -212,6 +212,18 @@ Não puxar nada daqui antes do **M3**.
   - **Contrato de arte, para não travar ninguém:** `assets/characters/*.png` ou `.svg`, proporção e
     tamanho a definir junto com o `[D-Design]`, e os textos (`name`, `description`, `bonus`) num
     `src/data/characters.json` no mesmo formato do `actions.json` — editável sem tocar em `.ts`.
+  - **2026-09-06 — os quatro personagens existem, e a parte narrativa já saiu do gelo.** Ana Luiza,
+    Carlos Mendes, Ricardo Souza e Juliana Almeida estão em `docs/PERSONAGENS.md`, **sem bônus
+    nenhum**: entram como identidade visual para o `P8-06` e o `P8-07`. Isso não puxa o item do
+    gelo — puxa só a metade que não custa balanceamento. O que as fichas ensinaram sobre os três
+    bloqueios acima:
+    - **O 1:1 não fecha, e agora dá para ver onde.** Ana Luiza → Energia, Carlos → Natureza,
+      Juliana → Sociedade. **Ricardo é de recursos hídricos, e água não é ramo**; Transporte e
+      Indústria ficam sem ninguém.
+    - **Seis das oito habilidades das fichas não têm sistema no jogo** — produção de energia,
+      limpeza de área contaminada, água (duas), reputação e financiamento. Só "Biodiversidade
+      Urbana" (→ `support`) encaixa direto. A tradução das oito está na `§2` do
+      `docs/PERSONAGENS.md`, pronta para quem for implementar.
 
 ---
 
