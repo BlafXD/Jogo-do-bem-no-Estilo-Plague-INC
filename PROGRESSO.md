@@ -28,6 +28,116 @@ Regras curtas:
 
 ---
 
+## 2026-09-06 — O escopo travado, e as duas coisas que travá-lo obrigou a admitir
+
+- **Parte / tarefa:** `P4-01` ✔
+- **O que mudou:**
+  - `docs/ESCOPO.md` **criado** — 7 seções.
+  - `PLANO.md` — checkbox do `P4-01`, com o ponteiro para o `§6` do arquivo novo.
+
+### A tarefa é a lista do "não"
+
+A regra 1 da `FORMA-DE-TRABALHO.md` já dizia o que se pode implementar. O que faltava era a outra
+metade: **a lista explícita do que fica de fora, e por quê.** Escopo que só diz "sim" é lista de
+desejos.
+
+O arquivo separa o "não" em quatro camadas, porque só a primeira é negociável:
+
+| camada | o que é | negociável? |
+|---|---|---|
+| **Gelo** | 40 nós, 20 eventos, conquistas, cenários históricos, ranking, inglês, clima animado, personagens jogáveis | **sim, depois do M3** |
+| **Regra do projeto** | backend, analytics, asset de terceiro, framework de UI, `Math.random()`, número sem fonte | não |
+| **Honestidade científica** | o tsunami | não |
+| **Nunca esteve na mesa** | multijogador, app de celular, campanha, editor de cenário, narração | não |
+
+A quarta camada não estava escrita em lugar nenhum, e é a que responde a pergunta que um avaliador
+faz primeiro. Escrever "não vai ter multijogador" custa uma linha e economiza uma conversa.
+
+O corte do tsunami virou **critério**, e não anedota: um evento que precisa de ressalva para ser
+honesto não entra. Vale para o que o `[D-Historia]` propuser.
+
+### Cada número do arquivo saiu do repositório, não da memória
+
+A seção 1 é o jogo medido em 2026-09-06:
+
+| | |
+|---|---|
+| árvore | 20 nós, 5 ramos × 4, **1600 PAC** de custo total |
+| eventos | 10, limiares de 1,3 a 2,2 °C |
+| partida | 900 ticks — **~22 min a 1x, ~5,6 min a 4x** |
+| medalhas | ouro < 1,5 · prata < 2,0 · bronze < 2,55 · derrota ≥ 3,0 °C |
+| peso | 74 kB de JS + 20 kB de CSS · **a feira é um arquivo de 95 kB** |
+| suíte | 672 testes em 38 arquivos |
+
+Os dois números de duração eu calculei em vez de repetir: 75 anos × 12 ticks = 900, a 1,5 s por
+tick dá 1350 s, e 4x divide por quatro. O "~5 min" que o `PLANO.md` promete para a feira é 5,6 —
+perto o bastante para a promessa valer, e agora está escrito qual é o número de verdade.
+
+### O estado real do backlog, que eu não tinha contado
+
+**39 concluídas · 1 em andamento · 17 abertas.** E o dado que muda como o resto do projeto deve ser
+lido: **das 17 abertas, uma só é código** — o `P7-05`, três efeitos CC0 e um botão de mudo. Todo o
+resto é entrega de disciplina, texto delegável, ou depende de pessoas de fora sentarem para jogar.
+
+**O jogo, como software, está pronto.** O caminho crítico não passa mais por mim.
+
+### As duas coisas que travar o escopo obrigou a admitir
+
+Estas não são conserto, são decisão sua. Ficaram no `§6` do arquivo em vez de ficarem implícitas.
+
+**1. A ordem da Parte 1 se inverteu.** O `P1-02` pede protótipo de papel *print and play*, e a regra
+do GDD `§6` é explícita: *"se a mecânica não for interessante com papel e caneta, programar não vai
+salvar"*. Só que o jogo digital já existe e já é jogável de ponta a ponta. Um protótipo de papel
+agora testa uma pergunta que a versão digital já respondeu. Registrei as três saídas honestas —
+fazer mesmo assim porque vale nota; fazer uma versão reduzida como material de estande, que é uso
+real; ou registrar o corte com justificativa — e **não escolhi por você.**
+
+**2. A Parte 2 já foi entregue pelo caminho errado.** Os 5 itens `[D]` de narrativa existem em
+versão mínima porque o código precisou deles: os 4 finais, os 10 fatos de evento, os 20 de
+habilidade. Era o previsto pela Estratégia Solo, mas significa que a Parte 2 não tem entrega própria
+a mostrar. Se ela precisa render nota, o entregável é o documento (`P2-01`, `P2-02`), não o texto
+que já está na tela.
+
+### Duas tarefas da Parte 2 caem fora do contrato que deveria cobri-las
+
+Continuação da auditoria que o `P4-04` começou, e ela piorou:
+
+- **`P2-03` (identidade das 8 regiões)** — o `regions.json` só tem `name`. Guardar "1 linha +
+  desafio" por região exige campo novo no JSON **e** código que o mostre.
+- **`P2-05` (textos dos 4 finais)** — eles moram no `src/data/i18n.ts`, que é `.ts`, e o contrato do
+  `[D-Historia]` proíbe tocar em `.ts`. Ou o texto migra para um JSON, ou a tarefa não é delegável
+  como está escrita.
+
+Dos 5 itens da Parte 2, **só o `P2-04`** (10 microtextos de evento) é entregável hoje pelo contrato,
+como ele está.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run format:check
+  ```
+
+  E ler o `docs/ESCOPO.md`. Os números da seção 1 se conferem assim:
+
+  ```bash
+  node -e "const s=require('./src/data/skills.json');console.log(s.length,'nós',s.reduce((a,n)=>a+n.cost,0),'PAC')"
+  ```
+
+- **Pendente:**
+  - **As duas decisões do `§6`** — o protótipo de papel e a entrega da Parte 2. Ficam abertas até
+    você decidir; não são bloqueio para mais nada.
+  - **O `docs/GDD.md` está desatualizado em dois pontos**, e o `§12` não me deixa mexer nele sem
+    pedir: o título ainda diz `(codinome provisório)` e o `§8` ainda lista "Nome definitivo do jogo"
+    como decisão pendente — o `P1-04` ratificou **Ponto de Virada** em 2026-08-26. O `§8` também
+    continua marcando o áudio e a direção de arte como pendentes, o que ainda é verdade.
+  - **O `ESCOPO.md` não está citado no `CLAUDE.md` nem na tabela de arquivos da
+    `FORMA-DE-TRABALHO.md`**, e os dois são "não editar sem pedir". Acrescentei ele ao índice do
+    `README.md`, que é meu; os outros dois ficam para você. Um documento de escopo que ninguém acha
+    não trava escopo nenhum.
+- **Evidência:** nenhuma nova — o entregável é o próprio `docs/ESCOPO.md`.
+
+---
+
 ## 2026-09-06 — O README de onboarding, e o que escrevê-lo revelou sobre os três contratos
 
 - **Parte / tarefa:** `P4-04` ✔

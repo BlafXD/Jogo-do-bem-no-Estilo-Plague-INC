@@ -126,7 +126,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 
 ## Parte 4 — Projetando um jogo digital
 
-- [ ] `P4-01` Escopo travado — incluindo a **lista do que não vai ter** — **P**
+- [x] `P4-01` Escopo travado — incluindo a **lista do que não vai ter** — **P** — *`docs/ESCOPO.md`; deixou duas decisões abertas para mim, no §6 de lá*
 - [ ] `P4-02` Cronograma aula a aula — **M**
 - [ ] `P4-03` Estimativa de custo: horas × valor-hora, assets, hospedagem — **P**
 - [x] `P4-04` `README.md` de onboarding: como rodar o projeto + os 3 contratos de pacote acima — **M** — *destrava a entrada do grupo sem me custar tempo depois*
