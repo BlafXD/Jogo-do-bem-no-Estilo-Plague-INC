@@ -28,6 +28,126 @@ Regras curtas:
 
 ---
 
+## 2026-09-06 — A Parte 4 fechou: o cronograma que é quase todo retrospectivo, e o custo contado de dois jeitos
+
+- **Parte / tarefa:** `P4-02` ✔ · `P4-03` ✔ — **a Parte 4 fecha com 5 de 6** (só o `P4-05` fica, e
+  ele depende de o grupo existir)
+- **O que mudou:**
+  - `docs/CRONOGRAMA.md` **criado** — 5 seções.
+  - `docs/CUSTO.md` **criado** — 6 seções.
+  - `PLANO.md` — os dois checkboxes.
+  - `README.md` — os dois no índice de documentos.
+
+### Um cronograma escrito com 42 de 58 tarefas prontas é, em dois terços, um relatório
+
+E isso é a coisa honesta a fazer com ele, não um defeito a disfarçar. Um cronograma escrito no
+começo teria virado ficção na segunda semana; o que serve para o relatório final e para os slides é
+o registro do que **de fato** aconteceu, com as datas certas. Elas saíram do `git log`, não da
+memória:
+
+**Dez dias de trabalho, de 2026-08-06 a 2026-09-06** — 32 dias de calendário, 54 commits, 50
+entradas no diário. Medi a janela de cada dia pelo intervalo entre o primeiro e o último commit.
+
+**Os dois dias que carregaram o projeto foram 08-18 (7h49) e 08-26 (8h39)** — 28 dos 54 commits
+saíram deles, e com eles os dois marcos e a virada para jogável.
+
+### A ordem do plano e a da execução divergiram, e uma das divergências não foi planejada
+
+A tabela do `§2` compara as duas. A Parte 6 (engine) foi a **primeira** a andar e as Partes 1 e 2
+continuam abertas — o que é exatamente o que a "Ordem em modo solo" do `PLANO.md` mandava fazer:
+*"fazer uma fatia vertical fina cedo, mesmo que feia"*. Divergência deliberada.
+
+**Mas uma não foi.** O risco `R2` tinha como mitigação escrita *"planilha antes do código"*. O
+`P3-02` (a planilha dos 75 anos) foi feito em **08-20**, dois dias **depois** de o `P6-02` já
+calcular temperatura. Deu certo — a planilha confirmou o modelo em vez de corrigi-lo — mas isso foi
+**sorte de um modelo simples, não método**. Com realimentação no modelo, descobrir o erro só na
+planilha teria custado o engine inteiro. Está escrito lá porque um cronograma retrospectivo que só
+elogia a si mesmo não serve para nada.
+
+### O custo responde duas perguntas, e misturá-las é o erro clássico
+
+| pergunta | resposta | onde |
+|---|---|---|
+| Quanto custaria **contratar** este trabalho? | **120 – 184 h** | `§1.1`, pelos esforços P/M/G do `PLANO.md` |
+| Quanto ele **levou** aqui? | **≈ 33 h em 10 dias** | `§1.2`, medido no `git log` |
+
+**A diferença entre 33 e 120 é o dado, não o erro.** As duas contas medem coisas diferentes e as
+duas estão certas: a primeira é o que o escopo vale como trabalho, a segunda é o que ele levou
+nestas condições. A conta que vai no relatório é a primeira; a segunda é o que explica como 42
+tarefas couberam em 32 dias sem ninguém virar noite todo dia.
+
+O número de relógio é um **piso frouxo**, e o arquivo diz por quê: ignora o que veio antes do
+primeiro commit e depois do último de cada dia, e o dia 08-29 conta **zero** porque teve um commit
+só — quando a entrada daquele dia descreve uma auditoria de acessibilidade inteira.
+
+### O valor-hora é a única entrada que não sai do repositório
+
+Isolei ele numa seção própria, com três âncoras ilustrativas (R$ 30 / 50 / 80) **marcadas como
+placeholder, não como cotação de mercado** — inventar um valor-hora e apresentá-lo como pesquisa
+seria o mesmo pecado que a regra 9 proíbe para número climático. A faixa a R$ 50/h dá ≈ R$ 7.600
+pelo projeto completo, se a entrega pedir um número único.
+
+A separação tem consequência prática: **se o valor-hora mudar, tudo na `§2` muda e nada na `§3`
+muda.** É por isso que são duas seções e não uma tabela.
+
+### O dinheiro que saiu: R$ 0, e por decisão
+
+Hospedagem, domínio, banco, arte, fontes, áudio e bibliotecas — todos zero. Não é sorte: é o `§12`
+cobrando o preço em restrição de escopo e devolvendo em custo zero e numa build que roda de pendrive
+sem internet. Um detalhe que vale como prova: **o `package.json` não tem bloco `dependencies`** —
+só `devDependencies`, e nenhuma delas é embarcada no build.
+
+Duas linhas ficaram sem número, e isso está dito em vez de chutado: a **impressão do cartaz**
+(`P8-06`, depende de formato e gráfica) e as **ferramentas** — editor e assistente de código, a
+única linha possivelmente não-zero, que só você sabe. Se preferir que ela não conste, é uma linha
+para apagar; deixei porque estimativa de custo com item conhecido omitido fica errada.
+
+E o pendrive da feira está na tabela meio de brincadeira, meio a sério: **95 kB é o custo de
+infraestrutura do projeto inteiro no estande.** Cabe num e-mail.
+
+### O que o corte de escopo economizou, em horas
+
+Traduzi o `docs/ESCOPO.md §3.1` pela mesma régua: **entre 33 e 55 horas não gastas** — um quarto a
+um terço do projeto inteiro. É o argumento de que o corte foi feito no lugar certo: nada do que
+ficou de fora é o que faz o jogo ser um jogo.
+
+### O que deu errado
+
+**Escrevi os dois documentos com os números errados.** Eles contavam 40 concluídas e 18 abertas — o
+estado de antes de eu marcar os próprios checkboxes do `P4-02` e do `P4-03`. Um documento de custo
+que não conta a si mesmo é exatamente o tipo de erro que ninguém revisa depois.
+
+Peguei porque fui recontar em vez de confiar: a primeira contagem por parte também estava errada,
+porque o `grep` casava IDs citados nas notas em itálico (o `P4-05` cita o `P4-04`) e não só o ID no
+começo da linha. Refeito com padrão ancorado em `^- \[x\] \``, bateu com a conta à mão: **42
+concluídas · 1 em andamento · 15 abertas**.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run format:check
+  ```
+
+  E as contagens dos dois documentos, que são reproduzíveis:
+
+  ```bash
+  grep -o '^- \[x\] `\(SETUP\|P[0-9]\)-[0-9]*`' PLANO.md | wc -l          # 42
+  grep '^- \[x\]' PLANO.md | grep -o '\*\*[PMG]\*\*' | sort | uniq -c      # 10 P, 24 M, 6 G
+  git log --format="%ad" --date=format:"%Y-%m-%d %H:%M" | sort             # as janelas do §1
+  ```
+
+- **Pendente:**
+  - **Faltam três datas que só você tem**, e sem elas o `§4` do cronograma é ordem de dependência e
+    não calendário: a da **Feira**, a da **Avaliação Parcial** (prazo da APS 1) e a da
+    **apresentação final**. Está escrito no `§5` de lá.
+  - **A linha "Ferramentas" do `docs/CUSTO.md §3` está sem valor**, esperando você.
+  - **`G = 5 h` é suposição minha.** O `PLANO.md` só diz "uma sessão inteira". É a única premissa de
+    esforço no arquivo, e está declarada como tal.
+  - O `P4-05` é o último item da Parte 4 e depende de o grupo existir — não é bloqueio meu.
+- **Evidência:** nenhuma nova — os entregáveis são os dois documentos.
+
+---
+
 ## 2026-09-06 — O escopo travado, e as duas coisas que travá-lo obrigou a admitir
 
 - **Parte / tarefa:** `P4-01` ✔

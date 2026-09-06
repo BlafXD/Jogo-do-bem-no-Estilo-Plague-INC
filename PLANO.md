@@ -127,8 +127,8 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 ## Parte 4 — Projetando um jogo digital
 
 - [x] `P4-01` Escopo travado — incluindo a **lista do que não vai ter** — **P** — *`docs/ESCOPO.md`; deixou duas decisões abertas para mim, no §6 de lá*
-- [ ] `P4-02` Cronograma aula a aula — **M**
-- [ ] `P4-03` Estimativa de custo: horas × valor-hora, assets, hospedagem — **P**
+- [x] `P4-02` Cronograma aula a aula — **M** — *`docs/CRONOGRAMA.md`; retrospectivo em dois terços, e falta a data da feira para o resto virar calendário*
+- [x] `P4-03` Estimativa de custo: horas × valor-hora, assets, hospedagem — **P** — *`docs/CUSTO.md`; o valor-hora é premissa sua, está isolado numa seção só*
 - [x] `P4-04` `README.md` de onboarding: como rodar o projeto + os 3 contratos de pacote acima — **M** — *destrava a entrada do grupo sem me custar tempo depois*
 - [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes*
 - [x] `P4-06` **M1** — `SETUP-01` a `SETUP-07` concluídos e Pages no ar — **marco**
