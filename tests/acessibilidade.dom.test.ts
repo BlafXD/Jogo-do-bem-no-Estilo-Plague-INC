@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ui } from '../src/data/i18n';
 import { MEDAL_CEILING } from '../src/engine/outcome';
 import { balance } from '../src/engine/state';
@@ -78,6 +78,33 @@ describe('o link de pulo', () => {
     paraArvore?.click();
 
     expect(document.activeElement).toBe(tree);
+  });
+
+  /**
+   * **Por que a rolagem ganhou teste próprio, e por que ele é um espião.**
+   *
+   * `scrollIntoView` não existe em jsdom, que não faz layout. Sem o dublê do
+   * `tests/setup-jsdom.ts`, a chamada estourava um `TypeError` dentro do
+   * ouvinte de clique — e um erro lançado ali **não derruba o teste**: o Vitest
+   * o recolhe como *unhandled error* e a suíte termina verde, com o aviso num
+   * rodapé fácil de não ler. Foi assim entre o P8-04 e agora.
+   *
+   * O `vi.spyOn` fecha essa porta pelo lado que importa: ele **exige** que o
+   * método exista. Se o dublê sumir do setup, este teste falha na hora, com
+   * nome e linha, em vez de virar aviso de rodapé.
+   *
+   * E a asserção do argumento não é enfeite: `block: 'start'` é o que põe o
+   * topo da seção na tela. Rolar até o meio depois de um salto deixaria o
+   * cabeçalho do bloco fora de vista, que é justamente o que quem pulou
+   * precisa ler para saber onde caiu.
+   */
+  it('rola o alvo até o topo, além de focá-lo', () => {
+    const { nav, tree } = paginaComPulo();
+    const rolagem = vi.spyOn(tree, 'scrollIntoView');
+
+    [...nav.querySelectorAll('a')][1]?.click();
+
+    expect(rolagem).toHaveBeenCalledWith({ block: 'start' });
   });
 
   it('não deixa a URL virar rota — o jogo é página única', () => {

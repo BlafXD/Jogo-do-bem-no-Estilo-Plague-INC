@@ -28,6 +28,202 @@ Regras curtas:
 
 ---
 
+## 2026-09-06 — O README de onboarding, e o que escrevê-lo revelou sobre os três contratos
+
+- **Parte / tarefa:** `P4-04` ✔
+- **O que mudou:**
+  - `README.md` **criado** — não existia, num repositório público desde o `SETUP-04`.
+  - `PLANO.md` — checkbox do `P4-04` e uma ressalva nova no `P4-05`.
+
+### O que o arquivo é
+
+Onboarding para quem nunca viu o repositório e pode não saber TypeScript: o pitch, como rodar, a
+tabela dos 10 comandos, o mapa de pastas com a regra de ouro, **os três pacotes delegáveis**, as
+regras que mais pegam quem chega e o índice dos documentos.
+
+A parte que justifica a tarefa é a dos pacotes. O `PLANO.md` já tinha os três contratos em três
+parágrafos, escritos para mim; o README os reescreve para **quem vai executá-los**, com o caminho
+exato do arquivo, o que é seu e o que não é, e como conferir o próprio trabalho sem saber ler o
+código. É a mitigação do risco `R4` deixando de ser intenção.
+
+### Escrever os contratos foi auditá-los, e um dos três não estava de pé
+
+Esta é a descoberta da sessão, e ela muda o `P4-05`. Ao tentar escrever "você entrega X e o código
+já lê", descobri que isso só é verdade em dois casos e meio:
+
+| pacote | pronto para entregar hoje? |
+|---|---|
+| **`[D-Historia]`** | **sim.** Os 4 `.json` existem, com 43 registros somados, e o código lê deles |
+| **`[D-Design]` — `theme.css`** | **sim.** Troca de valores, drop-in, com o contraste virando teste |
+| **`[D-Design]` — ícones** | **não.** Ver abaixo |
+| **`[D-Musica]`** | **não.** Não há áudio, nem código que toque áudio, nem pasta `assets/` |
+
+**Os ícones.** O contrato pede `assets/icons/*.svg`, 24×24, traço de 2px. Só que os ícones do jogo
+hoje são **caracteres Unicode** — `✔`, `●`, `◌`, `✕`, `▲`, `◉` — escritos no `src/data/i18n.ts`, que
+é `.ts` e está fora de todo contrato. Um designer que aceitasse o pacote e produzisse os arquivos
+descobriria, na entrega, que não há onde encaixá-los sem mudar código. Está escrito no README como
+aviso antes de desenhar, e não como nota de rodapé.
+
+**O áudio.** A pasta `assets/` **não existe**. O `P7-05` (três efeitos CC0 e botão de mudo) ainda
+não foi feito, e é ele que decide onde os arquivos vão morar. Entregar `.ogg` antes disso é
+entregar num lugar onde o código não vai procurar.
+
+Nenhum dos dois é motivo para atrasar o README — o `[D-Historia]` sai inteiro hoje, e é o pacote
+mais pesado dos três. Mas os dois viraram ressalva no `P4-05`: **distribuir um pacote que não tem
+onde encaixar a entrega é a forma mais cara de delegar.**
+
+### Cada promessa do README foi conferida, não estimada
+
+Um documento de onboarding que mente custa mais que documento nenhum: quem chega não tem como
+distinguir "eu errei" de "o texto está velho". Então cada afirmação verificável foi executada.
+
+| o que o README afirma | como foi conferido | resultado |
+|---|---|---|
+| O jogo está no ar | `curl` no Pages | `200` |
+| `npm run dev` abre em `:5173` | subi o servidor e pedi a página | `VITE v8.2.1`, `200` |
+| `engine/` não pode importar de `ui/`, e o lint recusa | pus `import { celsius } from '../ui/format'` no `climate.ts` | erro do `no-restricted-imports`, com a §3 na mensagem |
+| Contraste ruim quebra a suíte, com o número no erro | troquei `--cor-rotulo` por um cinza fraco | 2 testes falharam: `cor-rotulo sobre cor-fundo: 2.40:1: expected 2.39… to be >= 4.5` |
+| JSON quebrado é pego pelo `npm test` | vírgula dupla na linha 6 do `skills.json` | `SyntaxError: Expected double-quoted property name in JSON at position 149 (line 6 column 62)` |
+
+Os quatro sabotados foram restaurados e a suíte fechou verde de novo. **A última linha é a que mais
+vale para o `[D-Historia]`:** o erro aponta linha e coluna, então "rodei `npm test` e ele reclamou"
+é instrução suficiente para alguém que nunca abriu um `.json`.
+
+### Duas coisas que o README não faz, de propósito
+
+**Não repete a `FORMA-DE-TRABALHO.md`.** Ele lista as oito regras que mais pegam quem chega e aponta
+para o arquivo. Dois textos com as mesmas regras discordam em três semanas, e o que fica errado é
+sempre o secundário.
+
+**Não tem seção de "como contribuir" com fluxo de branch e PR.** O `FORMA-DE-TRABALHO.md §4.1` já é
+o dono disso, e o projeto está em modo solo — inventar um fluxo de PR para uma equipe que ainda não
+existe seria escrever ficção no arquivo que deveria ser o mais confiável do repositório.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run format:check
+  ```
+
+  E o arquivo em si: abrir o `README.md` no GitHub e conferir se o *badge* da CI renderiza verde.
+
+- **Pendente:**
+  - **O *badge* da CI nunca foi visto renderizado.** A URL foi montada a partir do
+    `.github/workflows/ci.yml` e do remoto; só quem confere é o GitHub, depois do push.
+  - **O `docs/NARRATIVA.md` é citado e não existe.** É o contrato do `[D-Historia]` dizendo onde a
+    narrativa vai morar; nasce com o pacote. Citado no README como "ainda não existe".
+  - **O README não cita o `P7-05` como bloqueio formal do `[D-Musica]`** — só descreve o estado. Se
+    o grupo se formar antes do `P7-05`, essa dependência precisa virar linha no `PLANO.md`.
+- **Evidência:** nenhuma nova — o entregável é o próprio `README.md`.
+
+---
+
+## 2026-09-06 — A suíte estava verde com dois erros no rodapé
+
+- **Parte / tarefa:** correção do `P8-04` — não é item novo do `PLANO.md`, e nenhum checkbox mudou
+- **O que mudou:**
+  - `tests/setup-jsdom.ts` — dublê de `Element.prototype.scrollIntoView`, com o porquê escrito.
+  - `tests/acessibilidade.dom.test.ts` — um teste novo, que espia a rolagem do salto.
+  - Suíte: 671 → **672**. E, o que importa mais: **`Errors 2` → nenhum**.
+
+### O que estava acontecendo
+
+Abrindo a sessão, a verificação de rotina terminava assim:
+
+```
+Test Files  38 passed (38)
+     Tests  671 passed (671)
+    Errors  2 errors
+```
+
+Os dois vinham do mesmo lugar, e entraram junto com o `P8-04`, uma semana atrás:
+
+```
+TypeError: target.scrollIntoView is not a function
+ ❯ src/ui/skip-link.ts:62
+```
+
+jsdom não faz layout. Sem viewport, sem posição de elemento e sem rolagem,
+`Element.prototype.scrollIntoView` não é um método que erra — é um nome que **não existe**.
+Conferido no jsdom 30.0.1: `Object.getOwnPropertyDescriptor(Element.prototype, 'scrollIntoView')`
+devolve `undefined`.
+
+### Por que uma semana inteira não bastou para notar
+
+Esta é a parte que vale mais que o conserto. **Um erro lançado dentro de um ouvinte de evento não
+derruba o teste que despachou o evento.** O ouvinte não roda na pilha do `expect`; quem recolhe o
+que ele lança é o Vitest, no fim de tudo, como *unhandled error*.
+
+Os dois testes envolvidos — "o clique leva o foco junto, e não só a rolagem" e "não deixa a URL
+virar rota" — continuavam passando com razão: o `preventDefault` e o `focus()` acontecem nas linhas
+**anteriores** à que estourava. Cada um media o que se propôs a medir. O relatório fechava com "671
+passed" em verde e o problema em três linhas de rodapé.
+
+O próprio Vitest escreve ali: *"This might cause false positive tests."* Ele tem razão, e a regra
+que fica é curta: **suíte verde com erro no rodapé não é suíte verde.** O `§1.5` da
+`FORMA-DE-TRABALHO.md` exige `test` passando — e "passando" precisa incluir o rodapé.
+
+### Onde o conserto foi parar, e por que não no código de produção
+
+A saída óbvia era um `if (typeof target.scrollIntoView === 'function')` no `skip-link.ts`. Ela está
+errada por dois motivos:
+
+- Põe no código de produção um galho que **nunca é falso em navegador nenhum**, só para agradar o
+  ambiente de teste.
+- Pior: engole em silêncio. No dia em que a chamada sumisse por acidente, o `if` continuaria verde.
+
+O buraco é do jsdom, então o conserto é do jsdom — e o `tests/setup-jsdom.ts` existe exatamente
+para isso desde o `P6-07`, onde consertou o `localStorage` que o Node 22 ocupava. O dublê é um
+método de corpo vazio: ele devolve o nome para que a chamada aconteça e **possa ser observada**.
+
+### O teste novo é um espião, e não um `expect` de fachada
+
+O dublê sozinho faria os erros sumirem sem provar nada — e erro que some sem teste volta. O teste
+novo usa `vi.spyOn(tree, 'scrollIntoView')`, que **exige que o método exista**: se o dublê sair do
+setup, ele falha com nome e linha.
+
+Conferido quebrando de propósito, com o galho do setup trocado por `false`:
+
+```
+× rola o alvo até o topo, além de focá-lo
+  Error: The property "scrollIntoView" is not defined on the object.
+Tests  1 failed | 15 passed (16)
+```
+
+Que é exatamente a diferença que se queria: antes o problema aparecia como `Errors 2` num rodapé,
+agora aparece como um teste com nome.
+
+A asserção confere o **argumento** (`{ block: 'start' }`), e não só que houve chamada. `start` é o
+que põe o topo da seção na tela; rolar até o meio depois de um salto deixaria o cabeçalho do bloco
+fora de vista — justamente o que quem pulou precisa ler para saber onde caiu.
+
+### Uma varredura, para saber se havia mais
+
+`grep` em `src/` por `scrollIntoView`, `scrollTo`, `matchMedia`, `.animate(`, `getContext`,
+`ResizeObserver` e `IntersectionObserver`. Os únicos achados são o `skip-link.ts:62` e dois
+`requestAnimationFrame` no `main.ts` (mais duas menções em comentário). O `main.ts` não é montado
+em jsdom por teste nenhum, e o jsdom implementa `requestAnimationFrame`. Não havia mais nada.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm run test && npm run lint && npm run build && npm run format:check
+  npx vitest run tests/acessibilidade.dom.test.ts   # 16 passando
+  ```
+
+  No rodapé do `npm run test`, a linha `Errors` **não aparece mais**.
+
+- **Pendente:**
+  - **O dublê é global e mudo.** Todo teste em jsdom passa a ter um `scrollIntoView` que não faz
+    nada. Hoje só o link de pulo chama o método; se um dia a rolagem virar comportamento que
+    importa em outro lugar, o dublê passa a esconder o que aquele teste deveria medir.
+  - As pendências do `P8-04` continuam **todas** abertas: nenhum leitor de tela de verdade, o link
+    de pulo cobrindo o `<h1>` quando em foco, a barra de espaço comprando o nó na árvore e o
+    `[tabindex='-1']:focus` como seletor global numa folha de módulo.
+- **Evidência:** nenhuma nova — o que mudou não aparece na tela, aparece no rodapé do terminal.
+
+---
+
 ## 2026-08-29 — Passagem de acessibilidade: dois dos três eixos já passavam, e o terceiro estava furado
 
 - **Parte / tarefa:** `P8-04` ✔
