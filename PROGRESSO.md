@@ -126,10 +126,14 @@ como ele está.
 - **Pendente:**
   - **As duas decisões do `§6`** — o protótipo de papel e a entrega da Parte 2. Ficam abertas até
     você decidir; não são bloqueio para mais nada.
-  - **O `docs/GDD.md` está desatualizado em dois pontos**, e o `§12` não me deixa mexer nele sem
-    pedir: o título ainda diz `(codinome provisório)` e o `§8` ainda lista "Nome definitivo do jogo"
-    como decisão pendente — o `P1-04` ratificou **Ponto de Virada** em 2026-08-26. O `§8` também
-    continua marcando o áudio e a direção de arte como pendentes, o que ainda é verdade.
+  - ~~**O `docs/GDD.md` está desatualizado em dois pontos.**~~ **Corrigido no mesmo dia**, com
+    autorização pedida e dada no chat, como o `§12` exige: o título perdeu o `(codinome
+    provisório)` e o `§8` marca o nome como decidido, apontando para o `P1-04` e a data. Foram as
+    duas únicas ocorrências no arquivo, e nenhum teste lê `.md` — as citações ao GDD espalhadas
+    por `tests/` são todas comentário.
+  - **O cabeçalho do `§8` do GDD ainda diz "resolver com a equipe antes da Parte 4"**, e a Parte 4
+    já passou com quatro dos cinco itens em aberto. Não mexi: trocar aquele prazo é decidir um
+    prazo novo, e isso é seu, não meu.
   - **O `ESCOPO.md` não está citado no `CLAUDE.md` nem na tabela de arquivos da
     `FORMA-DE-TRABALHO.md`**, e os dois são "não editar sem pedir". Acrescentei ele ao índice do
     `README.md`, que é meu; os outros dois ficam para você. Um documento de escopo que ninguém acha

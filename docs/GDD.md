@@ -1,4 +1,4 @@
-# GDD — "Ponto de Virada" (codinome provisório)
+# GDD — Ponto de Virada
 
 > **Documento de Design do Jogo.** Descreve *o que o jogo é* e *como ele se comporta*.
 > É a fonte da verdade do design: se o código discordar deste arquivo, o código está errado.
@@ -356,7 +356,7 @@ Espelha as 8 partes do plano de ensino. Cada aula precisa de **algo jogável ou 
 
 ## 8. Decisões pendentes (resolver com a equipe antes da Parte 4)
 
-- [ ] Nome definitivo do jogo
+- [x] Nome definitivo do jogo — **Ponto de Virada**, ratificado no `P1-04` em 2026-08-26
 - [ ] Formar o grupo e distribuir os 3 pacotes delegáveis (Design, Música, História) — ver `PLANO.md`
 - [ ] Direção de arte (pixel art? flat vetorial? mapa estilizado?)
 - [ ] Trilha e efeitos sonoros (fonte CC0)
