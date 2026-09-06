@@ -92,8 +92,13 @@ export const ui = {
   // do jogador, a lógica invertida do *Plague Inc*, e a tensão de não haver PAC
   // para comprar tudo. São três linhas de propósito: o `§2.1` do GDD fecha
   // avisando que a mensagem do ODS 13 está "embutida na mecânica — não em um
-  // texto de tutorial". O pitch definitivo é do `P1-01` e a narrativa é do
-  // pacote [D-Historia].
+  // texto de tutorial".
+  //
+  // **O `P1-01` conferiu estas três e as manteve.** O one-pager
+  // (`docs/CONCEITO.md`) escreve o pitch em cinco linhas; as duas que sobram
+  // são o enquadramento da catraca e os números do déficit de PAC, e nenhuma
+  // das duas cabe numa tela de título sem empurrar o botão de começar para
+  // fora da dobra. A narrativa continua sendo do pacote [D-Historia].
   title: {
     label: 'Início',
     pitch: [

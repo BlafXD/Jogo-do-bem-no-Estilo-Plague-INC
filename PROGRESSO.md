@@ -28,6 +28,111 @@ Regras curtas:
 
 ---
 
+## 2026-09-06 — O one-pager, e as duas frases bonitas que eu inventei antes de conferir
+
+- **Parte / tarefa:** `P1-01` ✔
+- **O que mudou:**
+  - `docs/CONCEITO.md` **criado** — uma página, de propósito.
+  - `src/data/i18n.ts` — só um comentário: o ponteiro que apontava para esta tarefa.
+  - `PLANO.md` e `README.md` — checkbox e índice.
+
+### O formato é a metade da tarefa
+
+Os outros documentos que escrevi esta semana têm o tamanho que o assunto pede. Este não pode: um
+one-pager que ocupa três páginas não é um one-pager, é um documento com o nome errado. Ele entrega
+as três coisas que o `PLANO.md` pede — pitch de 5 linhas, fantasia do jogador, dilema central — mais
+uma ficha técnica de cinco linhas, e para.
+
+**O teste do formato é ler em voz alta.** É isso que o `P8-06` (cartaz, pitch de 60s) e o `P8-07`
+(slides) vão fazer com ele.
+
+### O que deu errado: duas frases inventadas, num documento que vira cartaz
+
+Esta é a parte que precisa ficar registrada, porque o erro foi de tipo perigoso.
+
+**1. "Financiar a Ásia Oriental este ano é não financiar a África."** Escrevi isso na seção da
+fantasia do jogador. É uma boa frase. **E descreve uma mecânica que o jogo não tem.** Conferido:
+
+```
+alvos dos efeitos: {"global": 26, "(sem alvo)": 3}
+algum nó com alvo regional? NÃO — todos globais
+```
+
+A contenção da Inércia também é global (`contain(state)` não recebe região). **Não existe gasto
+regional em lugar nenhum do jogo.** Eu tinha lido o `§3` do GDD, onde o tipo `Effect` permite
+`target: RegionId | 'global'`, e confundi *o que o contrato admite* com *o que os dados usam*.
+
+**2. "A ressaca escolhe a costa."** O evento "Ressaca e maré de tempestade" tem `targets: "any"` —
+ele cai em qualquer região. A imagem era boa e era falsa.
+
+**A versão verdadeira ficou melhor que a inventada**, o que costuma acontecer. As regiões não são
+onde você gasta — são **onde você vê a conta chegar**: os eventos escolhem regiões por nome, o mapa
+mostra onde doeu, e as suas compras são todas planetárias. Você assiste a seca atingir a África com
+uma solução global no bolso, sem conseguir apontá-la para lá. Isso é impotência de verdade, e é o
+que o código faz.
+
+Os dois exemplos que ficaram foram conferidos no `events.json`: a **Seca** inclui `af`, e o
+**Branqueamento de corais** (`la,ea,sa,oc`) de fato nunca chega à Europa.
+
+**A lição, e por que ela é maior aqui:** um one-pager é o documento com maior chance de ser
+**reimpresso sem revisão** — ele vira cartaz, slide e fala de 60 segundos. Uma frase inventada aqui
+sai da gráfica antes de alguém notar. A regra 9 da `FORMA-DE-TRABALHO.md` proíbe número climático
+sem fonte; o mesmo rigor precisa valer para **afirmação sobre a própria mecânica**, e a fonte é o
+`src/data/`.
+
+### Uma terceira, menor, também corrigida
+
+Escrevi *"agir em 2030 e agir em 2060 compram a mesma coisa por preços completamente diferentes"*.
+Está de trás para frente: o custo em PAC de um nó **não muda com o ano** — o que muda é o que ele
+entrega. Virou "o mesmo nó custa o mesmo PAC em 2030 e em 2060, e entrega resultados que não se
+comparam: um corta setenta anos de emissão, o outro corta quarenta."
+
+### Um susto que não era erro
+
+Quase registrei uma inconsistência no `docs/BALANCEAMENTO.md`: ele fala em "750 PAC que a partida
+entrega" e, duas linhas depois, em "16 dos 20 nós — 65% das 1600 PAC". Parecia contradição.
+
+**São dois cenários diferentes, e a tabela do §182 diz isso claramente:** sem tocar no ramo
+Sociedade a partida arrecada 750 (46,9% da árvore, 53,1% fora de alcance); comprando os dois nós de
+PAC cedo, arrecada 1047 (65,5%, e os 34,5% que o `P3-04` pedia). E os "quatro nós de 140 PAC" são os
+quatro fora de Sociedade — há cinco no total, um por ramo. Nada errado; eu que li duas linhas como
+se fossem uma. **Conferir antes de reportar valeu mais do que teria valido reportar rápido.**
+
+### O pitch da tela de título fica como está
+
+O comentário do `i18n.ts` dizia, desde o `P5-06`, *"o pitch definitivo é do `P1-01`"*. Agora o
+`P1-01` existe, e o veredito é **não mexer**: as três linhas na tela são as linhas 2, 3 e 5 do
+one-pager, comprimidas e corretas. As duas que o one-pager acrescenta — o enquadramento da catraca e
+os números do déficit — não cabem numa tela de título sem empurrar o botão de começar para fora da
+dobra.
+
+Atualizei o comentário para registrar isso, em vez de deixá-lo apontando para uma tarefa concluída.
+É a única linha de `.ts` desta entrada, e é comentário.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run format:check
+  ```
+
+  E, para as duas frases que caíram:
+
+  ```bash
+  node -e "const s=require('./src/data/skills.json');console.log(s.every(n=>n.effects.every(e=>!e.target||e.target==='global')))"   # true
+  node -e "console.log(require('./src/data/events.json').find(e=>e.id==='storm-surge').targets)"                                    # any
+  ```
+
+- **Pendente:**
+  - **O pitch de 60 segundos do `P8-06` ainda não existe.** As cinco linhas lidas em voz alta dão
+    perto de 30 s, então elas são a semente e não a peça pronta. Fica com o cartaz.
+  - **A seção da fantasia descreve as 8 regiões como diferenciação real.** Elas diferenciam onde o
+    dano cai e onde o apoio erode — não a estratégia de compra, porque não há compra regional. O
+    `docs/GDD.md §2.3` promete "regiões diferentes = estratégias diferentes", e **hoje isso é
+    verdade só pela metade.** Não é tarefa deste one-pager, mas é candidato a achado do `P8-02`.
+- **Evidência:** nenhuma nova — o entregável é o próprio `docs/CONCEITO.md`.
+
+---
+
 ## 2026-09-06 — A Parte 4 fechou: o cronograma que é quase todo retrospectivo, e o custo contado de dois jeitos
 
 - **Parte / tarefa:** `P4-02` ✔ · `P4-03` ✔ — **a Parte 4 fecha com 5 de 6** (só o `P4-05` fica, e

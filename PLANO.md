@@ -91,7 +91,7 @@ Edita **apenas** `src/data/*.json` (campos `name`, `description`, `fact`) e `doc
 
 Objetivo: **provar que a ideia é divertida antes de escrever código.**
 
-- [ ] `P1-01` One-pager do conceito: pitch de 5 linhas, fantasia do jogador, dilema central — **P**
+- [x] `P1-01` One-pager do conceito: pitch de 5 linhas, fantasia do jogador, dilema central — **P** — *`docs/CONCEITO.md`; confirmou o pitch de 3 linhas da tela de título, que fica como está*
 - [ ] `P1-02` Protótipo de papel *print and play*: 12 cartas de habilidade, 8 cartas de evento, ficha de indicadores — **M**
 - [ ] `P1-03` Playtest do protótipo com 2 pessoas quaisquer (colega, família) — **M** — aceite: `docs/playtests/01-papel.md` com 3 problemas encontrados
 - [x] `P1-04` Escolher o nome do jogo — **P** — **Ponto de Virada**
