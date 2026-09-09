@@ -143,7 +143,7 @@ jsdom prova.
 - **Como verificar:**
 
   ```bash
-  npm run typecheck && npm test && npm run lint && npm run build && npm run build:feira && npm run format:check
+  npm run check              # os seis de uma vez, ~30 s — o atalho criado hoje
   find dist-feira -type f    # um arquivo só
   # O gerador é determinístico: rodar de novo reescreve os mesmos bytes.
   md5sum src/assets/audio/*.wav > /tmp/antes && node scripts/gerar-audio.mjs && md5sum -c /tmp/antes
@@ -167,6 +167,22 @@ jsdom prova.
 - **Evidência:** `docs/evidencias/2026-09-09-p7-05-som-no-evento-critico.jpg` — o instante em que o
   `alert.wav` disparou: o aviso de tempo pausado, o cartão CRÍTICO e o botão "● Silenciar" no mesmo
   quadro.
+
+### Emenda do mesmo dia: `npm run check`
+
+Pedido no chat, depois da entrega acima. A sequência de seis comandos que fecha toda tarefa virou um
+script no `package.json`, com a **mesma ordem** de sempre — que é a da regra 5 e a da CI, para uma
+falha local e uma falha no pull request significarem a mesma coisa.
+
+Ele chama os seis já existentes em vez de repetir as linhas de comando deles. Isso faz o `tsc` rodar
+três vezes (`typecheck`, `build`, `build:feira`), o que custa ~7 s dos 31. Chamar `vite build`
+direto economizaria esse tempo, mas duplicaria a definição do build em dois lugares do
+`package.json` — e o dia em que um mudasse sem o outro seria pago mais caro do que 7 segundos.
+
+**O achado que veio junto: o `build:feira` não está na CI.** O `.github/workflows/ci.yml` roda cinco
+dos seis; o build de arquivo único — a garantia de que o jogo abre de um pendrive sem internet — só
+é conferido quando alguém o roda à mão. Uma quebra ali passa verde no pull request. Entrou no
+`check` por isso; **pôr na CI é uma linha e continua em aberto.**
 
 ---
 

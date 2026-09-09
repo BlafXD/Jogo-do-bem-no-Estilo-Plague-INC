@@ -54,6 +54,7 @@ configuração sozinha nem sempre é respeitada.
 
 | Comando               | O que faz                                                                                   |
 | --------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run check`       | **Os seis abaixo, em sequência.** É o comando de "terminei" — ~30 s                          |
 | `npm run dev`         | Servidor de desenvolvimento, com recarga automática                                          |
 | `npm run typecheck`   | Só confere tipos (`tsc --noEmit`)                                                            |
 | `npm test`            | Roda a suíte inteira uma vez                                                                 |
@@ -71,11 +72,25 @@ configuração sozinha nem sempre é respeitada.
 ### Antes de considerar qualquer coisa pronta
 
 ```bash
-npm run typecheck && npm test && npm run lint && npm run build && npm run format:check
+npm run check
 ```
 
-Os cinco, nesta ordem. É a regra 5 da `FORMA-DE-TRABALHO.md` e é exatamente o que a CI roda em todo
-pull request — se um falhar aqui, ele falha lá.
+Ele é só o atalho para esta sequência, que é a que importa:
+
+```bash
+npm run typecheck && npm test && npm run lint && npm run build && npm run build:feira && npm run format:check
+```
+
+**A ordem não é decorativa.** É a regra 5 da `FORMA-DE-TRABALHO.md`, e é a mesma da CI — se um falhar
+aqui, ele falha lá. O `typecheck` vem antes do `test` porque o Vitest **não confere tipo**: em
+2026-09-06 um teste com o tipo errado passou na suíte e só o `tsc` acusou.
+
+O `check` roda os seis em cerca de 30 segundos. Rodar um por um continua valendo enquanto se
+trabalha — `npm run test:watch` numa aba é mais rápido do que a sequência inteira a cada mudança; o
+`check` é para o fim, antes de ler o diff e commitar.
+
+> **Só o `build:feira` não está na CI.** Os outros cinco rodam em todo pull request; o build de
+> arquivo único é conferido apenas quando alguém o roda à mão. É por isso que ele entra no `check`.
 
 **"Passando" inclui o rodapé.** O Vitest consegue terminar com todos os testes verdes e uma linha
 `Errors N` embaixo: erro lançado dentro de um ouvinte de evento não derruba o teste que o disparou,
