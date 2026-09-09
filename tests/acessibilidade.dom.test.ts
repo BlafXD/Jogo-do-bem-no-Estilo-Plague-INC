@@ -159,7 +159,16 @@ describe('a guarda dos atalhos de tempo', () => {
 describe('os blocos do cabeçalho têm nome que chega ao leitor de tela', () => {
   const casos = [
     ['HUD', (root: Element) => mountHud(root), ui.hudLabel],
-    ['controle de tempo', (root: Element) => mountControls(root, () => {}), ui.controls.label],
+    [
+      'controle de tempo',
+      (root: Element) =>
+        mountControls(
+          root,
+          () => {},
+          () => {},
+        ),
+      ui.controls.label,
+    ],
     [
       'barra da partida',
       (root: Element) =>
@@ -184,7 +193,11 @@ describe('os blocos do cabeçalho têm nome que chega ao leitor de tela', () => 
 describe('os atalhos aparecem na tela', () => {
   it('a barra de tempo escreve os atalhos, e não só os põe no title', () => {
     const root = document.createElement('div');
-    mountControls(root, () => {});
+    mountControls(
+      root,
+      () => {},
+      () => {},
+    );
 
     expect(root.querySelector('.ctl__shortcuts')?.textContent).toBe(ui.controls.shortcuts);
   });

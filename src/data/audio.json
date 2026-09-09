@@ -1,0 +1,5 @@
+{
+  "unlock": { "file": "unlock.wav", "volume": 0.45 },
+  "alert": { "file": "alert.wav", "volume": 0.6 },
+  "outcome": { "file": "outcome.wav", "volume": 0.5 }
+}

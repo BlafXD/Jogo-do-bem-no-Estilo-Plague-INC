@@ -35,12 +35,25 @@ projeto — confirmado no chat em 2026-09-06. Nenhuma marca, empresa ou ONG real
 
 ## Áudio
 
-Nenhum ainda. Previsto em `P7-05`: três efeitos CC0 e botão de mudo. Trilha é do
-pacote `[D-Musica]`.
+**Os três efeitos são da casa, e nenhum deles foi baixado.** O `P7-05` pedia "3 efeitos CC0", e o
+contrato do `[D-Musica]` no `PLANO.md` aceita "autoral **ou** CC0"; a segunda metade é a que valeu,
+por duas razões práticas. Esta máquina não tem `ffmpeg` nem `oggenc`, então produzir `.ogg` aqui não
+era possível — e trazer arquivo de terceiro obrigaria a verificar de fora uma licença que a regra 10
+não deixa errar, escolhendo som pelo nome do arquivo em vez de pelo som.
+
+O `scripts/gerar-audio.mjs` soma seno e decaimento exponencial e escreve os três WAV. **A autoria
+fica satisfeita por construção, não por promessa**, e o resultado é reproduzível: rodar o script de
+novo escreve exatamente os mesmos bytes (não há sorteio nenhum ali — regra 7).
+
+**São andaime, e existem para serem trocados.** O `[D-Musica]` entrega `.ogg` na mesma pasta e
+corrige o campo `file` do `src/data/audio.json`; nenhum arquivo `.ts` muda, e o script pode ser
+apagado no mesmo dia. A trilha em loop continua sendo do pacote.
 
 | Arquivo | Autor | Licença | Origem |
 |---|---|---|---|
-| — | — | — | — |
+| `src/assets/audio/unlock.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
+| `src/assets/audio/alert.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
+| `src/assets/audio/outcome.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
 
 ## Fontes tipográficas
 

@@ -130,7 +130,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 - [x] `P4-02` Cronograma aula a aula — **M** — *`docs/CRONOGRAMA.md`; retrospectivo em dois terços, e falta a data da feira para o resto virar calendário*
 - [x] `P4-03` Estimativa de custo: horas × valor-hora, assets, hospedagem — **P** — *`docs/CUSTO.md`; o valor-hora é premissa sua, está isolado numa seção só*
 - [x] `P4-04` `README.md` de onboarding: como rodar o projeto + os 3 contratos de pacote acima — **M** — *destrava a entrada do grupo sem me custar tempo depois*
-- [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes*
+- [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes.* **2026-09-09: o `[D-Musica]` ficou pronto para entregar** — o `P7-05` deixou a pasta, o manifesto e o teste que cobra os dois; falta só a metade dos ícones do `[D-Design]`
 - [x] `P4-06` **M1** — `SETUP-01` a `SETUP-07` concluídos e Pages no ar — **marco**
 
 ---
@@ -167,7 +167,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P7-02` Cartão de evento com o fato real + auto-pausa em evento crítico — **M**
 - [x] `P7-03` `engine/inertia.ts`: ações do antagonista a cada ~6 ticks — **M**
 - [x] `P7-04` Feedback visual: o mapa muda com a temperatura; alertas por região — **M**
-- [ ] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P**
+- [x] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P** — *os efeitos saíram **autorais** e não CC0: sem `ffmpeg` na máquina não dava para produzir `.ogg`, e o contrato do `[D-Musica]` aceita "autoral ou CC0". O `scripts/gerar-audio.mjs` escreve os três WAV; o cargo troca por `.ogg` e corrige o `src/data/audio.json`, sem tocar em `.ts`*
 - [x] `P7-06` Telas de fim com gráfico da linha do tempo da partida — **G**
 - [x] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**
 - [x] `P7-08` Tutorial: **4 passos contextuais** no modo padrão e **um painel curto** no Modo Feira, com "Pular" nos dois — **M** — *o painel da feira foi decidido no chat em 2026-08-26; ele substitui os 4 passos, não soma com eles*

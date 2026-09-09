@@ -106,6 +106,45 @@ function refuse(reason: SaveRefusal): null {
   return null;
 }
 
+/**
+ * A preferência de som (P7-05).
+ *
+ * **Chave própria, e não um campo do save.** Mudo é do aparelho, não da
+ * partida: quem silenciou o computador do estande quer que ele siga silencioso
+ * na partida seguinte, e no Modo Feira — que não salva nada (P7-07) — a escolha
+ * precisa sobreviver do mesmo jeito. Guardá-la no save também obrigaria a subir
+ * o `SAVE_VERSION` por um dado que não muda uma vírgula do clima.
+ */
+export const MUTE_KEY = 'ponto-de-virada:mudo';
+
+/** Guarda a preferência. Devolve se conseguiu — o som segue de qualquer jeito. */
+export function saveMuted(muted: boolean): boolean {
+  const store = storage();
+  if (store === null) return false;
+
+  try {
+    store.setItem(MUTE_KEY, muted ? '1' : '0');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A preferência guardada. **Sem preferência é com som**, e não mudo: um jogo
+ * calado por padrão faria o P7-05 inteiro parecer quebrado no estande.
+ */
+export function loadMuted(): boolean {
+  const store = storage();
+  if (store === null) return false;
+
+  try {
+    return store.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 /** Apaga a partida guardada. É o que o botão de reiniciar chama. */
 export function clearGame(): boolean {
   const store = storage();

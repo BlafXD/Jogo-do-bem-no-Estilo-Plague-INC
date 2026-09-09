@@ -133,13 +133,23 @@ export function applyCommand(control: TimeControl, command: TimeCommand | null):
 // ----------------------------------------------------------------- DOM ---
 
 /**
- * Monta a barra de controle: um botão de pausa e um por velocidade.
+ * Monta a barra de controle: pausa, uma velocidade por botão e o som (P7-05).
  *
  * São `<button>` de verdade, e não `<div>` com clique: o §5 exige navegação por
  * teclado, e botão nativo já vem com foco, Enter, Espaço e papel de acessibi-
  * lidade sem uma linha de código.
+ *
+ * **O botão de som é montado aqui, e não pelo audio.ts**, embora o som seja de
+ * lá. Quem faz `replaceChildren` nesta barra é esta função; um segundo módulo
+ * pendurando um filho no mesmo container criaria dois donos do mesmo DOM, e o
+ * dia em que o `renderControls` precisasse redesenhar a barra o botão sumiria
+ * sem ninguém entender por quê. O audio.ts decide o que toca; a barra desenha.
  */
-export function mountControls(root: Element, onCommand: (command: TimeCommand) => void): void {
+export function mountControls(
+  root: Element,
+  onCommand: (command: TimeCommand) => void,
+  onToggleSound: () => void,
+): void {
   // `role="group"` junto do rótulo, e não o rótulo sozinho (P8-04). O
   // `#controles` é um `<div>`, e num `<div>` sem papel o `aria-label` é
   // **descartado**: a ARIA proíbe nomear o papel genérico, então o leitor de
@@ -177,6 +187,27 @@ export function mountControls(root: Element, onCommand: (command: TimeCommand) =
     return button;
   });
 
+  // O som (P7-05). Mesmo marcador ● das velocidades, e pela mesma razão: o §5
+  // proíbe estado só por cor, e "há som agora" precisa ser visível sem que
+  // ninguém toque em nada — silêncio, ao contrário do relógio parado, não se
+  // distingue de "não aconteceu nada que faça barulho".
+  const sound = document.createElement('button');
+  sound.type = 'button';
+  sound.className = 'ctl__button ctl__sound';
+  sound.dataset.control = 'sound';
+  sound.title = ui.sound.hint;
+
+  const soundMarker = document.createElement('span');
+  soundMarker.className = 'ctl__marker';
+  soundMarker.setAttribute('aria-hidden', 'true');
+  soundMarker.textContent = '●';
+
+  const soundLabel = document.createElement('span');
+  soundLabel.className = 'ctl__sound-label';
+
+  sound.append(soundMarker, soundLabel);
+  sound.addEventListener('click', onToggleSound);
+
   // Os atalhos escritos na tela (P8-04). Até aqui eles só existiam no `title` de
   // cada botão — invisível para quem navega por teclado, que é exatamente quem
   // os usa — e no primeiro passo do tutorial, que aparece uma vez, some no
@@ -185,11 +216,33 @@ export function mountControls(root: Element, onCommand: (command: TimeCommand) =
   shortcuts.className = 'ctl__shortcuts';
   shortcuts.textContent = ui.controls.shortcuts;
 
-  root.replaceChildren(pause, ...speeds, shortcuts);
+  // O som depois das velocidades e antes dos atalhos: a linha de atalhos ocupa a
+  // fileira inteira (`flex: 1 0 100%`), então qualquer botão depois dela cairia
+  // sozinho numa terceira linha.
+  root.replaceChildren(pause, ...speeds, sound, shortcuts);
 }
 
-/** Reflete o estado atual nos botões. O rótulo da pausa é texto, não cor. */
-export function renderControls(root: ParentNode, control: TimeControl): void {
+/**
+ * Reflete o estado atual nos botões. O rótulo da pausa é texto, não cor.
+ *
+ * O som chega como booleano, e não como o `Sound` do audio.ts: a barra só
+ * precisa saber se está mudo, e receber o tipo inteiro faria este módulo — que
+ * é sobre tempo — passar a depender do módulo de áudio por nada.
+ */
+export function renderControls(root: ParentNode, control: TimeControl, muted: boolean): void {
+  const sound = root.querySelector('[data-control="sound"]');
+
+  if (sound !== null) {
+    const label = sound.querySelector('.ctl__sound-label');
+    if (label !== null) label.textContent = muted ? ui.sound.unmute : ui.sound.mute;
+
+    // `is-active` quando **há** som: o marcador diz o estado, e o rótulo ao lado
+    // diz o que o clique faz. Sem `aria-pressed` de propósito — num botão cujo
+    // nome já alterna, ele anunciaria o estado duas vezes e com sinais opostos
+    // ("Silenciar, pressionado" com o som ligado).
+    sound.classList.toggle('is-active', !muted);
+  }
+
   const pause = root.querySelector('[data-control="pause"]');
 
   if (pause !== null) {

@@ -28,6 +28,7 @@ import {
   renderControls,
   type TimeCommand,
 } from './ui/controls';
+import { createSound, playSfx, toggleMute } from './ui/audio';
 import { containView, mountContain, renderContain } from './ui/contain';
 import {
   eventCardsView,
@@ -58,7 +59,7 @@ import {
   renderSession,
 } from './ui/session';
 import { mountSkipLink } from './ui/skip-link';
-import { clearGame, loadGame, saveGame } from './ui/storage';
+import { clearGame, loadGame, loadMuted, saveGame, saveMuted } from './ui/storage';
 import {
   armNewGame,
   cancelNewGame,
@@ -158,6 +159,16 @@ let control = createTimeControl();
 let session = createSession(restored === null ? null : restored.year);
 let previousFrame = performance.now();
 let shownTick = state.tick;
+
+/**
+ * O som (P7-05), lido do `localStorage` na carga.
+ *
+ * Sobrevive ao reinício e ao Modo Feira porque não é da partida: é a mesma razão
+ * de a região escolhida e a velocidade não entrarem no save, escrita logo
+ * abaixo e no controls.ts. Quem silencia o computador do estande espera que ele
+ * siga silencioso para o próximo visitante.
+ */
+let sound = createSound(loadMuted());
 
 /**
  * O tick do evento crítico que já parou o relógio (P7-02).
@@ -290,8 +301,20 @@ function handleCommand(command: TimeCommand | null): void {
   // faria a tela afirmar que o jogo está parado enquanto ele anda.
   if (!control.paused) autoPaused = false;
 
-  renderControls(controls, control);
+  renderControls(controls, control, sound.muted);
   renderEvents();
+}
+
+/**
+ * Ligar e desligar os efeitos sonoros (P7-05).
+ *
+ * Grava na hora, e fora do `persist`: a preferência tem chave própria e vale
+ * mesmo no Modo Feira, onde o `persist` não escreve nada de propósito.
+ */
+function handleToggleSound(): void {
+  sound = toggleMute(sound);
+  saveMuted(sound.muted);
+  renderControls(controls, control, sound.muted);
 }
 
 /** Os cartões de evento e o aviso de auto-pausa. */
@@ -320,6 +343,11 @@ function checkAutoPause(): void {
 
   pausedForTick = newest;
   autoPaused = true;
+  // O som acompanha a auto-pausa, e não a chegada de um evento qualquer: quem
+  // decide o que merece interromper a partida é esta função, e o alerta existe
+  // para explicar por que o tempo parou sozinho — inclusive para quem estava
+  // olhando para outro canto da tela.
+  playSfx(sound, 'alert');
   handleCommand({ kind: 'pause' });
 }
 
@@ -577,6 +605,10 @@ function handleUnlock(id: SkillId): void {
   if (next === state) return;
 
   state = next;
+  // Depois da comparação por identidade, e não antes: uma compra recusada não
+  // faz barulho, senão o som viraria mentira — o clique mais frustrante do jogo
+  // é o do nó caro demais, e ele soaria igual ao que deu certo.
+  playSfx(sound, 'unlock');
   renderGame();
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
   // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá
@@ -611,7 +643,7 @@ function handleContain(): void {
 // fica honesta com o que a pessoa encontra primeiro.
 mountSkipLink(pular, tabuleiro, tree);
 mountHud(hud);
-mountControls(controls, handleCommand);
+mountControls(controls, handleCommand, handleToggleSound);
 mountEventCards(eventos);
 mountMap(mapa, mapView(state, selectedRegion), handleSelect);
 mountRegionPanel(regiao, handleCloseRegion);
@@ -702,7 +734,7 @@ const tutorialPanel = mountTutorialPanel(handleDismissPanel);
 mountTree(tree, treeView(state), handleUnlock);
 
 renderGame();
-renderControls(controls, control);
+renderControls(controls, control, sound.muted);
 renderSessionBar();
 
 document.addEventListener('keydown', (event) => {
@@ -791,6 +823,14 @@ function frame(now: number): void {
   // mesma razão de o engine ser chamado durante a pausa: um laço que se desliga
   // precisa ser religado no reinício, e um `previousFrame` velho entregaria o
   // intervalo inteiro de uma vez no primeiro quadro da partida nova.
+  // Lido antes do passo para ser comparado depois dele (P7-05). Duas leituras da
+  // mesma pergunta em volta do avanço é o que identifica **o quadro** em que a
+  // partida acabou — e o som de fim precisa tocar uma vez, não a cada quadro da
+  // tela de fim. Uma variável de longa vida faria o mesmo, mas teria que ser
+  // zerada no reinício, no Modo Feira e na volta ao título; esta não tem como
+  // ficar desatualizada.
+  const finishedBefore = isFinished(state);
+
   const step = advanceRealTime(
     state,
     clock,
@@ -800,13 +840,15 @@ function frame(now: number): void {
     // sendo chamado em todo quadro — é ele que mantém o `previousFrame`
     // fresco, e é por isso que sair do título não entrega de uma vez o tempo
     // que a pessoa passou lendo o pitch.
-    currentScreen(screens, isFinished(state)) === 'game' ? effectiveSpeed(control) : 0,
+    currentScreen(screens, finishedBefore) === 'game' ? effectiveSpeed(control) : 0,
     isFinished,
   );
 
   previousFrame = now;
   state = step.state;
   clock = step.clock;
+
+  if (!finishedBefore && isFinished(state)) playSfx(sound, 'outcome');
 
   // Redesenha só quando o mês vira. Sem isto seriam 60 escritas por segundo no
   // DOM para mostrar exatamente os mesmos textos.

@@ -65,6 +65,20 @@ export const ui = {
   },
 
   /**
+   * O botão de som, na mesma barra da pausa e das velocidades.
+   *
+   * **O rótulo é a ação, e não o estado** — é o mesmo contrato do botão de
+   * pausa, que alterna entre "Pausar" e "Retomar": quem lê "Silenciar" sabe que
+   * há som agora. Quem enxerga tem ainda o marcador ● e a borda grossa quando o
+   * som está ligado, que são forma e não cor, como o §5 exige.
+   */
+  sound: {
+    mute: 'Silenciar',
+    unmute: 'Ativar som',
+    hint: 'Liga e desliga os três efeitos sonoros. A escolha vale para as próximas partidas.',
+  },
+
+  /**
    * O link de pulo (P8-04).
    *
    * Medido no navegador: uma partida em curso tem **35 paradas de tabulação**,

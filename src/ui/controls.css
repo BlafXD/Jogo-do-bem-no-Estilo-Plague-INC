@@ -54,6 +54,20 @@
   font-weight: 600;
 }
 
+/* O botão de som (P7-05).
+
+   Largura fixa pela mesma razão da pausa: o rótulo alterna entre "Silenciar" e
+   "Ativar som", e sem isto a barra inteira se desloca a cada clique.
+
+   Ele reusa o .ctl__marker e o .is-active das velocidades de propósito — o
+   marcador ● e a borda grossa já significam "este é o estado atual" nesta barra,
+   e inventar um segundo vocabulário visual para dizer a mesma coisa custaria
+   leitura sem ganhar nada. */
+.ctl__sound {
+  min-width: 9.5rem;
+  justify-content: center;
+}
+
 .ctl__marker {
   /* Sempre no DOM, só invisível: reservar o espaço evita que o botão mude de
      largura ao ser escolhido. */

@@ -28,6 +28,148 @@ Regras curtas:
 
 ---
 
+## 2026-09-09 — O jogo faz barulho: os três efeitos e o botão de mudo
+
+- **Parte / tarefa:** `P7-05` — **a última tarefa de código do projeto.** Com ela, a lista do que
+  falta no `docs/CRONOGRAMA.md` §3 deixa de ter "uma só é código".
+- **O que mudou:**
+  - `src/ui/audio.ts` **criado** — o manifesto, a resolução de URL, o estado de mudo e o disparo.
+  - `src/data/audio.json` **criado** — nome do arquivo e volume dos três efeitos.
+  - `src/assets/audio/*.wav` **criados** — 71 KB somados.
+  - `scripts/gerar-audio.mjs` **criado** — quem escreve os três WAV. Primeira pasta `scripts/` do
+    repositório.
+  - `src/ui/controls.ts` + `.css` — o botão de som na barra; `src/ui/storage.ts` — a preferência.
+  - `src/main.ts` — a fiação e os três disparos.
+  - `tests/audio.test.ts` e `tests/audio.dom.test.ts` **criados**; `eslint.config.js` e
+    `tests/acessibilidade.dom.test.ts` ajustados. Suíte: 677 → **693**.
+
+### "3 efeitos CC0" virou "3 efeitos autorais", e isso foi decidido antes de escrever código
+
+O `PLANO.md` pedia CC0. **Esta máquina não tem `ffmpeg` nem `oggenc`** — produzir `.ogg` aqui não
+era possível, e baixar arquivo de terceiro significaria escolher som pelo nome do arquivo e depois
+verificar de fora uma licença que a regra 10 não deixa errar. O contrato do `[D-Musica]` aceita
+*"autoral **ou** CC0"*, então a saída existia dentro das regras; foi levada ao chat como conflito
+com o `PLANO.md`, como o `CLAUDE.md` manda, e aprovada lá.
+
+O `scripts/gerar-audio.mjs` soma seno e decaimento exponencial e escreve WAV mono de 16 bits a
+22050 Hz. **A autoria fica satisfeita por construção, não por promessa.** Não há sorteio nenhum ali
+(regra 7), então rodar de novo escreve os mesmos bytes — o que faz um `git diff` num arquivo de som
+significar alguma coisa.
+
+Os três estão em Dó maior de propósito: eles tocam juntos numa mesma partida — uma compra logo
+depois de um alerta é o caso comum — e três timbres fora de escala soariam como três jogos
+diferentes.
+
+### O que o `import.meta.glob` compra, e por que ele não é enfeite
+
+**Nenhum caminho de arquivo de som está escrito em `.ts`.** O `audio.json` diz o nome, o
+`import.meta.glob('../assets/audio/*')` varre a pasta, e o `sfxUrl` casa um com o outro em tempo de
+execução. É o que faz o contrato do `[D-Musica]` valer de verdade: o cargo põe `.ogg` na pasta,
+corrige um campo do JSON, e **nenhuma linha de código muda**.
+
+O preço dessa escolha é um risco novo — um arquivo esquecido na pasta entra no bundle sem ninguém
+pedir. Por isso o `tests/audio.test.ts` varre o disco nas duas direções: todo arquivo do manifesto
+existe, e todo arquivo da pasta está no manifesto. Trocar `.wav` por `.ogg` pela metade fica
+vermelho na suíte em vez de virar silêncio na feira.
+
+### O build da feira: a previsão do `vite.config.ts` era sobre hoje
+
+O comentário do plugin de arquivo único dizia, desde o `P8-05`, que *"é por aqui que os efeitos
+sonoros do P7-05 vão avisar, em vez de quebrarem calados no estande"*. Não avisaram — o
+`assetsInlineLimit: Infinity` absorveu os três:
+
+| | antes | depois |
+|---|---|---|
+| `dist-feira/index.html` | 286 KB | **385 KB** |
+
+`find dist-feira -type f` continua devolvendo **um** arquivo.
+
+### Três decisões de interface que não são óbvias
+
+**1. Quem monta o botão é o `controls.ts`, não o `audio.ts`.** A barra é quem faz `replaceChildren`
+nela; um segundo módulo pendurando um filho ali criaria dois donos do mesmo DOM, e o dia em que a
+barra precisasse se redesenhar o botão sumiria sem explicação. O `audio.ts` decide o que toca; a
+barra desenha.
+
+**2. O botão entra antes da linha de atalhos, e há um teste só para isso.** A linha de atalhos ocupa
+a fileira inteira do flex (`flex: 1 0 100%`), então um botão depois dela cairia sozinho numa terceira
+linha da barra. É o tipo de coisa que só se vê no navegador — por isso ficou travada em teste.
+
+**3. Sem `aria-pressed`.** O rótulo alterna entre "Silenciar" e "Ativar som", que é o mesmo contrato
+do botão de pausa. Somar `aria-pressed` a um botão cujo **nome** já carrega o estado anunciaria a
+mesma coisa duas vezes, e com sinais opostos: "Silenciar, pressionado" com o som ligado. Quem
+enxerga tem o marcador ● e a borda grossa — forma, não cor, como o §5 exige.
+
+### O mudo tem chave própria, e é isso que o faz funcionar no Modo Feira
+
+`ponto-de-virada:mudo`, fora do save. Mudo é do aparelho, não da partida: quem silencia o computador
+do estande quer que ele siga silencioso para o próximo visitante — e o Modo Feira **não salva nada**
+(`P7-07`), então uma preferência guardada no save morreria ali. De quebra, evita subir o
+`SAVE_VERSION` por um dado que não muda uma vírgula do clima.
+
+### O que deu errado: a aba estava oculta, e metade do navegador dorme junto
+
+A verificação no navegador travou logo no começo — o tempo não andava, o PAC ficava em 5 e o ano em
+2025. `document.visibilityState` respondeu `hidden`: **o `requestAnimationFrame` está congelado numa
+aba de segundo plano**, e o laço de quadro do `main.ts` é quem move a simulação inteira.
+
+Dois contornos, e os dois valem para a próxima vez:
+
+- **Para o tempo:** em modo `dev` o Vite serve os módulos, então dá para
+  `await import('/src/engine/state.ts')` no console e plantar um save legítimo no `localStorage` —
+  um com PAC de sobra para comprar, outro a dois ticks dos 3 °C que encerram a partida. Verificar o
+  fim do jogo deixou de custar meia hora de relógio.
+- **Para o som:** elemento de mídia em aba oculta **não carrega** — `readyState` fica em 0 e
+  `loadedmetadata` nunca dispara. Decodificar, porém, não passa por ali: um `fetch` mais
+  `AudioContext.decodeAudioData` provou que o Chrome lê os três WAV, com as durações exatas que o
+  gerador escreveu (0,300 s · 0,500 s · 0,850 s), mono.
+
+### O que a verificação provou, com um espião no `play()`
+
+Como não dá para ouvir daqui, a prova foi trocar `HTMLAudioElement.prototype.play` por um espião:
+
+| Momento | Arquivo | Volume |
+|---|---|---|
+| Compra de um nó da árvore | `unlock.wav` | 0,45 |
+| Auto-pausa por evento crítico | `alert.wav` | 0,6 |
+| Fim da partida | `outcome.wav` | 0,5 |
+
+E mais três coisas que a suíte não alcança: **o som de fim tocou uma vez só** — a comparação
+`finishedBefore` no laço de quadro segurou, com a tela de fim no ar por vários segundos depois;
+**no mudo a compra continua acontecendo e não sai som nenhum**; e a preferência **sobreviveu ao
+recarregamento da página**, que é exatamente o que o `tests/setup-jsdom.ts` avisa que nenhum teste em
+jsdom prova.
+
+- **Como verificar:**
+
+  ```bash
+  npm run typecheck && npm test && npm run lint && npm run build && npm run build:feira && npm run format:check
+  find dist-feira -type f    # um arquivo só
+  # O gerador é determinístico: rodar de novo reescreve os mesmos bytes.
+  md5sum src/assets/audio/*.wav > /tmp/antes && node scripts/gerar-audio.mjs && md5sum -c /tmp/antes
+  ```
+
+  Na tela: `npm run dev`, entrar na partida e comprar um nó — o botão "● Silenciar" fica ao lado das
+  velocidades. Clicar nele apaga o marcador, troca o rótulo para "Ativar som" e a próxima compra sai
+  calada; recarregar a página mantém a escolha.
+
+- **Pendente:**
+  - **Ninguém ouviu os três sons ainda.** A verificação provou que o `play()` é chamado com o
+    arquivo e o volume certos, e que o Chrome decodifica os WAV — mas se eles são *agradáveis* numa
+    caixa de som de estande é julgamento que precisa de ouvido humano. Vale ouvir antes da feira; o
+    volume de cada um é um campo do `src/data/audio.json` e não pede recompilação de nada.
+  - **O botão de som não existe na tela de título.** Ele vive na barra de controle, que é do
+    cabeçalho da partida. Quem chega ao estande só consegue silenciar depois de começar a jogar.
+  - **O `alert.wav` toca só em evento crítico**, junto da auto-pausa — evento moderado continua
+    mudo. Foi decisão, não esquecimento: o alerta existe para explicar por que o tempo parou.
+  - A trilha em loop continua sendo do `[D-Musica]`, e agora ele **está pronto para ser entregue** —
+    a pasta, o manifesto e o teste que cobra os dois existem (`PLANO.md`, `P4-05`).
+- **Evidência:** `docs/evidencias/2026-09-09-p7-05-som-no-evento-critico.jpg` — o instante em que o
+  `alert.wav` disparou: o aviso de tempo pausado, o cartão CRÍTICO e o botão "● Silenciar" no mesmo
+  quadro.
+
+---
+
 ## 2026-09-06 — A equipe da agência chegou à tela de título
 
 - **Parte / tarefa:** continuação da proposta do chat — a metade narrativa do item "Personagens

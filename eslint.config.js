@@ -51,6 +51,20 @@ export default tseslint.config(
   },
 
   {
+    // Os geradores de asset (P7-05) rodam em Node, e não no navegador. Sem
+    // `@types/node` e sem o pacote `globals` — dependência nova pede aprovação
+    // (§2) —, os dois nomes que eles usam entram à mão. É a mesma escolha do
+    // tests/node-io.d.ts: declarar o punhado que se usa de verdade em vez de
+    // instalar o mundo. `no-console` não os alcança: a regra vale para `**/*.ts`
+    // e o que ela protege é o código que vai para a tela, não um script que
+    // existe para ser rodado à mão e dizer o que escreveu.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', URL: 'readonly' },
+    },
+  },
+
+  {
     // §3, regra de ouro da arquitetura: engine/ não sabe que existe uma tela.
     files: ['src/engine/**/*.ts'],
     rules: {
