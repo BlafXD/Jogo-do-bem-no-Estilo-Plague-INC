@@ -1,0 +1,148 @@
+===============================================================================
+ PONTO DE VIRADA - COMO ABRIR O JOGO
+===============================================================================
+
+ Sao tres jeitos. Escolha pelo que voce quer fazer AGORA:
+
+   MOSTRAR PARA ALGUEM ................... jeito 1 (com internet)
+                                           jeito 2 (sem internet / feira)
+   MEXER NO CODIGO ....................... jeito 3
+
+ Os comandos abaixo se digitam no terminal, DENTRO da pasta do projeto.
+ Para abrir o terminal ja na pasta certa: abra a pasta no Explorer, clique na
+ barra de endereco, escreva  cmd  e aperte Enter.
+
+
+===============================================================================
+ JEITO 1 - O LINK. NENHUM COMANDO, NENHUM ARQUIVO.
+===============================================================================
+
+   https://blafxd.github.io/Jogo-do-bem-no-Estilo-Plague-INC/
+
+ Abre no celular, no computador de qualquer pessoa, em qualquer navegador.
+ E a versao que esta na branch main - cada commit que sobe atualiza esse link
+ sozinho, em uns 2 minutos.
+
+ >> E ESTE o jeito de mostrar o jogo para alguem. Nao precisa de nada instalado.
+ >> So nao serve se nao houver internet - e ai o jeito 2 resolve.
+
+
+===============================================================================
+ JEITO 2 - UM ARQUIVO SO, SEM INTERNET (a versao da feira)
+===============================================================================
+
+ O jogo inteiro cabe num arquivo unico que abre com dois cliques, direto do
+ disco ou de um pendrive, sem internet nenhuma:
+
+   dist-feira\index.html
+
+ --- SE ESSE ARQUIVO JA EXISTE -------------------------------------------------
+
+   Clique duas vezes nele. Acabou. Nenhum comando.
+
+   (Ou clique duas vezes em  ABRIR-O-JOGO.bat , na pasta do projeto: ele
+    reconstroi o arquivo e abre no navegador, tudo de uma vez.)
+
+ --- SE ESSE ARQUIVO NAO EXISTE ------------------------------------------------
+
+   Ele nao vem junto no download do projeto - precisa ser gerado. Uma vez:
+
+     npm run build:feira
+
+   Isso cria a pasta  dist-feira  com o  index.html  dentro. Dai em diante e so
+   clicar duas vezes nele.
+
+   Refaca esse comando toda vez que o jogo mudar, senao voce vai mostrar uma
+   versao velha.
+
+ --- PARA LEVAR NUM PENDRIVE ---------------------------------------------------
+
+   Copie SO o arquivo  dist-feira\index.html . Ele nao depende de mais nada.
+
+ !! CUIDADO: o outro build, o da pasta  dist , NAO abre com dois cliques.
+    Ele mostra a pagina toda quebrada, em fonte de maquina de escrever. Isso e
+    esperado e nao e defeito - o motivo esta no P8-05. Para clicar duas vezes,
+    use sempre o  dist-feira .
+
+
+===============================================================================
+ JEITO 3 - PARA PROGRAMAR (mexer no codigo e ver na hora)
+===============================================================================
+
+ --- PRIMEIRA VEZ NESTA MAQUINA ------------------------------------------------
+
+   1) Instalar o Node.js versao 22.12 ou mais nova:  https://nodejs.org
+      Conferir se deu certo (as duas linhas tem que responder um numero):
+
+        node -v
+        npm -v
+
+   2) Baixar as dependencias do projeto, dentro da pasta dele:
+
+        npm ci
+
+      Demora alguns minutos. So precisa ser feito uma vez - ou quando alguem
+      mexer no package.json.
+
+ --- TODA VEZ, DEPOIS DISSO ----------------------------------------------------
+
+        npm run dev
+
+   Ele responde com um endereco parecido com  http://localhost:5173/  .
+   Abra no navegador. Ao salvar um arquivo, a pagina se atualiza sozinha.
+
+   Para parar o servidor: aperte  Ctrl + C  no terminal.
+
+ --- ANTES DE COMMITAR ---------------------------------------------------------
+
+        npm run check
+
+   Roda tudo (tipos, testes, lint, os dois builds e a formatacao) em ~30 s.
+   Se algum falhar, ele para ali e mostra qual foi.
+
+
+===============================================================================
+ TABELA DE BOLSO
+===============================================================================
+
+   npm ci ................. baixa as dependencias (so na primeira vez)
+   npm run dev ............ abre o jogo para desenvolver (recarrega sozinho)
+   npm run build:feira .... gera o  dist-feira\index.html  de dois cliques
+   npm run check .......... confere tudo antes de commitar
+   Ctrl + C ............... para o servidor que estiver rodando
+
+
+===============================================================================
+ PERGUNTAS QUE APARECEM SEMPRE
+===============================================================================
+
+ "O index.html da raiz do projeto nao e o jogo?"
+
+   Nao. Aquele arquivo e um molde: ele tem  <script src="/src/main.ts">  dentro,
+   e navegador nenhum sabe ler TypeScript. Clicar duas vezes nele abre uma
+   pagina vazia. Quem transforma o molde no jogo de verdade e o  npm run build
+   (ou o  build:feira ). O arquivo que abre com dois cliques e o
+   dist-feira\index.html , e so ele.
+
+ "Da para ter um icone e um executavel, em vez de comandos?"
+
+   Do jeito mais parecido: crie um atalho para  dist-feira\index.html  na area
+   de trabalho (botao direito no arquivo > Enviar para > Area de trabalho).
+   O atalho aceita icone proprio (botao direito > Propriedades > Alterar icone).
+   Um  .exe  de verdade exigiria empacotar um navegador junto do jogo, o que
+   nao esta no escopo (FORMA-DE-TRABALHO.md, secao 2).
+
+ "npm nao e reconhecido como comando"
+
+   O Node nao esta instalado, ou o terminal foi aberto antes da instalacao.
+   Feche o terminal, abra de novo e tente  node -v .
+
+ "Abri o dist-feira\index.html e o navegador reclamou de arquivo perigoso"
+
+   Alguns navegadores avisam ao abrir HTML baixado de fora. E o arquivo do
+   proprio projeto; pode abrir.
+
+
+===============================================================================
+ Este arquivo e um resumo. A explicacao completa esta no README.md.
+===============================================================================

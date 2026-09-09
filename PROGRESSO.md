@@ -28,6 +28,104 @@ Regras curtas:
 
 ---
 
+## 2026-09-09 — Um comando para conferir, dois cliques para abrir
+
+- **Parte / tarefa:** nenhuma do `PLANO.md` — três pedidos do chat, todos sobre **ferramenta de
+  trabalho e não sobre o jogo**. Nenhum checkbox mudou, nenhuma linha de `src/` foi tocada.
+- **O que mudou:**
+  - `package.json` — o script `check`.
+  - `.github/workflows/ci.yml` — o passo do `build:feira`.
+  - `COMO-RODAR.txt` e `ABRIR-O-JOGO.bat` **criados**, na raiz.
+  - `.gitattributes` — CRLF obrigatório para os dois.
+  - `README.md` — a seção "Só quero abrir o jogo, não programar".
+
+### `npm run check`: os seis de uma vez
+
+A sequência que fecha toda tarefa era digitada à mão todas as vezes. Virou script, com a **mesma
+ordem** de sempre — a da regra 5 e a da CI —, para uma falha local e uma falha no pull request
+significarem a mesma coisa. São 29 s.
+
+Ele chama os seis scripts existentes em vez de repetir os comandos deles. Isso faz o `tsc` rodar
+três vezes (`typecheck`, `build`, `build:feira`) e custa ~7 s dos 29. Chamar `vite build` direto
+economizaria o tempo, mas duplicaria a definição do build em dois pontos do `package.json` — e o dia
+em que um mudasse sem o outro custa mais que 7 segundos.
+
+**Conferi que ele para no primeiro erro**, que era o risco real: um `&&` que ignorasse o código de
+saída no Windows reportaria verde tendo rodado tudo. Com um erro de tipo plantado num arquivo
+temporário, parou no `typecheck` e saiu com código 2, sem rodar mais nada.
+
+### O `build:feira` não estava na CI, e a falta era real
+
+O `ci.yml` rodava cinco dos seis. O build de arquivo único — a garantia de que o jogo abre de um
+pendrive sem internet — só era conferido quando alguém o rodava à mão.
+
+**Isso não era teórico.** O plugin do `vite.config.ts` falha quando sobra qualquer asset fora do
+HTML; os três `.wav` do `P7-05`, entregues hoje mais cedo, eram exatamente o tipo de arquivo que
+dispara isso. Se o `assetsInlineLimit` não os tivesse absorvido, a feira quebraria **e o pull
+request passaria verde.**
+
+Entrou como passo separado, e não trocando os seis por um `npm run check`: o GitHub mostra qual
+passo falhou na própria lista, sem ninguém abrir o log. O `check` é para a máquina de quem
+desenvolve, onde o que importa é digitar uma linha.
+
+### Os dois arquivos da raiz, e a pergunta que os gerou
+
+A pergunta do chat foi *"por que eu tenho que ficar rodando comandos no CMD para rodar o jogo?"*, e
+a resposta é que **para mostrar o jogo não tem que rodar comando nenhum** — o que faltava era isso
+estar escrito em algum lugar que não fosse o meio do `README.md`.
+
+- **`COMO-RODAR.txt`** — texto puro, na raiz, dividido por intenção: mostrar para alguém com
+  internet (o link do Pages), sem internet (o `dist-feira/index.html` de dois cliques) e programar
+  (primeira vez nesta máquina × toda vez depois disso). Fecha com as perguntas que aparecem sempre,
+  incluindo a do `index.html` da raiz.
+- **`ABRIR-O-JOGO.bat`** — duplo clique: instala as dependências se faltarem, gera o build da feira
+  e abre no navegador. Reconstrói **toda** vez de propósito; são ~5 s, e o pior cenário de um
+  estande é mostrar uma versão velha sem perceber.
+
+Duas escolhas pequenas com razão: o `.bat` **não tem acento nas mensagens** (o console do Windows
+abre em codepage 850 ou 437 conforme a máquina, e acento vira símbolo trocado justamente na tela
+que existe para socorrer quem travou); e os dois arquivos entraram no `.gitattributes` com
+`eol=crlf`, porque o `cmd.exe` tropeça em `goto` num arquivo só com LF e o Bloco de Notas antigo
+mostra um `.txt` de LF como uma linha só. Os dois existem para quem já está com problema — não
+podem depender de o checkout ter convertido certo.
+
+### O que a verificação alcançou, e onde ela parou
+
+O `.bat` foi rodado de verdade, com o `dist-feira` apagado antes: saiu com código 0, gerou **um**
+arquivo e abriu o navegador.
+
+Os três `.wav` viram `data:` dentro do HTML único, e eles sobrevivem à viagem — extraídos do
+base64 do `dist-feira/index.html`, voltam com os bytes exatos (22.094 · 37.530 · 13.274),
+cabeçalho `RIFF/WAVE` válido e as durações certas.
+
+**O que não deu para medir:** se o navegador *toca* um `data:audio` num documento aberto de
+`file://`. A extensão do Chrome não abre URL `file://`, e este ambiente não tem saída de som. É uma
+pergunta nova — o `P8-05` mediu o bloqueio de CORS para `<script src>`, que é outro mecanismo — e
+está aberta no Pendente.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check                 # 29 s, termina no format:check verde
+  rm -rf dist-feira && ./ABRIR-O-JOGO.bat && find dist-feira -type f
+  ```
+
+  O `.bat` precisa ser executado a partir da pasta do projeto, ou por duplo clique no Explorer.
+
+- **Pendente:**
+  - **Ninguém confirmou que o som toca na build da feira.** Dois cliques no `ABRIR-O-JOGO.bat`,
+    entrar na partida e comprar um nó respondem em 20 segundos — e é a única forma, porque exige
+    ouvido e um `file://` de verdade. Se não tocar, o conserto conhecido é trocar o
+    `HTMLAudioElement` por `AudioContext` com o base64 decodificado à mão.
+  - A regra 5 da `FORMA-DE-TRABALHO.md` continua citando três comandos, e não o `npm run check`. O
+    §12 proíbe reescrever aquele arquivo sem pedir.
+  - O `.bat` é de Windows. Numa máquina Linux ou Mac o caminho continua sendo o
+    `npm run build:feira` à mão, que o `COMO-RODAR.txt` também traz.
+- **Evidência:** nenhuma — não há tela nova. O que mudou é o que se digita para chegar às telas que
+  já existiam.
+
+---
+
 ## 2026-09-09 — O jogo faz barulho: os três efeitos e o botão de mudo
 
 - **Parte / tarefa:** `P7-05` — **a última tarefa de código do projeto.** Com ela, a lista do que
@@ -167,22 +265,6 @@ jsdom prova.
 - **Evidência:** `docs/evidencias/2026-09-09-p7-05-som-no-evento-critico.jpg` — o instante em que o
   `alert.wav` disparou: o aviso de tempo pausado, o cartão CRÍTICO e o botão "● Silenciar" no mesmo
   quadro.
-
-### Emenda do mesmo dia: `npm run check`
-
-Pedido no chat, depois da entrega acima. A sequência de seis comandos que fecha toda tarefa virou um
-script no `package.json`, com a **mesma ordem** de sempre — que é a da regra 5 e a da CI, para uma
-falha local e uma falha no pull request significarem a mesma coisa.
-
-Ele chama os seis já existentes em vez de repetir as linhas de comando deles. Isso faz o `tsc` rodar
-três vezes (`typecheck`, `build`, `build:feira`), o que custa ~7 s dos 31. Chamar `vite build`
-direto economizaria esse tempo, mas duplicaria a definição do build em dois lugares do
-`package.json` — e o dia em que um mudasse sem o outro seria pago mais caro do que 7 segundos.
-
-**O achado que veio junto: o `build:feira` não está na CI.** O `.github/workflows/ci.yml` roda cinco
-dos seis; o build de arquivo único — a garantia de que o jogo abre de um pendrive sem internet — só
-é conferido quando alguém o roda à mão. Uma quebra ali passa verde no pull request. Entrou no
-`check` por isso; **pôr na CI é uma linha e continua em aberto.**
 
 ---
 

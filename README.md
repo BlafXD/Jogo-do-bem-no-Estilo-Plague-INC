@@ -17,6 +17,20 @@ e está medido em `docs/BALANCEAMENTO.md`.
 
 ---
 
+## Só quero abrir o jogo, não programar
+
+Esse link acima já é o jogo — não precisa de nada instalado, e é o jeito de mostrar para alguém.
+
+**Sem internet** (feira, pendrive), o jogo inteiro cabe num arquivo só, que abre com dois cliques:
+`dist-feira/index.html`. Ele não vem no repositório porque é gerado; quem o gera é o
+`npm run build:feira`, ou o **`ABRIR-O-JOGO.bat`** na raiz, que gera e abre de uma vez.
+
+O **`COMO-RODAR.txt`**, também na raiz, é a versão de bolso disso tudo — separada por "primeira vez
+nesta máquina" e "toda vez, depois disso", em texto puro, para ser lida por quem travou e não abriu
+este README.
+
+---
+
 ## Rodar na sua máquina
 
 Você precisa de **Node 22.12 ou mais novo** (`node --version` para conferir) e de nada além disso.
@@ -89,8 +103,7 @@ O `check` roda os seis em cerca de 30 segundos. Rodar um por um continua valendo
 trabalha — `npm run test:watch` numa aba é mais rápido do que a sequência inteira a cada mudança; o
 `check` é para o fim, antes de ler o diff e commitar.
 
-> **Só o `build:feira` não está na CI.** Os outros cinco rodam em todo pull request; o build de
-> arquivo único é conferido apenas quando alguém o roda à mão. É por isso que ele entra no `check`.
+Os seis rodam também na CI, em todo pull request — se um falhar aqui, ele falha lá.
 
 **"Passando" inclui o rodapé.** O Vitest consegue terminar com todos os testes verdes e uma linha
 `Errors N` embaixo: erro lançado dentro de um ouvinte de evento não derruba o teste que o disparou,

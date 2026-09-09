@@ -1,6 +1,14 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# O .bat e o .txt de ajuda vao ao contrario: CRLF sempre.
+# O `cmd.exe` tropeça em `goto` quando o arquivo tem só LF, e o Bloco de Notas
+# antigo mostra um .txt de LF como uma linha só. Os dois existem justamente para
+# quem travou e abriu o arquivo à mão — não podem depender do checkout ter
+# convertido certo.
+*.bat text eol=crlf
+COMO-RODAR.txt text eol=crlf
+
 # Hooks precisam de LF mesmo no Windows.
 # Com core.autocrlf=true (o padrão aqui), o checkout entregaria o script com
 # CRLF e o shebang viraria "#!/bin/sh\r" — o sh recusa com "bad interpreter" e

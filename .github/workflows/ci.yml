@@ -38,10 +38,25 @@ jobs:
       - run: npm ci
 
       # Os quatro do aceite do SETUP-03, na mesma ordem da regra 5.
+      #
+      # São passos separados, e não um `npm run check` só, de propósito: o
+      # GitHub mostra qual passo falhou na lista, sem ninguém abrir o log. O
+      # `check` do package.json existe para a máquina de quem desenvolve, onde
+      # o que importa é digitar uma linha em vez de seis.
       - run: npm run typecheck
       - run: npm run test
       - run: npm run lint
       - run: npm run build
+
+      # O build da feira (P8-05) — o `index.html` único que abre de um pendrive
+      # sem internet. Ele **não** estava aqui até 2026-09-09, e a falta era real:
+      # o plugin de arquivo único falha quando sobra qualquer asset fora do HTML,
+      # então um arquivo novo em `src/assets/` quebra a feira **e passa verde no
+      # pull request**. Foi o que quase aconteceu com os `.wav` do P7-05.
+      #
+      # A saída não vira artefato: o Pages publica o `dist/`. Isto aqui é
+      # verificação, e o que se quer dela é que ela falhe quando tiver que falhar.
+      - run: npm run build:feira
 
       - run: npm run format:check
 
