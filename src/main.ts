@@ -314,6 +314,17 @@ function handleCommand(command: TimeCommand | null): void {
 function handleToggleSound(): void {
   sound = toggleMute(sound);
   saveMuted(sound.muted);
+
+  // **Religar o som toca uma amostra na hora.** Não é enfeite: sem isto, o
+  // primeiro som de uma partida nova só é possível no **63º segundo** — o nó
+  // mais barato custa 40 PAC, e começa-se com 5 ganhando 10 por ano, o que a 1x
+  // dá 3,5 anos de jogo. Nesse intervalo o jogo é indistinguível de um jogo
+  // quebrado, e foi exatamente esse o primeiro relato de quem abriu a build.
+  //
+  // O `playSfx` já devolve falso no mudo, então silenciar continua silencioso —
+  // a amostra só sai no sentido que precisa de confirmação.
+  playSfx(sound, 'unlock');
+
   renderControls(controls, control, sound.muted);
 }
 
