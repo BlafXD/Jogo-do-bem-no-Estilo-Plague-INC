@@ -29,9 +29,14 @@ delegável `[D-Design]` segue previsto.
 projeto — confirmado no chat em 2026-09-06. Nenhuma marca, empresa ou ONG real aparece na arte, que
 é o que a regra 10 barra.
 
+**O mapa-múndi também é da casa.** O `Mapa Mundi.jpeg` que o `VIS-03` pôs no jogo foi gerado pelo
+autor do projeto, como os retratos — confirmado no chat em 2026-09-16. Entrou sem edição nenhuma: as
+fronteiras das 8 regiões não estão na imagem, são polígonos do projeto no `src/ui/map-geometry.ts`.
+
 | Arquivo | Autor | Licença | Origem |
 |---|---|---|---|
 | `src/assets/characters/*.jpg` (4 retratos) | autor do projeto | própria | recortados de uma folha única de 1408 × 768, em 2026-09-06 |
+| `src/assets/map/world.jpg` | autor do projeto | própria | cópia sem edição do `Mapa Mundi.jpeg`, de 1376 × 768, em 2026-09-16 |
 
 ## Áudio
 

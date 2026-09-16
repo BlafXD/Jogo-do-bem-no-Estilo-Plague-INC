@@ -1,27 +1,28 @@
-/* O mapa esquemático das 8 regiões (P5-01).
+/* O mapa das 8 regiões: o mapa-múndi ilustrado do VIS-03. Os retângulos do
+   P5-01 saíram; o que ficou deles foi o contrato das etiquetas.
 
    Mesmo contrato das outras folhas: cor e medida saem de custom properties com
-   valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
-   encostar aqui.
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar aqui.
 
-   **Uma cor entra além do fundo**, e é a única: o preenchimento das formas, que
-   é a `--cor-superficie` do tema. Sem ela a região seria um contorno vazio
-   sobre o fundo da página, e oito contornos vazios não se leem como um mapa.
+   **O desenho é uma imagem, e o que se lê fica em cima dela, em etiquetas de
+   fundo opaco.** Texto direto sobre uma imagem de satélite não tem contraste que
+   se possa garantir: um deserto claro e um oceano escuro pedem cores opostas. A
+   etiqueta usa o fundo do tema, e o contraste de tudo que se escreve nela está
+   na tabela do theme.css, recalculada pelo tests/theme.test.ts — inclusive as
+   duas misturas que esta folha faz, a do hover e a da região escolhida.
 
-   Quem define a borda da forma contra a página é o traço, não o preenchimento —
-   é por isso que o preenchimento quase igual ao fundo não é um problema de
-   contraste: o traço passa o mínimo de 3:1 para elemento não textual tanto
-   contra o fundo quanto contra o que ele cerca. Os números de todos os pares
-   desta folha estão na tabela do theme.css, recalculada pelo
-   tests/theme.test.ts.
+   **As camadas de cada região** (a luz, o estado e o contorno) só aparecem
+   depois que o map.ts pendura as máscaras nelas. Sem máscara, uma camada
+   cobriria o mapa inteiro; por isso o palco as esconde enquanto elas não
+   estiverem prontas.
 
-   **Sobre o §5 e a seleção.** A regra proíbe comunicar *estado do jogo* só por
-   cor. Qual região está selecionada não é estado do jogo — é onde o jogador
-   está olhando —, mas o sinal aqui também não é só cor: o traço **dobra de
-   espessura** e um marcador aparece no canto da forma. Quando o painel do
-   P5-04 entrar, é ele que passa a ser a confirmação definitiva do que está
-   escolhido. O estado do jogo que este mapa mostra — o apoio de cada região —
-   é texto com rótulo escrito, nunca cor. */
+   **Sobre o §5.** Nenhum estado do jogo é dito só por cor aqui:
+   - região escolhida: contorno claro no desenho, **borda grossa e o marcador ▸**
+     na etiqueta, e o `aria-pressed`;
+   - região atingida por evento: um pulso de brasa, e **"◉ evento" escrito**;
+   - apoio abaixo do piso: **hachura** no desenho — textura, não cor —, e
+     "▲ crítico" escrito quando não há evento na frente;
+   - aquecimento: a terra seca, e **a legenda embaixo diz a faixa por escrito**. */
 
 .map {
   display: block;
@@ -34,166 +35,332 @@
   max-width: 70ch;
 }
 
-/* Rola de lado em vez de deixar o desenho encolher. O porquê está no map.ts:
-   o texto dentro do SVG diminui junto com o SVG, e o §5 fixa 16px como piso. */
+/* Rola de lado em vez de deixar o desenho encolher: abaixo da largura do tema
+   as etiquetas começariam a se tocar, e é nessa largura que o
+   tests/map-geometry.test.ts mede a distância entre elas. */
 .map__scroll {
   overflow-x: auto;
 }
 
-.map__canvas {
-  display: block;
-  width: 100%;
-  /* 44rem é o piso que mantém a fonte de 26 unidades acima de 16px na tela:
-     704px / 1000 unidades = 0,704, e 26 × 0,704 = 18,3px. Mexer aqui é mexer
-     nas constantes de fonte do map.ts. */
-  min-width: 44rem;
-  /* 54rem, e não a largura da coluna: medido no navegador, 68rem davam 675px de
-     altura — o mapa sozinho comia uma tela inteira e empurrava a árvore para
-     fora dela. Aqui ele fica em ~536px e ainda cabe com o HUD acima. A altura
-     acompanha a largura porque o viewBox é 1000×620.
-
-     O painel de detalhe (P5-04) precisa terminar no mesmo ponto que o mapa, e
-     desde o P5-02 os dois leem a mesma medida do theme.css — antes ela estava
-     escrita duas vezes, com uma nota em cada folha pedindo para lembrar da
-     outra. */
-  max-width: var(--largura-mundo, 54rem);
-  height: auto;
+.map__frame {
+  position: relative;
+  /* A mesma largura do painel de detalhe, que precisa terminar no mesmo ponto
+     para os dois se lerem como uma coisa só. Aqui ela é fixa, e não máxima: as
+     etiquetas têm tamanho em rem, e o mapa também, então a proporção entre eles
+     não muda nem com o zoom do navegador. */
+  width: var(--largura-mundo, 54rem);
+  /* A imagem inteira na largura, com a faixa da Antártida cortada embaixo. */
+  aspect-ratio: 1376 / 620;
+  overflow: hidden;
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-oceano, #0b4c63);
+  box-shadow: 0 0 0 1px var(--cor-borda, #4c8069);
 }
 
-.map__region {
+/* O palco tem a proporção da imagem inteira e passa da moldura por baixo: as
+   camadas e as etiquetas se posicionam em fração da imagem, e a moldura corta
+   o que sobra. */
+.map__stage {
+  position: absolute;
+  inset: 0 0 auto;
+  aspect-ratio: 1376 / 768;
+}
+
+.map__stage[data-pointer='region'] {
   cursor: pointer;
-  /* Arrastar o ponteiro sobre uma região selecionaria o nome como texto, o que
+}
+
+.map__image,
+.map__heat,
+.map__haze,
+.map__layer,
+.map__light,
+.map__state,
+.map__halo,
+.map__edge {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.map__image,
+.map__heat {
+  display: block;
+  max-width: none;
+  user-select: none;
+}
+
+/* A secura: a mesma imagem, passada por sépia e recortada pela terra. A
+   opacidade acompanha o `--calor` que o map.ts escreve — 0 na partida
+   começando, 1 no limiar da derrota. */
+.map__heat {
+  filter: sepia(1) saturate(1.35) hue-rotate(-14deg) brightness(0.92);
+  opacity: calc(var(--calor, 0) * 0.9);
+}
+
+/* Da metade do caminho em diante, o mapa ganha um tom de brasa. */
+.map__haze {
+  background: radial-gradient(
+    ellipse at 55% 45%,
+    color-mix(in srgb, var(--cor-alerta, #f2a65a) 45%, transparent),
+    transparent 70%
+  );
+  mix-blend-mode: multiply;
+  opacity: clamp(0, (var(--calor, 0) - 0.55) * 2, 0.8);
+}
+
+.map__stage:not([data-masks='ready']) .map__heat,
+.map__stage:not([data-masks='ready']) .map__layer {
+  display: none;
+}
+
+.map__heat,
+.map__light,
+.map__state,
+.map__edge {
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* A luz clareia a região sem apagar o relevo que está embaixo. */
+.map__light {
+  background: var(--cor-creme, #f4edd0);
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.map__edge {
+  background: var(--cor-creme, #f4edd0);
+}
+
+/* O halo escuro é o que faz o contorno claro aparecer tanto sobre o deserto
+   quanto sobre o oceano. */
+.map__halo {
+  opacity: 0;
+  filter: drop-shadow(0 0 1.5px var(--cor-fundo, #0f1c17))
+    drop-shadow(0 0 4px var(--cor-fundo, #0f1c17));
+  transition: opacity 160ms ease-out;
+}
+
+.map__layer[data-hover] .map__light {
+  opacity: 0.6;
+}
+
+.map__layer[data-hover] .map__halo {
+  opacity: 0.5;
+}
+
+.map__layer[data-state~='selected'] .map__light,
+.map__layer[data-state~='selected'] .map__halo {
+  opacity: 1;
+}
+
+.map__state {
+  opacity: 0;
+}
+
+/* Apoio abaixo do piso: hachura. É textura, e não só cor (§5). */
+.map__layer[data-state~='low'] .map__state {
+  opacity: 1;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--cor-alerta, #f2a65a) 62%, transparent) 0 3px,
+    transparent 3px 10px
+  );
+}
+
+/* Região atingida por evento: um pulso lento, que chama o olho sem piscar. */
+.map__layer[data-state~='event'] .map__state {
+  background: var(--cor-alerta, #f2a65a);
+  will-change: opacity;
+  animation: map-pulse 1.8s ease-in-out infinite;
+}
+
+/* As duas coisas juntas: a hachura fica, sobre uma brasa parada. */
+.map__layer[data-state~='event'][data-state~='low'] .map__state {
+  opacity: 1;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--cor-alerta, #f2a65a) 70%, transparent) 0 3px,
+      transparent 3px 10px
+    ),
+    color-mix(in srgb, var(--cor-alerta, #f2a65a) 30%, transparent);
+  animation: none;
+}
+
+@keyframes map-pulse {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+
+  50% {
+    opacity: 0.42;
+  }
+}
+
+/* ------------------------------------------------------------ as etiquetas */
+
+.map__label {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 0.1rem;
+  min-width: 8.5rem;
+  min-height: var(--alvo-toque, 2.75rem);
+  padding: 0.25rem 0.6rem 0.4rem;
+  border: 1px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: var(--cor-fundo, #0f1c17);
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  font-size: var(--tamanho-base, 1rem);
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  /* Arrastar o ponteiro sobre a etiqueta selecionaria o nome como texto, o que
      num estande vira um borrão azul que ninguém sabe desfazer. */
   user-select: none;
 }
 
-.map__shape {
-  fill: var(--cor-superficie, #182c24);
-  stroke: var(--cor-borda, #4c8069);
-  stroke-width: 2;
-  /* A transição é curta de propósito: ela confirma o clique sem atrasar a
-     resposta, e some junto com o resto se o sistema pedir menos animação. */
-  transition: fill 120ms ease-out;
+.map__label:hover {
+  border-color: var(--cor-destaque, #7fd1a8);
+  background: color-mix(in srgb, var(--cor-destaque, #7fd1a8) 12%, var(--cor-fundo, #0f1c17));
 }
 
-.map__region:hover .map__shape {
-  /* O próprio destaque diluído, não uma cor nova. */
-  fill: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
+/* Escolhida: borda do dobro da espessura e o marcador ▸ — a espessura é o sinal
+   que sobrevive a uma tela sem cor. O padding desconta o pixel a mais para a
+   etiqueta não mudar de tamanho. */
+.map__label[aria-pressed='true'] {
+  border-width: 2px;
+  border-color: var(--cor-destaque, #7fd1a8);
+  padding: calc(0.25rem - 1px) calc(0.6rem - 1px) calc(0.4rem - 1px);
+  background: color-mix(in srgb, var(--cor-destaque, #7fd1a8) 18%, var(--cor-fundo, #0f1c17));
 }
 
-/* Selecionada: traço contínuo do dobro da espessura, na cor de destaque. A
-   espessura é o sinal que sobrevive a uma tela sem cor. */
-.map__region[data-selected='true'] .map__shape {
-  stroke: var(--cor-destaque, #7fd1a8);
-  stroke-width: 4;
-}
-
-/* Anel de foco explícito, igual ao da árvore, dos controles e da contenção.
-   O traço grosso vem junto porque `outline` em elemento de SVG ainda tem
-   suporte irregular entre navegadores — se o anel não aparecer, o contorno da
-   forma aparece, e quem navega por teclado nunca fica sem saber onde está. */
-.map__region:focus-visible {
+/* Anel de foco explícito, igual ao da árvore, dos controles e da contenção. */
+.map__label:focus-visible {
   outline: 3px solid var(--cor-alerta, #f2a65a);
   outline-offset: 2px;
 }
 
-.map__region:focus-visible .map__shape {
-  stroke: var(--cor-alerta, #f2a65a);
-  stroke-width: 5;
+.map__head {
+  white-space: nowrap;
 }
 
 .map__name {
-  fill: var(--cor-valor, #f2f7f4);
-  font-family: inherit;
   font-weight: 600;
 }
 
+.map__marker {
+  color: var(--cor-destaque, #7fd1a8);
+}
+
+.map__marker:not(:empty) {
+  margin-right: 0.3em;
+}
+
+.map__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--cor-rotulo, #a7c0b4);
+  white-space: nowrap;
+}
+
+/* Tabular: os dígitos têm todos a mesma largura, e o número não treme enquanto
+   o tempo corre — a mesma razão do HUD. */
 .map__support {
-  fill: var(--cor-rotulo, #a7c0b4);
-  font-family: inherit;
-  /* Tabular: os dígitos têm todos a mesma largura, então o número não treme
-     enquanto o tempo corre — a mesma razão do HUD. */
   font-variant-numeric: tabular-nums;
 }
 
-.map__marker {
-  fill: var(--cor-destaque, #7fd1a8);
-  font-family: inherit;
+/* O medidor: o apoio de 0 a 100, com o piso de apatia marcado. É reforço — o
+   número está escrito ao lado dele. */
+.map__meter {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 2.5rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--cor-valor, #f2f7f4) 14%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .map__shape {
-    transition: none;
-  }
+.map__meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--apoio, 0%);
+  background: var(--cor-destaque, #7fd1a8);
 }
 
-/* Com a partida acabada o mapa continua legível — ele é justamente o que se
-   quer olhar depois do fim, para entender onde o apoio ruiu. Diferente da
-   árvore e da contenção, não é apagado: aqui não há nada para clicar que possa
-   ser recusado. */
-
-/* --------------------------- o aquecimento e os alertas (P7-04) ---------- */
-
-/* As quatro faixas são os tetos das medalhas do §2.7 — a mesma escala pela qual
-   a tela de fim julga a partida. Todas saem por color-mix da paleta que já
-   existe; nenhuma cor nova entra.
-
-   **O contraste das faixas é testado, e não só conferido.** Desde o VIS-02 o
-   tests/theme.test.ts lê os percentuais dos três color-mix abaixo, compõe a cor
-   que a tela mostra e mede os quatro textos que ficam por cima — nome, apoio,
-   marcador e alerta. A faixa `over` (22% de alerta) é a mais clara e o pior
-   caso: o alerta escrito sobre ela é o par mais apertado do jogo, e o número
-   está na tabela do theme.css.
-
-   **Sobre o §5.** A regra proíbe comunicar estado do jogo só por cor, e uma
-   escala de calor é o caso extremo da tentação. Quem carrega o recado é a
-   legenda `.map__heat` logo abaixo do desenho, que nomeia a faixa por escrito —
-   "acima de 2,55 °C — nenhuma medalha ao alcance". Tire as cores da tela e a
-   frase continua dizendo em que ponto o mundo está. */
-
-.map__canvas[data-heat='gold'] .map__shape {
-  fill: color-mix(in srgb, var(--cor-destaque, #7fd1a8) 8%, var(--cor-superficie, #182c24));
+.map__label[data-level='low'] .map__meter i {
+  background: var(--cor-alerta, #f2a65a);
 }
 
-.map__canvas[data-heat='silver'] .map__shape {
-  fill: var(--cor-superficie, #182c24);
+.map__meter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--piso, 25%);
+  width: 2px;
+  background: var(--cor-fundo, #0f1c17);
 }
 
-.map__canvas[data-heat='bronze'] .map__shape {
-  fill: color-mix(in srgb, var(--cor-alerta, #f2a65a) 10%, var(--cor-superficie, #182c24));
+/* O alerta pendurado em cima da etiqueta: ícone mais palavra escrita. Ele se
+   apoia na borda e não entra na etiqueta — descendo mais, cobria o acento de
+   "África" e de "Ásia". A linha baixa é o que o deixa caber entre a Europa, o
+   Oriente Médio e a Ásia Meridional, na conta do tests/map-geometry.test.ts. */
+.map__alert {
+  position: absolute;
+  left: 0.45rem;
+  bottom: 100%;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
-.map__canvas[data-heat='over'] .map__shape {
-  fill: color-mix(in srgb, var(--cor-alerta, #f2a65a) 22%, var(--cor-superficie, #182c24));
+.map__alert:empty {
+  display: none;
 }
 
-/* O hover continua vencendo o aquecimento: ele é resposta ao ponteiro, e uma
-   resposta que não aparece é pior do que nenhuma. Vem depois na folha, que é o
-   que basta com a mesma especificidade. */
-.map__canvas .map__region:hover .map__shape {
-  fill: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
+.map__alert[data-alert='event'] {
+  background: var(--cor-fundo, #0f1c17);
+  color: var(--cor-alerta, #f2a65a);
+  box-shadow: 0 0 0 1.5px var(--cor-alerta, #f2a65a);
 }
 
-.map__heat {
+/* O fundo escrito sobre a brasa: o mesmo par da tabela do theme.css, lido ao
+   contrário — o contraste não depende de qual dos dois é o texto. */
+.map__alert[data-alert='support'] {
+  background: var(--cor-alerta, #f2a65a);
+  color: var(--cor-fundo, #0f1c17);
+}
+
+/* A legenda do aquecimento (P7-04). */
+.map__caption {
   margin: 0.75rem 0 0;
   color: var(--cor-rotulo, #a7c0b4);
   max-width: 70ch;
 }
 
-/* O alerta no canto da forma. Ícone **mais** palavra escrita — a cor aqui é
-   reforço, e o map.ts registra por quê. */
-.map__alert {
-  font-family: inherit;
-  font-weight: 600;
-}
+@media (prefers-reduced-motion: reduce) {
+  .map__light,
+  .map__halo {
+    transition: none;
+  }
 
-.map__alert[data-alert='event'] {
-  fill: var(--cor-alerta, #f2a65a);
-}
-
-/* Crítico usa a mesma cor de alerta: são os dois avisos do mapa, e inventar uma
-   terceira cor para separá-los faria a cor voltar a ser o recado. Quem os
-   separa é a palavra escrita — "evento" e "crítico". */
-.map__alert[data-alert='support'] {
-  fill: var(--cor-alerta, #f2a65a);
+  .map__layer[data-state~='event'] .map__state {
+    animation: none;
+    opacity: 0.3;
+  }
 }

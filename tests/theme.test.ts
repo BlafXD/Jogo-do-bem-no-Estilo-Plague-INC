@@ -98,9 +98,15 @@ const AA_NON_TEXT = 3;
 /** A opacidade dos fundos de hover, que o theme.css declara no color-mix. */
 const HOVER_ALPHA = 0.12;
 
+/**
+ * As cores de desenho: nenhum texto é escrito sobre elas, então não entram nas
+ * contas de contraste — mas continuam sendo do tema, e no mesmo formato.
+ */
+const DRAWING = ['cor-creme', 'cor-oceano'] as const;
+
 describe('a paleta', () => {
-  it('define as 7 cores, todas em #rrggbb', () => {
-    for (const name of PALETTE) {
+  it('define as 7 cores da interface e as 2 de desenho, todas em #rrggbb', () => {
+    for (const name of [...PALETTE, ...DRAWING]) {
       expect(token(name), name).toMatch(/^#[0-9a-f]{6}$/);
     }
   });
@@ -163,27 +169,30 @@ describe('a paleta', () => {
   });
 
   /**
-   * As faixas de calor do mapa (P7-04) são misturas feitas no map.css, e o nome,
-   * o apoio, o marcador e o alerta de cada região ficam escritos por cima delas.
-   * Até o VIS-02 esse contraste só existia num comentário daquela folha — o tipo
-   * de número que envelhece calado quando a paleta muda.
+   * O map.css mistura duas cores do tema para o fundo das etiquetas: a do hover e
+   * a da região escolhida. O nome, o apoio e o marcador ficam escritos por cima
+   * dessas misturas, então o contraste delas precisa ser medido como o dos
+   * fundos de hover acima. Até o VIS-02 esse número só existia num comentário
+   * daquela folha — o tipo de número que envelhece calado quando a paleta muda.
    *
    * Os percentuais são lidos da própria folha, e não repetidos aqui: o teste mede
-   * a cor que a tela mostra, e não a que alguém lembrou de anotar.
+   * a cor que a tela mostra, e não a que alguém lembrou de anotar. Misturas com
+   * `transparent` ficam de fora, porque nenhuma delas tem texto em cima.
    */
-  it('passa o AA sobre as faixas de calor do mapa, já compostas', () => {
-    const mapa = readCss('map.css').replace(/\/\*[\s\S]*?\*\//g, '');
-    const faixas = [
+  it('passa o AA sobre as misturas do mapa que ficam sob texto', () => {
+    const mapa = readCss('map.css')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\s+/g, ' ');
+    const misturas = [
       ...mapa.matchAll(
-        /color-mix\(in srgb, var\(--(cor-[a-z]+),[^)]*\) (\d+)%, var\(--(cor-[a-z]+),[^)]*\)\)/g,
+        /color-mix\( ?in srgb, ?var\(--(cor-[a-z]+),[^)]*\) (\d+)%, ?var\(--(cor-[a-z]+),[^)]*\) ?\)/g,
       ),
     ];
 
-    // Ouro, bronze e acima de tudo. A prata é a própria superfície, que o teste
-    // de texto sobre os dois fundos já cobre.
-    expect(faixas, 'as faixas de calor do map.css').toHaveLength(3);
+    // A do hover e a da etiqueta escolhida (VIS-03).
+    expect(misturas, 'as misturas de fundo do map.css').toHaveLength(2);
 
-    for (const [, base, percentual, fundo] of faixas) {
+    for (const [, base, percentual, fundo] of misturas) {
       if (base === undefined || percentual === undefined || fundo === undefined) {
         throw new Error('um color-mix do map.css saiu do formato que este teste lê');
       }

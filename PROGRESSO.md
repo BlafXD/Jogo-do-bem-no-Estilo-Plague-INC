@@ -28,6 +28,151 @@ Regras curtas:
 
 ---
 
+## 2026-09-16 — O mapa virou o mapa-múndi ilustrado, com as oito regiões recortadas
+
+- **Parte / tarefa:** `VIS-03` ✔
+- **O que mudou:**
+  - `src/assets/map/world.jpg` — o `Mapa Mundi.jpeg`, byte a byte, sem edição. A linha dele entrou
+    no `docs/CREDITOS.md`.
+  - `src/ui/map-geometry.ts` **criado** — os polígonos das regiões em pixels da imagem, o ponto de
+    cada etiqueta e as funções puras que viram máscara: terra e água, rasterização, contorno e
+    grade de clique.
+  - `src/ui/map.ts` e `src/ui/map.css` — reescritos. As formas em SVG do `P5-01` saíram. No lugar
+    delas ficaram a imagem, uma camada por região (luz, estado e contorno) e as etiquetas, que agora
+    são `<button>` de verdade.
+  - `src/ui/theme.css` — duas cores de desenho, `--cor-creme` e `--cor-oceano`. Na tabela de
+    contraste, as faixas de calor deram lugar às duas misturas das etiquetas.
+  - `src/data/i18n.ts` — a legenda do calor agora fala da terra secando, e três comentários
+    mudaram.
+  - Testes: `tests/map-geometry.test.ts` **criado**, `tests/map.test.ts` e `tests/map.dom.test.ts`
+    reescritos, `tests/theme.test.ts` ajustado. Suíte: 694 → **747**.
+  - `docs/DIRECAO-DE-ARTE.md §6` — os pontos em que a implementação saiu diferente do plano.
+
+### Como o recorte funciona
+
+**A imagem não traz fronteira nenhuma.** As regiões são nove polígonos, pintados em ordem, e o de
+depois vence. A Europa tem dois: o norte da Eurásia e a ponta da Chukotka, que a imagem repete na
+borda esquerda.
+
+**As máscaras nascem no navegador.** Na carga, o `map.ts` lê os pixels da imagem num canvas,
+separa a terra da água pela regra do azul e cruza o resultado com os polígonos. Saem:
+- uma máscara e um contorno por região;
+- a máscara da terra, que recorta o calor;
+- a grade de clique.
+
+Tudo fica na metade da resolução. A alternativa era guardar 17 PNGs no repositório (oito
+máscaras, oito contornos e a terra), e cada ajuste de polígono obrigaria a refazer todos.
+
+**Sem canvas, o jogo continua.** Se a leitura dos pixels falhar, o palco fica em
+`data-masks="unavailable"` e as camadas não aparecem. A imagem fica limpa, e as etiquetas continuam
+clicáveis. No jsdom da suíte a imagem nunca carrega, e um teste confere que nenhum canvas é pedido.
+
+**O recorte é o do `docs/CIENCIA.md`:**
+- a Rússia fica na Europa;
+- a Ásia Central fica no Oriente Médio;
+- o Sudeste Asiático fica na Ásia Oriental;
+- o Egito, com o Sinai, fica na África;
+- a Nova Guiné se divide em 141° L;
+- a Groenlândia fica na América do Norte.
+
+O teste de geometria confere 37 pontos, um por decisão. Por exemplo: o Sinai é África, Israel é
+Oriente Médio, e a metade oeste da Nova Guiné é Ásia Oriental.
+
+**As etiquetas não se tocam.** O teste mede as oito caixas na largura do tema, supondo o pior
+caso: todas com alerta. O mapa tem largura fixa em `rem`, como as etiquetas, então a conta vale
+para qualquer zoom.
+
+**Saíram os testes do desenho antigo.** Foram as formas do SVG, a quebra do nome em duas linhas e a
+posição do texto dentro de cada forma. Os de teclado também saíram (Enter, barra de espaço, a tecla
+que não podia chegar ao atalho de pausa): agora o `<button>` nativo faz isso sozinho, e a guarda do
+`main.ts` já ignora a barra de espaço quando o foco está num botão. Conferi na tela: com o foco na
+etiqueta da Ásia Meridional, a barra de espaço e o Enter escolhem e desmarcam a região, e a pausa
+não muda.
+
+### O defeito que o VIS-02 deixou para cá
+
+A África e a Oceania apareciam com **"Apoio 25" e "▲ crítico" ao mesmo tempo**. O alerta agora
+compara com o piso **o número que a etiqueta mostra**, e não o valor exato. Um teste novo cobre os
+dois lados:
+- 24,99 aparece como "Apoio 25" e fica sem alerta;
+- 24,4 aparece como "Apoio 24" e ganha o alerta.
+
+Na tela, o Oriente Médio da partida de 2047 tem apoio 24,95 e aparece como "Apoio 25", sem alerta.
+
+### Um defeito que só a tela mostrou
+
+Na primeira conferência, **o selo "▲ crítico" cobria o acento de "África", "Ásia Oriental" e "Ásia
+Meridional"**. Ele ficava 1rem acima da etiqueta e tinha altura de linha 1,45, então descia 8 px
+para dentro dela.
+
+**Agora o selo se apoia na borda** (`bottom: 100%`) e a altura de linha é 1,25. As duas mudanças
+vêm juntas por um motivo: com o selo alto, a etiqueta da Ásia Meridional encostava na do Oriente
+Médio. Com a linha mais baixa, sobram 2,7 px entre as duas, medidos no navegador.
+
+**O teste de sobreposição usava duas medidas fixas**, 51 px para a etiqueta e 16 px para o selo, e
+a primeira estava errada. Agora ele lê do próprio `map.css` a altura de linha, o padding, o gap e
+a borda. Isso dá 52,4 px, e o Chrome mede 52.
+
+**Conferi que ele reprova de verdade.** Com a altura de linha do selo de volta em 1,45, o teste
+falhou com `as etiquetas de eu e me se tocam`. Voltei o arquivo e ele passou de novo.
+
+### Como foi conferido
+
+**No Chrome, pela extensão.** Plantei pelo console a partida da seed 7 em 2047. As máscaras ficaram
+prontas, o "Apoio 25" apareceu sem alerta, e foi aqui que o selo sobre o acento apareceu. **A
+extensão caiu no meio da conferência**, porque o Chrome foi fechado.
+
+**O resto foi no Edge em modo headless**, com um script de CDP fora do repositório e um perfil
+temporário (nada novo no `package.json`). O que foi visto:
+- **hover e clique na terra:** o Saara acende e escolhe a África, e o painel de detalhe abre;
+- **clique no mar:** não muda nada;
+- **foco visível:** o anel aparece na etiqueta;
+- **movimento reduzido:** o pulso do evento para, e a região fica numa brasa parada a 30%;
+- **tela de 390 px:** a página não rola de lado, e o mapa rola dentro da própria caixa (343 de
+  864 px);
+- **a partida quente:** a seed 7 sem nenhuma compra, em 2083, com 2,80 °C e `--calor` 0,879;
+- **o build da feira aberto por `file://`:** a imagem vai embutida como `data:`, não há nenhum
+  recurso externo, as máscaras ficam prontas, e o hover e o clique funcionam.
+
+**No console, nenhum erro do jogo.** Aparecem só dois avisos: o "não havia partida salva" da
+primeira carga e o 404 do `favicon.ico`. O `index.html` não declara ícone, e isso já era assim.
+
+**A evidência do meio da partida tem o apoio ajustado à mão**, para mostrar todos os estados de
+uma vez: três eventos, uma região crítica, o caso do 24,95 e uma região escolhida. O save de 2047
+é o de sempre, só com o apoio das regiões trocado. A evidência de 2083 é a partida sem nenhum
+ajuste.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check                              # 747 testes
+  npx vitest run tests/map-geometry.test.ts  # o recorte e as etiquetas
+  ```
+
+  Na tela: rode `npm run dev` e comece uma partida. Passe o ponteiro sobre a terra: a região
+  acende, e o clique a escolhe. Na feira: rode `npm run build:feira` e abra
+  `dist-feira/index.html` com dois cliques.
+
+- **Pendente:**
+  - **O build da feira por `file://` foi conferido só no Edge.** Falta abri-lo no navegador do
+    computador da feira.
+  - **A Austrália fica quase toda embaixo da etiqueta da Oceania**, e o Brasil embaixo da da
+    América Latina. As posições são as do protótipo aprovado. Se incomodar, dá para mover os pontos
+    no `LABEL_ANCHORS`, e o teste de sobreposição diz se ainda cabe.
+  - **O save plantado no Chrome ficou lá**, no `localhost:5199`, porque a extensão caiu antes da
+    limpeza. Ele só aparece nessa porta.
+  - **Nesta máquina o pulso do evento não anima.** Os efeitos de animação do Windows estão
+    desligados, e o jogo respeita o `prefers-reduced-motion`. Com a preferência emulada como
+    "sem preferência", a animação `map-pulse` roda.
+  - **Os avisos do Node 26 no `npm run check`** continuam, como no `VIS-02`.
+- **Evidência:**
+  - `docs/evidencias/2026-09-16-vis-03-mapa-meio-da-partida.jpg` — 2047, com a África escolhida,
+    três eventos e a hachura do apoio crítico;
+  - `docs/evidencias/2026-09-16-vis-03-mapa-aquecido.jpg` — 2083, a terra seca, e a América Latina
+    escolhida.
+
+---
+
 ## 2026-09-16 — A paleta nova entrou, e o contraste passou a morar num lugar só
 
 - **Parte / tarefa:** `VIS-02` ✔

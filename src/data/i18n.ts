@@ -170,7 +170,8 @@ export const ui = {
     warning: 'A partida salva será apagada. Não dá para desfazer.',
   },
 
-  // O mapa esquemático das 8 regiões (P5-01), com a lista do docs/GDD.md §2.3.
+  // O mapa das 8 regiões (P5-01; ilustrado desde o VIS-03), com a lista do
+  // docs/GDD.md §2.3.
   //
   // **O nome de cada região não está aqui**, pelo mesmo motivo do `fact` dos
   // eventos: ele mora no `src/data/regions.json`, que é o arquivo que o pacote
@@ -182,7 +183,7 @@ export const ui = {
     support: (value: string) => `Apoio ${value}`,
 
     /**
-     * O que o leitor de tela lê no lugar da forma.
+     * O que o leitor de tela lê no lugar da etiqueta da região.
      *
      * Traz a escala junto ("de 100"): quem não enxerga o mapa não tem como
      * saber, pelo número sozinho, se 50 é muito ou pouco.
@@ -198,14 +199,14 @@ export const ui = {
     // aquecimento não ser só cor (§5), e ela diz o que o número do HUD não diz:
     // não a temperatura, mas **em que faixa da nota** o mundo já está.
     heat: {
-      caption: (band: string) => `A cor das regiões acompanha o aquecimento. Agora: ${band}.`,
+      caption: (band: string) => `A terra do mapa seca conforme o mundo esquenta. Agora: ${band}.`,
       gold: (limit: string) => `abaixo de ${limit}, o teto do ouro`,
       silver: (limit: string) => `abaixo de ${limit}, o teto da prata`,
       bronze: (limit: string) => `abaixo de ${limit}, o teto do bronze`,
       over: (limit: string) => `acima de ${limit} — nenhuma medalha ao alcance`,
     },
 
-    // O alerta no canto da forma (P7-04). Ícone **mais** palavra escrita: o §5
+    // O alerta pendurado na etiqueta (P7-04). Ícone **mais** palavra escrita: o §5
     // proíbe estado só por cor, e alerta é justamente onde a cor tenta carregar
     // tudo sozinha.
     alert: {

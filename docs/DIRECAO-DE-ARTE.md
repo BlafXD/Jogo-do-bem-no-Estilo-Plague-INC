@@ -149,8 +149,8 @@ no marcador da barra e na legenda do mapa.
 ## 6. O mapa
 
 - **A imagem é o `Mapa Mundi.jpeg`** (1376 × 768), **gerado pelo autor do projeto, como os
-  personagens** — confirmado no chat em 2026-09-16. A linha no `docs/CREDITOS.md` entra junto com
-  o arquivo, no `VIS-03`.
+  personagens** — confirmado no chat em 2026-09-16. No repositório ela é o
+  `src/assets/map/world.jpg`, sem edição, e a linha dela está no `docs/CREDITOS.md`.
 - **O recorte vai de 0 a 620 px na vertical.** A faixa branca da Antártida sai, porque nenhuma
   mecânica usa aquela terra e ela roubava a atenção (proposta 3, §10).
 - **As oito regiões seguem o recorte do `docs/CIENCIA.md`, e o mapa passa a mostrá-lo.**
@@ -161,9 +161,10 @@ no marcador da barra e na legenda do mapa.
   - A Nova Guiné se divide no meridiano 141° L.
   - A Groenlândia fica na América do Norte.
 - **Terra e oceano se separam pela cor**: onde o azul predomina, é água. As fronteiras entre
-  regiões foram traçadas em pixels (`polys.txt`, nas fontes do protótipo), porque a imagem não é
-  uma projeção exata. Ela fica perto da Miller, com ~3,83 px por grau, mas com desvios locais de
-  vários pixels.
+  regiões foram traçadas em pixels, porque a imagem não é uma projeção exata. Ela fica perto da
+  Miller, com ~3,83 px por grau, mas com desvios locais de vários pixels. Os polígonos nasceram no
+  `polys.txt` das fontes do protótipo e hoje moram no `src/ui/map-geometry.ts`; o
+  `tests/map-geometry.test.ts` confere 37 pontos do recorte, um por decisão.
 - **Três particularidades da imagem.** Todas já estão tratadas no traçado:
   - a ponta da Chukotka reaparece na borda esquerda e pertence à Europa;
   - a ilha de Sacalina está grudada no continente;
@@ -173,7 +174,7 @@ no marcador da barra e na legenda do mapa.
 
 | Estado | Como aparece | Por que não é só cor |
 |---|---|---|
-| Escolhida | contorno creme de 2 px com halo escuro, terra clareada | a etiqueta ganha borda grossa e o marcador `▸` |
+| Escolhida | contorno creme fino (2 px da imagem) com halo escuro, terra clareada | a etiqueta ganha borda grossa e o marcador `▸` |
 | Sob o ponteiro | o mesmo, pela metade | — (não é estado do jogo) |
 | Atingida por evento | pulso de brasa, 1,8 s | etiqueta `◉ evento` |
 | Apoio abaixo do piso | hachura de brasa a 135° | **textura**, mais a etiqueta `▲ crítico` |
@@ -184,12 +185,25 @@ no marcador da barra e na legenda do mapa.
 - "Apoio N" e um medidor com o piso de apatia marcado;
 - o alerta, quando houver, pendurado acima.
 
-Isso aposenta o `<g role="button">` de hoje, a única vez em que a interface abria mão do elemento
-nativo. **Clicar na terra** também escolhe a região, por uma grade de 8 px gerada junto com as
-máscaras.
+Isso aposentou o `<g role="button">` do `P5-01`, a única vez em que a interface abria mão do
+elemento nativo. **Clicar na terra** também escolhe a região, por uma grade na metade da resolução
+da imagem, gerada junto com as máscaras. Um clique a até 6 px da costa (em pixels da imagem) ainda
+conta como terra; um clique no mar não faz nada.
 
-**Em tela estreita ou com zoom alto**, o mapa mantém uma largura mínima e rola de lado **dentro da
-própria caixa** — a página não rola, como já é hoje.
+**A etiqueta tem fundo opaco**, e não os 90% do protótipo: é o que permite medir o contraste do
+texto, na tabela do `theme.css`. **O alerta se apoia na borda de cima** e não entra na etiqueta —
+descendo mais, ele cobria o acento de "África" e de "Ásia".
+
+**As máscaras nascem no navegador.** Na carga, o `map.ts` lê os pixels da imagem num canvas,
+separa a terra da água, pinta os polígonos e entrega a cada camada a sua máscara. Nenhuma imagem
+gerada entra no repositório, e o build da feira funciona por `file://`, porque a imagem vai
+embutida no HTML. Se o canvas falhar, as camadas ficam escondidas: o desenho não reage, e as
+etiquetas continuam funcionando.
+
+**Em tela estreita ou com zoom alto**, o mapa tem **largura fixa**, a do `--largura-mundo`, e rola
+de lado **dentro da própria caixa**. A página não rola, como já era. A largura é fixa, e não
+mínima, porque as etiquetas têm tamanho em `rem`: com o mapa também em `rem`, a distância entre
+elas não muda com o zoom, e o teste de sobreposição vale para qualquer zoom.
 
 ---
 

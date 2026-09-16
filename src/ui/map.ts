@@ -1,196 +1,74 @@
-// O mapa esquemático das 8 regiões (P5-01). As regiões estão no docs/GDD.md §2.3.
+// O mapa das 8 regiões: o mapa-múndi ilustrado do VIS-03, que substituiu os
+// retângulos do P5-01. As regiões estão no docs/GDD.md §2.3; o desenho, no
+// docs/DIRECAO-DE-ARTE.md §6.
 //
 // Mesma divisão do hud.ts, do tree.ts e do contain.ts: `mapView` é **puro** —
-// entra GameState, sai o mapa inteiro em texto e coordenada — e só `mountMap` e
-// `renderMap` tocam no DOM.
+// entra GameState, sai o mapa inteiro em texto e número — e só `mountMap` e
+// `renderMap` tocam no DOM. A geometria (a imagem, os contornos, onde cada
+// etiqueta pousa) está no map-geometry.ts, também pura.
 //
 // **Por que este arquivo existe.** O engine simula as oito regiões desde o
 // P6-01: o climate.ts cresce emissão região a região, o events.ts acerta um
 // alvo, a Inércia derruba apoio localmente e as habilidades aplicam efeito
-// regional. Nada disso aparecia na tela — o HUD mostra a **média** do apoio, e
-// uma média esconde exatamente o que interessa: que a África pode estar em 12
-// enquanto a Europa está em 68. Metade da simulação rodava invisível.
+// regional. O HUD mostra a **média** do apoio, e uma média esconde exatamente o
+// que interessa: que a África pode estar em 12 enquanto a Europa está em 68.
 //
 // **Por que o apoio, e não as emissões.** O HUD já mostra a emissão global, e a
-// emissão de uma região é um número pequeno com decimal (0,56 a 16,4 Gt) que se
-// lê mal de longe. O apoio é o número que só existe em média no HUD, é o que os
-// eventos e a Inércia atacam, e é uma das duas condições de derrota do §2.7 —
-// zerar nas oito regiões dissolve a agência. É o que o jogador precisa ver
-// chegando.
+// emissão de uma região é um número pequeno com decimal que se lê mal de longe.
+// O apoio é o número que só existe em média no HUD, é o que os eventos e a
+// Inércia atacam, e é uma das duas condições de derrota do §2.7.
 //
-// **Por que formas geométricas, e não um mapa-múndi de verdade.** O corte de
-// escopo do modo solo (PLANO.md) diz "mapa esquemático" e "formas + ícones
-// CC0"; um contorno de continente traçado de outra fonte esbarraria na regra 10
-// e no §12. Blocos arredondados em posição aproximadamente geográfica dizem
-// "onde" sem copiar nada de ninguém.
+// **As etiquetas são botões de verdade.** O P5-01 desenhava cada região como um
+// `<g role="button">` dentro do SVG — a única vez em que a interface abria mão do
+// elemento nativo, pagando com Enter e Espaço tratados à mão. Agora o desenho é
+// uma imagem, e o que se clica e se alcança por Tab é um `<button>` por cima
+// dela: teclado, foco e leitor de tela vêm de graça, e o atalho de pausa do
+// main.ts já ignora teclas que nascem num botão.
+//
+// **As máscaras nascem no navegador.** Quando a imagem carrega, um `<canvas>` lê
+// os pixels, separa terra de água e pinta, para cada região, uma máscara e um
+// contorno. Nenhuma imagem gerada entra no repositório: só o mapa e os
+// polígonos. Sem canvas — ou com um canvas que não deixa ler os pixels —, o mapa
+// fica sem os realces, e as oito etiquetas continuam fazendo tudo.
 //
 // A regra de ouro do §3 continua valendo na direção que importa: este arquivo
 // importa do engine; nenhum arquivo do engine importa daqui.
 
+import worldImage from '../assets/map/world.jpg';
 import { ui } from '../data/i18n';
 import { medalFor, MEDAL_CEILING, type Medal } from '../engine/outcome';
 import { balance, REGION_IDS, type GameState, type RegionId } from '../engine/state';
-
-// ------------------------------------------------------------- geometria ---
-
-export type RegionShape = {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-};
-
-/** O sistema de coordenadas do SVG. Tudo abaixo é em unidade de viewBox. */
-export const MAP_VIEWBOX = { width: 1000, height: 620 } as const;
-
-/**
- * Onde cada região fica no desenho.
- *
- * **Não vai para o balance.json nem para o regions.json**, e os dois motivos
- * são diferentes. Do balance.json porque a regra 8 fala de número de
- * balanceamento — coordenada de desenho não muda o jogo, muda o layout, e
- * misturá-la com o TCRE faria o arquivo de constantes deixar de ser legível
- * como planilha. Do regions.json porque aquele arquivo é o contrato de edição
- * do pacote [D-Historia] (PLANO.md): quem for escrever o nome de uma região não
- * deve tropeçar em `x` e `height`, nem poder quebrar o mapa mexendo em texto.
- *
- * A disposição é aproximadamente geográfica — Américas à esquerda, Ásia à
- * direita, Oceania no canto inferior. O tests/map.test.ts cobra que nenhuma
- * forma invada a outra e que todas caibam no viewBox.
- */
-export const REGION_SHAPES: Readonly<Record<RegionId, RegionShape>> = {
-  na: { x: 40, y: 40, width: 230, height: 170 },
-  la: { x: 150, y: 250, width: 180, height: 230 },
-  eu: { x: 400, y: 40, width: 170, height: 130 },
-  af: { x: 390, y: 215, width: 190, height: 240 },
-  me: { x: 610, y: 190, width: 170, height: 140 },
-  ea: { x: 650, y: 40, width: 290, height: 140 },
-  sa: { x: 610, y: 345, width: 190, height: 140 },
-  oc: { x: 810, y: 460, width: 170, height: 130 },
-};
-
-/**
- * Os tamanhos de fonte, em unidade de viewBox.
- *
- * Ficam aqui, e não no CSS, porque o cálculo de onde cada linha de texto pousa
- * depende deles — e uma medida que o TypeScript usa para posicionar e o CSS usa
- * para desenhar, cada um com o seu próprio valor, é uma discordância esperando
- * acontecer. O `mountMap` os escreve como atributo de apresentação, que é a
- * forma de menor precedência: o theme.css do P5-02 ainda pode assumir o
- * controle com uma regra de CSS, se o Design quiser outra escala.
- *
- * **Não são livres.** O §5 do GDD fixa 16px como piso para todo texto, e o SVG
- * encolhe junto com a tela: o `min-width` do map.css é o que garante que 26
- * unidades nunca desçam abaixo desse piso. Mexer num dos dois é mexer no outro.
- */
-export const NAME_FONT_SIZE = 26;
-export const SUPPORT_FONT_SIZE = 26;
-export const MARKER_FONT_SIZE = 30;
-export const ALERT_FONT_SIZE = 22;
-
-/** Distância entre as duas linhas do nome. */
-const NAME_LINE_HEIGHT = 30;
-
-/** Linha de base do marcador de seleção e do alerta, medida do topo da forma. */
-const CORNER_Y = 28;
-
-/**
- * O quanto o nome tem que descer para não entrar na faixa dos cantos.
- *
- * **Isto existe por causa de um defeito visto no navegador**, e não por
- * precaução: com o alerta do P7-04 no canto direito, as três formas de 140 de
- * altura com nome em duas linhas — Ásia Oriental, Oriente Médio e Ásia
- * Meridional — desenhavam "▲ crítico" **por cima** do nome. O bloco de texto é
- * centrado na forma, e numa forma baixa o centro sobe até a faixa dos cantos.
- *
- * O piso é a soma que dá folga: a base do alerta cai em `CORNER_Y`, a descida
- * dele vai a cerca de `+5`, e a primeira linha do nome sobe cerca de `19` acima
- * da própria base. `28 + 5 + 19 = 52`, e 56 deixa 4 unidades de sobra.
- *
- * Vale para as duas linhas do bloco: o apoio desce junto, para o espaçamento
- * entre nome e apoio continuar o mesmo. Nas formas altas o piso nunca é
- * alcançado e nada se move.
- */
-const NAME_TOP_LIMIT = 56;
-
-export type CellText = {
-  /** O eixo em que o nome e o apoio se centram. */
-  readonly cx: number;
-  /** Linha de base da primeira linha do nome. */
-  readonly nameY: number;
-  readonly lineHeight: number;
-  /** Linha de base do apoio. */
-  readonly supportY: number;
-  readonly markerX: number;
-  readonly markerY: number;
-  /** O canto do alerta (P7-04): o oposto do marcador de seleção. */
-  readonly alertX: number;
-  readonly alertY: number;
-};
-
-/**
- * Onde o texto de uma região pousa dentro da forma.
- *
- * O bloco de texto é centrado na forma, e o deslocamento depende de o nome ter
- * quebrado em duas linhas ou não — sem isso, "Europa" ficaria alto e "Ásia
- * Meridional" transbordaria por baixo. É função pura de propósito: o
- * tests/map.test.ts consegue cobrar que nada saia da forma sem precisar de
- * navegador, que é onde esse tipo de erro costuma ser descoberto tarde.
- */
-export function textAnchors(shape: RegionShape, lines: number): CellText {
-  const cx = shape.x + shape.width / 2;
-  const cy = shape.y + shape.height / 2;
-  const twoLines = lines >= 2;
-
-  // O bloco quer ficar centrado; numa forma baixa ele é empurrado para baixo o
-  // bastante para sair da faixa dos cantos. O empurrão depende só da **forma e
-  // do nome**, nunca de haver alerta em cena — se dependesse, o nome pularia de
-  // lugar toda vez que um evento caísse na região.
-  const wantedNameY = cy - (twoLines ? 26 : 8);
-  const nameY = Math.max(wantedNameY, shape.y + NAME_TOP_LIMIT);
-  const push = nameY - wantedNameY;
-
-  return {
-    cx,
-    nameY,
-    lineHeight: NAME_LINE_HEIGHT,
-    supportY: cy + (twoLines ? 48 : 30) + push,
-    // O marcador de seleção mora no canto superior esquerdo, fora do caminho do
-    // nome: ele aparece e some durante a partida, e se dividisse a linha com o
-    // nome faria o nome pular de lugar a cada clique.
-    markerX: shape.x + 16,
-    markerY: shape.y + CORNER_Y,
-    // Espelho do marcador, no canto oposto: os dois podem estar em cena ao
-    // mesmo tempo (uma região escolhida que acabou de ser atingida) e nenhum
-    // dos dois pode empurrar o nome de lugar.
-    alertX: shape.x + shape.width - 16,
-    alertY: shape.y + CORNER_Y,
-  };
-}
+import {
+  LABEL_ANCHORS,
+  MAP_SIZE,
+  edgeOf,
+  halfMask,
+  hitGrid,
+  landOf,
+  rasterizeRegions,
+  regionAt,
+  regionCode,
+} from './map-geometry';
 
 // ---------------------------------------------------------------- a view ---
 
 /**
  * O quanto o mundo esquentou, em faixas (P7-04).
  *
- * **As faixas são os tetos das medalhas do §2.7**, e sai de graça o que isso
- * ensina: a cor do mapa é a mesma escala pela qual a tela de fim vai julgar a
- * partida. Quem vê as oito formas passarem de frias a quentes está vendo o ouro
- * e depois a prata ficarem para trás, antes de qualquer texto dizer isso.
- *
- * Quem decide a faixa é o `medalFor` do engine — a mesma função que concede a
- * medalha. Uma segunda leitura dos limiares aqui seria o jeito de o mapa e a
- * tela de fim discordarem em silêncio.
+ * **As faixas são os tetos das medalhas do §2.7**, e quem decide a faixa é o
+ * `medalFor` do engine — a mesma função que concede a medalha. Uma segunda
+ * leitura dos limiares aqui seria o jeito de o mapa e a tela de fim discordarem
+ * em silêncio.
  */
 export type MapHeat = Medal | 'over';
 
 export type RegionAlertKind = 'event' | 'support';
 
 /**
- * O alerta no canto da forma.
+ * O alerta pendurado na etiqueta.
  *
  * **Ícone mais palavra escrita, nunca a cor sozinha** (§5 do GDD): tire as cores
- * da tela e continua escrito `evento` ou `crítico` no canto da região.
+ * da tela e continua escrito `evento` ou `crítico` em cima da região.
  */
 export type RegionAlert = {
   readonly kind: RegionAlertKind;
@@ -201,17 +79,19 @@ export type RegionAlert = {
 export type RegionCell = {
   readonly id: RegionId;
   readonly name: string;
-  /** O nome quebrado em até duas linhas, para caber na forma. */
-  readonly nameLines: readonly string[];
   /** "Apoio 50" — rótulo mais valor, nunca o número sozinho (§5 do GDD). */
   readonly support: string;
-  /** A frase que o leitor de tela lê no lugar da forma. */
+  /** O apoio que a etiqueta mostra, de 0 a 100: o número e a largura do medidor. */
+  readonly supportValue: number;
+  /** Se esse mesmo número está abaixo do piso de apatia. */
+  readonly low: boolean;
+  /** A frase que o leitor de tela lê no lugar da etiqueta. */
   readonly ariaLabel: string;
   readonly selected: boolean;
-  /** O sinal visível de seleção. Vazio quando a região não está selecionada. */
+  /** O sinal visível de seleção. Vazio quando a região não está escolhida. */
   readonly marker: string;
-  readonly shape: RegionShape;
-  readonly text: CellText;
+  /** Onde o centro da etiqueta pousa, em fração do desenho — de 0 a 1. */
+  readonly anchor: { readonly left: number; readonly top: number };
   /** `null` quando não há nada a avisar sobre esta região. */
   readonly alert: RegionAlert | null;
 };
@@ -220,6 +100,12 @@ export type MapView = {
   readonly cells: readonly RegionCell[];
   readonly selected: RegionId | null;
   readonly heat: MapHeat;
+  /**
+   * O quanto a terra já secou: 0 na temperatura em que a partida começa, 1 no
+   * limiar da derrota. Os dois extremos são do balance.json, e não números
+   * novos.
+   */
+  readonly heatLevel: number;
   /** A faixa dita por escrito. É o que impede o aquecimento de ser só cor (§5). */
   readonly heatCaption: string;
 };
@@ -235,13 +121,9 @@ const HEAT_CEILING: Readonly<Record<MapHeat, number>> = {
 };
 
 const threshold = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
-/**
- * A faixa em que o mundo está, e a frase que a nomeia.
- *
- * O `?? 'over'` é a única tradução feita aqui: o `medalFor` devolve `null` acima
- * do bronze, e `null` não é nome de faixa de cor.
- */
+/** A faixa em que o mundo está, e a frase que a nomeia. */
 function heatFor(state: GameState): { readonly heat: MapHeat; readonly caption: string } {
   const heat: MapHeat = medalFor(state.temperature) ?? 'over';
   const limit = `${threshold.format(HEAT_CEILING[heat])} ${ui.units.celsius}`;
@@ -249,63 +131,31 @@ function heatFor(state: GameState): { readonly heat: MapHeat; readonly caption: 
   return { heat, caption: ui.map.heat.caption(ui.map.heat[heat](limit)) };
 }
 
+/** O quanto a terra secou, de 0 a 1 — ver `MapView.heatLevel`. */
+function heatLevelFor(state: GameState): number {
+  const span = balance.loseTemperature - balance.startTemperature;
+  const level = (state.temperature - balance.startTemperature) / span;
+  return Math.min(1, Math.max(0, level));
+}
+
 /**
  * O alerta de uma região, ou `null` quando não há o que avisar.
  *
- * **A prioridade é regra, não gosto.** Com evento em cena e apoio abaixo do
- * piso ao mesmo tempo, quem aparece é o evento — porque ele é o único dos dois
- * que não tem outro lugar no mapa. O apoio crítico continua escrito na própria
- * forma, no número logo abaixo do nome; um `Apoio 18` já denuncia o estado sem
- * ajuda de canto nenhum.
+ * **A prioridade é regra, não gosto.** Com evento em cena e apoio abaixo do piso
+ * ao mesmo tempo, quem aparece é o evento, porque ele é o único dos dois que não
+ * tem outro lugar no mapa: o apoio crítico continua escrito no número da
+ * própria etiqueta, e pintado de hachura no desenho.
  *
  * **O limiar do apoio é o `supportFloor`, e não um número novo.** O tick.ts
  * registra que o desgaste do tempo *para* no piso: uma região abaixo dele não
  * chegou ali sozinha — foi um evento (P7-01) ou a Inércia (P7-03) que a furou.
- * É a diferença entre "o tempo passou" e "alguma coisa quebrou aqui", e ela já
- * está medida no balance.json.
  */
-function alertFor(state: GameState, id: RegionId): RegionAlert | null {
+function alertFor(state: GameState, id: RegionId, low: boolean): RegionAlert | null {
   if (state.activeEvents.some((active) => active.target === id)) {
     return { kind: 'event', ...ui.map.alert.event };
   }
-  if (state.regions[id].support < balance.supportFloor) {
-    return { kind: 'support', ...ui.map.alert.support };
-  }
+  if (low) return { kind: 'support', ...ui.map.alert.support };
   return null;
-}
-
-const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
-
-/**
- * Quebra o nome em até duas linhas, no ponto que deixa as duas mais parecidas.
- *
- * "América do Norte" vira "América" / "do Norte" (7 e 8 caracteres) em vez de
- * "América do" / "Norte" (10 e 5). A diferença importa porque as formas são
- * estreitas: é a linha mais longa que decide se o texto cabe.
- *
- * Nunca quebra em três — nenhum dos oito nomes precisa, e uma terceira linha
- * não caberia na altura das formas menores. Se um dia entrar um nome de quatro
- * palavras, é o teste de "o texto cabe na forma" que vai reclamar primeiro.
- */
-export function nameLines(name: string): readonly string[] {
-  const words = name.split(' ');
-  if (words.length < 2) return [name];
-
-  let cut = 1;
-  let smallest = Number.POSITIVE_INFINITY;
-
-  for (let index = 1; index < words.length; index += 1) {
-    const left = words.slice(0, index).join(' ').length;
-    const right = words.slice(index).join(' ').length;
-    const difference = Math.abs(left - right);
-
-    if (difference < smallest) {
-      smallest = difference;
-      cut = index;
-    }
-  }
-
-  return [words.slice(0, cut).join(' '), words.slice(cut).join(' ')];
 }
 
 /**
@@ -314,143 +164,269 @@ export function nameLines(name: string): readonly string[] {
  * `selected` chega de fora e não sai do GameState: onde o jogador está olhando
  * não é estado da partida, é estado da tela. O porquê está no main.ts.
  *
- * O apoio é **arredondado**, igual ao apoio médio do HUD. Aqui não vale a regra
- * do PAC (truncar, para o número na tela não prometer o que a ação vai negar):
- * ninguém gasta apoio, ele só é lido — e mostrar 49 para 49,7 afastaria a soma
- * das oito da média que o HUD mostra logo acima.
+ * O apoio é **arredondado**, igual ao apoio médio do HUD e ao painel da região.
+ * **E o alerta de apoio crítico olha para esse mesmo número arredondado** (VIS-02
+ * achou o defeito): antes ele comparava o valor exato, e uma região em 24,99
+ * aparecia como "Apoio 25" e "▲ crítico" ao mesmo tempo — a tela dizendo duas
+ * coisas contra o próprio piso de 25.
  */
 export function mapView(state: GameState, selected: RegionId | null): MapView {
   const cells = REGION_IDS.map((id): RegionCell => {
     const region = state.regions[id];
-    const shape = REGION_SHAPES[id];
-    const lines = nameLines(region.name);
-    const support = whole.format(Math.round(region.support));
-    const isSelected = selected === id;
-    const alert = alertFor(state, id);
+    const value = Math.round(region.support);
+    const low = value < balance.supportFloor;
+    const alert = alertFor(state, id, low);
+    const shown = whole.format(value);
+    const anchor = LABEL_ANCHORS[id];
 
     return {
       id,
       name: region.name,
-      nameLines: lines,
-      support: ui.map.support(support),
-      // O alerta entra na frase falada, e não só no canto do desenho: quem não
-      // enxerga o mapa precisa saber que a região foi atingida pelo mesmo
-      // caminho por que fica sabendo o apoio dela.
+      support: ui.map.support(shown),
+      supportValue: value,
+      low,
+      // O alerta entra na frase falada, e não só no desenho: quem não enxerga o
+      // mapa precisa saber que a região foi atingida pelo mesmo caminho por que
+      // fica sabendo o apoio dela.
       ariaLabel:
-        ui.map.cell(region.name, support) + (alert === null ? '' : ui.map.alert.said(alert.label)),
-      selected: isSelected,
-      marker: isSelected ? ui.map.selectedMarker : '',
-      shape,
-      text: textAnchors(shape, lines.length),
+        ui.map.cell(region.name, shown) + (alert === null ? '' : ui.map.alert.said(alert.label)),
+      selected: selected === id,
+      marker: selected === id ? ui.map.selectedMarker : '',
+      anchor: { left: anchor.x / MAP_SIZE.width, top: anchor.y / MAP_SIZE.height },
       alert,
     };
   });
 
   const { heat, caption } = heatFor(state);
-  return { cells, selected, heat, heatCaption: caption };
+  return { cells, selected, heat, heatLevel: heatLevelFor(state), heatCaption: caption };
+}
+
+// ---------------------------------------------------------- as máscaras ---
+
+/** As máscaras de um mapa, já prontas para virar `mask-image`. */
+type MapMasks = {
+  readonly regions: ReadonlyMap<RegionId, string>;
+  readonly edges: ReadonlyMap<RegionId, string>;
+  readonly land: string;
+  readonly hit: HitGrid;
+};
+
+/** A grade de clique, na mesma meia resolução das máscaras. */
+type HitGrid = { readonly cells: Uint8Array; readonly width: number; readonly height: number };
+
+/**
+ * Quantas células da grade de clique um clique no mar ainda alcança.
+ *
+ * Três células de meia resolução são seis pixels da imagem — o bastante para
+ * acertar uma ilha pequena sem que um clique no meio do oceano escolha nada.
+ */
+const HIT_RADIUS = 3;
+
+/** As grades de clique de cada mapa montado. */
+const hitGrids = new WeakMap<Element, HitGrid>();
+
+/** Os pixels da imagem, ou `null` quando o navegador não deixa lê-los. */
+function readPixels(image: HTMLImageElement): Uint8ClampedArray | null {
+  const canvas = document.createElement('canvas');
+  canvas.width = MAP_SIZE.width;
+  canvas.height = MAP_SIZE.height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (context === null) return null;
+
+  context.drawImage(image, 0, 0, MAP_SIZE.width, MAP_SIZE.height);
+  try {
+    return context.getImageData(0, 0, MAP_SIZE.width, MAP_SIZE.height).data;
+  } catch {
+    // Canvas contaminado: a imagem veio de uma origem que não deixa ler os
+    // pixels. O mapa segue sem realces, e as etiquetas seguem funcionando.
+    return null;
+  }
+}
+
+/** Uma máscara em alfa vira um PNG branco com aquela transparência. */
+function toDataUrl(alpha: Uint8ClampedArray, width: number, height: number): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (context === null) return '';
+
+  const image = context.createImageData(width, height);
+  for (let i = 0; i < alpha.length; i += 1) {
+    image.data.fill(255, i * 4, i * 4 + 3);
+    image.data[i * 4 + 3] = alpha[i] ?? 0;
+  }
+  context.putImageData(image, 0, 0);
+  return canvas.toDataURL('image/png');
+}
+
+/** As máscaras das oito regiões, o contorno de cada uma, a terra e o clique. */
+function buildMasks(image: HTMLImageElement): MapMasks | null {
+  const { width, height } = MAP_SIZE;
+  const pixels = readPixels(image);
+  if (pixels === null) return null;
+
+  const land = landOf(pixels, width, height);
+  const regions = rasterizeRegions(width, height, 1);
+  const half = { width: Math.floor(width / 2), height: Math.floor(height / 2) };
+  const masks = REGION_IDS.map((id) => ({
+    id,
+    alpha: halfMask(regions, land, width, height, regionCode(id)),
+  }));
+  const png = (alpha: Uint8ClampedArray): string => toDataUrl(alpha, half.width, half.height);
+
+  return {
+    regions: new Map(masks.map(({ id, alpha }) => [id, png(alpha)])),
+    edges: new Map(masks.map(({ id, alpha }) => [id, png(edgeOf(alpha, half.width, half.height))])),
+    land: png(halfMask(regions, land, width, height, 0)),
+    hit: { cells: hitGrid(masks.map(({ alpha }) => alpha)), ...half },
+  };
+}
+
+function setMask(target: Element | null, url: string | undefined): void {
+  if (!(target instanceof HTMLElement) || url === undefined || url === '') return;
+  target.style.setProperty('-webkit-mask-image', `url("${url}")`);
+  target.style.setProperty('mask-image', `url("${url}")`);
+}
+
+/** Pendura as máscaras nas camadas do mapa e liga a grade de clique. */
+function applyMasks(stage: HTMLElement, image: HTMLImageElement): void {
+  const masks = buildMasks(image);
+  if (masks === null) {
+    stage.dataset.masks = 'unavailable';
+    return;
+  }
+
+  for (const id of REGION_IDS) {
+    const layer = stage.querySelector(`[data-layer="${id}"]`);
+    setMask(layer?.querySelector('.map__light') ?? null, masks.regions.get(id));
+    setMask(layer?.querySelector('.map__state') ?? null, masks.regions.get(id));
+    setMask(layer?.querySelector('.map__edge') ?? null, masks.edges.get(id));
+  }
+  setMask(stage.querySelector('.map__heat'), masks.land);
+
+  hitGrids.set(stage, masks.hit);
+  stage.dataset.masks = 'ready';
+}
+
+/**
+ * Roda quando a imagem estiver decodificada — agora, se ela já estiver.
+ *
+ * Em teste, com jsdom, a imagem nunca carrega: nenhum canvas é pedido, e é isso
+ * que mantém a suíte sem o aviso de "não implementado" no rodapé.
+ */
+function whenLoaded(image: HTMLImageElement, run: () => void): void {
+  if (image.complete && image.naturalWidth > 0) {
+    run();
+    return;
+  }
+  image.addEventListener('load', run, { once: true });
 }
 
 // ------------------------------------------------------------------- DOM ---
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+type Slot = 'marker' | 'support' | 'meter' | 'alert' | 'heat';
 
-type Slot = 'support' | 'marker' | 'alert';
+function element<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  className: string,
+  slot?: Slot,
+): HTMLElementTagNameMap[K] {
+  const created = document.createElement(tag);
+  created.className = className;
+  if (slot !== undefined) created.dataset.map = slot;
+  return created;
+}
 
-function svg<K extends keyof SVGElementTagNameMap>(tag: K): SVGElementTagNameMap[K] {
-  return document.createElementNS(SVG_NS, tag);
+/** Uma camada de realce por região: a luz, o estado e o contorno. */
+function layerElement(id: RegionId): HTMLDivElement {
+  const layer = element('div', 'map__layer');
+  layer.dataset.layer = id;
+  layer.setAttribute('aria-hidden', 'true');
+
+  const halo = element('div', 'map__halo');
+  halo.append(element('div', 'map__edge'));
+  layer.append(element('div', 'map__light'), element('div', 'map__state'), halo);
+  return layer;
 }
 
 /**
- * Monta a forma de uma região: o bloco, o marcador, o nome e o apoio.
+ * A etiqueta de uma região: nome, apoio, medidor e o alerta pendurado.
  *
- * **É um `<g role="button">`, e não um `<button>` de verdade**, e essa é a
- * única vez no projeto em que a UI abre mão do elemento nativo. Um `<button>`
- * não pode conter um `<rect>` de SVG, e envolver o desenho em oito botões de
- * HTML posicionados por cima exigiria manter duas geometrias em sincronia — a
- * do desenho e a dos botões —, que é justamente o tipo de duplicação que este
- * projeto evita em todo lugar. O preço é ter que tratar Enter e Espaço à mão,
- * que é o que o `keydown` abaixo faz.
+ * O marcador de seleção e o medidor são decoração para o leitor de tela: quem
+ * diz que a região está escolhida é o `aria-pressed`, e quem diz o apoio é a
+ * frase do `aria-label`.
  */
-function regionElement(cell: RegionCell, onSelect: (id: RegionId) => void): SVGGElement {
-  const group = svg('g');
-  group.setAttribute('class', 'map__region');
-  group.dataset.region = cell.id;
-  group.setAttribute('role', 'button');
-  group.setAttribute('tabindex', '0');
+function labelElement(cell: RegionCell): HTMLButtonElement {
+  const button = element('button', 'map__label');
+  button.type = 'button';
+  button.dataset.region = cell.id;
+  button.style.left = `${cell.anchor.left * 100}%`;
+  button.style.top = `${cell.anchor.top * 100}%`;
 
-  const shape = svg('rect');
-  shape.setAttribute('class', 'map__shape');
-  shape.setAttribute('x', String(cell.shape.x));
-  shape.setAttribute('y', String(cell.shape.y));
-  shape.setAttribute('width', String(cell.shape.width));
-  shape.setAttribute('height', String(cell.shape.height));
-  shape.setAttribute('rx', '14');
-
-  const marker = svg('text');
-  marker.setAttribute('class', 'map__marker');
-  marker.dataset.map = 'marker';
-  marker.setAttribute('x', String(cell.text.markerX));
-  marker.setAttribute('y', String(cell.text.markerY));
-  marker.setAttribute('font-size', String(MARKER_FONT_SIZE));
-  // Decoração: quem diz ao leitor de tela que a região está escolhida é o
-  // `aria-pressed` do grupo, e repetir isso em texto faria a leitura anunciar
-  // duas vezes a mesma coisa.
+  const marker = element('span', 'map__marker', 'marker');
   marker.setAttribute('aria-hidden', 'true');
+  const name = element('span', 'map__name');
+  name.textContent = cell.name;
+  const head = element('span', 'map__head');
+  head.append(marker, name);
 
-  const name = svg('text');
-  name.setAttribute('class', 'map__name');
-  name.setAttribute('x', String(cell.text.cx));
-  name.setAttribute('y', String(cell.text.nameY));
-  name.setAttribute('text-anchor', 'middle');
-  name.setAttribute('font-size', String(NAME_FONT_SIZE));
-  name.append(
-    ...cell.nameLines.map((line, index) => {
-      const span = svg('tspan');
-      span.setAttribute('x', String(cell.text.cx));
-      span.setAttribute('dy', index === 0 ? '0' : String(cell.text.lineHeight));
-      span.textContent = line;
-      return span;
-    }),
-  );
+  const meter = element('span', 'map__meter', 'meter');
+  meter.setAttribute('aria-hidden', 'true');
+  // O piso de apatia marcado dentro do medidor, na escala de 0 a 100 do apoio.
+  meter.style.setProperty('--piso', `${balance.supportFloor}%`);
+  meter.append(document.createElement('i'));
+  const row = element('span', 'map__row');
+  row.append(element('span', 'map__support', 'support'), meter);
 
-  const support = svg('text');
-  support.setAttribute('class', 'map__support');
-  support.dataset.map = 'support';
-  support.setAttribute('x', String(cell.text.cx));
-  support.setAttribute('y', String(cell.text.supportY));
-  support.setAttribute('text-anchor', 'middle');
-  support.setAttribute('font-size', String(SUPPORT_FONT_SIZE));
+  button.append(head, row, element('span', 'map__alert', 'alert'));
+  return button;
+}
 
-  // O alerta mora no canto oposto ao marcador de seleção, e é montado sempre —
-  // vazio quando não há o que avisar. Criá-lo só quando aparece obrigaria o
-  // renderMap a reconstruir o grupo, que é justamente o que ele evita para não
-  // arrancar o foco do teclado de quem estiver navegando o mapa.
-  const alert = svg('text');
-  alert.setAttribute('class', 'map__alert');
-  alert.dataset.map = 'alert';
-  alert.setAttribute('x', String(cell.text.alertX));
-  alert.setAttribute('y', String(cell.text.alertY));
-  alert.setAttribute('text-anchor', 'end');
-  alert.setAttribute('font-size', String(ALERT_FONT_SIZE));
+/** Acende a região sob o ponteiro, e só ela. */
+function setHover(stage: HTMLElement, id: RegionId | null): void {
+  for (const layer of stage.querySelectorAll<HTMLElement>('[data-layer]')) {
+    if (layer.dataset.layer === id) layer.dataset.hover = '';
+    else delete layer.dataset.hover;
+  }
+  stage.dataset.pointer = id === null ? '' : 'region';
+}
 
-  group.append(shape, marker, name, support, alert);
-  group.addEventListener('click', () => onSelect(cell.id));
+/** A região da etiqueta sob o ponteiro, ou `null` fora das etiquetas. */
+function labelUnder(target: EventTarget | null): RegionId | null {
+  const button = target instanceof Element ? target.closest<HTMLElement>('.map__label') : null;
+  return REGION_IDS.find((id) => id === button?.dataset.region) ?? null;
+}
 
-  group.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
+/**
+ * O ponteiro sobre o desenho: acender a região sob ele e escolhê-la no clique.
+ *
+ * A grade de clique só existe depois das máscaras; antes disso, e em qualquer
+ * navegador que não as produza, o desenho não reage — e as etiquetas, sim.
+ */
+function wirePointer(stage: HTMLElement, onSelect: (id: RegionId) => void): void {
+  const regionUnder = (event: MouseEvent): RegionId | null => {
+    const grid = hitGrids.get(stage);
+    const box = stage.getBoundingClientRect();
+    if (grid === undefined || box.width === 0 || box.height === 0) return null;
 
-    // `preventDefault` porque a barra de espaço rola a página. `stopPropagation`
-    // porque o main.ts escuta Espaço no `document` para pausar o jogo, e a
-    // guarda de lá deixa passar tudo que não for `HTMLButtonElement` — um `<g>`
-    // não é. Sem esta linha, escolher uma região pelo teclado pausaria a
-    // partida junto: é o preço escondido de não usar um botão nativo, e ele se
-    // paga aqui.
-    event.preventDefault();
-    event.stopPropagation();
-    onSelect(cell.id);
+    const x = ((event.clientX - box.left) / box.width) * grid.width;
+    const y = ((event.clientY - box.top) / box.height) * grid.height;
+    return regionAt(grid.cells, grid.width, grid.height, x, y, HIT_RADIUS);
+  };
+
+  // Em cima de uma etiqueta vale a região dela, mesmo que o desenho embaixo seja
+  // mar ou outra região.
+  stage.addEventListener('mousemove', (event) => {
+    setHover(stage, labelUnder(event.target) ?? regionUnder(event));
   });
-
-  return group;
+  stage.addEventListener('mouseleave', () => setHover(stage, null));
+  stage.addEventListener('click', (event) => {
+    // A etiqueta tem o próprio clique; contar este também desmarcaria de volta.
+    if (labelUnder(event.target) !== null) return;
+    const id = regionUnder(event);
+    if (id !== null) onSelect(id);
+  });
 }
 
 /**
@@ -463,103 +439,131 @@ function regionElement(cell: RegionCell, onSelect: (id: RegionId) => void): SVGG
 export function mountMap(root: Element, view: MapView, onSelect: (id: RegionId) => void): void {
   root.setAttribute('aria-label', ui.map.label);
 
-  const intro = document.createElement('p');
-  intro.className = 'map__intro';
+  const intro = element('p', 'map__intro');
   intro.textContent = ui.map.intro;
 
-  const canvas = svg('svg');
-  canvas.setAttribute('class', 'map__canvas');
-  canvas.setAttribute('viewBox', `0 0 ${MAP_VIEWBOX.width} ${MAP_VIEWBOX.height}`);
-  // O papel de grupo dá ao SVG algo que o leitor de tela reconhece como
-  // recipiente de coisas focáveis. O nome acessível fica na seção, como nos
-  // outros módulos — repeti-lo aqui faria a leitura anunciar o mapa duas vezes.
-  canvas.setAttribute('role', 'group');
-  canvas.append(...view.cells.map((cell) => regionElement(cell, onSelect)));
+  // As duas imagens são a mesma: a de baixo é o mapa, a de cima é a mesma terra
+  // passada por um filtro de secura, recortada pela máscara da terra. O
+  // navegador decodifica o arquivo uma vez só.
+  const image = element('img', 'map__image');
+  const heat = element('img', 'map__heat');
+  for (const picture of [image, heat]) {
+    picture.src = worldImage;
+    picture.alt = '';
+    picture.decoding = 'async';
+    picture.draggable = false;
+  }
+  heat.setAttribute('aria-hidden', 'true');
 
-  // O rolador existe por causa do §5: o texto dentro do SVG encolhe junto com o
-  // SVG, e abaixo de certa largura ele cairia sob o piso de 16px. O map.css
-  // trava a largura mínima e deixa esta caixa rolar de lado — encolher o texto
-  // seria trocar uma régua de acessibilidade por conforto de layout.
-  const scroll = document.createElement('div');
-  scroll.className = 'map__scroll';
-  scroll.append(canvas);
+  const haze = element('div', 'map__haze');
+  haze.setAttribute('aria-hidden', 'true');
+
+  const stage = element('div', 'map__stage');
+  stage.dataset.masks = 'pending';
+  stage.append(image, heat, haze, ...REGION_IDS.map(layerElement));
+  for (const cell of view.cells) {
+    const button = labelElement(cell);
+    button.addEventListener('click', () => onSelect(cell.id));
+    stage.append(button);
+  }
+
+  const frame = element('div', 'map__frame');
+  frame.append(stage);
+  // O rolador existe por causa do §5: a etiqueta tem 16 px, e o mapa não pode
+  // encolher abaixo da largura em que as oito cabem sem se tocar. Numa tela
+  // estreita ele rola de lado, dentro da própria caixa; a página, não.
+  const scroll = element('div', 'map__scroll');
+  scroll.append(frame);
 
   // A legenda do aquecimento (P7-04). Fica **abaixo** do desenho: ela explica
-  // uma cor que já está na tela, e quem lê antes de olhar não tem o que ligar à
-  // frase. É também o que impede o aquecimento de ser só cor (§5).
-  const heat = document.createElement('p');
-  heat.className = 'map__heat';
-  heat.dataset.map = 'heat';
+  // uma cor que já está na tela. É também o que impede o aquecimento de ser só
+  // cor (§5).
+  const caption = element('p', 'map__caption', 'heat');
 
-  root.replaceChildren(intro, scroll, heat);
+  root.replaceChildren(intro, scroll, caption);
+  wirePointer(stage, onSelect);
+  whenLoaded(image, () => applyMasks(stage, image));
   renderMap(root, view);
 }
 
-function slot(group: ParentNode, name: Slot): SVGElement | null {
-  return group.querySelector<SVGElement>(`[data-map="${name}"]`);
+function slot(parent: ParentNode, name: Slot): HTMLElement | null {
+  return parent.querySelector<HTMLElement>(`[data-map="${name}"]`);
+}
+
+function setText(target: HTMLElement | null, text: string): void {
+  if (target !== null && target.textContent !== text) target.textContent = text;
+}
+
+/** O que a camada da região mostra: escolhida, atingida, com apoio crítico. */
+function layerState(cell: RegionCell): string {
+  const states: string[] = [];
+  if (cell.selected) states.push('selected');
+  if (cell.alert?.kind === 'event') states.push('event');
+  if (cell.low) states.push('low');
+  return states.join(' ');
+}
+
+function renderLabel(button: HTMLElement, cell: RegionCell): void {
+  button.dataset.selected = String(cell.selected);
+  button.dataset.level = cell.low ? 'low' : 'ok';
+  // `aria-pressed`, e não `aria-current`: o clique numa região já escolhida a
+  // desmarca, então isto é um interruptor de dois estados.
+  button.setAttribute('aria-pressed', String(cell.selected));
+  button.setAttribute('aria-label', cell.ariaLabel);
+
+  setText(slot(button, 'marker'), cell.marker);
+  setText(slot(button, 'support'), cell.support);
+  slot(button, 'meter')?.style.setProperty(
+    '--apoio',
+    `${Math.min(100, Math.max(0, cell.supportValue))}%`,
+  );
+
+  const alert = slot(button, 'alert');
+  if (alert === null) return;
+  setText(alert, cell.alert === null ? '' : `${cell.alert.icon} ${cell.alert.label}`);
+  if (cell.alert === null) alert.removeAttribute('data-alert');
+  else alert.setAttribute('data-alert', cell.alert.kind);
 }
 
 /**
- * Devolve o foco do teclado à forma de uma região (P5-04).
+ * Devolve o foco do teclado à etiqueta de uma região (P5-04).
  *
  * Existe por causa do painel de detalhe: quando ele fecha, o botão que tinha o
- * foco desaparece da tela, e sem isto o foco cairia no `<body>` — quem navega
- * por teclado voltaria ao começo da página e teria que atravessar o HUD, a barra
- * de tempo e os cartões de evento de novo para chegar ao mapa. O §5 do GDD pede
- * painel navegável por teclado; sair dele sem perder o lugar faz parte disso.
- *
- * Devolve se conseguiu, em vez de falhar calado: quem chama sabe que o foco
- * pode não ter ido a lugar nenhum.
+ * foco desaparece da tela, e sem isto o foco cairia no `<body>`. Devolve se
+ * conseguiu, em vez de falhar calado.
  */
 export function focusRegion(root: ParentNode, id: RegionId): boolean {
-  const group = root.querySelector<SVGGElement>(`[data-region="${id}"]`);
-  if (group === null) return false;
+  const button = root.querySelector<HTMLButtonElement>(`button[data-region="${id}"]`);
+  if (button === null) return false;
 
-  group.focus();
+  button.focus();
   return true;
 }
 
 /**
- * Escreve o estado atual nas formas já montadas.
+ * Escreve o estado atual no mapa já montado.
  *
  * **Atualiza em vez de reconstruir**, como a árvore e pelo mesmo motivo: o mapa
- * redesenha a cada mês de jogo, e recriar os oito grupos arrancaria o foco do
- * teclado de quem estivesse navegando — a cada 1,5 segundo na velocidade 1x.
+ * redesenha a cada mês de jogo, e recriar as etiquetas arrancaria o foco do
+ * teclado de quem estivesse navegando por elas.
  */
 export function renderMap(root: ParentNode, view: MapView): void {
   for (const cell of view.cells) {
-    const group = root.querySelector<SVGGElement>(`[data-region="${cell.id}"]`);
-    if (group === null) continue;
+    const button = root.querySelector<HTMLElement>(`button[data-region="${cell.id}"]`);
+    if (button !== null) renderLabel(button, cell);
 
-    group.dataset.selected = String(cell.selected);
-    // `aria-pressed`, e não `aria-current`: o clique numa região já escolhida a
-    // desmarca, então isto é um interruptor de dois estados — que é exatamente
-    // o que `pressed` descreve.
-    group.setAttribute('aria-pressed', String(cell.selected));
-    group.setAttribute('aria-label', cell.ariaLabel);
-
-    const support = slot(group, 'support');
-    if (support !== null) support.textContent = cell.support;
-
-    const marker = slot(group, 'marker');
-    if (marker !== null) marker.textContent = cell.marker;
-
-    const alert = slot(group, 'alert');
-    if (alert !== null) {
-      // Texto vazio, e não `hidden`: um <text> sem conteúdo não pinta nada, e
-      // assim o elemento continua no lugar para o próximo mês reaproveitar.
-      alert.textContent = cell.alert === null ? '' : `${cell.alert.icon} ${cell.alert.label}`;
-      if (cell.alert === null) alert.removeAttribute('data-alert');
-      else alert.setAttribute('data-alert', cell.alert.kind);
-    }
+    const layer = root.querySelector<HTMLElement>(`[data-layer="${cell.id}"]`);
+    if (layer !== null) layer.dataset.state = layerState(cell);
   }
 
-  // O aquecimento vive no <svg>, e não no grupo de cada região: são oito formas
-  // lendo a mesma faixa, e escrevê-la oito vezes seria oito lugares para ela
-  // ficar dessincronizada por um quadro.
-  const canvas = root.querySelector('.map__canvas');
-  if (canvas !== null) canvas.setAttribute('data-heat', view.heat);
+  // O aquecimento vive no palco, e não em cada região: são oito camadas lendo a
+  // mesma faixa, e escrevê-la oito vezes seria oito lugares para ela ficar
+  // dessincronizada por um quadro.
+  const stage = root.querySelector<HTMLElement>('.map__stage');
+  if (stage !== null) {
+    stage.dataset.heat = view.heat;
+    stage.style.setProperty('--calor', view.heatLevel.toFixed(3));
+  }
 
-  const heat = root.querySelector('[data-map="heat"]');
-  if (heat !== null) heat.textContent = view.heatCaption;
+  setText(slot(root, 'heat'), view.heatCaption);
 }

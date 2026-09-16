@@ -53,16 +53,19 @@
      alerta   a 12% sobre fundo       = #2A291B   pior texto 7,25
      alerta   a 12% sobre superfície  = #353926   pior texto 5,88
 
-   Texto sobre as faixas de calor do mapa (map.css, P7-04), já compostas — o
-   teste lê os percentuais da própria folha:
-     destaque a  8% sobre superfície  = #2B3728   pior texto 6,18
-     alerta   a 10% sobre superfície  = #313625   pior texto 6,16
-     alerta   a 22% sobre superfície  = #4A452C   pior texto 4,76
+   Texto sobre as etiquetas do mapa (map.css, VIS-03), já compostas — o teste
+   lê os percentuais da própria folha:
+     destaque a 12% sobre fundo       = #282E22   pior texto 6,90   (hover)
+     destaque a 18% sobre fundo       = #35392A   pior texto 5,86   (escolhida)
 
-   **O último é o par mais apertado do jogo:** o alerta "▲ crítico" escrito sobre
-   a faixa mais quente. Uma brasa um pouco mais escura, ou uma faixa um pouco
-   mais forte, e ele cai abaixo de 4,5:1 — é o primeiro número a olhar numa
-   próxima troca de paleta.
+   **O par mais apertado do jogo é o texto sobre o hover da superfície**, com
+   5,56:1 — o primeiro número a olhar numa próxima troca de paleta. Até o VIS-03
+   era o alerta escrito sobre a faixa mais quente do mapa, com 4,76:1; as faixas
+   saíram quando o mapa virou imagem, e o texto passou a morar em etiquetas de
+   fundo opaco.
+
+   As duas cores que o VIS-03 trouxe — o creme e o oceano — são de desenho, e
+   nenhum texto é escrito sobre elas.
 
    ---------------------------------------------------------------------------
    O QUE ESTE ARQUIVO NÃO RESOLVE
@@ -111,6 +114,16 @@
    * de 4,5:1.
    */
   --cor-borda: #a08d5e;
+
+  /**
+   * O creme dos cartões dos personagens. No mapa (VIS-03) é o contorno e a luz
+   * da região escolhida: cor de desenho, e não de texto. Quem a separa da
+   * imagem, clara ou escura, é o halo escuro em volta.
+   */
+  --cor-creme: #f4edd0;
+
+  /** O mar atrás do mapa, onde a imagem não chega. */
+  --cor-oceano: #0b4c63;
 
   /* ---------------------------------------------------------- derivadas --- */
 
