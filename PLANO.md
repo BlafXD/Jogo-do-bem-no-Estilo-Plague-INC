@@ -193,22 +193,23 @@ personagens e um mapa-múndi ilustrado, deixados na pasta acima do repositório.
 "Expansão com cargos" da tabela da Estratégia Solo — **identidade visual própria** e **mapa
 ilustrado** — feita agora, em modo solo. **Não mexe em mecânica nem em balanceamento.**
 
-**Direção proposta no `VIS-01`:** a identidade sai da ficha dos personagens (verde-floresta, fio de
-latão com traço de circuito, cartões creme, a folha). A assinatura são as listras do aquecimento:
-a partida contada em anos, na cor da temperatura.
+**Direção aprovada no `VIS-01`, em 2026-09-16** (`docs/DIRECAO-DE-ARTE.md`): a identidade sai da
+ficha dos personagens (verde-floresta, fio de latão com traço de circuito, cartões creme, a folha).
+A assinatura são as listras do aquecimento: a partida contada em anos, na cor da temperatura.
 
 **Ordem:** antes do `P8-01`. O playtest, o vídeo, o cartaz e os slides mostram o jogo; se o visual
 mudar depois deles, os quatro precisam ser refeitos.
 
-- [~] `VIS-01` Protótipo visual fora do repositório + decisão de direção de arte registrada no `docs/GDD.md §8` — **M** — *protótipo entregue em 2026-09-16 (`Protótipo VIS-01 - Ponto de Virada.html`, na pasta acima do repositório). Falta a aprovação; o registro no GDD vem junto com ela*
+- [x] `VIS-01` Protótipo visual fora do repositório + decisão de direção de arte registrada no `docs/GDD.md §8` — **M** — *protótipo aprovado em 2026-09-16 (`Protótipo VIS-01 - Ponto de Virada.html`, na pasta acima do repositório); o sistema visual está em `docs/DIRECAO-DE-ARTE.md`*
 - [ ] `VIS-02` Paleta nova no `theme.css`, com o `tests/theme.test.ts` recalculando os contrastes — **P**
-- [ ] `VIS-03` Mapa ilustrado: as 8 regiões recortadas sobre a imagem, seguindo o `docs/CIENCIA.md` — **G** — *travado na origem do `Mapa Mundi.jpeg` (regra 10)*
+- [ ] `VIS-03` Mapa ilustrado: as 8 regiões recortadas sobre a imagem, seguindo o `docs/CIENCIA.md` — **G** — *o `Mapa Mundi.jpeg` foi gerado pelo autor do projeto, como os personagens (confirmado em 2026-09-16); a linha do `docs/CREDITOS.md` entra junto com o arquivo*
 - [ ] `VIS-04` Partida em tela cheia: barra de indicadores, mapa no centro e barra de tempo com as listras; coluna única em tela estreita — **G**
 - [ ] `VIS-05` Árvore e contenção num painel que abre e fecha (`Esc`) — **M**
 - [ ] `VIS-06` As 16 poses tratadas + um manifesto de qual pose aparece em cada momento, editável sem `.ts` — **M**
-- [ ] `VIS-07` Personagens no tutorial, nos eventos e no fim, sem bônus — **M** — *contradiz o `docs/PERSONAGENS.md §4` ("dentro da partida: não"); precisa de confirmação*
-- [ ] `VIS-08` Tela de título nova, com o botão de som — **M**
+- [ ] `VIS-07` Personagens no tutorial, nos eventos e no fim, sem bônus — **M** — *o protótipo que os põe na partida foi aprovado; o `docs/PERSONAGENS.md §4` ("dentro da partida: não") muda junto com esta tarefa*
+- [ ] `VIS-08` Tela de título nova, com o botão de som e as listras da partida sem compras — **M** — *depende do `VIS-10`, que ensina o engine a simular essa partida*
 - [ ] `VIS-09` Ícones SVG próprios nos indicadores e nos ramos — a metade que faltava do `[D-Design]` — **M**
+- [ ] `VIS-10` Tela de fim nova: medalha, números, gráfico e as listras da partida contra uma partida sem nenhuma compra — **M** — *exige o engine simular a partida paralela, com a mesma seed, e muda a descrição da tela de fim no `docs/GDD.md §2.7` (pede permissão)*
 
 ---
 

@@ -358,6 +358,6 @@ Espelha as 8 partes do plano de ensino. Cada aula precisa de **algo jogável ou 
 
 - [x] Nome definitivo do jogo — **Ponto de Virada**, ratificado no `P1-04` em 2026-08-26
 - [ ] Formar o grupo e distribuir os 3 pacotes delegáveis (Design, Música, História) — ver `PLANO.md`
-- [ ] Direção de arte (pixel art? flat vetorial? mapa estilizado?)
+- [x] Direção de arte — **a sala de situação da agência**: ilustração digital da casa (personagens e mapa-múndi), identidade tirada da ficha dos personagens e as listras do aquecimento como assinatura. Aprovada em 2026-09-16, no `VIS-01`; o sistema inteiro está em `docs/DIRECAO-DE-ARTE.md`
 - [ ] Trilha e efeitos sonoros (fonte CC0)
 - [ ] Confirmar stack com o professor

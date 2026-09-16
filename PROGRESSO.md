@@ -28,6 +28,90 @@ Regras curtas:
 
 ---
 
+## 2026-09-16 — A direção de arte foi aprovada, e o mapa é da casa
+
+- **Parte / tarefa:** `VIS-01` ✔
+- **O que mudou:**
+  - `docs/DIRECAO-DE-ARTE.md` **criado** — o sistema visual inteiro, em 11 seções. É o brief do
+    `VIS-02` ao `VIS-10`.
+  - `docs/GDD.md §8` — a pendência "Direção de arte" marcada, com um ponteiro para o arquivo novo.
+  - `README.md` — o arquivo novo no índice.
+  - `PLANO.md`:
+    - `VIS-01` marcado;
+    - o `VIS-03` destravado;
+    - uma nota no `VIS-07`;
+    - o `VIS-08` passa a depender do `VIS-10`;
+    - o `VIS-10` **criado** (a tela de fim, que o protótipo redesenhou e que não tinha tarefa).
+  - `docs/evidencias/2026-09-16-vis-01-*.jpg` — cinco prints do protótipo.
+
+### As duas respostas que destravaram
+
+A aprovação veio no chat: *"Aliás, muito foda! Gostei, podemos seguir com os próximos passos."*
+Na mesma mensagem veio a origem do mapa: **"o mapa fui eu que gerei, igual aos personagens"**. Com
+isso, o `Mapa Mundi.jpeg` passa a ter o mesmo registro dos retratos: autor do projeto, licença
+própria. A linha do `docs/CREDITOS.md` entra no `VIS-03`, no mesmo diff do arquivo, pela ordem que
+o projeto já seguiu em 06/09 (registrar antes de a imagem entrar, nunca depois).
+
+A origem também libera a **evidência**, que a entrada anterior tinha segurado porque o repositório
+é público.
+
+### Por que um arquivo novo, e não mais texto no GDD
+
+O protótipo decide muita coisa: 17 cores com papel e contraste, a escala das listras, os estados
+do mapa, quem aparece em cada momento. **Tudo isso vivia só dentro de um HTML fora do
+repositório**, que a equipe não enxerga pelo GitHub. O GDD fica com a decisão numa linha, e o
+detalhe mora ao lado, como já acontece com o `docs/INERCIA.md` e o `docs/PERSONAGENS.md`.
+
+### O que foi aprovado junto, e o que ainda pede uma confirmação
+
+O protótipo aprovado mostra **os personagens dentro da partida** e traz **três ideias que o GDD não
+tinha** (§10 do arquivo novo): a partida sem compras como comparação, um especialista por evento e
+o mapa sem a Antártida. Tomei a aprovação como aprovação da direção. **Duas mudanças de texto
+ainda vão pedir permissão quando as tarefas chegarem:**
+- o `docs/PERSONAGENS.md §4`, no `VIS-07`;
+- a descrição da tela de fim no `docs/GDD.md §2.7`, no `VIS-10`.
+
+**A tela de fim não tinha tarefa.** Os nove itens abertos de manhã cobriam o título e os
+personagens no fim, mas não a tela em si: medalha, números, listras e gráfico. Virou o `VIS-10`,
+**e ele carrega um pedaço de engine**: simular a partida sem compras com a mesma seed. O número que
+o protótipo mostra (2091) sai da fórmula do GDD sem Inércia nem eventos; o do jogo vai sair do
+`tick.ts`. O `VIS-08` depende dele, porque o título usa a mesma partida.
+
+### Os prints
+
+Tirados do protótipo servido localmente, com a barra de revisão escondida, numa janela de
+1536 × 702 (escala de 125% do Windows):
+
+| Arquivo | O que mostra |
+|---|---|
+| `2026-09-16-vis-01-titulo.jpg` | o nome, a equipe e as listras da partida sem compras |
+| `2026-09-16-vis-01-partida.jpg` | 2046: a Ásia Oriental escolhida, três eventos e as hachuras de apoio crítico |
+| `2026-09-16-vis-01-arvore.jpg` | os cinco losangos, o detalhe e a contenção |
+| `2026-09-16-vis-01-evento-critico.jpg` | Ricardo dando a ressaca e maré de tempestade |
+| `2026-09-16-vis-01-fim.jpg` | bronze, as duas faixas de listras e o gráfico |
+
+- **Como verificar:**
+
+  ```bash
+  git status --short    # 4 modificados, 6 novos (o documento e os 5 prints)
+  npm run check         # nenhum código mudou; a suíte segue verde
+  ```
+
+  E ler o `docs/DIRECAO-DE-ARTE.md`: cada tabela dele corresponde a algo visível no protótipo.
+
+- **Pendente:**
+  - **As datas da feira e da APS 1** continuam sem resposta. Elas decidem quanto do `VIS-*` cabe
+    antes do `P8-01`.
+  - **O logotipo ECO-GRID deformado nas poses** — vale corrigir na ferramenta que gerou as imagens
+    antes do cartaz (`P8-06`).
+  - **A Bahnschrift só existe no Windows.** Se a máquina da feira for outra, a identidade perde a
+    condensada.
+  - **O `README.md` ainda descreve o `[D-Musica]` como se o `P7-05` não existisse** ("não há áudio
+    nenhum"). É anterior a hoje e ficou fora deste diff.
+- **Evidência:** os cinco arquivos da tabela acima.
+
+---
+
 ## 2026-09-16 — O protótipo da identidade visual, montado fora do repositório
 
 - **Parte / tarefa:** `VIS-01`, de uma seção nova do `PLANO.md` pedida no chat hoje. **Em
