@@ -28,6 +28,140 @@ Regras curtas:
 
 ---
 
+## 2026-09-16 — O protótipo da identidade visual, montado fora do repositório
+
+- **Parte / tarefa:** `VIS-01`, de uma seção nova do `PLANO.md` pedida no chat hoje. **Em
+  andamento:** o protótipo está pronto, mas a aprovação dele ainda não veio.
+- **O que mudou:**
+  - `PLANO.md` — a seção "VIS — Identidade visual", com nove tarefas, e o prefixo `VIS-*` no
+    "Como usar".
+  - **Nenhum arquivo de código, dado, teste ou imagem do repositório.** O protótipo e as fontes
+    estão na pasta acima dele: `Protótipo VIS-01 - Ponto de Virada.html` (1,1 MB, um arquivo só) e
+    `Protótipo VIS-01 - fontes/`, com um `LEIA-ME.txt` que explica como refazer tudo.
+
+### Por que o protótipo ficou fora do repositório
+
+Três razões, e as três são regra do projeto. **A origem do `Mapa Mundi.jpeg` não está registrada**
+(regra 10), e o repositório é público. **Um visual novo é ideia nova** (regra 1): primeiro se
+mostra, depois se escreve código. E **o redesenho mexe em uns vinte arquivos**; concordar sobre a
+aparência antes de abri-los é o caminho barato.
+
+### O que o protótipo mostra
+
+Seis telas — título, começo com tutorial, partida em 2046, árvore aberta, evento crítico e fim —
+e um painel de notas de design. Os textos são os do jogo (`i18n.ts`, `skills.json`,
+`events.json`, `actions.json`); os números da partida saem das fórmulas do GDD §4.
+
+- **Paleta tirada da ficha dos personagens.** Todo texto passa do AA: o pior caso é 6,35:1. A borda
+  mais fraca tem 3,96:1, contra os 3:1 exigidos.
+- **Bahnschrift nos títulos, números e rótulos.** É a fonte de sinalização que vem no Windows 10 e
+  11: não se baixa, não entra no pacote e não tem licença a registrar.
+- **A assinatura são as listras do aquecimento:** um ano por listra, na cor da temperatura. É a
+  linguagem das *warming stripes* de Ed Hawkins, desenhada com os números da própria partida.
+  Aparecem na barra do tempo, na tela de título e na tela de fim.
+- **O mapa é a imagem nova, com as oito regiões recortadas pelo `docs/CIENCIA.md`.** A Rússia
+  inteira fica na Europa, a Ásia Central no Oriente Médio, a Indonésia na Ásia Oriental e o Egito
+  na África. O mapa de retângulos escondia tudo isso.
+  - Clicar na terra escolhe a região.
+  - A terra seca conforme a temperatura sobe.
+  - Apoio abaixo do piso ganha **hachura**: textura, não só cor.
+  - As etiquetas são botões de verdade.
+- **Os personagens apresentam, sem dar bônus.** Cada passo do tutorial é dito por um deles, perto
+  do que explica. Cada evento é dado pelo especialista do assunto. A Juliana abre a tela de fim.
+
+### Como as imagens foram tratadas
+
+Esta máquina só tem o `System.Drawing` como ferramenta de imagem. Virou um utilitário em C#,
+compilado com o `csc` que já vem no Windows: **nenhuma dependência foi instalada**.
+
+- **Poses.** Carlos, Ricardo e Juliana tinham fundo liso (`#EFEAE4`, `#FFFFFF`, `#EFE7D2`). O
+  utilitário inunda o fundo a partir da borda e desloca a franja para o creme `#F4EDD0`, o mesmo do
+  cartão da Ana Luiza. Os fundos da Ana tinham moldura de circuito desenhada; uma abertura
+  morfológica apagou os traços finos longe do corpo. **A linha de baixo da moldura passava por cima
+  da calça** e só saiu cortando a faixa inferior das quatro imagens.
+- **Terra e oceano** foram separados pela cor (onde o azul predomina é água), e deu certo de
+  primeira: os Grandes Lagos, o Cáspio e o Mar Vermelho saíram limpos.
+- **As fronteiras entre regiões foram traçadas em pixels, e não calculadas.** O mapa não é uma
+  projeção exata: fica perto da projeção de Miller, com ~3,83 px por grau, mas com desvios locais
+  de vários pixels. Por isso as linhas seguem o que é visível na imagem: o Baikal, o alto Amur, a
+  crista do Himalaia, o Golfo da Califórnia e o Sinai.
+- **Três surpresas da imagem:**
+  - o mapa repete a ponta da Chukotka na borda esquerda, e ela precisou ir para a Europa, e não
+    para a América do Norte;
+  - a ilha de Sacalina está grudada no continente;
+  - o estreito de Bab-el-Mandeb está fechado.
+
+### O que a conferência no navegador corrigiu
+
+- **O título não cabia na altura da tela.** A janela de teste tinha 1536 × 702 px (escala de 125%
+  do Windows, comum em notebook); a faixa de listras ficava fora da dobra.
+- **A região escolhida virava um borrão branco.** A sombra aplicada a um preenchimento
+  semitransparente clareava tudo por baixo. Trocou-se por máscaras de contorno de 2 px, com halo
+  escuro.
+- **Os alertas cobriam o nome da região**, e o boletim ficava espremido embaixo do painel da região.
+- **Os nós da árvore vazavam para a coluna vizinha** com ~110 px de largura. Entraram a Bahnschrift
+  condensada e a hifenização em português ("Armazena-mento", "internacio-nais").
+- **Abrir a árvore rolava a página**: o foco era dado sem `preventScroll`, e a cobertura não tinha
+  um ancestral posicionado.
+- **Em tela estreita, a barra de baixo fixa cobria o mapa**, e as etiquetas apareciam por cima
+  dela.
+
+### O que deu errado, e onde a verificação parou
+
+- **A extensão do Chrome não abre `file://`**, então o caminho dos dois cliques não foi testado no
+  navegador. O arquivo conferido pelo servidor local é idêntico byte a byte ao que está no disco,
+  e não depende de nada externo: sem rede, sem módulos e sem leitura de pixels em `<canvas>`.
+- **A janela não aceitou ser redimensionada.** As larguras de 720 e 390 px foram testadas em
+  iframes; em nenhuma delas a página rola para o lado.
+- **A primeira captura de tela depois de trocar de tela trava por 30 s**, porque a aba conta como
+  oculta. A segunda funciona. O `requestAnimationFrame` mediu 123 quadros por segundo, então não é
+  lentidão da página.
+- **Um heredoc do bash quebrou nas aspas de um script Node.** Os ajustes passaram a ir para
+  arquivos.
+
+### Três ideias novas que o protótipo contém e o GDD não
+
+1. **A comparação com "sem nenhuma compra"**, no título e no fim. O jogo teria que simular essa
+   partida paralela. No protótipo ela sai da fórmula do GDD, sem Inércia nem eventos, e acaba em
+   2091.
+2. **Um especialista por evento.** Ricardo cuida da água, Carlos dos ecossistemas, Ana Luiza do
+   calor e das tempestades, e Juliana da saúde e da comida.
+3. **O mapa sem a Antártida**, que nenhuma mecânica usa.
+
+Três textos mudaram por causa do layout novo: dois passos do tutorial (a árvore agora abre por um
+botão; o cartão do evento virou boletim) e a legenda do calor.
+
+- **Como verificar:**
+
+  ```bash
+  git status --short    # só PLANO.md e PROGRESSO.md
+  ```
+
+  No disco: dois cliques em `..\Protótipo VIS-01 - Ponto de Virada.html`. Na barra de cima dá para:
+  - trocar entre as seis telas;
+  - arrastar "Calor do mapa" para ver a terra secar;
+  - abrir as notas de design em "Notas".
+
+  Na tela 2, "Entendi" passa pelos quatro conselheiros; na tela 4, comprar um nó baixa o PAC e
+  libera os filhos dele.
+
+- **Pendente:**
+  - **A aprovação do visual.** Com ela, a direção de arte vai para o `docs/GDD.md §8` (que só muda
+    com permissão) e o `VIS-01` é marcado.
+  - **A origem do `Mapa Mundi.jpeg`** para o `docs/CREDITOS.md`. Sem ela o `VIS-03` não começa.
+  - **Confirmar os personagens dentro da partida**, que o `docs/PERSONAGENS.md §4` hoje proíbe.
+    Trava o `VIS-07`.
+  - **As três ideias novas acima.**
+  - **As datas da feira e da APS 1**, que decidem quanto do `VIS-*` cabe antes do `P8-01`.
+  - **O logotipo ECO-GRID sai deformado** em várias poses ("CCO-GREN", "ECO-GIBG").
+  - **O tratamento das poses precisa ser reproduzível dentro do repositório** quando o `VIS-06`
+    entrar — como foram os recortes de 06/09, documentados no `docs/PERSONAGENS.md §5`.
+  - **O commit `db3c1fe`** (o som que toca ao religar o áudio) não tem entrada neste diário.
+- **Evidência:** nenhuma em `docs/evidencias/` ainda. Toda tela do protótipo mostra o mapa, cuja
+  origem não está registrada, e o repositório é público. A evidência entra junto com o crédito.
+
+---
+
 ## 2026-09-09 — Um comando para conferir, dois cliques para abrir
 
 - **Parte / tarefa:** nenhuma do `PLANO.md` — três pedidos do chat, todos sobre **ferramenta de

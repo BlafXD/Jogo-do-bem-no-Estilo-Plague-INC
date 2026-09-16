@@ -6,7 +6,7 @@
 
 ## Como usar
 
-- **ID**: `P<parte>-<n>` · `SETUP-*` para infraestrutura
+- **ID**: `P<parte>-<n>` · `SETUP-*` para infraestrutura · `VIS-*` para a identidade visual
 - **Esforço**: `P` (até 1h) · `M` (2–4h) · `G` (uma sessão inteira)
 - **Status**: `[ ]` a fazer · `[~]` em andamento · `[x]` concluído
 - **`[D]`** = **delegável**. Quando o grupo for formado, a tarefa sai inteira para um cargo. Até lá, faço a versão mínima.
@@ -183,6 +183,32 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P8-05` Build offline para a feira, testado em máquina limpa — **M** — aceite: roda sem internet — *`npm run build:feira` gera um `dist-feira/index.html` único; o build normal **não** abre de `file://`*
 - [ ] `P8-06` `[D]` Cartaz com o ODS 13, QR code e pitch de 60s para o estande — **M**
 - [ ] `P8-07` Slides da apresentação final — **M**
+
+---
+
+## VIS — Identidade visual
+
+Pedido do chat em 2026-09-16: *"precisamos melhorar muito o design"*. Veio com 16 poses dos quatro
+personagens e um mapa-múndi ilustrado, deixados na pasta acima do repositório. É a coluna
+"Expansão com cargos" da tabela da Estratégia Solo — **identidade visual própria** e **mapa
+ilustrado** — feita agora, em modo solo. **Não mexe em mecânica nem em balanceamento.**
+
+**Direção proposta no `VIS-01`:** a identidade sai da ficha dos personagens (verde-floresta, fio de
+latão com traço de circuito, cartões creme, a folha). A assinatura são as listras do aquecimento:
+a partida contada em anos, na cor da temperatura.
+
+**Ordem:** antes do `P8-01`. O playtest, o vídeo, o cartaz e os slides mostram o jogo; se o visual
+mudar depois deles, os quatro precisam ser refeitos.
+
+- [~] `VIS-01` Protótipo visual fora do repositório + decisão de direção de arte registrada no `docs/GDD.md §8` — **M** — *protótipo entregue em 2026-09-16 (`Protótipo VIS-01 - Ponto de Virada.html`, na pasta acima do repositório). Falta a aprovação; o registro no GDD vem junto com ela*
+- [ ] `VIS-02` Paleta nova no `theme.css`, com o `tests/theme.test.ts` recalculando os contrastes — **P**
+- [ ] `VIS-03` Mapa ilustrado: as 8 regiões recortadas sobre a imagem, seguindo o `docs/CIENCIA.md` — **G** — *travado na origem do `Mapa Mundi.jpeg` (regra 10)*
+- [ ] `VIS-04` Partida em tela cheia: barra de indicadores, mapa no centro e barra de tempo com as listras; coluna única em tela estreita — **G**
+- [ ] `VIS-05` Árvore e contenção num painel que abre e fecha (`Esc`) — **M**
+- [ ] `VIS-06` As 16 poses tratadas + um manifesto de qual pose aparece em cada momento, editável sem `.ts` — **M**
+- [ ] `VIS-07` Personagens no tutorial, nos eventos e no fim, sem bônus — **M** — *contradiz o `docs/PERSONAGENS.md §4` ("dentro da partida: não"); precisa de confirmação*
+- [ ] `VIS-08` Tela de título nova, com o botão de som — **M**
+- [ ] `VIS-09` Ícones SVG próprios nos indicadores e nos ramos — a metade que faltava do `[D-Design]` — **M**
 
 ---
 
