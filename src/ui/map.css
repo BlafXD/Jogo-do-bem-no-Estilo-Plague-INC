@@ -4,21 +4,16 @@
    valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
    encostar aqui.
 
-   **Uma cor nova entra**, e é a única: o preenchimento das formas. Sem ela a
-   região seria um contorno vazio sobre o fundo da página, e oito contornos
-   vazios não se leem como um mapa. Contrastes conferidos (WCAG 2.1):
-
-     preenchimento #182C24  vs fundo #0F1C17   1,19:1  (superfície, não borda)
-     borda    #4C8069  vs preenchimento  3,23:1   vs fundo  3,84:1  (exige 3:1)
-     destaque #7FD1A8  vs preenchimento  8,13:1   vs fundo  9,67:1
-     valor    #F2F7F4  vs preenchimento 13,61:1
-     rótulo   #A7C0B4  vs preenchimento  7,61:1
-     alerta   #F2A65A  vs preenchimento  7,28:1
+   **Uma cor entra além do fundo**, e é a única: o preenchimento das formas, que
+   é a `--cor-superficie` do tema. Sem ela a região seria um contorno vazio
+   sobre o fundo da página, e oito contornos vazios não se leem como um mapa.
 
    Quem define a borda da forma contra a página é o traço, não o preenchimento —
-   é por isso que o 1,19:1 do preenchimento não é um problema de contraste: o
-   traço faz 3,84:1 contra o fundo e 3,23:1 contra o que ele cerca, e os dois
-   passam o mínimo de 3:1 para elemento não textual.
+   é por isso que o preenchimento quase igual ao fundo não é um problema de
+   contraste: o traço passa o mínimo de 3:1 para elemento não textual tanto
+   contra o fundo quanto contra o que ele cerca. Os números de todos os pares
+   desta folha estão na tabela do theme.css, recalculada pelo
+   tests/theme.test.ts.
 
    **Sobre o §5 e a seleção.** A regra proíbe comunicar *estado do jogo* só por
    cor. Qual região está selecionada não é estado do jogo — é onde o jogador
@@ -143,15 +138,12 @@
    a tela de fim julga a partida. Todas saem por color-mix da paleta que já
    existe; nenhuma cor nova entra.
 
-   **Contrastes conferidos na faixa mais clara**, que é o pior caso (`over`,
-   #48472F na prática — 22% de alerta sobre a superfície):
-
-     valor  #F2F7F4  vs  preenchimento `over`   8,75:1   (exige 4,5:1)
-     rótulo #A7C0B4  vs  preenchimento `over`   5,36:1   (exige 4,5:1)
-
-   As outras três são mais escuras que essa, então passam com folga maior. A
-   faixa `gold` mistura destaque em vez de alerta e fica **mais escura** que a
-   superfície base, o que só aumenta o contraste do texto.
+   **O contraste das faixas é testado, e não só conferido.** Desde o VIS-02 o
+   tests/theme.test.ts lê os percentuais dos três color-mix abaixo, compõe a cor
+   que a tela mostra e mede os quatro textos que ficam por cima — nome, apoio,
+   marcador e alerta. A faixa `over` (22% de alerta) é a mais clara e o pior
+   caso: o alerta escrito sobre ela é o par mais apertado do jogo, e o número
+   está na tabela do theme.css.
 
    **Sobre o §5.** A regra proíbe comunicar estado do jogo só por cor, e uma
    escala de calor é o caso extremo da tentação. Quem carrega o recado é a

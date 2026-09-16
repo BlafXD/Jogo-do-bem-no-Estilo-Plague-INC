@@ -54,8 +54,8 @@ function contrast(a: string, b: string): number {
  * Compõe uma cor translúcida sobre um fundo opaco.
  *
  * Os fundos de hover são a cor de destaque a 12% — o que se lê na tela não é o
- * `#7FD1A8`, é a mistura. Medir o contraste contra a cor pura daria um número
- * que ninguém enxerga.
+ * destaque puro, é a mistura. Medir o contraste contra a cor pura daria um
+ * número que ninguém enxerga.
  */
 function over(front: string, back: string, alpha: number): string {
   const [f, b] = [channels(front), channels(back)];
@@ -159,6 +159,43 @@ describe('a paleta', () => {
       // A opacidade que o teste de contraste usa precisa ser a que está escrita
       // aqui, ou ele mediria uma cor que a tela não mostra.
       expect(token(suave), suave).toContain(`${HOVER_ALPHA * 100}%`);
+    }
+  });
+
+  /**
+   * As faixas de calor do mapa (P7-04) são misturas feitas no map.css, e o nome,
+   * o apoio, o marcador e o alerta de cada região ficam escritos por cima delas.
+   * Até o VIS-02 esse contraste só existia num comentário daquela folha — o tipo
+   * de número que envelhece calado quando a paleta muda.
+   *
+   * Os percentuais são lidos da própria folha, e não repetidos aqui: o teste mede
+   * a cor que a tela mostra, e não a que alguém lembrou de anotar.
+   */
+  it('passa o AA sobre as faixas de calor do mapa, já compostas', () => {
+    const mapa = readCss('map.css').replace(/\/\*[\s\S]*?\*\//g, '');
+    const faixas = [
+      ...mapa.matchAll(
+        /color-mix\(in srgb, var\(--(cor-[a-z]+),[^)]*\) (\d+)%, var\(--(cor-[a-z]+),[^)]*\)\)/g,
+      ),
+    ];
+
+    // Ouro, bronze e acima de tudo. A prata é a própria superfície, que o teste
+    // de texto sobre os dois fundos já cobre.
+    expect(faixas, 'as faixas de calor do map.css').toHaveLength(3);
+
+    for (const [, base, percentual, fundo] of faixas) {
+      if (base === undefined || percentual === undefined || fundo === undefined) {
+        throw new Error('um color-mix do map.css saiu do formato que este teste lê');
+      }
+      const composto = over(token(base), token(fundo), Number(percentual) / 100);
+
+      for (const texto of TEXT) {
+        const razao = contrast(token(texto), composto);
+        expect(
+          razao,
+          `${texto} sobre ${base} a ${percentual}% de ${fundo} (${composto}): ${razao.toFixed(2)}:1`,
+        ).toBeGreaterThanOrEqual(AA_TEXT);
+      }
     }
   });
 });

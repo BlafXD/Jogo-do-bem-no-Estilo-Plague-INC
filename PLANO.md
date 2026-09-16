@@ -201,7 +201,7 @@ A assinatura são as listras do aquecimento: a partida contada em anos, na cor d
 mudar depois deles, os quatro precisam ser refeitos.
 
 - [x] `VIS-01` Protótipo visual fora do repositório + decisão de direção de arte registrada no `docs/GDD.md §8` — **M** — *protótipo aprovado em 2026-09-16 (`Protótipo VIS-01 - Ponto de Virada.html`, na pasta acima do repositório); o sistema visual está em `docs/DIRECAO-DE-ARTE.md`*
-- [ ] `VIS-02` Paleta nova no `theme.css`, com o `tests/theme.test.ts` recalculando os contrastes — **P**
+- [x] `VIS-02` Paleta nova no `theme.css`, com o `tests/theme.test.ts` recalculando os contrastes — **P** — *as nove folhas de módulo pararam de repetir os contrastes, e o teste passou a cobrir as faixas de calor do mapa*
 - [ ] `VIS-03` Mapa ilustrado: as 8 regiões recortadas sobre a imagem, seguindo o `docs/CIENCIA.md` — **G** — *o `Mapa Mundi.jpeg` foi gerado pelo autor do projeto, como os personagens (confirmado em 2026-09-16); a linha do `docs/CREDITOS.md` entra junto com o arquivo*
 - [ ] `VIS-04` Partida em tela cheia: barra de indicadores, mapa no centro e barra de tempo com as listras; coluna única em tela estreita — **G**
 - [ ] `VIS-05` Árvore e contenção num painel que abre e fecha (`Esc`) — **M**

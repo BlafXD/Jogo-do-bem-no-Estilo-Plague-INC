@@ -77,8 +77,10 @@ Os pares fora da tabela:
 
 ### Da paleta de hoje para a nova (o `VIS-02`)
 
-O `src/ui/theme.css` tem sete cores. Cinco trocam de valor, e **o destaque muda de papel**: o
-verde-menta de hoje vira latão. O verde fica guardado para uma coisa só — o que já foi comprado.
+O `src/ui/theme.css` tem sete cores. Seis trocam de valor — só a brasa fica — e **o destaque muda
+de papel**: o verde-menta vira latão, e o verde fica guardado para uma coisa só, o que já foi
+comprado. Aplicado no `VIS-02`, que também tirou das nove folhas de módulo os contrastes que elas
+repetiam: a única tabela é a do cabeçalho do `theme.css`.
 
 | Hoje | Vira |
 |---|---|

@@ -6,11 +6,18 @@
    troca os valores abaixo e não abre nenhum outro arquivo — nem `.ts`, nem as
    outras folhas de estilo.
 
+   **A paleta é a da direção de arte aprovada no VIS-01**, aplicada no VIS-02: o
+   verde-floresta, o latão e a brasa da ficha dos personagens. O verde-menta que
+   vinha do P5-02 saiu; de onde cada cor nova vem, e quais ainda vão entrar com
+   as próximas tarefas, está no docs/DIRECAO-DE-ARTE.md §3.
+
    As folhas dos módulos continuam lendo tudo como `var(--nome, reserva)`, com o
    valor de reserva repetido no próprio `var()`. Isso é deliberado e não é
    redundância morta: se este arquivo faltar ou vier quebrado, a página continua
    legível em vez de virar texto branco no branco — o que importa numa feira,
-   onde não há ninguém para consertar CSS no meio da apresentação.
+   onde não há ninguém para consertar CSS no meio da apresentação. **As reservas
+   ainda são a paleta anterior**, e de propósito: ela é um conjunto inteiro que
+   já passava no AA, e é inteira que ela entra quando este arquivo falta.
 
    ---------------------------------------------------------------------------
    CONTRASTE — o §5 do GDD exige AA (4,5:1 em texto, 3:1 em elemento não textual)
@@ -19,27 +26,43 @@
    verdade estão aqui**, e o tests/theme.test.ts recalcula todas elas a partir
    deste arquivo — trocar uma cor por outra que não passe quebra a suíte.
 
+   **Esta é a única tabela de contraste do projeto.** Até o VIS-02, nove folhas
+   de módulo repetiam os números no cabeçalho, e trocar a paleta aqui deixava as
+   nove erradas sem que o diff mostrasse nenhuma delas. Agora elas apontam para
+   cá.
+
    Texto sobre os dois fundos:            exige 4,5:1
-     valor    #F2F7F4   sobre fundo 16,17   sobre superfície 13,61
-     rótulo   #A7C0B4   sobre fundo  9,04   sobre superfície  7,61
-     destaque #7FD1A8   sobre fundo  9,67   sobre superfície  8,13
-     alerta   #F2A65A   sobre fundo  8,66   sobre superfície  7,28
+     valor    #F3EFE0   sobre fundo 15,72   sobre superfície 13,05
+     rótulo   #B9BFA7   sobre fundo  9,55   sobre superfície  7,92
+     destaque #E2CD95   sobre fundo 11,55   sobre superfície  9,59
+     alerta   #F2A65A   sobre fundo  8,95   sobre superfície  7,43
 
    Borda, traço e anel de foco:           exige 3:1
-     borda    #4C8069   sobre fundo  3,84   sobre superfície  3,23
-     destaque #7FD1A8   sobre fundo  9,67   sobre superfície  8,13
-     alerta   #F2A65A   sobre fundo  8,66   sobre superfície  7,28
+     borda    #A08D5E   sobre fundo  5,58   sobre superfície  4,63
+     destaque #E2CD95   sobre fundo 11,55   sobre superfície  9,59
+     alerta   #F2A65A   sobre fundo  8,95   sobre superfície  7,43
 
-   Os dois fundos entre si dão 1,19:1, e isso **não** é uma falha: quem separa a
-   superfície do fundo é o traço da borda, que faz 3,84:1 contra a página e
-   3,23:1 contra o que cerca. Preenchimento não precisa de contraste próprio
+   Os dois fundos entre si dão 1,21:1, e isso **não** é uma falha: quem separa a
+   superfície do fundo é o traço da borda, que faz 5,58:1 contra a página e
+   4,63:1 contra o que cerca. Preenchimento não precisa de contraste próprio
    quando o contorno carrega a forma.
 
    Texto sobre os fundos de hover, já compostos:
-     destaque a 12% sobre fundo       = #1C3228   pior texto 6,76
-     destaque a 12% sobre superfície  = #244034   pior texto 5,59
-     alerta   a 12% sobre fundo       = #2A2D1F   pior texto 6,95
-     alerta   a 12% sobre superfície  = #323B2A   pior texto 5,78
+     destaque a 12% sobre fundo       = #282E22   pior texto 6,90
+     destaque a 12% sobre superfície  = #333E2D   pior texto 5,56
+     alerta   a 12% sobre fundo       = #2A291B   pior texto 7,25
+     alerta   a 12% sobre superfície  = #353926   pior texto 5,88
+
+   Texto sobre as faixas de calor do mapa (map.css, P7-04), já compostas — o
+   teste lê os percentuais da própria folha:
+     destaque a  8% sobre superfície  = #2B3728   pior texto 6,18
+     alerta   a 10% sobre superfície  = #313625   pior texto 6,16
+     alerta   a 22% sobre superfície  = #4A452C   pior texto 4,76
+
+   **O último é o par mais apertado do jogo:** o alerta "▲ crítico" escrito sobre
+   a faixa mais quente. Uma brasa um pouco mais escura, ou uma faixa um pouco
+   mais forte, e ele cai abaixo de 4,5:1 — é o primeiro número a olhar numa
+   próxima troca de paleta.
 
    ---------------------------------------------------------------------------
    O QUE ESTE ARQUIVO NÃO RESOLVE
@@ -53,32 +76,41 @@
 :root {
   /* ------------------------------------------------------------- paleta --- */
 
-  /** O fundo da página. */
-  --cor-fundo: #0f1c17;
+  /** O fundo da página — o verde-floresta. */
+  --cor-fundo: #0f1812;
 
   /**
    * O preenchimento das formas que se destacam do fundo — hoje, as regiões do
-   * mapa. Quase igual ao fundo de propósito: quem desenha o limite é a borda.
+   * mapa. É o musgo do cartão dos personagens, quase igual ao fundo de
+   * propósito: quem desenha o limite é a borda.
    */
-  --cor-superficie: #182c24;
+  --cor-superficie: #1b2a1f;
 
   /** Texto principal: números, nomes, o que se lê primeiro. */
-  --cor-valor: #f2f7f4;
+  --cor-valor: #f3efe0;
 
   /** Texto secundário: rótulos, unidades, frases de apoio. */
-  --cor-rotulo: #a7c0b4;
-
-  /** Títulos, estado disponível, seleção, anel de foco dos controles. */
-  --cor-destaque: #7fd1a8;
+  --cor-rotulo: #b9bfa7;
 
   /**
-   * O que pede atenção: evento crítico, contenção da Inércia, confirmação de
-   * reinício, anel de foco onde o destaque já é a cor do estado.
+   * O latão: títulos, estado disponível, seleção, anel de foco dos controles.
+   * Era o verde-menta até o VIS-02; o verde agora fica reservado para o que já
+   * foi comprado, e entra com a tarefa que redesenhar a árvore.
+   */
+  --cor-destaque: #e2cd95;
+
+  /**
+   * A brasa — o que pede atenção: evento crítico, contenção da Inércia,
+   * confirmação de reinício, anel de foco onde o destaque já é a cor do estado.
+   * A única cor que o VIS-02 não mudou.
    */
   --cor-alerta: #f2a65a;
 
-  /** Contorno de tudo. Não é cor de texto — precisa de 3:1, não de 4,5:1. */
-  --cor-borda: #4c8069;
+  /**
+   * O fio de latão: o contorno de tudo. Não é cor de texto — precisa de 3:1, não
+   * de 4,5:1.
+   */
+  --cor-borda: #a08d5e;
 
   /* ---------------------------------------------------------- derivadas --- */
 

@@ -4,10 +4,8 @@
    valor de reserva no próprio var(), para o theme.css do P5-02 assumir sem
    encostar aqui.
 
-   Nenhuma cor nova entra. As quatro usadas já foram medidas contra o fundo
-   #0F1C17 no hud.css, no session.css e no outcome.css:
-     --cor-destaque #7FD1A8  9,67:1     --cor-alerta  #F2A65A  8,66:1
-     --cor-valor    #F2F7F4 16,17:1     --cor-rotulo  #A7C0B4   9,04:1
+   Nenhuma cor nova entra. As quatro usadas — destaque, alerta, valor e rótulo —
+   têm o contraste na tabela do theme.css, recalculada pelo tests/theme.test.ts.
 
    O `data-severity` pinta a borda e o ícone, e é **reforço, não recado**: o §5
    do GDD proíbe comunicar estado só por cor. Quem diz a gravidade é o ícone

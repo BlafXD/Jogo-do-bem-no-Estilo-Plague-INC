@@ -28,6 +28,108 @@ Regras curtas:
 
 ---
 
+## 2026-09-16 — A paleta nova entrou, e o contraste passou a morar num lugar só
+
+- **Parte / tarefa:** `VIS-02` ✔
+- **O que mudou:**
+  - `src/ui/theme.css` — seis das sete cores trocadas pelas da direção de arte (só a brasa ficou).
+    A tabela de contraste do cabeçalho foi refeita com os números novos.
+  - **Nove folhas de módulo, só em comentário:** `contain`, `controls`, `event-cards`, `hud`, `map`,
+    `outcome`, `region-panel`, `session` e `tree`. Os contrastes copiados saíram, e no lugar ficou um
+    aviso de onde eles moram.
+  - `tests/theme.test.ts` — um teste novo, para as faixas de calor do mapa. Suíte: 693 → **694**.
+  - `docs/DIRECAO-DE-ARTE.md` — "cinco cores trocam" virou "seis", que é a conta certa.
+  - `docs/evidencias/2026-09-16-vis-02-paleta-nova-*.jpg` — dois prints do jogo de verdade.
+
+### A troca que o contrato prometia, e os nove comentários que ela deixaria mentindo
+
+O contrato do `[D-Design]` diz que trocar a identidade visual é abrir **um arquivo só**. Antes de
+começar, uma busca pelas cores antigas achou outra coisa: **nove folhas repetiam no cabeçalho os
+hexadecimais e os contrastes da paleta do `P5-02`**. Trocar só o `theme.css`, como eu tinha
+declarado, deixaria os nove comentários errados — **e nenhum deles apareceria no diff**, porque
+ninguém encostaria neles. É o mesmo defeito que o `P5-02` já tinha achado uma vez (o `--cor-alerta`
+anotado como 9,73:1 em três arquivos, quando o valor era 8,66:1).
+
+Isso passava de quatro arquivos, então a escolha foi para o chat, e a resposta foi limpar. **Agora a
+única tabela de contraste do projeto é a do `theme.css`.** As folhas dizem onde ela está, e a
+próxima troca de paleta volta a ser, de fato, um arquivo só.
+
+**As reservas dentro dos `var()` continuam na paleta anterior, de propósito.** Elas só entram
+quando o `theme.css` falta, e nesse caso entram todas juntas — e a paleta anterior é um conjunto
+inteiro que já passava no AA. Trocá-las seriam 150 alterações mecânicas, em 13 folhas, sem ganho
+de leitura.
+
+### O único contraste que o teste não media
+
+O teste já recalculava o texto sobre os dois fundos e sobre os fundos de hover. **As três faixas de
+calor do mapa** (`P7-04`) eram a exceção: são misturas feitas no `map.css`, e o contraste delas só
+existia num comentário daquela folha.
+
+O teste novo lê os percentuais dos três `color-mix` direto da folha, compõe a cor que a tela
+mostra e mede os quatro textos que ficam por cima: nome, apoio, marcador e alerta.
+
+**Conferi que ele reprova de verdade.** Com a faixa mais quente trocada de 22% para 45%, o teste
+falhou com `cor-rotulo sobre cor-alerta a 45% de cor-superficie (#7c623a): 3.02:1`. Voltei o
+arquivo e ele passou de novo.
+
+### Os números que importam
+
+| Par | Antes | Agora |
+|---|---:|---:|
+| texto principal sobre o fundo | 16,17 | 15,72 |
+| rótulo sobre a superfície | 7,61 | 7,92 |
+| destaque sobre o fundo | 9,67 | 11,55 |
+| borda sobre a superfície | 3,23 | 4,63 |
+| pior texto sobre hover | 5,59 | 5,56 |
+| **alerta sobre a faixa mais quente do mapa** | não medido | **4,76** |
+
+**O último é o par mais apertado do jogo**, e o `theme.css` agora avisa isso em destaque: uma brasa
+um pouco mais escura, ou uma faixa um pouco mais forte, e ele cai abaixo de 4,5:1.
+
+### O que a tela mostrou
+
+O jogo foi aberto com `npm run dev`. Para ter o que ver, gerei uma partida pelo próprio engine no
+console, como a sessão do `P7-05` registrou: seed 7, comprando primeiro o ramo Sociedade e contendo
+a Inércia acima de 35, até 2047. Ela tem três eventos ativos e está na faixa da prata. O layout é o
+antigo e as cores são as novas: nome em latão, bordas em fio dourado, alertas em brasa, e a região
+escolhida com a borda grossa em latão.
+
+**Um achado que não é desta tarefa:** a África e a Oceania aparecem como **"Apoio 25" e
+"▲ crítico" ao mesmo tempo**. O apoio delas era 24,99 e 24,54. O `map.ts` arredonda o número para
+casar com a média do HUD, e o alerta compara o valor exato com o piso de 25. Em 2047 isso acontece
+com frequência, porque várias regiões ficam coladas no piso. Não mexi: o lugar natural para
+resolver é o `VIS-03`, que reescreve as etiquetas do mapa.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 694 testes
+  # Nenhum hexadecimal da paleta antiga fora das reservas dos var():
+  grep -n -i -E '#[0-9a-f]{6}' src/ui/*.css | grep -v theme.css | grep -v 'var(--'
+  ```
+
+  Na tela: `npm run dev`. O jogo inteiro fica em verde-floresta e latão, com o layout de sempre.
+
+- **Pendente:**
+  - **O "Apoio 25" com "▲ crítico"**, descrito acima — para o `VIS-03`.
+  - **Comprado e disponível na árvore continuam da mesma cor.** Antes eram menta, agora são latão, e
+    seguem distintos pelo ícone, pelo rótulo e pela espessura da borda. O verde-folha do "comprado"
+    entra com o `VIS-05`.
+  - **As cores novas que ainda não existem no tema** (creme, bronze, folha, oceano e as listras)
+    entram com as tarefas que as usarem, como o `docs/DIRECAO-DE-ARTE.md §3` combina.
+  - **O `npm run check` imprime avisos do Node 26** (`localStorage is not available because
+    --localstorage-file was not provided`). Não são desta tarefa: já apareciam 13 vezes na
+    verificação do `VIS-01`.
+- **Evidência:**
+  - `docs/evidencias/2026-09-16-vis-02-paleta-nova-topo.jpg` — o HUD, os controles e os três
+    eventos;
+  - `docs/evidencias/2026-09-16-vis-02-paleta-nova-mapa.jpg` — o mapa, com a região escolhida e os
+    alertas.
+
+  Um terceiro print saiu pintado pela metade e foi descartado.
+
+---
+
 ## 2026-09-16 — A direção de arte foi aprovada, e o mapa é da casa
 
 - **Parte / tarefa:** `VIS-01` ✔
