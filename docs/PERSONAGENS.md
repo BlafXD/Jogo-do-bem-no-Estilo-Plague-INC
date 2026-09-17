@@ -127,7 +127,21 @@ Nada disso precisa ser decidido agora. Como identidade visual, quatro é um núm
 | **Tela de título** | ✔ **no ar** — os quatro, sob o rótulo "A equipe da agência" |
 | **Cartaz da feira** (`P8-06`) | previsto — é o uso mais forte: quatro rostos vendem um estande melhor que um mapa |
 | **Slides** (`P8-07`) | previsto |
-| **Dentro da partida** | **não.** Nenhuma tela de jogo muda |
+| **Dentro da partida** | ✔ **no ar desde o `VIS-07`** (2026-09-17, com permissão no chat) — no tutorial, nos eventos e na tela de fim |
+
+**Dentro da partida, eles são a equipe falando, e não personagens jogáveis.** Até 2026-09-17 esta
+linha dizia "não"; o protótipo aprovado no `VIS-01` os pôs na partida, e a mudança foi autorizada
+no chat quando o `VIS-07` começou. As regras do topo deste arquivo continuam valendo inteiras:
+**nenhum bônus, nada no `GameState`, nenhuma linha de balanceamento.** Onde eles aparecem:
+
+- **Tutorial:** cada um dos quatro passos é dito por uma pessoa, com o retrato ao lado do texto.
+- **Eventos:** o especialista do assunto dá a notícia. No boletim, ele aparece num avatar redondo,
+  com "por Ricardo"; no evento crítico, num cartão no centro da tela, com o tempo parado.
+- **Tela de fim:** a Juliana, com o painel no tablet, ao lado do resultado.
+
+**Nenhuma fala é inventada para eles.** O que dizem é o texto que o jogo já tinha: o passo do
+tutorial e o fato real do evento. Quem aparece onde está no `src/data/characters.json`, e o texto
+de nome e cargo, no `src/data/i18n.ts`.
 
 **Sobre a tela de título:** se entrarem, entram como **a equipe**, não como escolha. O jogador é o
 Gerente; estes são os quatro especialistas que ele dirige. Pôr um rosto só implicaria que aquele

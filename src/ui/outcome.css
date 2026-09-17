@@ -241,3 +241,23 @@
   color: var(--cor-rotulo, #a7c0b4);
   font-size: var(--tamanho-base, 1rem);
 }
+
+/* ------------------------------------------ a Juliana ao lado (VIS-07) --- */
+
+/* O resultado e a auditora lado a lado. Quando falta largura, ela desce para
+   baixo do texto, que é o que se lê primeiro. */
+.outcome__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem 1.5rem;
+}
+
+.outcome__said {
+  flex: 1 1 20rem;
+}
+
+.outcome__portrait {
+  flex: none;
+  width: 11.5rem;
+}

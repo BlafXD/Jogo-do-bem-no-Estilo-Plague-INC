@@ -35,6 +35,7 @@ import {
   type RealWorldAction,
 } from '../engine/review';
 import { balance, skills, SKILL_BRANCHES, type GameState } from '../engine/state';
+import { momentCast, mountPortrait, renderPortrait } from './characters';
 import { celsius } from './format';
 import { hudView } from './hud';
 import {
@@ -353,8 +354,18 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
   // a curva diz **quando** cada coisa foi decidida, o "ficou para trás" põe isso
   // em palavras, e só então a tela fala do mundo real. Os botões ficam por
   // último porque são a saída, não parte do que se lê.
+  // A Juliana, com o painel no tablet, ao lado do resultado (VIS-07): a
+  // auditora da agência lê a partida junto com o jogador. A legenda é o que ela
+  // faz aqui, e não o cargo — o cargo está no texto alternativo.
+  const portrait = mountPortrait('outcome__portrait', true);
+  renderPortrait(portrait, momentCast('outcome'), ui.cast.outcome);
+
+  const top = document.createElement('div');
+  top.className = 'outcome__top';
+  top.append(said, portrait);
+
   card.append(
-    said,
+    top,
     stats,
     mountTimelineChart(),
     section('lookback', ui.outcome.lookBack.label),

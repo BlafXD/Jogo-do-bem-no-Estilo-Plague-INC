@@ -14,6 +14,7 @@ import {
 } from '../src/engine/state';
 import { TOTAL_TICKS } from '../src/engine/tick';
 import { hudView } from '../src/ui/hud';
+import { momentCast, personLabel, personText } from '../src/ui/characters';
 import { mountOutcome, outcomeView, renderOutcome } from '../src/ui/outcome';
 
 /**
@@ -240,7 +241,7 @@ describe('o cartão na tela', () => {
     const ordem = [...(card?.children ?? [])].map((node) => node.className);
 
     expect(ordem).toEqual([
-      'outcome__said',
+      'outcome__top',
       'outcome__stats',
       'chart',
       'outcome__lookback',
@@ -344,5 +345,20 @@ describe('o cartão na tela', () => {
     // Região viva contendo controle faz alguns leitores reanunciarem o botão a
     // cada mudança. Ele fica de fora, de propósito.
     expect(live?.querySelector('button')).toBeNull();
+  });
+});
+
+describe('a Juliana ao lado do resultado (VIS-07)', () => {
+  it('aparece com a pose do manifesto, o nome e a legenda da auditoria', () => {
+    const root = show(mount(), ended(2.4));
+    const retrato = root.querySelector<HTMLElement>('.outcome__top .outcome__portrait');
+    const quem = momentCast('outcome');
+
+    expect(retrato?.hidden).toBe(false);
+    expect(retrato?.querySelector('img')?.alt).toBe(personLabel(quem.person));
+    expect(retrato?.querySelector('[data-cast="name"]')?.textContent).toBe(
+      personText(quem.person).name,
+    );
+    expect(retrato?.querySelector('[data-cast="role"]')?.textContent).toBe(ui.cast.outcome);
   });
 });

@@ -27,6 +27,7 @@ import { ui } from '../data/i18n';
 import { eventById, isCritical, startTickOf } from '../engine/events';
 import type { ActiveEvent, GameState } from '../engine/state';
 import { yearForTick } from '../engine/tick';
+import { eventCast, mountAvatar, personText, type Appearance } from './characters';
 
 // --------------------------------------------------------------- a view ---
 
@@ -48,6 +49,13 @@ export type EventCardView = {
   readonly where: string;
   /** O fato real, uma frase. Vem do events.json, com fonte em docs/CIENCIA.md. */
   readonly fact: string;
+  /**
+   * Quem deu a notícia (VIS-07): o especialista do assunto, pelo
+   * src/data/characters.json. `null` para um evento sem especialista.
+   */
+  readonly speaker: Appearance | null;
+  /** "por Ricardo", ou vazio quando não há especialista. */
+  readonly by: string;
   readonly severity: EventSeverity;
   readonly severityIcon: string;
   readonly severityLabel: string;
@@ -75,12 +83,15 @@ function cardFor(state: GameState, active: ActiveEvent): EventCardView | null {
   const started = startTickOf(active, state.tick);
   const severity: EventSeverity = isCritical(event) ? 'critical' : 'moderate';
   const badge = ui.events.severity[severity];
+  const speaker = eventCast(event.id);
 
   return {
     key: `${event.id}@${started}`,
     name: event.name,
     where: ui.events.where(state.regions[active.target].name, String(yearForTick(started))),
     fact: event.fact,
+    speaker,
+    by: speaker === null ? '' : ui.cast.by(personText(speaker.person).short),
     severity,
     severityIcon: badge.icon,
     severityLabel: badge.label,
@@ -173,7 +184,12 @@ function cardElement(card: EventCardView): HTMLLIElement {
 
   head.append(icon, span('events__severity', card.severityLabel), span('events__name', card.name));
 
-  item.append(head, paragraph('events__where', card.where), paragraph('events__fact', card.fact));
+  const where = paragraph('events__where', card.where);
+  if (card.by !== '') where.append(' · ', span('events__by', card.by));
+
+  // O avatar é decoração: o nome de quem deu a notícia vai escrito acima.
+  if (card.speaker !== null) item.append(mountAvatar(card.speaker));
+  item.append(head, where, paragraph('events__fact', card.fact));
   return item;
 }
 
@@ -188,9 +204,9 @@ function cardElement(card: EventCardView): HTMLLIElement {
  * **Nada aqui é focável, de propósito.** Sem botão dentro, a lista pode ser
  * reconstruída sem arrancar o foco do teclado de ninguém — que é justamente o
  * que o tree.ts precisa evitar e por isso atualiza em vez de recriar. Quem
- * quiser retomar o tempo usa o botão que já existe na barra de controle, a
- * poucos centímetros daqui; um segundo botão de retomar seria dois lugares para
- * a mesma ação divergir.
+ * quiser retomar o tempo usa a barra de controle, ou o "Retomar" do cartão
+ * central do evento crítico (critical-card.ts, VIS-07), que aparece por cima da
+ * partida enquanto o tempo está parado.
  */
 export function mountEventCards(root: Element): void {
   root.setAttribute('aria-label', ui.events.label);

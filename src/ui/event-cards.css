@@ -154,3 +154,23 @@
   line-height: 1.45;
   max-width: 46ch;
 }
+
+/* Quem deu a notícia (VIS-07): o avatar à esquerda, com o texto do cartão ao
+   lado. O avatar é decoração — o nome vai escrito na linha de onde e quando. */
+.events__card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.75rem;
+}
+
+.events__card > :not(.avatar) {
+  grid-column: 2;
+}
+
+.events__card > .avatar {
+  grid-row: 1 / span 3;
+}
+
+.events__by {
+  color: var(--cor-valor, #f2f7f4);
+}

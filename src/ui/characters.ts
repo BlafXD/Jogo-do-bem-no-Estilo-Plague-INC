@@ -56,6 +56,12 @@ export const CAST_MOMENTS = [
 
 export type CastMoment = (typeof CAST_MOMENTS)[number];
 
+/**
+ * Onde fica o rosto numa pose, em fração da largura e da altura da imagem. É o
+ * centro do avatar redondo do boletim (VIS-07).
+ */
+export type Face = readonly [x: number, y: number];
+
 /** Uma pessoa numa pose. */
 export type Appearance = {
   readonly person: PersonId;
@@ -65,6 +71,8 @@ export type Appearance = {
 export type Cast = {
   /** As poses de cada pessoa, na ordem do manifesto. */
   readonly poses: Readonly<Record<PersonId, readonly string[]>>;
+  /** O rosto de cada pose, pelo nome do arquivo sem extensão. */
+  readonly faces: Readonly<Record<string, Face>>;
   readonly moments: Readonly<Record<CastMoment, Appearance>>;
   /** A equipe na tela de título, na ordem em que aparece. */
   readonly title: readonly Appearance[];
@@ -78,7 +86,9 @@ export type Cast = {
 type RawAppearance = { readonly person: string; readonly pose: string };
 
 export type RawCast = {
-  readonly people: Readonly<Record<string, readonly string[]>>;
+  readonly people: Readonly<
+    Record<string, Readonly<Record<string, { readonly face: readonly number[] }>>>
+  >;
   readonly moments: Readonly<Record<string, RawAppearance>>;
   readonly title: readonly RawAppearance[];
   readonly events: {
@@ -108,22 +118,34 @@ function sameKeys(what: string, found: readonly string[], expected: readonly str
   if (extra.length > 0) fail(`${what} com chave desconhecida: ${extra.join(', ')}.`);
 }
 
-function parsePoses(people: RawCast['people']): Record<PersonId, readonly string[]> {
+/** O rosto precisa ser dois números entre 0 e 1: ele é uma fração da imagem. */
+function parseFace(where: string, raw: readonly number[]): Face {
+  const [x, y] = raw;
+  const inside = (value: number | undefined): value is number =>
+    value !== undefined && Number.isFinite(value) && value >= 0 && value <= 1;
+  if (raw.length !== 2 || !inside(x) || !inside(y)) {
+    fail(`${where} tem o rosto em [${raw.join(', ')}], e ele precisa de dois números entre 0 e 1.`);
+  }
+  return [x, y];
+}
+
+function parsePoses(people: RawCast['people']): Pick<Cast, 'poses' | 'faces'> {
   sameKeys('"people"', Object.keys(people), PERSON_IDS);
 
   const poses = {} as Record<PersonId, readonly string[]>;
+  const faces: Record<string, Face> = {};
   for (const person of PERSON_IDS) {
-    const list = people[person] ?? [];
-    if (list.length === 0) fail(`"${person}" não tem pose nenhuma.`);
-    for (const pose of list) {
+    const entries = Object.entries(people[person] ?? {});
+    if (entries.length === 0) fail(`"${person}" não tem pose nenhuma.`);
+    for (const [pose, data] of entries) {
       if (!POSE_NAME.test(pose)) {
         fail(`"${person}" tem a pose "${pose}", que não vira nome de arquivo.`);
       }
+      faces[`${person}-${pose}`] = parseFace(`a pose "${pose}" de "${person}"`, data.face);
     }
-    if (new Set(list).size !== list.length) fail(`"${person}" repete uma pose.`);
-    poses[person] = list;
+    poses[person] = entries.map(([pose]) => pose);
   }
-  return poses;
+  return { poses, faces };
 }
 
 function appearance(
@@ -150,7 +172,7 @@ function appearance(
  * nenhum especialista pode citar um evento que não existe.
  */
 export function parseCast(raw: RawCast, eventIds: readonly string[]): Cast {
-  const poses = parsePoses(raw.people);
+  const { poses, faces } = parsePoses(raw.people);
 
   sameKeys('"moments"', Object.keys(raw.moments), CAST_MOMENTS);
   const moments = {} as Record<CastMoment, Appearance>;
@@ -182,7 +204,7 @@ export function parseCast(raw: RawCast, eventIds: readonly string[]): Cast {
     speakers[event] = person;
   }
 
-  return { poses, moments, title, eventPose, speakers };
+  return { poses, faces, moments, title, eventPose, speakers };
 }
 
 export const cast: Cast = parseCast(
@@ -207,16 +229,23 @@ export function eventCast(eventId: string): Appearance | null {
   return person === undefined ? null : { person, pose: cast.eventPose[person] };
 }
 
-/** O nome e o cargo, para o texto alternativo da imagem (regra 8: no i18n). */
-const LABEL: Readonly<Record<PersonId, string>> = {
-  'ana-luiza': ui.title.team.alt.anaLuiza,
-  'carlos-mendes': ui.title.team.alt.carlosMendes,
-  'ricardo-souza': ui.title.team.alt.ricardoSouza,
-  'juliana-almeida': ui.title.team.alt.julianaAlmeida,
-};
+/** O nome, o nome curto e o cargo de uma pessoa (regra 8: no i18n). */
+export function personText(person: PersonId): {
+  readonly name: string;
+  readonly short: string;
+  readonly role: string;
+} {
+  return ui.cast.people[person];
+}
 
+/** "Ana Luiza, engenheira elétrica": o texto alternativo de um retrato. */
 export function personLabel(person: PersonId): string {
-  return LABEL[person];
+  return ui.cast.people[person].alt;
+}
+
+/** O rosto da pose, para centrar o avatar. */
+export function faceOf(appearance: Appearance): Face {
+  return cast.faces[`${appearance.person}-${appearance.pose}`] ?? [0.5, 0.2];
 }
 
 // ---------------------------------------------------------------- arquivos ---
@@ -258,4 +287,97 @@ export function poseUrl(appearance: Appearance): string | null {
   }
 
   return null;
+}
+
+// --------------------------------------------------------------------- DOM ---
+
+/**
+ * Monta um retrato: a pose inteira num cartão creme, com o texto alternativo.
+ *
+ * Com `caption`, a faixa de bronze embaixo leva o nome e o cargo **em texto de
+ * verdade**, e não em pixel (docs/DIRECAO-DE-ARTE.md §7). Sem ela, quem diz o
+ * nome é o texto ao lado do retrato, e o `alt` fica com o nome também — o
+ * leitor de tela anuncia a imagem antes de chegar ao texto.
+ */
+export function mountPortrait(className: string, caption: boolean): HTMLElement {
+  const figure = document.createElement('figure');
+  figure.className = `portrait ${className}`;
+
+  const img = document.createElement('img');
+  img.className = 'portrait__img';
+  img.dataset.cast = 'img';
+  img.decoding = 'async';
+  figure.append(img);
+
+  if (caption) {
+    const band = document.createElement('figcaption');
+    band.className = 'portrait__band';
+    const name = document.createElement('strong');
+    name.dataset.cast = 'name';
+    const role = document.createElement('span');
+    role.dataset.cast = 'role';
+    band.append(name, ' ', role);
+    figure.append(band);
+  }
+
+  return figure;
+}
+
+function writeText(target: Element | null, text: string): void {
+  if (target !== null && target.textContent !== text) target.textContent = text;
+}
+
+/**
+ * Põe uma pessoa num retrato já montado. Troca só o que mudou: o render roda a
+ * cada mês, e reatribuir o `src` faria o navegador reconferir a imagem.
+ *
+ * `role` troca o cargo da faixa por outra legenda — a da tela de fim diz
+ * "Auditoria da partida". Sem arquivo para a pose, o retrato some: um quadro
+ * vazio é pior que nenhum.
+ */
+export function renderPortrait(figure: HTMLElement, who: Appearance | null, role?: string): void {
+  const url = who === null ? null : poseUrl(who);
+  figure.hidden = who === null || url === null;
+  if (who === null || url === null) return;
+
+  const img = figure.querySelector<HTMLImageElement>('[data-cast="img"]');
+  if (img !== null) {
+    if (img.getAttribute('src') !== url) img.src = url;
+    const alt = personLabel(who.person);
+    if (img.alt !== alt) img.alt = alt;
+  }
+
+  const text = personText(who.person);
+  writeText(figure.querySelector('[data-cast="name"]'), text.name);
+  writeText(figure.querySelector('[data-cast="role"]'), role ?? text.role);
+  figure.dataset.person = who.person;
+}
+
+/**
+ * O avatar redondo do boletim, centrado no rosto da pose.
+ *
+ * É decoração (`aria-hidden`): o nome de quem deu a notícia vai escrito no
+ * cartão. O rosto é posto no centro pelo `translate` em porcentagem, que se
+ * mede pelo tamanho da própria imagem — assim a conta não depende da largura de
+ * cada pose, que varia de 397 a 467 px.
+ */
+export function mountAvatar(who: Appearance): HTMLElement {
+  const avatar = document.createElement('span');
+  avatar.className = 'avatar';
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.dataset.person = who.person;
+
+  const url = poseUrl(who);
+  if (url !== null) {
+    const img = document.createElement('img');
+    img.className = 'avatar__img';
+    img.src = url;
+    img.alt = '';
+    const [x, y] = faceOf(who);
+    img.style.setProperty('--rosto-x', String(x));
+    img.style.setProperty('--rosto-y', String(y));
+    avatar.append(img);
+  }
+
+  return avatar;
 }

@@ -11,20 +11,17 @@
 // `2`, `4`) continuam valendo com ele aberto, porque o main.ts as escuta no
 // documento inteiro.
 //
-// **É uma janela modal de verdade**, e isso pede três coisas:
-// - o resto da página fica `inert` — nem o mouse nem o Tab chegam lá;
-// - o Tab dá a volta dentro do painel, em vez de escapar para a barra do
-//   navegador;
-// - `Esc` fecha, e o foco volta para quem abriu (§5 do GDD).
-// O `<dialog>` nativo faria as três sozinho, mas o jsdom dos testes não tem o
-// `showModal`, e um painel que só se testa no navegador é um painel que quebra
-// calado.
+// **É uma janela modal de verdade:** o resto da página fica `inert`, o Tab dá a
+// volta dentro do painel (modal.ts), e `Esc` fecha, com o foco voltando para
+// quem abriu (§5 do GDD). Quem liga o `inert` é o main.ts, porque o cartão do
+// evento crítico (VIS-07) pode abrir por cima do painel.
 //
 // Mesma divisão do resto da UI: `treePanelView` é puro, e só as funções de baixo
 // tocam no DOM.
 
 import { ui } from '../data/i18n';
 import type { GameState } from '../engine/state';
+import { trapTab } from './modal';
 import { wholePoints } from './tree';
 
 // --------------------------------------------------------------- a view ---
@@ -45,37 +42,6 @@ export function treePanelView(state: GameState, open: boolean, inGame: boolean):
 }
 
 // ------------------------------------------------------------------ DOM ---
-
-/** O que pode receber foco dentro do painel, na ordem da página. */
-const FOCUSABLE = 'button, a[href], [tabindex]:not([tabindex="-1"])';
-
-function focusables(dialog: Element): HTMLElement[] {
-  return [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-    (element) => element.closest('[hidden]') === null,
-  );
-}
-
-/**
- * Prende o Tab dentro do painel: do último vai para o primeiro, e do primeiro,
- * com Shift, para o último.
- */
-function trapTab(dialog: HTMLElement, event: KeyboardEvent): void {
-  if (event.key !== 'Tab') return;
-
-  const all = focusables(dialog);
-  const first = all[0];
-  const last = all.at(-1);
-  if (first === undefined || last === undefined) return;
-
-  const active = document.activeElement;
-  if (event.shiftKey && (active === first || !dialog.contains(active))) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && active === last) {
-    event.preventDefault();
-    first.focus();
-  }
-}
 
 /**
  * Monta o cabeçalho do painel e liga os três jeitos de fechar: o botão, o
@@ -131,20 +97,9 @@ export function mountTreePanel(root: HTMLElement, onClose: () => void): void {
   dialog.addEventListener('keydown', (event) => trapTab(dialog, event));
 }
 
-/**
- * Abre ou fecha o painel, e desliga o resto da página enquanto ele está aberto.
- *
- * `background` são os blocos que ficam atrás do painel. O `inert` vai como
- * atributo, e não como propriedade, porque o jsdom dos testes não conhece a
- * propriedade — e o atributo é o que o navegador honra.
- */
-export function renderTreePanel(
-  root: HTMLElement,
-  view: TreePanelView,
-  background: readonly HTMLElement[],
-): void {
+/** Abre ou fecha o painel, e escreve o saldo. */
+export function renderTreePanel(root: HTMLElement, view: TreePanelView): void {
   root.hidden = !view.open;
-  for (const block of background) block.toggleAttribute('inert', view.open);
 
   const points = root.querySelector('[data-tree-panel="points"]');
   if (points !== null && points.textContent !== view.points) points.textContent = view.points;

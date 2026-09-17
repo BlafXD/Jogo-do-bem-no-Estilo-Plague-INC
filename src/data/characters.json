@@ -1,22 +1,101 @@
 {
   "people": {
-    "ana-luiza": ["aponta", "energia", "acolhe", "planta"],
-    "carlos-mendes": ["aponta", "explica", "analisa", "conversa"],
-    "ricardo-souza": ["aponta", "apresenta", "folha", "atencao"],
-    "juliana-almeida": ["atencao", "painel", "aponta", "mapa"]
+    "ana-luiza": {
+      "aponta": {
+        "face": [0.47, 0.28]
+      },
+      "energia": {
+        "face": [0.54, 0.31]
+      },
+      "acolhe": {
+        "face": [0.5, 0.18]
+      },
+      "planta": {
+        "face": [0.56, 0.34]
+      }
+    },
+    "carlos-mendes": {
+      "aponta": {
+        "face": [0.53, 0.24]
+      },
+      "explica": {
+        "face": [0.51, 0.18]
+      },
+      "analisa": {
+        "face": [0.47, 0.19]
+      },
+      "conversa": {
+        "face": [0.46, 0.17]
+      }
+    },
+    "ricardo-souza": {
+      "aponta": {
+        "face": [0.41, 0.16]
+      },
+      "apresenta": {
+        "face": [0.57, 0.16]
+      },
+      "folha": {
+        "face": [0.37, 0.17]
+      },
+      "atencao": {
+        "face": [0.54, 0.2]
+      }
+    },
+    "juliana-almeida": {
+      "atencao": {
+        "face": [0.51, 0.27]
+      },
+      "painel": {
+        "face": [0.52, 0.21]
+      },
+      "aponta": {
+        "face": [0.43, 0.11]
+      },
+      "mapa": {
+        "face": [0.55, 0.25]
+      }
+    }
   },
   "moments": {
-    "tutorial-time": { "person": "ana-luiza", "pose": "aponta" },
-    "tutorial-tree": { "person": "carlos-mendes", "pose": "explica" },
-    "tutorial-event": { "person": "ricardo-souza", "pose": "aponta" },
-    "tutorial-inertia": { "person": "juliana-almeida", "pose": "atencao" },
-    "outcome": { "person": "juliana-almeida", "pose": "painel" }
+    "tutorial-time": {
+      "person": "ana-luiza",
+      "pose": "aponta"
+    },
+    "tutorial-tree": {
+      "person": "carlos-mendes",
+      "pose": "explica"
+    },
+    "tutorial-event": {
+      "person": "ricardo-souza",
+      "pose": "aponta"
+    },
+    "tutorial-inertia": {
+      "person": "juliana-almeida",
+      "pose": "atencao"
+    },
+    "outcome": {
+      "person": "juliana-almeida",
+      "pose": "painel"
+    }
   },
   "title": [
-    { "person": "ana-luiza", "pose": "acolhe" },
-    { "person": "carlos-mendes", "pose": "conversa" },
-    { "person": "ricardo-souza", "pose": "apresenta" },
-    { "person": "juliana-almeida", "pose": "painel" }
+    {
+      "person": "ana-luiza",
+      "pose": "acolhe"
+    },
+    {
+      "person": "carlos-mendes",
+      "pose": "conversa"
+    },
+    {
+      "person": "ricardo-souza",
+      "pose": "apresenta"
+    },
+    {
+      "person": "juliana-almeida",
+      "pose": "painel"
+    }
   ],
   "events": {
     "pose": {

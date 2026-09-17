@@ -28,6 +28,146 @@ Regras curtas:
 
 ---
 
+## 2026-09-17 — A equipe entra na partida: no tutorial, nos eventos e no fim
+
+- **Parte / tarefa:** `VIS-07` ✔
+- **Permissão e decisão do chat:**
+  - o `docs/PERSONAGENS.md §4`, que dizia "dentro da partida: não", foi mudado com permissão;
+  - o evento crítico ganhou o cartão central do protótipo.
+- **O que mudou:**
+  - `src/ui/critical-card.ts` e `src/ui/critical-card.css` **criados** — o cartão central do
+    evento crítico. Ele traz o retrato do especialista com a faixa de nome, o selo "▲ Crítico" e
+    "O tempo parou", o nome, onde e quando, o fato em creme e "Retomar".
+  - `src/ui/modal.ts` **criado** — o que as duas janelas por cima da partida compartilham: o Tab
+    preso, o `inert` e a checagem de para onde o foco pode voltar. O `tree-panel.ts` deixou de
+    cuidar do `inert` e passou a usar este módulo.
+  - `src/ui/characters.ts`:
+    - o retrato (`mountPortrait` e `renderPortrait`) e o avatar redondo (`mountAvatar`);
+    - o centro do rosto de cada pose (`faceOf`);
+    - o nome e o cargo (`personText`).
+
+    O `src/ui/characters.css` **criado** é a folha das duas peças.
+  - `src/data/characters.json` — cada pose ganhou o centro do rosto (`face`), com os números do
+    protótipo.
+  - `src/data/i18n.ts`:
+    - nome, nome curto e cargo das quatro pessoas num lugar só (`team`), lido pela tela de título
+      e pela partida;
+    - os textos novos do cartão crítico e da equipe (`ui.cast`).
+  - Módulos da tela:
+    - `tutorial.ts` e `tutorial.css`: o balão tem o retrato e "Nome · Cargo" em cima da fala;
+    - `event-cards.ts` e `event-cards.css`: cada cartão tem o avatar e "por Ricardo";
+    - `outcome.ts` e `outcome.css`: a Juliana ao lado do resultado, com "Auditoria da partida".
+  - `src/ui/theme.css` — o bronze (`--cor-bronze`) da faixa de nome, com o creme por cima (6,23:1).
+  - `src/main.ts`:
+    - o cartão crítico e o `renderOverlays`, que é o dono único do `inert`;
+    - o foco, que entra no "Retomar" e volta para onde estava;
+    - o `Esc`, que fecha o cartão antes de qualquer coisa.
+  - `index.html` — o `#evento-critico`, depois do painel da árvore.
+  - Testes:
+    - criados: `critical-card.dom.test.ts` e `modal.dom.test.ts`;
+    - ampliados: `characters`, `tutorial.dom`, `event-cards.dom`, `outcome.dom` e `theme`;
+    - ajustado: `tree-panel.dom`.
+
+    Suíte: 858 → **883**.
+  - `docs/PERSONAGENS.md §4`, `docs/DIRECAO-DE-ARTE.md §8`, `README.md` e `PLANO.md`.
+
+### Como o cartão crítico funciona
+
+**Ele existe enquanto a pausa automática vale**, e fechá-lo **é** soltar o tempo, por três
+caminhos: o botão, o `Espaço` e o `Esc`. O clique no fundo não fecha, de propósito: um clique errado
+ao lado não pode pôr o mundo para andar. O cartão mostra o crítico mais recente, que é o que parou o
+relógio. Ele continua também no boletim, com o aviso de tempo parado.
+
+**O `inert` passou a ter um dono só.** O cartão pode abrir com o painel da árvore aberto, e cada
+janela escrevendo o atributo nos mesmos blocos apagaria a outra. Agora o `renderOverlays` do
+`main.ts` decide:
+- com qualquer janela aberta, a página de trás fica desligada;
+- com o cartão aberto, o painel da árvore também fica.
+
+**O foco acompanha o cartão.** Quem tinha o foco é guardado antes de a página ser desligada, porque
+um elemento que fica `inert` perde o foco. Ao fechar, o foco volta para esse elemento; se ele saiu
+da tela, vai para o nó escolhido da árvore, com o painel aberto, ou para o botão de pausa.
+
+### O avatar
+
+O avatar é um círculo creme com a pose inteira dentro, muito maior que ele. O `translate` em
+porcentagem põe o rosto no centro: a porcentagem se mede pela própria imagem, então a conta vale
+para as larguras das poses, que vão de 397 a 467 px. O centro de cada rosto está no
+`characters.json`, e o teste confere que os 16 ficam dentro da imagem.
+
+### Duas correções que vieram de testes
+
+- **O teste do i18n chama cada função com uma lista de textos**, e o `toLowerCase` do texto
+  alternativo quebrou nela. O texto alternativo agora vem pronto em cada pessoa.
+- **O teste do cartão de fim trava a ordem dos blocos.** Ele passou a esperar o `outcome__top`, que
+  junta o resultado e a Juliana.
+
+### Conferi que os testes reprovam de verdade
+
+- Sem o texto alternativo no retrato, quatro testes falharam.
+- Com o cartão crítico aberto sem pausa, dois falharam.
+- Com o avatar anunciado ao leitor de tela, um falhou.
+
+Voltei o arquivo nas três vezes.
+
+### Como foi conferido
+
+**No Edge em modo headless**, pelo script de CDP das tarefas anteriores, fora do repositório:
+- **Partida nova.** O balão do tempo tem a Ana Luiza, com a imagem carregada e o texto
+  alternativo. Em 390 px o balão cabe na largura.
+- **Um crítico ao vivo.** Uma partida de 2061 foi plantada um mês antes de uma ressaca e maré de
+  tempestade, com o painel da árvore aberto.
+  - O cartão abriu por cima do painel, com o Ricardo, e as cinco partes de trás ficaram `inert`.
+    O foco foi para o "Retomar".
+  - O `Espaço` soltou o tempo, e o foco voltou para o nó escolhido da árvore.
+- **O mesmo crítico sem o painel.** O `Esc` soltou o tempo, e o foco foi para o botão de pausa.
+- **O mesmo crítico em 390 × 844.** O cartão coube na largura, e o "Retomar" ficou à vista; o
+  clique nele soltou o tempo.
+- **O boletim.** Os cinco cartões têm avatar (48 px, imagem carregada) e "por …".
+- **A tela de fim** de uma derrota em 2089, com a Juliana e a legenda na faixa.
+
+**O que a tela mostrou, e o que mudou por causa dela:**
+1. **Em 390 px o cartão crítico saía 10 px pela esquerda.** Faltava `box-sizing: border-box`, e o
+   padding somava à largura.
+2. **No fim, a faixa da Juliana quebrava o nome em duas linhas.** O retrato passou de 9,5rem para
+   11,5rem.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`. O save de teste foi
+apagado no fim.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 883 testes
+  npm run dev
+  ```
+
+  Na tela:
+  - Numa partida nova, o primeiro balão tem a Ana Luiza.
+  - Jogue a 4x até cair um evento crítico: o cartão do especialista aparece no centro, e o
+    `Espaço` o fecha e solta o tempo.
+  - No boletim, cada evento tem o rosto de quem deu a notícia.
+  - Na tela de fim, a Juliana fica ao lado do resultado.
+
+- **Pendente:**
+  - **O build da feira foi de 631 KB para 1,29 MB**, com as 16 poses embutidas. Só 9 delas
+    aparecem na partida; as outras 7 são da tela de título do `VIS-08`, que vai usá-las. Não foi
+    aberto por `file://` nesta tarefa.
+  - **O aviso de tempo parado aparece duas vezes para o leitor de tela:** no cartão e na região
+    viva do boletim. Vale conferir com leitor de tela de verdade.
+  - **O balão do tutorial não muda de lugar por passo**, como no protótipo (em cima, à direita):
+    continua acima da barra de baixo.
+  - **O servidor de dev da conferência do `VIS-05` ficou preso na porta 5199** até esta tarefa, e foi encerrado no fim dela.
+- **Evidência:**
+  - `docs/evidencias/2026-09-17-vis-07-tutorial-com-a-ana.jpg` — o primeiro passo, em 1536 × 702;
+  - `docs/evidencias/2026-09-17-vis-07-evento-critico.jpg` — o cartão por cima do painel da
+    árvore;
+  - `docs/evidencias/2026-09-17-vis-07-boletim-com-avatares.jpg` — o boletim com os avatares;
+  - `docs/evidencias/2026-09-17-vis-07-fim-com-a-juliana.jpg` — a derrota em 2089;
+  - `docs/evidencias/2026-09-17-vis-07-critico-tela-estreita.jpg` — o cartão em 390 px.
+
+---
+
 ## 2026-09-17 — As 16 poses da equipe entram, com o manifesto de quem aparece onde
 
 - **Parte / tarefa:** `VIS-06` ✔

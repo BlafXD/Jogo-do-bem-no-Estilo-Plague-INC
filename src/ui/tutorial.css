@@ -40,6 +40,32 @@
   background: var(--cor-destaque-suave, rgb(127 209 168 / 12%));
 }
 
+/* Quem fala (VIS-07): o retrato à esquerda, e a fala ao lado — o nome, o
+   texto do passo e os botões. */
+.tutorial__portrait {
+  flex: none;
+  width: 6.5rem;
+}
+
+.tutorial__speech {
+  display: flex;
+  flex: 1 1 20rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.tutorial__speaker {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--cor-destaque, #7fd1a8);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .tutorial__text {
   margin: 0;
   /* Cresce e encolhe, mas nunca fica tão estreito que quebre em duas palavras

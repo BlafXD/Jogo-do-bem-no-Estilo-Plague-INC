@@ -112,11 +112,12 @@ const HOVER_ALPHA = 0.12;
 const DRAWING = [
   'cor-creme',
   'cor-oceano',
+  'cor-bronze',
   ...Array.from({ length: 8 }, (_, parada) => `cor-listra-${parada}`),
 ] as const;
 
 describe('a paleta', () => {
-  it('define as 9 cores da interface e as 10 de desenho, todas em #rrggbb', () => {
+  it('define as 9 cores da interface e as 11 de desenho, todas em #rrggbb', () => {
     for (const name of [...PALETTE, ...DRAWING]) {
       expect(token(name), name).toMatch(/^#[0-9a-f]{6}$/);
     }
@@ -141,6 +142,14 @@ describe('a paleta', () => {
   it('passa o AA da tinta sobre o creme', () => {
     const razao = contrast(token('cor-tinta'), token('cor-creme'));
     expect(razao, `cor-tinta sobre cor-creme: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(
+      AA_TEXT,
+    );
+  });
+
+  /** A faixa de nome dos personagens (VIS-07): o creme escrito sobre o bronze. */
+  it('passa o AA do creme sobre o bronze', () => {
+    const razao = contrast(token('cor-creme'), token('cor-bronze'));
+    expect(razao, `cor-creme sobre cor-bronze: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(
       AA_TEXT,
     );
   });
@@ -275,6 +284,9 @@ describe('as folhas dos módulos', () => {
     'stripes.css',
     'tree.css',
     'tree-panel.css',
+    'characters.css',
+    'critical-card.css',
+    'tutorial.css',
   ];
 
   /**

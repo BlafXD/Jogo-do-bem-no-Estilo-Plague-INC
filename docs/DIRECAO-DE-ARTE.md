@@ -356,6 +356,26 @@ da tabela acima:
 
 ---
 
+### Como ficou no `VIS-07`
+
+Os personagens entraram na partida, sem bônus (o `docs/PERSONAGENS.md §4` mudou junto, com
+permissão). Onde a tela saiu diferente da tabela do §7 e das peças acima:
+
+- **Tutorial.** O balão tem o retrato à esquerda e "Nome · Cargo" em cima da fala. Ele continua
+  logo acima da barra de baixo; o lugar por passo do protótipo (em cima, à direita) não entrou.
+- **Boletim.** Cada cartão tem o avatar redondo do especialista, centrado no rosto, e "por
+  Ricardo" depois do lugar e do ano. O centro de cada rosto está no `characters.json`.
+- **Evento crítico.** É o cartão central da tabela acima: o retrato com a faixa de bronze, o
+  selo, o nome, o fato em creme, o aviso e "Retomar" com a tecla `Espaço` desenhada. Ele abre por
+  cima de tudo, inclusive do painel da árvore. Fechar solta o tempo — pelo botão, pelo `Espaço` ou
+  pelo `Esc` —, e o clique no fundo não fecha. O aviso de tempo parado continua também no boletim.
+- **Fim.** A Juliana fica ao lado do resultado, com a legenda "Auditoria da partida" na faixa. O
+  balão de fala do protótipo não entrou.
+- **Uma cor entrou no tema:** o bronze (`--cor-bronze`) da faixa de nome, com o creme por cima
+  (6,23:1).
+
+---
+
 ## 9. O que continua valendo do §5
 
 - **Ícone e texto em todo estado:** `✔ Comprado`, `● Disponível`, `◌ PAC insuficiente`,

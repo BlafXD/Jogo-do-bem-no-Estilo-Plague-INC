@@ -32,6 +32,12 @@ import {
 import { createSound, playSfx, toggleMute } from './ui/audio';
 import { containView, mountContain, renderContain } from './ui/contain';
 import {
+  criticalCardView,
+  focusResume,
+  mountCriticalCard,
+  renderCriticalCard,
+} from './ui/critical-card';
+import {
   eventCardsView,
   mountEventCards,
   newestCriticalTick,
@@ -59,6 +65,7 @@ import {
   mountSession,
   renderSession,
 } from './ui/session';
+import { canRefocus, setInert } from './ui/modal';
 import { mountSkipLink } from './ui/skip-link';
 import { clearGame, loadGame, loadMuted, saveGame, saveMuted } from './ui/storage';
 import { mountStripes, renderStripes, rulerMark, stripesView } from './ui/stripes';
@@ -103,7 +110,9 @@ import { focusClose, mountTreePanel, renderTreePanel, treePanelView } from './ui
 // igual. Está no topo porque é o arquivo que manda nos outros, e quem abrir esta
 // lista deve ver isso antes de ver as folhas dos módulos (P5-02).
 import './ui/theme.css';
+import './ui/characters.css';
 import './ui/contain.css';
+import './ui/critical-card.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
 import './ui/hud.css';
@@ -172,6 +181,8 @@ const listras = required<HTMLElement>('#listras');
 const atalhoArvore = required<HTMLElement>('#atalho-arvore');
 const painelArvore = required<HTMLElement>('#painel-arvore');
 const detalheNo = required<HTMLElement>('#detalhe-no');
+// O cartão central do evento crítico (VIS-07).
+const criticoEl = required<HTMLElement>('#evento-critico');
 
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
@@ -265,8 +276,20 @@ let chosenSkill: SkillId = treeView(state)[0]?.nodes[0]?.id ?? '';
 /** Quem tinha o foco quando o painel abriu. É para lá que ele volta. */
 let treeOpener: HTMLElement | null = null;
 
-/** Os blocos que ficam atrás do painel, e que ele desliga enquanto aberto. */
-const behindTreePanel: readonly HTMLElement[] = [pular, topo, app, base];
+/**
+ * Os blocos que ficam atrás das duas janelas, e que elas desligam enquanto
+ * abertas. O painel da árvore entra nessa lista só quando o cartão crítico
+ * abre por cima dele.
+ */
+const behindOverlays: readonly HTMLElement[] = [pular, topo, app, base];
+
+/**
+ * O cartão do evento crítico está na tela (VIS-07), e quem tinha o foco quando
+ * ele abriu. É a virada deste booleano que leva o foco ao "Retomar" e o traz de
+ * volta — o cartão abre sozinho, no meio da partida, e não por um clique.
+ */
+let criticalShown = false;
+let criticalOpener: HTMLElement | null = null;
 
 const layout: ScreenLayout = {
   title: telaTitulo,
@@ -360,6 +383,7 @@ function handleCommand(command: TimeCommand | null): void {
 
   renderControls(controls, control, sound.muted);
   renderEvents();
+  renderOverlays();
 }
 
 /**
@@ -584,6 +608,7 @@ function renderGame(): void {
   renderStripes(listras, stripesView(state));
   renderSelection();
   renderTreePanelAll(screen === 'game', finished);
+  renderOverlays();
   // O botão da árvore sai junto com o tabuleiro: na tela de fim a árvore está
   // escondida, e abrir o painel ali não teria o que mostrar.
   atalhoArvore.hidden = screen !== 'game';
@@ -626,12 +651,65 @@ function renderTreePanelAll(inGame: boolean, finished: boolean): void {
   renderSkillDetail(detalheNo, skillDetailView(view, chosenSkill, finished));
   renderContain(contencao, containView(state));
   renderTreeButton(atalhoArvore, treeButtonView(state), panel.open);
-  renderTreePanel(painelArvore, panel, behindTreePanel);
+  renderTreePanel(painelArvore, panel);
 
   // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só
   // existe para o CSS: quem de fato recusa é o `handleUnlock` e o
   // `handleContain`.
   painelArvore.dataset.finished = String(finished);
+}
+
+/**
+ * As duas janelas por cima da partida: o cartão do evento crítico e o `inert`
+ * do que fica atrás delas.
+ *
+ * **O `inert` tem um dono só, e é esta função** (modal.ts): as duas janelas
+ * podem estar abertas juntas, e cada uma escrevendo o atributo apagaria a
+ * outra. O cartão crítico fica por cima do painel da árvore, e o desliga
+ * também.
+ *
+ * O foco acompanha o cartão: entra no "Retomar" quando ele aparece, e volta
+ * para onde estava quando ele some. Se aquele lugar não existe mais, vai para
+ * o nó escolhido da árvore, com o painel aberto, ou para o botão de pausa.
+ */
+function renderOverlays(): void {
+  const inGame = currentScreen(screens, isFinished(state)) === 'game';
+  const critical = inGame ? criticalCardView(state, autoPaused) : null;
+  const shown = critical !== null;
+
+  // Antes de desligar a página: um elemento que fica `inert` perde o foco.
+  if (shown && !criticalShown) {
+    criticalOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
+
+  renderCriticalCard(criticoEl, critical);
+  setInert(behindOverlays, shown || (treeOpen && inGame));
+  setInert([painelArvore], shown);
+
+  if (shown && !criticalShown) focusResume(criticoEl);
+  if (!shown && criticalShown) {
+    if (canRefocus(criticalOpener)) criticalOpener.focus();
+    else if (!(treeOpen && focusChosenNode(tree))) {
+      controls.querySelector<HTMLElement>('[data-control="pause"]')?.focus();
+    }
+    criticalOpener = null;
+  }
+  criticalShown = shown;
+}
+
+/**
+ * Fechar o cartão crítico — pelo "Retomar" ou pelo Esc. Fechar **é** soltar o
+ * tempo: a pausa automática termina junto com a pausa.
+ */
+function resumeFromCritical(): void {
+  if (control.paused) {
+    handleCommand({ kind: 'togglePause' });
+    return;
+  }
+
+  autoPaused = false;
+  renderEvents();
+  renderOverlays();
 }
 
 /**
@@ -664,10 +742,7 @@ function closeTree(): void {
   treeOpen = false;
   renderGame();
 
-  const back =
-    treeOpener !== null && treeOpener.isConnected && treeOpener !== document.body
-      ? treeOpener
-      : atalhoArvore.querySelector('button');
+  const back = canRefocus(treeOpener) ? treeOpener : atalhoArvore.querySelector('button');
   treeOpener = null;
   back?.focus();
 }
@@ -879,6 +954,7 @@ function handleDismissPanel(): void {
 const tutorialPanel = mountTutorialPanel(handleDismissPanel);
 
 mountTreePanel(painelArvore, closeTree);
+mountCriticalCard(criticoEl, resumeFromCritical);
 mountTree(tree, treeView(state), chosenSkill, handleChooseSkill);
 // A compra sai do detalhe, e não do losango: clicar num nó só o escolhe.
 mountSkillDetail(detalheNo, handleUnlock);
@@ -897,6 +973,14 @@ document.addEventListener('keydown', (event) => {
     // inteira, e o que estiver por baixo dele — a confirmação de reinício
     // inclusive — está fora da vista e fora do alcance do teclado. Fechar algo
     // escondido e deixar o painel no ar seria o Esc não fazer nada visível.
+    // O cartão do evento crítico vem antes de tudo (VIS-07): ele fica por
+    // cima até do painel da árvore. Fechá-lo solta o tempo.
+    if (criticalShown) {
+      event.preventDefault();
+      resumeFromCritical();
+      return;
+    }
+
     if (treeOpen) {
       event.preventDefault();
       closeTree();

@@ -1,15 +1,18 @@
 import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import castData from '../src/data/characters.json';
+import { ui } from '../src/data/i18n';
 import { climateEvents } from '../src/engine/state';
 import {
   CAST_MOMENTS,
   PERSON_IDS,
   cast,
   eventCast,
+  faceOf,
   momentCast,
   parseCast,
   personLabel,
+  personText,
   poseAssets,
   poseFile,
   poseUrl,
@@ -146,23 +149,43 @@ describe('parseCast', () => {
   const casos: readonly [string, (raw: RawCast) => RawCast, RegExp][] = [
     [
       'pessoa a mais',
-      (raw) => ({ ...raw, people: { ...raw.people, gerente: ['aponta'] } }),
+      (raw) => ({ ...raw, people: { ...raw.people, gerente: { aponta: { face: [0.5, 0.2] } } } }),
       /chave desconhecida: gerente/,
     ],
     [
       'pessoa sem pose',
-      (raw) => ({ ...raw, people: { ...raw.people, 'ana-luiza': [] } }),
+      (raw) => ({ ...raw, people: { ...raw.people, 'ana-luiza': {} } }),
       /"ana-luiza" não tem pose/,
     ],
     [
       'pose que não vira nome de arquivo',
-      (raw) => ({ ...raw, people: { ...raw.people, 'ana-luiza': ['Aponta Já'] } }),
+      (raw) => ({
+        ...raw,
+        people: { ...raw.people, 'ana-luiza': { 'Aponta Já': { face: [0.5, 0.2] } } },
+      }),
       /não vira nome de arquivo/,
     ],
     [
-      'pose repetida',
-      (raw) => ({ ...raw, people: { ...raw.people, 'ana-luiza': ['aponta', 'aponta'] } }),
-      /repete uma pose/,
+      'rosto fora da imagem',
+      (raw) => ({
+        ...raw,
+        people: {
+          ...raw.people,
+          'ana-luiza': { ...raw.people['ana-luiza'], aponta: { face: [0.5, 1.2] } },
+        },
+      }),
+      /a pose "aponta" de "ana-luiza" tem o rosto em \[0.5, 1.2\]/,
+    ],
+    [
+      'rosto com um número só',
+      (raw) => ({
+        ...raw,
+        people: {
+          ...raw.people,
+          'ana-luiza': { ...raw.people['ana-luiza'], aponta: { face: [0.5] } },
+        },
+      }),
+      /dois números entre 0 e 1/,
     ],
     [
       'momento que falta',
@@ -228,5 +251,30 @@ describe('parseCast', () => {
 
   it('o erro começa pelo nome do arquivo', () => {
     expect(() => parseCast({ ...copia(), title: [] }, EVENT_IDS)).toThrow(/^characters\.json: /);
+  });
+});
+
+describe('o rosto e o nome', () => {
+  it('toda pose tem o rosto dentro da imagem', () => {
+    for (const person of PERSON_IDS) {
+      for (const pose of cast.poses[person]) {
+        const [x, y] = faceOf({ person, pose });
+        expect(x, `${person} ${pose}`).toBeGreaterThan(0);
+        expect(x, `${person} ${pose}`).toBeLessThan(1);
+        expect(y, `${person} ${pose}`).toBeGreaterThan(0);
+        expect(y, `${person} ${pose}`).toBeLessThan(1);
+      }
+    }
+  });
+
+  it('o rosto sai do manifesto, e não de um valor fixo', () => {
+    expect(faceOf({ person: 'juliana-almeida', pose: 'aponta' })).toEqual([0.43, 0.11]);
+  });
+
+  /** O texto da tela de título e o de dentro da partida saem da mesma fonte. */
+  it('o nome do retrato é o mesmo da tela de título', () => {
+    expect(personLabel('ana-luiza')).toBe(ui.title.team.alt.anaLuiza);
+    expect(personLabel('juliana-almeida')).toBe(ui.title.team.alt.julianaAlmeida);
+    expect(personText('carlos-mendes').short).toBe('Carlos');
   });
 });

@@ -2,6 +2,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { ui } from '../src/data/i18n';
+import { momentCast, personLabel, personText } from '../src/ui/characters';
 import {
   completeStep,
   createTutorial,
@@ -192,5 +193,43 @@ describe('o painel do Modo Feira', () => {
       ?.click();
 
     expect(onStart).toHaveBeenCalledOnce();
+  });
+});
+
+describe('quem fala em cada passo (VIS-07)', () => {
+  it('o balão mostra o retrato e o nome de quem dá o passo', () => {
+    const alvos = ancoras();
+    const callout = mountTutorial(
+      () => {},
+      () => {},
+    );
+
+    renderTutorial(callout, alvos, tutorialView(createTutorial('new'), nada));
+
+    const ana = personText('ana-luiza');
+    expect(callout.querySelector('[data-tutorial="speaker"]')?.textContent).toBe(
+      ui.cast.speaker(ana.name, ana.role),
+    );
+    expect(callout.querySelector<HTMLImageElement>('.tutorial__portrait img')?.alt).toBe(
+      personLabel('ana-luiza'),
+    );
+  });
+
+  it('troca de pessoa quando o passo muda, sem recriar o retrato', () => {
+    const alvos = ancoras();
+    const callout = mountTutorial(
+      () => {},
+      () => {},
+    );
+    renderTutorial(callout, alvos, tutorialView(createTutorial('new'), nada));
+    const retrato = callout.querySelector('.tutorial__portrait');
+
+    const depois = completeStep(createTutorial('new'), 'time');
+    renderTutorial(callout, alvos, tutorialView(depois, cues({ canBuy: true })));
+
+    expect(callout.querySelector('.tutorial__portrait')).toBe(retrato);
+    expect(callout.querySelector<HTMLImageElement>('.tutorial__portrait img')?.alt).toBe(
+      personLabel(momentCast('tutorial-tree').person),
+    );
   });
 });

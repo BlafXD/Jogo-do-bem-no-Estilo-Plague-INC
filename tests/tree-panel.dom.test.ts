@@ -133,28 +133,14 @@ describe('fechar', () => {
 
 describe('renderTreePanel', () => {
   it('abre e fecha pelo hidden, e escreve o saldo', () => {
-    const { panel, behind } = pagina();
+    const { panel } = pagina();
 
-    renderTreePanel(panel, treePanelView(withPoints(120), true, true), behind);
+    renderTreePanel(panel, treePanelView(withPoints(120), true, true));
     expect(panel.hidden).toBe(false);
     expect(panel.querySelector('[data-tree-panel="points"]')?.textContent).toBe('120');
 
-    renderTreePanel(panel, treePanelView(withPoints(120), false, true), behind);
+    renderTreePanel(panel, treePanelView(withPoints(120), false, true));
     expect(panel.hidden).toBe(true);
-  });
-
-  /**
-   * Janela modal de verdade: com o painel aberto, o que fica atrás não recebe
-   * nem clique nem Tab. Fechado, tudo volta.
-   */
-  it('desliga o resto da página enquanto está aberto', () => {
-    const { panel, behind } = pagina();
-
-    renderTreePanel(panel, treePanelView(withPoints(0), true, true), behind);
-    for (const block of behind) expect(block.hasAttribute('inert')).toBe(true);
-
-    renderTreePanel(panel, treePanelView(withPoints(0), false, true), behind);
-    for (const block of behind) expect(block.hasAttribute('inert')).toBe(false);
   });
 });
 

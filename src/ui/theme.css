@@ -48,6 +48,9 @@
    Texto sobre o creme (o fato real da árvore, VIS-05):
      tinta    #2A281D   sobre creme 12,59
 
+   Texto sobre o bronze (a faixa de nome dos personagens, VIS-07):
+     creme    #F4EDD0   sobre bronze 6,23
+
    Os dois fundos entre si dão 1,21:1, e isso **não** é uma falha: quem separa a
    superfície do fundo é o traço da borda, que faz 5,58:1 contra a página e
    4,63:1 contra o que cerca. Preenchimento não precisa de contraste próprio
@@ -147,6 +150,12 @@
    * imagem, clara ou escura, é o halo escuro em volta.
    */
   --cor-creme: #f4edd0;
+
+  /**
+   * O bronze da faixa de nome dos personagens (VIS-07), com o nome e o cargo
+   * escritos em creme por cima.
+   */
+  --cor-bronze: #6a5234;
 
   /** O mar atrás do mapa, onde a imagem não chega. */
   --cor-oceano: #0b4c63;

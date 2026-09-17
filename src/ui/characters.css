@@ -1,0 +1,76 @@
+/* Os personagens na tela (VIS-07): o retrato e o avatar.
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar
+   aqui. O contraste está na tabela do theme.css.
+
+   **Os retratos ficam em cartões creme** (docs/DIRECAO-DE-ARTE.md §7): as poses
+   já têm esse fundo, e o cartão continua a cor da imagem até a borda. O nome e
+   o cargo vão numa faixa de bronze, em texto de verdade. */
+
+/* ---------------------------------------------------------- o retrato --- */
+
+.portrait {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-creme, #f2f7f4);
+}
+
+.portrait[hidden] {
+  display: none;
+}
+
+/* A pose inteira, sem cortar: a altura manda, e a largura acompanha. */
+.portrait__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.portrait__band {
+  display: grid;
+  gap: 0.05rem;
+  padding: 0.35rem 0.6rem 0.45rem;
+  background: var(--cor-bronze, #0f1c17);
+  color: var(--cor-creme, #f2f7f4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  line-height: 1.2;
+}
+
+.portrait__band strong {
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------ o avatar --- */
+
+/* O rosto num círculo creme. A imagem é bem maior que o círculo, e o
+   `translate` em porcentagem põe o rosto no centro: a porcentagem se mede pela
+   própria imagem, então a conta vale para toda largura de pose. */
+.avatar {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  overflow: hidden;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: 50%;
+  background: var(--cor-creme, #f2f7f4);
+}
+
+.avatar__img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 260%;
+  max-width: none;
+  height: auto;
+  transform: translate(calc(var(--rosto-x, 0.5) * -100%), calc(var(--rosto-y, 0.2) * -100%));
+}

@@ -1,0 +1,183 @@
+/* O cartão central do evento crítico (VIS-07).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar
+   aqui. O contraste está na tabela do theme.css.
+
+   **A brasa é reforço, não recado** (§5): quem diz "crítico" é o triângulo e a
+   palavra escrita no selo, e quem diz que o tempo parou é a frase ao lado. */
+
+/* O fundo escurecido, por cima de tudo — inclusive do painel da árvore. */
+.critical {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.5rem, 2vw, 1.5rem);
+  overflow: auto;
+  background: color-mix(in srgb, var(--cor-fundo, #0f1c17) 82%, transparent);
+}
+
+.critical[hidden] {
+  display: none;
+}
+
+.critical__card {
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  width: min(100%, 50rem);
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border: 2px solid var(--cor-alerta, #f2a65a);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-superficie, #182c24);
+  box-shadow: 0 1.5rem 3.5rem color-mix(in srgb, var(--cor-fundo, #0f1c17) 80%, transparent);
+}
+
+@media (min-width: 40rem) {
+  .critical__card {
+    grid-template-columns: minmax(10rem, 15rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .critical__card {
+    animation: critical-entra 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes critical-entra {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Em tela estreita o retrato fica menor, para a notícia caber sem rolar. */
+.critical__portrait {
+  justify-self: center;
+  width: min(100%, 15rem);
+}
+
+@media (max-width: 39.99rem) {
+  .critical__portrait {
+    width: min(60%, 11rem);
+  }
+}
+
+.critical__body {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+}
+
+.critical__seal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.critical__icon,
+.critical__severity {
+  color: var(--cor-alerta, #f2a65a);
+  font-weight: 700;
+}
+
+.critical__paused {
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+.critical__name {
+  margin: 0;
+  color: var(--cor-valor, #f2f7f4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: clamp(1.625rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  font-stretch: 87.5%;
+  line-height: 1.05;
+}
+
+.critical__where {
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* O fato real no cartão creme, como no detalhe da árvore. */
+.critical__fact {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-creme, #f2f7f4);
+  color: var(--cor-tinta, #0f1c17);
+  font-size: var(--texto-medio, 1.125rem);
+}
+
+.critical__fact-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.critical__notice {
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+/* O botão principal da direção de arte, com a tecla desenhada ao lado. */
+.critical__resume {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.75rem;
+  min-height: var(--alvo-toque, 2.75rem);
+  padding: 0.3rem 0.5rem 0.3rem 1.1rem;
+  border: 2px solid var(--cor-destaque, #7fd1a8);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: var(--cor-destaque, #7fd1a8);
+  color: var(--cor-fundo, #0f1c17);
+  font: inherit;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--texto-medio, 1.125rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.critical__resume:hover {
+  box-shadow: 0 0 0 2px var(--cor-valor, #f2f7f4);
+}
+
+.critical__resume:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 3px;
+}
+
+.critical__key {
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--cor-fundo, #0f1c17);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}

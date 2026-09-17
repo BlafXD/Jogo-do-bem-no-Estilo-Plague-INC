@@ -224,7 +224,8 @@ Três regras sobre o campo `fact`:
 **Sobre o `characters.json`** (VIS-06): ele diz qual pessoa da equipe, e em qual pose, aparece em
 cada passo do tutorial, na tela de título, na tela de fim e em cada evento. Trocar quem dá a
 notícia de um evento é trocar um nome. Uma pose nova é um arquivo `pessoa-pose.jpg` em
-`src/assets/characters/poses/` **mais** o nome da pose na lista da pessoa; o `npm test` recusa
+`src/assets/characters/poses/` **mais** a pose na lista da pessoa, com o centro do rosto em `face`
+(dois números entre 0 e 1, a fração da largura e da altura da imagem); o `npm test` recusa
 uma metade sem a outra. Os nomes e cargos das pessoas continuam no `src/data/i18n.ts`.
 
 O texto da **interface** — rótulo, botão, dica, mensagem de fim — **não** está nos JSON: ele mora no

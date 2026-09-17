@@ -19,6 +19,33 @@
  */
 const listOfNames = new Intl.ListFormat('pt-BR', { style: 'long', type: 'conjunction' });
 
+/**
+ * A equipe da agência: o nome, o nome curto e o cargo de cada pessoa (VIS-07).
+ *
+ * Mora fora do `ui` porque dois lugares a leem — o texto alternativo da tela de
+ * título e os personagens dentro da partida —, e o nome escrito duas vezes é o
+ * nome que diverge. As chaves são os ids do `src/data/characters.json`.
+ */
+const person = (name: string, short: string, role: string) =>
+  ({
+    name,
+    short,
+    role,
+    /** "Ana Luiza, engenheira elétrica": o texto alternativo de um retrato. */
+    alt: `${name}, ${role.toLowerCase()}`,
+  }) as const;
+
+const team = {
+  'ana-luiza': person('Ana Luiza', 'Ana Luiza', 'Engenheira elétrica'),
+  'carlos-mendes': person('Carlos Mendes', 'Carlos', 'Engenheiro ambiental'),
+  'ricardo-souza': person('Ricardo Souza', 'Ricardo', 'Gestor de recursos hídricos'),
+  'juliana-almeida': person(
+    'Juliana Almeida',
+    'Juliana',
+    'Auditora de sustentabilidade corporativa',
+  ),
+};
+
 export const ui = {
   hud: {
     year: {
@@ -199,10 +226,10 @@ export const ui = {
     team: {
       heading: 'A equipe da agência',
       alt: {
-        anaLuiza: 'Ana Luiza, engenheira elétrica',
-        carlosMendes: 'Carlos Mendes, engenheiro ambiental',
-        ricardoSouza: 'Ricardo Souza, gestor de recursos hídricos',
-        julianaAlmeida: 'Juliana Almeida, auditora de sustentabilidade corporativa',
+        anaLuiza: team['ana-luiza'].alt,
+        carlosMendes: team['carlos-mendes'].alt,
+        ricardoSouza: team['ricardo-souza'].alt,
+        julianaAlmeida: team['juliana-almeida'].alt,
       },
     },
 
@@ -392,6 +419,19 @@ export const ui = {
      * sem explicar parece travado — e num estande de feira ninguém vai
      * investigar, vai chamar alguém.
      */
+    /**
+     * O cartão central do evento crítico (VIS-07). Ele aparece com o tempo
+     * parado, e fechá-lo é o que solta o tempo — pelo botão, pela barra de
+     * espaço ou pelo Esc.
+     */
+    critical: {
+      paused: 'O tempo parou',
+      fact: 'No mundo real',
+      resume: 'Retomar',
+      resumeKey: 'Espaço',
+      resumeHint: 'Fecha este cartão e solta o tempo. Atalhos: barra de espaço ou Esc.',
+    },
+
     paused: (name: string) =>
       `Tempo pausado: ${name}. Aperte Retomar, ou a barra de espaço, para seguir.`,
   },
@@ -593,6 +633,23 @@ export const ui = {
   // operar: que tecla pausa, onde clicar para comprar. Escrever "quem só adapta
   // perde no longo prazo" entregaria de graça a descoberta que o jogo inteiro
   // existe para provocar.
+  /**
+   * A equipe dentro da partida (VIS-07): no tutorial, nos eventos e no fim.
+   *
+   * **Nenhuma fala é inventada para eles** (docs/DIRECAO-DE-ARTE.md §7). O que
+   * o personagem "diz" é o texto que o jogo já tem — o passo do tutorial, o fato
+   * do evento. Voz própria é trabalho do `[D-Historia]`.
+   */
+  cast: {
+    people: team,
+    /** A linha de quem fala, em cima da fala. */
+    speaker: (name: string, role: string) => `${name} · ${role}`,
+    /** Quem deu a notícia, no cartão do boletim. */
+    by: (short: string) => `por ${short}`,
+    /** A legenda da Juliana na tela de fim. */
+    outcome: 'Auditoria da partida',
+  },
+
   tutorial: {
     label: 'Como jogar',
     next: 'Entendi',

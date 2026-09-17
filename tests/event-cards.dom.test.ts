@@ -11,6 +11,7 @@ import {
   type GameState,
 } from '../src/engine/state';
 import { yearForTick } from '../src/engine/tick';
+import { eventCast, faceOf, personText } from '../src/ui/characters';
 import {
   eventCardsView,
   mountEventCards,
@@ -224,5 +225,28 @@ describe('a lista só é reconstruída quando muda', () => {
     show(root, eventCardsView(withCards(601, card(moderado.id, 3))));
     expect(cardsIn(root)).toHaveLength(1);
     expect(textOf(root, '.events__name')).toBe(moderado.name);
+  });
+});
+
+describe('quem deu a notícia (VIS-07)', () => {
+  it('cada cartão tem o avatar e o nome do especialista', () => {
+    const root = show(mount(), eventCardsView(withCards(600, card(critico.id))));
+    const quem = eventCast(critico.id);
+    if (quem === null) throw new Error('o evento precisa de especialista');
+
+    const avatar = cardsIn(root)[0]?.querySelector('.avatar');
+    expect(avatar?.getAttribute('aria-hidden')).toBe('true');
+    expect((avatar as HTMLElement | null)?.dataset.person).toBe(quem.person);
+    expect(textOf(root, '.events__by')).toBe(ui.cast.by(personText(quem.person).short));
+  });
+
+  it('o avatar centra o rosto da pose', () => {
+    const root = show(mount(), eventCardsView(withCards(600, card(critico.id))));
+    const quem = eventCast(critico.id);
+    const img = root.querySelector<HTMLElement>('.avatar__img');
+    if (quem === null) throw new Error('o evento precisa de especialista');
+
+    expect(img?.style.getPropertyValue('--rosto-x')).toBe(String(faceOf(quem)[0]));
+    expect(img?.style.getPropertyValue('--rosto-y')).toBe(String(faceOf(quem)[1]));
   });
 });

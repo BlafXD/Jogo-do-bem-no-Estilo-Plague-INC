@@ -22,6 +22,14 @@
 // de baixo tocam no DOM.
 
 import { ui } from '../data/i18n';
+import {
+  momentCast,
+  mountPortrait,
+  personText,
+  renderPortrait,
+  type Appearance,
+  type CastMoment,
+} from './characters';
 
 // ------------------------------------------------------------------ núcleo ---
 
@@ -126,17 +134,41 @@ const ANCHOR: Readonly<Record<TutorialStep, TutorialAnchor>> = {
   inertia: 'contain',
 };
 
+/**
+ * Quem dá cada passo (VIS-07). A pessoa e a pose vêm do
+ * src/data/characters.json; aqui só se diz qual momento é cada passo.
+ */
+const MOMENT: Readonly<Record<TutorialStep, CastMoment>> = {
+  time: 'tutorial-time',
+  tree: 'tutorial-tree',
+  event: 'tutorial-event',
+  inertia: 'tutorial-inertia',
+};
+
 export type TutorialView = {
   readonly step: TutorialStep;
   readonly anchor: TutorialAnchor;
   readonly text: string;
+  /** Quem fala. A fala é o texto do passo — nenhuma é inventada para eles. */
+  readonly speaker: Appearance;
+  /** "Ana Luiza · Engenheira elétrica", em cima da fala. */
+  readonly speakerLine: string;
 };
 
 export function tutorialView(tutorial: TutorialState, cues: TutorialCues): TutorialView | null {
   const step = activeStep(tutorial, cues);
   if (step === null) return null;
 
-  return { step, anchor: ANCHOR[step], text: ui.tutorial.steps[step] };
+  const speaker = momentCast(MOMENT[step]);
+  const person = personText(speaker.person);
+
+  return {
+    step,
+    anchor: ANCHOR[step],
+    text: ui.tutorial.steps[step],
+    speaker,
+    speakerLine: ui.cast.speaker(person.name, person.role),
+  };
 }
 
 /** O painel do Modo Feira está no ar? */
@@ -178,6 +210,12 @@ export function mountTutorial(onNext: () => void, onSkip: () => void): HTMLEleme
   text.className = 'tutorial__text';
   text.dataset.tutorial = 'text';
 
+  // Quem fala (VIS-07): o retrato à esquerda e o nome em cima da fala. O nome
+  // vai no texto, e por isso o retrato não tem faixa própria.
+  const speaker = document.createElement('p');
+  speaker.className = 'tutorial__speaker';
+  speaker.dataset.tutorial = 'speaker';
+
   const next = button('tutorial__button', 'next', ui.tutorial.next, ui.tutorial.nextHint);
   next.addEventListener('click', onNext);
 
@@ -193,7 +231,11 @@ export function mountTutorial(onNext: () => void, onSkip: () => void): HTMLEleme
   actions.className = 'tutorial__actions';
   actions.append(next, skip);
 
-  callout.append(text, actions);
+  const speech = document.createElement('div');
+  speech.className = 'tutorial__speech';
+  speech.append(speaker, text, actions);
+
+  callout.append(mountPortrait('tutorial__portrait', false), speech);
   return callout;
 }
 
@@ -217,6 +259,10 @@ export function renderTutorial(
 
   const text = callout.querySelector<HTMLElement>('[data-tutorial="text"]');
   if (text !== null) text.textContent = view.text;
+  const speaker = callout.querySelector<HTMLElement>('[data-tutorial="speaker"]');
+  if (speaker !== null) speaker.textContent = view.speakerLine;
+  const portrait = callout.querySelector<HTMLElement>('.tutorial__portrait');
+  if (portrait !== null) renderPortrait(portrait, view.speaker);
   callout.dataset.step = view.step;
 
   const target = anchors[view.anchor];
