@@ -26,7 +26,7 @@
 // logo abaixo dele poderiam apontar anos diferentes.
 
 import { ui } from '../data/i18n';
-import { MEDALS, MEDAL_CEILING, outcomeOf, type Outcome } from '../engine/outcome';
+import { MEDALS, MEDAL_CEILING, outcomeOf, type Medal, type Outcome } from '../engine/outcome';
 import {
   crossings,
   purchasesByBranch,
@@ -36,6 +36,13 @@ import {
 } from '../engine/review';
 import { balance, skills, SKILL_BRANCHES, type GameState } from '../engine/state';
 import { momentCast, mountPortrait, renderPortrait } from './characters';
+import {
+  comparisonView,
+  mountComparison,
+  passiveFor,
+  renderComparison,
+  type ComparisonView,
+} from './comparison';
 import { celsius } from './format';
 import { hudView } from './hud';
 import {
@@ -64,6 +71,11 @@ export type OutcomeTone = 'medal' | 'none' | 'defeat';
 
 export type OutcomeView = {
   readonly tone: OutcomeTone;
+  /**
+   * A medalha desenhada (VIS-10), ou `null` sem medalha. É enfeite: quem diz o
+   * resultado é o título escrito ao lado.
+   */
+  readonly medal: Medal | null;
   /** Ícone do resultado. Nunca sozinho — anda sempre com o `title` ao lado. */
   readonly icon: string;
   /** "Ouro", "Sem medalha", "Derrota". */
@@ -82,6 +94,8 @@ export type OutcomeView = {
    * nunca precisa do `GameState`.
    */
   readonly chart: TimelineChartView;
+  /** A partida contra a mesma partida sem nenhuma compra, em listras (VIS-10). */
+  readonly comparison: ComparisonView;
   /** O "o que ficou para trás" do §2.7, uma frase por linha. */
   readonly lookBack: readonly string[];
   /** As 3 ações do mundo real, já escolhidas pelo que esta partida deixou de lado. */
@@ -102,7 +116,7 @@ const emissions = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
  * o §2.7 ganhar um quarto desfecho, o `tsc` para de compilar este arquivo em
  * vez de deixar um `default` silencioso escolher a frase errada.
  */
-type Headline = Pick<OutcomeView, 'tone' | 'icon' | 'title' | 'lead' | 'verdict'>;
+type Headline = Pick<OutcomeView, 'tone' | 'medal' | 'icon' | 'title' | 'lead' | 'verdict'>;
 
 function resultFor(outcome: Outcome): Headline {
   const text = ui.outcome;
@@ -114,7 +128,7 @@ function resultFor(outcome: Outcome): Headline {
           ? text.ending.temperature(celsius(balance.loseTemperature))
           : text.ending.support;
 
-      return { tone: 'defeat', ...text.result.defeat, lead };
+      return { tone: 'defeat', medal: null, ...text.result.defeat, lead };
     }
 
     case 'finished': {
@@ -133,6 +147,7 @@ function resultFor(outcome: Outcome): Headline {
 
       return {
         tone: outcome.medal === null ? 'none' : 'medal',
+        medal: outcome.medal,
         icon,
         title,
         lead,
@@ -144,7 +159,7 @@ function resultFor(outcome: Outcome): Headline {
     // porque `outcomeView` devolve `null` enquanto se joga, e um `throw` aqui
     // seria uma segunda regra sobre a mesma coisa.
     case 'playing':
-      return { tone: 'none', icon: '', title: '', lead: '', verdict: '' };
+      return { tone: 'none', medal: null, icon: '', title: '', lead: '', verdict: '' };
   }
 }
 
@@ -191,16 +206,22 @@ function lookBackFor(state: GameState): readonly string[] {
  * deliberadamente a mesma pergunta que o engine responde — a tela não tem uma
  * ideia própria de "acabou".
  */
-export function outcomeView(state: GameState): OutcomeView | null {
+export function outcomeView(state: GameState, passive?: GameState): OutcomeView | null {
   const outcome = outcomeOf(state);
   if (outcome.kind === 'playing') return null;
+
+  // A mesma partida sem nenhuma compra (VIS-10). Sem ela, a comparação a
+  // simula pela seed — e guarda, para não refazer a conta a cada clique.
+  const passiveState = passive ?? passiveFor(state.seed);
+  const comparison = comparisonView(state, passiveState);
 
   const hud = hudView(state);
   const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
   return {
     ...resultFor(outcome),
-    chart: timelineChartView(state),
+    chart: timelineChartView(state, passiveState),
+    comparison,
     lookBack: lookBackFor(state),
     realWorld: suggestedActions(state),
     stats: [
@@ -251,6 +272,64 @@ function section(name: Extract<Slot, 'lookback' | 'realworld'>, title: string): 
 
   block.append(heading, list);
   return block;
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function svgPart<K extends keyof SVGElementTagNameMap>(
+  tag: K,
+  className: string,
+  attributes: Readonly<Record<string, string>>,
+): SVGElementTagNameMap[K] {
+  const node = document.createElementNS(SVG_NS, tag);
+  node.setAttribute('class', className);
+  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
+  return node;
+}
+
+/**
+ * A medalha desenhada (VIS-10): a fita, o disco e o número da colocação.
+ *
+ * **É enfeite** (`aria-hidden`): quem diz "Bronze" é o título escrito ao lado,
+ * e o §5 não deixa a cor do disco carregar o resultado sozinha. As cores saem
+ * do tema, pelo `data-medal` que o render escreve.
+ */
+function mountMedal(): SVGSVGElement {
+  const medal = svgPart('svg', 'outcome__medal', { viewBox: '0 0 100 100' });
+  medal.setAttribute('aria-hidden', 'true');
+  medal.dataset.outcome = 'medal';
+
+  const rank = svgPart('text', 'outcome__medal-rank', {
+    x: '50',
+    y: '73',
+    'text-anchor': 'middle',
+  });
+  rank.dataset.outcome = 'medal-rank';
+
+  medal.append(
+    svgPart('path', 'outcome__medal-ribbon', { d: 'M34 6h14l-9 30h-14Z' }),
+    svgPart('path', 'outcome__medal-ribbon outcome__medal-ribbon--back', {
+      d: 'M66 6H52l9 30h14Z',
+    }),
+    svgPart('circle', 'outcome__medal-disc', { cx: '50', cy: '62', r: '30' }),
+    svgPart('circle', 'outcome__medal-ring', { cx: '50', cy: '62', r: '22' }),
+    rank,
+  );
+  return medal;
+}
+
+/** Escreve a medalha, ou a esconde. Sem medalha, fica o ícone de texto. */
+function renderMedal(root: ParentNode, medal: Medal | null): void {
+  const drawing = root.querySelector<SVGSVGElement>('[data-outcome="medal"]');
+  const rank = root.querySelector('[data-outcome="medal-rank"]');
+  const icon = slot(root, 'icon');
+
+  drawing?.toggleAttribute('hidden', medal === null);
+  if (icon !== null) icon.hidden = medal !== null;
+  if (drawing === null || medal === null) return;
+
+  drawing.dataset.medal = medal;
+  if (rank !== null) rank.textContent = String(MEDALS.indexOf(medal) + 1);
 }
 
 /** A seção das 3 ações, que leva uma linha de contexto entre o título e a lista. */
@@ -362,11 +441,12 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
 
   const top = document.createElement('div');
   top.className = 'outcome__top';
-  top.append(said, portrait);
+  top.append(mountMedal(), said, portrait);
 
   card.append(
     top,
     stats,
+    mountComparison(),
     mountTimelineChart(),
     section('lookback', ui.outcome.lookBack.label),
     realWorldSection(),
@@ -399,6 +479,8 @@ export function renderOutcome(root: Element, view: OutcomeView | null, reviewing
   if (card !== null) card.dataset.tone = view.tone;
 
   renderTimelineChart(root, view.chart);
+  renderComparison(root, view.comparison);
+  renderMedal(root, view.medal);
 
   const lookBack = slot(root, 'lookback');
   if (lookBack !== null) {

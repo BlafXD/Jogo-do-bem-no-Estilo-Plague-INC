@@ -113,11 +113,14 @@ const DRAWING = [
   'cor-creme',
   'cor-oceano',
   'cor-bronze',
+  'cor-medalha-ouro',
+  'cor-medalha-prata',
+  'cor-medalha-bronze',
   ...Array.from({ length: 8 }, (_, parada) => `cor-listra-${parada}`),
 ] as const;
 
 describe('a paleta', () => {
-  it('define as 9 cores da interface e as 11 de desenho, todas em #rrggbb', () => {
+  it('define as 9 cores da interface e as 14 de desenho, todas em #rrggbb', () => {
     for (const name of [...PALETTE, ...DRAWING]) {
       expect(token(name), name).toMatch(/^#[0-9a-f]{6}$/);
     }
@@ -152,6 +155,19 @@ describe('a paleta', () => {
     expect(razao, `cor-creme sobre cor-bronze: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(
       AA_TEXT,
     );
+  });
+
+  /**
+   * O número dentro da medalha (VIS-10) é texto grande e decorativo: o
+   * resultado vai escrito ao lado. Cobra-se o 3:1 de texto grande.
+   */
+  it('passa o 3:1 da tinta sobre os três discos da medalha', () => {
+    for (const disco of ['cor-medalha-ouro', 'cor-medalha-prata', 'cor-medalha-bronze']) {
+      const razao = contrast(token('cor-tinta'), token(disco));
+      expect(razao, `cor-tinta sobre ${disco}: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(
+        AA_NON_TEXT,
+      );
+    }
   });
 
   it('passa o mínimo de 3:1 em borda, traço e anel de foco', () => {

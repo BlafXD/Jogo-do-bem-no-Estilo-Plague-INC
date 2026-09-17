@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { ui } from '../src/data/i18n';
 import { MEDAL_CEILING } from '../src/engine/outcome';
 import { balance, createInitialState, skills, type GameState } from '../src/engine/state';
+import { unlockSkill } from '../src/engine/skills';
+import { passiveRun } from '../src/engine/passive-run';
 import { advanceTick, TOTAL_TICKS } from '../src/engine/tick';
 import { hudView } from '../src/ui/hud';
 import { timelineChartView, type ThresholdKey } from '../src/ui/timeline-chart';
@@ -208,5 +210,58 @@ describe('o texto que substitui o desenho', () => {
         String(balance.endYear),
       )} ${ui.timelineChart.summaryNoTurn}`,
     );
+  });
+});
+
+describe('a curva sem nenhuma compra (VIS-10)', () => {
+  const parada = passiveRun(2025);
+
+  it('não aparece quando a partida parada não vem', () => {
+    expect(timelineChartView(run(createInitialState(2025), 24)).passive).toBeNull();
+  });
+
+  it('é desenhada com o nome escrito no fim dela', () => {
+    const view = timelineChartView(run(createInitialState(2025), 24), parada);
+
+    expect(view.passive?.label).toBe(ui.timelineChart.passive);
+    expect(pontos(view.passive?.path ?? '')).toHaveLength(parada.history.length + 1);
+    expect(view.passive?.labelX).toBe(pontos(view.passive?.path ?? '').at(-1)?.x);
+  });
+
+  /** As duas curvas na mesma escala: a parada, mais quente, puxa o teto. */
+  it('usa o mesmo teto para as duas curvas', () => {
+    const jogada = run(createInitialState(2025), 24);
+    const sem = timelineChartView(jogada);
+    const com = timelineChartView(jogada, parada);
+
+    const teto = Math.max(balance.loseTemperature, parada.temperature);
+    const derrotaSem = sem.thresholds.find((linha) => linha.key === 'lose')?.y;
+    const derrotaCom = com.thresholds.find((linha) => linha.key === 'lose')?.y;
+    expect(teto).toBeGreaterThan(balance.loseTemperature);
+    expect(derrotaCom).toBeGreaterThan(derrotaSem ?? 0);
+  });
+
+  it('o leitor de tela ouve onde a partida parada chegou', () => {
+    const view = timelineChartView(run(createInitialState(2025), 24), parada);
+
+    expect(view.summary).toContain(String(parada.year));
+    expect(view.summary).toContain('Sem nenhuma compra');
+  });
+});
+
+describe('o rótulo da virada perto do piso', () => {
+  /**
+   * Uma partida que compra muito cedo vira as emissões já em 2025, e a marca
+   * fica no piso do desenho. O rótulo não pode cair em cima dos anos do eixo.
+   */
+  it('sobe para cima da marca quando embaixo não há espaço', () => {
+    let state = { ...createInitialState(2025), actionPoints: 100000 };
+    for (const skill of skills) state = unlockSkill(state, skill.id);
+    state = run({ ...state, actionPoints: 0 }, 60);
+
+    const turn = timelineChartView(state).turn;
+
+    expect(turn).not.toBeNull();
+    expect(turn?.labelY).toBeLessThan(turn?.y ?? 0);
   });
 });

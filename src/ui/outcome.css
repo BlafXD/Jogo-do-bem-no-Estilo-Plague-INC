@@ -261,3 +261,154 @@
   flex: none;
   width: 11.5rem;
 }
+
+/* ------------------------------------------------ a tela nova (VIS-10) --- */
+
+/* O cartão ocupa a largura da tela de fim: a medalha, o resultado e a Juliana
+   em cima; os números e as listras; e, na tela larga, o gráfico de um lado e o
+   que ficou para trás e as ações do outro. */
+.outcome__card {
+  max-width: 76rem;
+}
+
+/* A medalha desenhada. É enfeite: o título escrito ao lado é o resultado. */
+.outcome__medal {
+  flex: none;
+  width: 6.5rem;
+  height: 6.5rem;
+}
+
+.outcome__medal[hidden] {
+  display: none;
+}
+
+.outcome__medal-ribbon {
+  fill: var(--cor-bronze, #4c8069);
+}
+
+.outcome__medal-ribbon--back {
+  fill: var(--cor-borda, #4c8069);
+}
+
+.outcome__medal-disc {
+  stroke: var(--cor-creme, #f2f7f4);
+  stroke-width: 3;
+}
+
+.outcome__medal[data-medal='gold'] .outcome__medal-disc {
+  fill: var(--cor-medalha-ouro, #f2f7f4);
+}
+
+.outcome__medal[data-medal='silver'] .outcome__medal-disc {
+  fill: var(--cor-medalha-prata, #f2f7f4);
+}
+
+.outcome__medal[data-medal='bronze'] .outcome__medal-disc {
+  fill: var(--cor-medalha-bronze, #f2f7f4);
+}
+
+.outcome__medal-ring {
+  fill: none;
+  stroke: var(--cor-creme, #f2f7f4);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+.outcome__medal-rank {
+  fill: var(--cor-tinta, #0f1c17);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* As duas faixas: o nome à esquerda, as listras no meio, o resultado à direita.
+   Só a última faixa escreve os anos embaixo, e nenhuma tem o marcador do mês —
+   a partida acabou. */
+.compare {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0;
+}
+
+.compare__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr) minmax(5.5rem, auto);
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.compare__name {
+  display: grid;
+}
+
+.compare__title {
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.compare__span {
+  color: var(--cor-rotulo, #a7c0b4);
+  font-size: var(--tamanho-base, 1rem);
+}
+
+.compare__value {
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--texto-medio, 1.125rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.compare__row[data-row='passive'] .compare__value {
+  color: var(--cor-alerta, #f2a65a);
+}
+
+.compare .stripes {
+  min-width: 0;
+  padding-top: 0;
+}
+
+.compare .stripes__now,
+.compare__row[data-row='played'] .stripes__ticks {
+  display: none;
+}
+
+/* Em tela estreita, o nome e o resultado ficam na linha de cima, e as listras
+   ocupam a largura inteira embaixo. */
+@media (max-width: 40rem) {
+  .compare__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .compare__stripes {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* Na tela larga, o gráfico de um lado e as duas listas do outro. */
+@media (min-width: 75rem) {
+  .outcome__card {
+    display: grid;
+    grid-template-columns: minmax(44rem, 1.6fr) minmax(18rem, 1fr);
+    column-gap: 2rem;
+    align-items: start;
+  }
+
+  .outcome__card > * {
+    grid-column: 1 / -1;
+  }
+
+  .outcome__card > .chart {
+    grid-column: 1;
+    grid-row: span 2;
+    margin-top: 1.75rem;
+  }
+
+  .outcome__card > .outcome__lookback,
+  .outcome__card > .outcome__realworld {
+    grid-column: 2;
+  }
+}

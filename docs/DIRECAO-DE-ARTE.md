@@ -376,6 +376,26 @@ permissão). Onde a tela saiu diferente da tabela do §7 e das peças acima:
 
 ---
 
+### Como ficou no `VIS-10`
+
+A tela de fim ganhou a comparação com a mesma partida sem nenhuma compra. Onde ela saiu diferente
+da tabela acima:
+
+- **Medalha.** É o desenho do protótipo: a fita, o disco na cor da medalha e o número da
+  colocação. As três cores entraram no tema (`--cor-medalha-*`). Sem medalha, fica o ícone
+  escrito de antes, e o título continua dizendo o resultado.
+- **Listras.** São duas faixas, "Sua partida" e "Sem nenhuma compra", com o período e o resultado
+  escritos ao lado (`1,75 °C` ou `✕ 2089`). Os anos depois do fim ficam sem cor, e cada faixa
+  tem a sua frase para o leitor de tela.
+- **Gráfico.** A partida parada é uma tracejada miúda atrás da curva jogada, com "sem nenhuma
+  compra" escrito no fim dela, e as duas usam a mesma escala.
+- **Disposição.** Numa tela de 75rem ou mais, o gráfico fica à esquerda e "o que ficou para trás"
+  e as três ações, à direita. Abaixo disso, tudo vira uma coluna.
+- **O balão da Juliana e o texto "Resultado da partida"** do protótipo não entraram: a legenda da
+  faixa dela já diz o que ela faz ali.
+
+---
+
 ## 9. O que continua valendo do §5
 
 - **Ícone e texto em todo estado:** `✔ Comprado`, `● Disponível`, `◌ PAC insuficiente`,
@@ -401,6 +421,9 @@ que só se confirma quando a tarefa correspondente começar.
      o número de verdade sai do engine.
    - **Muda a descrição da tela de fim no `docs/GDD.md §2.7`**, que só se edita com permissão.
    - É o `VIS-10`, e o `VIS-08` depende dele.
+   - **Feito no `VIS-10`, em 2026-09-17, com permissão para o §2.7.** A partida parada sai do
+     `src/engine/passive-run.ts` e, simulada de verdade, acaba em **2089** nas seeds medidas
+     (2025, 7 e 1).
 2. **Um especialista por evento.** A tabela do §7.
 3. **O mapa sem a Antártida.** O §6.
 

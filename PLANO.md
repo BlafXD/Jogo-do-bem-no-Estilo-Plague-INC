@@ -209,7 +209,7 @@ mudar depois deles, os quatro precisam ser refeitos.
 - [x] `VIS-07` Personagens no tutorial, nos eventos e no fim, sem bônus — **M** — *feito em 2026-09-17, com permissão no chat para mudar o `docs/PERSONAGENS.md §4`. O evento crítico ganhou o cartão central (decisão do chat), e fechá-lo solta o tempo. Saiu maior que M: o cartão crítico é uma peça nova*
 - [ ] `VIS-08` Tela de título nova, com o botão de som e as listras da partida sem compras — **M** — *depende do `VIS-10`, que ensina o engine a simular essa partida*
 - [ ] `VIS-09` Ícones SVG próprios nos indicadores e nos ramos — a metade que faltava do `[D-Design]` — **M**
-- [ ] `VIS-10` Tela de fim nova: medalha, números, gráfico e as listras da partida contra uma partida sem nenhuma compra — **M** — *exige o engine simular a partida paralela, com a mesma seed, e muda a descrição da tela de fim no `docs/GDD.md §2.7` (pede permissão)*
+- [x] `VIS-10` Tela de fim nova: medalha, números, gráfico e as listras da partida contra uma partida sem nenhuma compra — **M** — *feito em 2026-09-17, com permissão no chat para mudar o `docs/GDD.md §2.7`. A partida parada sai do `src/engine/passive-run.ts` e acaba em 2089; o `VIS-08` já pode usá-la*
 
 ---
 

@@ -51,6 +51,10 @@
    Texto sobre o bronze (a faixa de nome dos personagens, VIS-07):
      creme    #F4EDD0   sobre bronze 6,23
 
+   O número dentro da medalha (VIS-10), em tinta sobre o disco. É texto grande
+   e decorativo — o resultado vai escrito ao lado —, e o teste cobra 3:1:
+     tinta    #2A281D   sobre ouro 7,32   sobre prata 8,40   sobre bronze 4,30
+
    Os dois fundos entre si dão 1,21:1, e isso **não** é uma falha: quem separa a
    superfície do fundo é o traço da borda, que faz 5,58:1 contra a página e
    4,63:1 contra o que cerca. Preenchimento não precisa de contraste próprio
@@ -156,6 +160,14 @@
    * escritos em creme por cima.
    */
   --cor-bronze: #6a5234;
+
+  /*
+   * Os discos da medalha desenhada da tela de fim (VIS-10). Cor de desenho: o
+   * resultado vai escrito ao lado, e o número dentro do disco é enfeite.
+   */
+  --cor-medalha-ouro: #d8b24c;
+  --cor-medalha-prata: #bfc4c6;
+  --cor-medalha-bronze: #c07a44;
 
   /** O mar atrás do mapa, onde a imagem não chega. */
   --cor-oceano: #0b4c63;

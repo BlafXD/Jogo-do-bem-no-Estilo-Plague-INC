@@ -28,6 +28,105 @@ Regras curtas:
 
 ---
 
+## 2026-09-17 — A tela de fim compara a partida com a mesma partida sem nenhuma compra
+
+- **Parte / tarefa:** `VIS-10` ✔
+- **Permissão do chat:** o `docs/GDD.md §2.7` foi mudado. A tela final passou a descrever "a
+  medalha, os números finais, as listras e o gráfico da linha do tempo comparando a partida com a
+  mesma partida sem nenhuma compra (mesma seed, simulada pelo engine)".
+- **O que mudou:**
+  - `src/engine/passive-run.ts` **criado** — o `passiveRun(seed)` joga a partida inteira sem
+    comprar nada e devolve o estado final, com o `history` preenchido. Custa uns 10 ms.
+  - `src/ui/comparison.ts` **criado** — as duas faixas de listras ("Sua partida" e "Sem nenhuma
+    compra"), com o período e o resultado de cada uma. O `passiveFor` guarda a partida parada por
+    seed, para não refazer a conta a cada clique.
+  - `src/ui/timeline-chart.ts` e `.css` — a curva tracejada da partida parada, com o nome escrito
+    no fim, na mesma escala da curva jogada. O resumo do leitor de tela diz onde ela chegou.
+  - `src/ui/outcome.ts` e `.css`:
+    - a medalha desenhada (fita, disco e número da colocação);
+    - as duas faixas depois dos números;
+    - o cartão mais largo, com o gráfico de um lado e as duas listas do outro a partir de 75rem.
+  - `src/ui/theme.css` — os discos da medalha (`--cor-medalha-ouro`, `-prata` e `-bronze`). A
+    tinta do número sobre eles dá 7,32, 8,40 e 4,30:1.
+  - `src/data/i18n.ts` — os textos da comparação e da curva parada.
+  - Testes:
+    - criados: `passive-run.test.ts` e `comparison.dom.test.ts`;
+    - ampliados: `timeline-chart`, `outcome.dom` e `theme`.
+
+    Suíte: 883 → **905**.
+  - `docs/GDD.md §2.7`, `docs/DIRECAO-DE-ARTE.md §8 e §10` e `PLANO.md`.
+
+### A partida parada
+
+**É a mesma partida, e não uma curva de fórmula.** O protótipo a tirou da fórmula do §4, sem
+Inércia nem eventos, e ela acabava em 2091. Simulada pelo engine, com a mesma seed, ela acaba em
+**2089**, derrotada pelo calor, nas três seeds medidas (2025, 7 e 1). Os testes cobram três coisas:
+- é determinística;
+- é a mesma partida que se joga sem tocar em nada;
+- uma partida que compra termina mais fria que ela.
+
+**A mesma seed não dá os mesmos eventos a partida inteira.** O peso de cada evento depende da
+temperatura, então as duas sorteiam igual só até a primeira compra fazer diferença.
+
+### Um defeito antigo que a tela mostrou
+
+**O rótulo "Pico de emissões" caía em cima dos anos do eixo** quando as emissões paravam de subir
+já em 2025 ("202Pico de emissões · 2025"). É do `P7-06`, e só aparece em quem compra muito cedo,
+como a partida de teste com as 20 compras de saída. Quando falta espaço embaixo da marca, o rótulo
+agora sobe para cima dela. Um teste novo cobra isso, e ele reprova sem a correção.
+
+### Conferi que os testes reprovam de verdade
+
+- Com o teto do gráfico ignorando a partida parada, um teste falhou.
+- Com a faixa parada sem o ano do fim, cinco falharam.
+- Com a colocação errada na medalha, um falhou.
+
+Voltei o arquivo nas três vezes.
+
+### Como foi conferido
+
+**No Edge em modo headless**, pelo script de CDP das tarefas anteriores, fora do repositório, com
+duas partidas plantadas um mês antes do fim:
+- **As 20 compras em 2025:** prata, 1,75 °C em 2100. Conferida em 1536 × 1500, 1920 × 1400,
+  1280 × 1500, 390 × 2600 e 1536 × 702.
+  - A medalha é de prata, com o número 2.
+  - A faixa parada diz "acaba em 2089" e "✕ 2089", com os anos seguintes sem cor.
+  - Em nenhum tamanho a página rola de lado ou algo sai do cartão. Em 390 px, só o gráfico rola
+    por dentro, como já era.
+- **Nenhuma compra:** derrota em 2089. As duas faixas e as duas curvas coincidem, que é o certo.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`. O save de teste foi
+apagado no fim.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 905 testes
+  npm run dev       # jogue até o fim, a 4x
+  ```
+
+  Na tela de fim:
+  - A medalha aparece desenhada, quando há medalha.
+  - As duas faixas comparam a partida com a mesma partida sem compras.
+  - O gráfico mostra a tracejada "sem nenhuma compra".
+
+- **Pendente:**
+  - **Uma observação para o `P8-02`:** a partida com as 20 compras em 2025 chegou a 2100 com prata,
+    mas com o apoio médio em 1 e a Inércia em 100 — quase dissolvida pelo apoio.
+  - **Numa partida sem compras, as duas faixas são iguais.** Está certo, mas repete a informação.
+  - **Em 1536 × 702, a comparação fica no limite de baixo da primeira tela**, e o gráfico só
+    aparece rolando o meio.
+  - **O build da feira foi a 1,30 MB** (era 1,29 MB).
+  - **O `VIS-08` já pode usar o `passiveFor`** para as listras da tela de título.
+  - **Parar a tarefa em segundo plano do servidor de dev não encerra o Vite:** o processo foi
+    encerrado à mão, pela porta.
+- **Evidência:**
+  - `docs/evidencias/2026-09-17-vis-10-fim-prata.jpg` — a prata em 2100, em 1536 × 1500;
+  - `docs/evidencias/2026-09-17-vis-10-fim-sem-compras.jpg` — a derrota em 2089, sem compras;
+  - `docs/evidencias/2026-09-17-vis-10-fim-tela-estreita.jpg` — a prata em 390 px.
+
+---
+
 ## 2026-09-17 — A equipe entra na partida: no tutorial, nos eventos e no fim
 
 - **Parte / tarefa:** `VIS-07` ✔

@@ -15,6 +15,7 @@ import {
 import { TOTAL_TICKS } from '../src/engine/tick';
 import { hudView } from '../src/ui/hud';
 import { momentCast, personLabel, personText } from '../src/ui/characters';
+import { passiveRun } from '../src/engine/passive-run';
 import { mountOutcome, outcomeView, renderOutcome } from '../src/ui/outcome';
 
 /**
@@ -243,6 +244,7 @@ describe('o cartão na tela', () => {
     expect(ordem).toEqual([
       'outcome__top',
       'outcome__stats',
+      'compare',
       'chart',
       'outcome__lookback',
       'outcome__realworld',
@@ -360,5 +362,36 @@ describe('a Juliana ao lado do resultado (VIS-07)', () => {
       personText(quem.person).name,
     );
     expect(retrato?.querySelector('[data-cast="role"]')?.textContent).toBe(ui.cast.outcome);
+  });
+});
+
+describe('a medalha e a comparação (VIS-10)', () => {
+  it('a medalha desenhada aparece com o número da colocação, escondida do leitor de tela', () => {
+    const root = show(mount(), ended(2.4));
+    const medalha = root.querySelector<SVGElement>('[data-outcome="medal"]');
+
+    expect(medalha?.hasAttribute('hidden')).toBe(false);
+    expect(medalha?.getAttribute('aria-hidden')).toBe('true');
+    expect(medalha?.dataset.medal).toBe('bronze');
+    expect(root.querySelector('[data-outcome="medal-rank"]')?.textContent).toBe('3');
+    // O título escrito continua dizendo o resultado.
+    expect(textOf(root, 'title')).toBe(ui.outcome.result.bronze.title);
+  });
+
+  it('sem medalha, fica o ícone escrito, e a medalha some', () => {
+    const root = show(mount(), ended(2.8));
+
+    expect(root.querySelector('[data-outcome="medal"]')?.hasAttribute('hidden')).toBe(true);
+    expect(root.querySelector<HTMLElement>('[data-outcome="icon"]')?.hidden).toBe(false);
+  });
+
+  it('o cartão compara a partida com a mesma partida sem compras', () => {
+    const root = show(mount(), ended(2.4));
+    const parada = passiveRun(2025);
+
+    expect(root.querySelector('[data-compare="passive-value"]')?.textContent).toBe(
+      `${ui.outcome.result.defeat.icon} ${parada.year}`,
+    );
+    expect(root.querySelector('.chart__passive')?.getAttribute('d')).toMatch(/^M /);
   });
 });

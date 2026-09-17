@@ -46,6 +46,26 @@
   stroke-linejoin: round;
 }
 
+/* A mesma partida sem nenhuma compra (VIS-10): tracejada miúda, na cor de
+   rótulo, atrás da curva jogada. O nome vai escrito no fim dela — a diferença
+   entre as duas não depende só do traço (§5). */
+.chart__passive {
+  stroke: var(--cor-rotulo, #a7c0b4);
+  stroke-width: 3;
+  stroke-dasharray: 4 8;
+  stroke-linecap: round;
+}
+
+.chart__passive-label {
+  fill: var(--cor-rotulo, #a7c0b4);
+  stroke: var(--cor-fundo, #0f1c17);
+  stroke-width: 6;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  font-family: inherit;
+  font-size: 24px;
+}
+
 /* O eixo do tempo. Contínuo, para não se confundir com as tracejadas. */
 .chart__axis {
   stroke: var(--cor-borda, #4c8069);
@@ -116,7 +136,9 @@
    aqui descobre a diferença num navegador só. A marca da virada some por esta
    regra, que é nossa e vale em qualquer lugar. */
 .chart__turn[hidden],
-.chart__turn-label[hidden] {
+.chart__turn-label[hidden],
+.chart__passive[hidden],
+.chart__passive-label[hidden] {
   display: none;
 }
 

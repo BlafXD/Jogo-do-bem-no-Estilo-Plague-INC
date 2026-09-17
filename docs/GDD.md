@@ -173,7 +173,11 @@ consulta, e não existe campo de "venceu" no `GameState` (`§3`). É o que imped
 de entregar uma medalha que a partida dele não sustenta, e o que elimina o bug de "ganhei mas o
 jogo não percebeu".
 
-Tela final: gráfico da linha do tempo + "o que você poderia ter feito diferente" + 3 ações reais do mundo real. Curto. Sem sermão.
+Tela final: a medalha, os números finais, as listras e o gráfico da linha do tempo comparando a partida com **a mesma partida sem nenhuma compra** (mesma seed, simulada pelo engine) + "o que você poderia ter feito diferente" + 3 ações reais do mundo real. Curto. Sem sermão.
+
+> **A comparação entrou no `VIS-10`, em 2026-09-17, com permissão no chat.** Ela mostra o que as
+> compras mudaram, com a mesma sorte de eventos no começo: a partida parada é a linha de base do §4,
+> com a Inércia e os eventos agindo, e não uma curva de fórmula.
 
 ---
 

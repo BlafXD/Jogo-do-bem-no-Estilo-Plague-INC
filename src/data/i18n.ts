@@ -539,6 +539,20 @@ export const ui = {
       intro: 'Escolhidas pelos ramos que esta partida deixou de lado.',
     },
 
+    // A comparação com a mesma partida sem nenhuma compra (VIS-10).
+    compare: {
+      section: 'A sua partida comparada à mesma partida sem nenhuma compra',
+      played: 'Sua partida',
+      passive: 'Sem nenhuma compra',
+      span: (from: string, to: string) => `${from} a ${to}`,
+      ended: (year: string) => `acaba em ${year}`,
+      /** A frase do leitor de tela de cada faixa de listras. */
+      label: (name: string, from: string, temperature: string, year: string) =>
+        `${name}, em listras de ${from} a ${year}: terminou em ${temperature}.`,
+      labelDissolved: (name: string, from: string, temperature: string, year: string) =>
+        `${name}, em listras de ${from} a ${year}: chegou a ${temperature}, e a agência foi dissolvida.`,
+    },
+
     // Como a partida acabou — a linha de cima do cartão.
     ending: {
       netZero: (limit: string) => `As emissões líquidas caíram abaixo de ${limit} antes de 2100.`,
@@ -622,6 +636,11 @@ export const ui = {
     summary: (from: string, fromYear: string, to: string, toYear: string) =>
       `A temperatura foi de ${from} em ${fromYear} a ${to} em ${toYear}.`,
     summaryTurn: (year: string) => `As emissões pararam de subir em ${year}.`,
+
+    /** A curva tracejada da mesma partida sem nenhuma compra (VIS-10). */
+    passive: 'sem nenhuma compra',
+    summaryPassive: (temperature: string, year: string) =>
+      `Sem nenhuma compra, a mesma partida chegaria a ${temperature} em ${year}.`,
     summaryNoTurn: 'As emissões ainda subiam quando a partida acabou.',
   },
 

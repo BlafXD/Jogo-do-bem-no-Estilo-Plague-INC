@@ -7,7 +7,11 @@
 // `mountTimelineChart` e `renderTimelineChart` tocam no DOM. Isso é o que
 // permite conferir onde cada linha cai sem abrir um navegador.
 //
-// **Uma curva só, e é a da temperatura.** É ela que dá a medalha, e é ela que o
+// **Desde o VIS-10 são duas curvas, e as duas são da temperatura:** a da
+// partida jogada e, tracejada atrás dela, a da mesma partida sem nenhuma compra
+// (engine/passive-run.ts). A distância entre as duas é o que as compras fizeram.
+//
+// **Nenhuma curva de emissões.** A temperatura é o que dá a medalha, e é ela que o
 // §2.7 chama de catraca de mão única. Uma segunda curva de emissões contaria a
 // mesma história com o dobro de tinta; o que a emissão tem de único — o ano em
 // que ela parou de subir — cabe numa marca sobre a curva da temperatura, e é o
@@ -23,7 +27,7 @@ import { ui } from '../data/i18n';
 import { timeline } from '../engine/history';
 import { MEDAL_CEILING, type Medal } from '../engine/outcome';
 import { turningPoint } from '../engine/review';
-import { balance, type GameState } from '../engine/state';
+import { balance, type GameState, type Snapshot } from '../engine/state';
 import { celsius } from './format';
 
 // ------------------------------------------------------------- geometria ---
@@ -63,6 +67,15 @@ const LABEL_X = PLOT.right + 14;
  * para 25 só troca quantos números aparecem embaixo do desenho.
  */
 const YEAR_STEP = 15;
+
+/** Distância entre o fim da curva sem compras e o texto dela, para cima. */
+const PASSIVE_LABEL_OFFSET = 16;
+
+/**
+ * A folga mínima entre o rótulo da virada e o piso do desenho, onde começam os
+ * anos do eixo. É a metade da altura do texto.
+ */
+const TURN_LABEL_FLOOR = 12;
 
 /** Distância entre a marca da virada e o texto dela. */
 const TURN_LABEL_OFFSET = 34;
@@ -134,9 +147,19 @@ export type ChartTurn = {
   readonly anchor: 'start' | 'middle' | 'end';
 };
 
+/** A curva da partida sem nenhuma compra, com o nome escrito no fim dela. */
+export type ChartPassive = {
+  readonly path: string;
+  readonly label: string;
+  readonly labelX: number;
+  readonly labelY: number;
+};
+
 export type TimelineChartView = {
   /** O atributo `d` da curva. */
   readonly path: string;
+  /** A mesma partida sem nenhuma compra (VIS-10), ou `null` quando não veio. */
+  readonly passive: ChartPassive | null;
   readonly thresholds: readonly ChartThreshold[];
   readonly years: readonly ChartYear[];
   /** `null` quando a emissão ainda subia no fim: não houve virada para marcar. */
@@ -205,25 +228,59 @@ const THRESHOLD_KEYS: readonly ThresholdKey[] = ['gold', 'silver', 'bronze', 'lo
  * DOM, que a linha do ouro está abaixo da do bronze e que a curva termina no
  * ano em que a partida terminou.
  */
-export function timelineChartView(state: GameState): TimelineChartView {
-  const curve = timeline(state);
-  const first = curve[0];
-  // Pela catraca do §2.7 o último ponto é sempre o mais quente: o CO₂ acumulado
-  // só cresce, e nenhuma compra faz a temperatura descer.
-  const last = curve[curve.length - 1] ?? first;
-  const ceiling = Math.max(balance.loseTemperature, last?.temperature ?? 0);
-
+/**
+ * O atributo `d` de uma curva.
+ *
+ * Um ponto só é o primeiro mês da partida. Ele vira um segmento de comprimento
+ * zero, e não um `M` solto: um `M` sozinho não pinta nada, nem com ponta
+ * arredondada, e a curva de uma partida recém-começada sumiria.
+ */
+function pathFor(curve: readonly Snapshot[], ceiling: number): string {
   const steps = curve.map(
     (point) =>
       `${xForYear(point.year).toFixed(1)} ${yForTemperature(point.temperature, ceiling).toFixed(1)}`,
   );
 
-  // Um ponto só é o primeiro mês da partida. Ele vira um segmento de
-  // comprimento zero, e não um `M` solto: um `M` sozinho não pinta nada, nem
-  // com ponta arredondada, e a curva de uma partida recém-começada sumiria.
   const [origin = '', ...rest] = steps;
-  const path =
-    steps.length === 0 ? '' : `M ${[origin, ...(rest.length === 0 ? [origin] : rest)].join(' L ')}`;
+  return steps.length === 0
+    ? ''
+    : `M ${[origin, ...(rest.length === 0 ? [origin] : rest)].join(' L ')}`;
+}
+
+/**
+ * A geometria inteira do gráfico de uma partida.
+ *
+ * `passive` é a mesma partida sem nenhuma compra (VIS-10). Ela entra no mesmo
+ * teto da partida jogada: as duas precisam da mesma escala para a distância
+ * entre elas querer dizer alguma coisa.
+ */
+export function timelineChartView(
+  state: GameState,
+  passiveState: GameState | null = null,
+): TimelineChartView {
+  const curve = timeline(state);
+  const first = curve[0];
+  // Pela catraca do §2.7 o último ponto é sempre o mais quente: o CO₂ acumulado
+  // só cresce, e nenhuma compra faz a temperatura descer.
+  const last = curve[curve.length - 1] ?? first;
+  const passiveCurve = passiveState === null ? [] : timeline(passiveState);
+  const passiveLast = passiveCurve[passiveCurve.length - 1];
+  const ceiling = Math.max(
+    balance.loseTemperature,
+    last?.temperature ?? 0,
+    passiveLast?.temperature ?? 0,
+  );
+
+  const path = pathFor(curve, ceiling);
+  const passive: ChartPassive | null =
+    passiveLast === undefined
+      ? null
+      : {
+          path: pathFor(passiveCurve, ceiling),
+          label: ui.timelineChart.passive,
+          labelX: xForYear(passiveLast.year),
+          labelY: yForTemperature(passiveLast.temperature, ceiling) - PASSIVE_LABEL_OFFSET,
+        };
 
   const turned = turningPoint(state);
   const turn: ChartTurn | null =
@@ -257,7 +314,15 @@ export function timelineChartView(state: GameState): TimelineChartView {
             // **não** está livre ali são as tracejadas dos limiares, e é por
             // isso que o CSS dá um halo ao texto — ele apaga a linha atrás de si
             // em vez de a geometria ter que desviar de quatro alturas fixas.
-            labelY: y + TURN_LABEL_OFFSET,
+            //
+            // **Menos quando embaixo não há espaço.** Uma virada logo no começo
+            // (quem compra muito cedo) põe a marca no piso do desenho, e o texto
+            // abaixo dela caía em cima dos anos do eixo. Aí ele sobe para cima da
+            // marca — o halo o separa da curva.
+            labelY:
+              y + TURN_LABEL_OFFSET > PLOT.bottom - TURN_LABEL_FLOOR
+                ? y - TURN_LABEL_OFFSET + TURN_LABEL_FLOOR
+                : y + TURN_LABEL_OFFSET,
             anchor,
           };
         })();
@@ -271,10 +336,14 @@ export function timelineChartView(state: GameState): TimelineChartView {
       String(last?.year ?? balance.startYear),
     ),
     turned === null ? text.summaryNoTurn : text.summaryTurn(String(turned.year)),
+    ...(passiveLast === undefined
+      ? []
+      : [text.summaryPassive(hudCelsius(passiveLast.temperature), String(passiveLast.year))]),
   ].join(' ');
 
   return {
     path,
+    passive,
     thresholds: THRESHOLD_KEYS.map((key) => ({
       key,
       label: text.threshold(THRESHOLD_NAMES[key], celsius(THRESHOLD_VALUES[key])),
@@ -294,7 +363,8 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K): SVGElementTagNameMap
   return document.createElementNS(SVG_NS, tag);
 }
 
-type Slot = 'canvas' | 'curve' | 'turn' | 'turn-label' | 'thresholds' | 'years';
+type Slot =
+  'canvas' | 'curve' | 'passive' | 'passive-label' | 'turn' | 'turn-label' | 'thresholds' | 'years';
 
 function slot(root: ParentNode, name: Slot): SVGElement | null {
   return root.querySelector<SVGElement>(`[data-chart="${name}"]`);
@@ -349,6 +419,16 @@ export function mountTimelineChart(): HTMLElement {
   const years = svg('g');
   years.dataset.chart = 'years';
 
+  // A partida sem compras entra antes da curva jogada, para ficar atrás dela.
+  const passive = svg('path');
+  passive.setAttribute('class', 'chart__passive');
+  passive.dataset.chart = 'passive';
+  passive.setAttribute('fill', 'none');
+
+  const passiveLabel = text('chart__passive-label', 0, 0);
+  passiveLabel.dataset.chart = 'passive-label';
+  passiveLabel.setAttribute('text-anchor', 'end');
+
   const curve = svg('path');
   curve.setAttribute('class', 'chart__curve');
   curve.dataset.chart = 'curve';
@@ -362,7 +442,7 @@ export function mountTimelineChart(): HTMLElement {
   const turnLabel = text('chart__turn-label', 0, 0);
   turnLabel.dataset.chart = 'turn-label';
 
-  canvas.append(thresholds, axis, years, curve, turnMark, turnLabel);
+  canvas.append(thresholds, axis, years, passive, passiveLabel, curve, turnMark, turnLabel);
 
   const scroll = document.createElement('div');
   scroll.className = 'chart__scroll';
@@ -384,6 +464,17 @@ export function renderTimelineChart(root: ParentNode, view: TimelineChartView): 
 
   const curve = slot(root, 'curve');
   if (curve !== null) curve.setAttribute('d', view.path);
+
+  const passive = slot(root, 'passive');
+  const passiveLabel = slot(root, 'passive-label');
+  for (const node of [passive, passiveLabel])
+    node?.toggleAttribute('hidden', view.passive === null);
+  if (view.passive !== null && passive !== null && passiveLabel !== null) {
+    passive.setAttribute('d', view.passive.path);
+    passiveLabel.setAttribute('x', view.passive.labelX.toFixed(1));
+    passiveLabel.setAttribute('y', view.passive.labelY.toFixed(1));
+    passiveLabel.textContent = view.passive.label;
+  }
 
   const thresholds = slot(root, 'thresholds');
   if (thresholds !== null) {
