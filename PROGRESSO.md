@@ -28,6 +28,85 @@ Regras curtas:
 
 ---
 
+## 2026-09-17 — As 16 poses da equipe entram, com o manifesto de quem aparece onde
+
+- **Parte / tarefa:** `VIS-06` ✔
+- **O que mudou:**
+  - `src/assets/characters/poses/` **criada**, com as 16 poses tratadas no `VIS-01`: quatro
+    pessoas, quatro poses cada, fundo creme e 480 px de altura (18 a 36 KB cada, 480 KB no total).
+    Vieram sem nova edição do `out/poses/` do protótipo, fora do repositório.
+  - `src/data/characters.json` **criado** — o manifesto, editável sem `.ts`, com quatro partes:
+    - `people`: as poses de cada pessoa;
+    - `moments`: quem aparece nos quatro passos do tutorial e na tela de fim;
+    - `title`: a equipe da tela de título;
+    - `events`: o especialista de cada um dos 10 eventos e a pose dele no cartão crítico.
+  - `src/ui/characters.ts` **criado**:
+    - `parseCast` confere o manifesto na carga, e o erro diz o campo;
+    - `momentCast`, `eventCast` e `personLabel` são as consultas;
+    - `poseUrl` resolve o arquivo pelo `import.meta.glob`, como o `audio.ts`.
+  - `tests/characters.test.ts` **criado**, com 26 testes. Suíte: 832 → **858**.
+  - `README.md` — o `characters.json` entrou no contrato do `[D-Historia]`, com a regra do nome
+    do arquivo de pose.
+  - `docs/CREDITOS.md` (a linha das 16 poses), `docs/DIRECAO-DE-ARTE.md §7` e `PLANO.md`.
+
+### Como o manifesto funciona
+
+**O arquivo de cada pose sai do nome, e não do JSON.** A pose `aponta` da Ana Luiza é
+`ana-luiza-aponta.jpg`. Uma pose nova é o arquivo na pasta mais o nome dela na lista da pessoa. Os
+testes recusam uma metade sem a outra, nos dois sentidos: pose sem arquivo e arquivo sem pose. É a
+mesma costura do `audio.json`.
+
+**O `parseCast` recusa o que viraria falha silenciosa na tela.** Os casos:
+- uma pessoa a mais ou a menos;
+- uma pose repetida, ou com nome que não vira nome de arquivo;
+- um momento faltando;
+- uma pose que a pessoa não tem;
+- um título vazio;
+- um evento do jogo sem especialista, ou um especialista para um evento que não existe.
+
+As pessoas são uma lista fechada no código: o nome e o cargo de cada uma estão no `i18n.ts`, e uma
+quinta pessoa precisaria desse texto antes de aparecer.
+
+**As tabelas são as do `docs/DIRECAO-DE-ARTE.md §7`**, e os testes as conferem uma a uma. A única
+escolha nova é a pose do cartão crítico, decidida no chat: a de alerta de cada especialista (Ana
+Luiza `aponta`, Carlos `analisa`, Ricardo `atencao` e Juliana `mapa`).
+
+### Nada muda na tela, e nada muda no build
+
+O `characters.ts` ainda não é importado pelo `main.ts`, então as poses não entram no bundle: o
+`dist-feira/index.html` continua com 631 KB, medido. Quando o `VIS-07` puser os personagens na
+partida, o arquivo da feira ganha até ~650 KB, porque as poses entram embutidas em base64.
+
+### Conferi que os testes reprovam de verdade
+
+- Sem a conferência dos eventos, dois testes falharam.
+- Aceitando qualquer pose para qualquer pessoa, dois falharam.
+- Com um arquivo sobrando na pasta, dois falharam.
+
+Voltei o arquivo nas três vezes.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check                       # 858 testes
+  npx vitest run tests/characters.test.ts
+  ```
+
+  Para ver o manifesto trabalhar, troque `"heatwave": "ana-luiza"` por `"heatwave": "gerente"` no
+  `src/data/characters.json` e rode o teste: o erro diz o evento e a pessoa.
+
+- **Pendente:**
+  - **O logotipo ECO-GRID sai deformado em várias poses** ("CCO-GREN", "ECO-GIBG"). Na tela quase
+    não aparece; num cartaz grande, aparece.
+  - **As poses da Ana Luiza têm a faixa de baixo cortada**, onde passava a moldura de circuito.
+  - **A tela de título continua com os quatro retratos antigos.** As poses dela são do `VIS-08`.
+  - **O avatar redondo do boletim** não tem pose própria. O `VIS-07` decide o recorte.
+  - **O script que tratou as poses (`VisTool.cs`) está fora do repositório**, na pasta do
+    protótipo. Refazer uma pose depende dele.
+- **Evidência:** — (nada muda na tela)
+
+---
+
 ## 2026-09-17 — A árvore e a contenção abrem num painel por cima da partida
 
 - **Parte / tarefa:** `VIS-05` ✔

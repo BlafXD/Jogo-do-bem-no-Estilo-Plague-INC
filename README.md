@@ -206,6 +206,7 @@ UTF-8 quebram o arquivo inteiro. O `npm test` avisa na hora, e é para isso que 
 | `events.json`   | 10 eventos                           | `name`, `fact`                 |
 | `regions.json`  | 8 regiões                            | `name`                         |
 | `actions.json`  | 5 ações do mundo real, na tela de fim| `name`, `description`, `fact`  |
+| `characters.json` | quem da equipe aparece em cada momento | todos: `person` e `pose` |
 
 Os outros campos — `cost`, `requires`, `effects`, `tempThreshold`, `baseWeight`, `impact`,
 `emissions`, `population`, `cleanShare` — são balanceamento medido. **Mexer neles muda o jogo, não o
@@ -219,6 +220,12 @@ Três regras sobre o campo `fact`:
    aquecimento não causa nenhum.
 2. **Uma frase.** O `fact` aparece dentro de um cartão, ao lado de números. Duas frases não cabem.
 3. **Nenhum número sem fonte.** Se você não achar a fonte, o número não entra.
+
+**Sobre o `characters.json`** (VIS-06): ele diz qual pessoa da equipe, e em qual pose, aparece em
+cada passo do tutorial, na tela de título, na tela de fim e em cada evento. Trocar quem dá a
+notícia de um evento é trocar um nome. Uma pose nova é um arquivo `pessoa-pose.jpg` em
+`src/assets/characters/poses/` **mais** o nome da pose na lista da pessoa; o `npm test` recusa
+uma metade sem a outra. Os nomes e cargos das pessoas continuam no `src/data/i18n.ts`.
 
 O texto da **interface** — rótulo, botão, dica, mensagem de fim — **não** está nos JSON: ele mora no
 `src/data/i18n.ts`, que é `.ts` e está fora do contrato. Se um rótulo estiver ruim, aponte; não

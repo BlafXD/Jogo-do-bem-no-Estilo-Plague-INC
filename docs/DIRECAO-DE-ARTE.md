@@ -278,6 +278,14 @@ quase não aparece; num cartaz grande, aparece.
 | Carlos | branqueamento de corais, incêndio florestal, deslizamento |
 | Juliana | surto transmitido por mosquito, colapso de safra |
 
+**No evento crítico, cada especialista usa a pose de alerta** (decisão de 2026-09-17): Ana Luiza
+`aponta`, Carlos `analisa`, Ricardo `atencao` e Juliana `mapa`.
+
+**Desde o `VIS-06`, as três tabelas moram no `src/data/characters.json`**, com as 16 poses em
+`src/assets/characters/poses/`. O `src/ui/characters.ts` confere o arquivo na carga, e o
+`tests/characters.test.ts` confere que ele bate com a pasta, com os eventos do jogo e com estas
+tabelas. Quem muda uma tabela aqui muda o JSON junto.
+
 **Nenhuma fala é inventada para eles.** O que o personagem "diz" é o texto que o jogo já tem — o
 passo do tutorial, o fato do evento. Voz própria é trabalho do `[D-Historia]`.
 

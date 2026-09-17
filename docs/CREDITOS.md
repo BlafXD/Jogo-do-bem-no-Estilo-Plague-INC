@@ -36,6 +36,7 @@ fronteiras das 8 regiões não estão na imagem, são polígonos do projeto no `
 | Arquivo | Autor | Licença | Origem |
 |---|---|---|---|
 | `src/assets/characters/*.jpg` (4 retratos) | autor do projeto | própria | recortados de uma folha única de 1408 × 768, em 2026-09-06 |
+| `src/assets/characters/poses/*.jpg` (16 poses) | autor do projeto | própria | quatro poses de cada pessoa, recebidas em 2026-09-16; o fundo virou creme `#F4EDD0` e a altura, 480 px, no `VIS-01` (`VisTool.cs`, fora do repositório) |
 | `src/assets/map/world.jpg` | autor do projeto | própria | cópia sem edição do `Mapa Mundi.jpeg`, de 1376 × 768, em 2026-09-16 |
 
 ## Áudio

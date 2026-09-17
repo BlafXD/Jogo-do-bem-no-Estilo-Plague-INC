@@ -1,0 +1,41 @@
+{
+  "people": {
+    "ana-luiza": ["aponta", "energia", "acolhe", "planta"],
+    "carlos-mendes": ["aponta", "explica", "analisa", "conversa"],
+    "ricardo-souza": ["aponta", "apresenta", "folha", "atencao"],
+    "juliana-almeida": ["atencao", "painel", "aponta", "mapa"]
+  },
+  "moments": {
+    "tutorial-time": { "person": "ana-luiza", "pose": "aponta" },
+    "tutorial-tree": { "person": "carlos-mendes", "pose": "explica" },
+    "tutorial-event": { "person": "ricardo-souza", "pose": "aponta" },
+    "tutorial-inertia": { "person": "juliana-almeida", "pose": "atencao" },
+    "outcome": { "person": "juliana-almeida", "pose": "painel" }
+  },
+  "title": [
+    { "person": "ana-luiza", "pose": "acolhe" },
+    { "person": "carlos-mendes", "pose": "conversa" },
+    { "person": "ricardo-souza", "pose": "apresenta" },
+    { "person": "juliana-almeida", "pose": "painel" }
+  ],
+  "events": {
+    "pose": {
+      "ana-luiza": "aponta",
+      "carlos-mendes": "analisa",
+      "ricardo-souza": "atencao",
+      "juliana-almeida": "mapa"
+    },
+    "speaker": {
+      "heatwave": "ana-luiza",
+      "cyclone": "ana-luiza",
+      "drought": "ricardo-souza",
+      "flood": "ricardo-souza",
+      "storm-surge": "ricardo-souza",
+      "coral-bleaching": "carlos-mendes",
+      "wildfire": "carlos-mendes",
+      "landslide": "carlos-mendes",
+      "vector-disease": "juliana-almeida",
+      "crop-failure": "juliana-almeida"
+    }
+  }
+}
