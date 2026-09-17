@@ -24,18 +24,17 @@ Os ícones de estado da interface são **caracteres Unicode** (`✔`, `●`, `�
 no `src/data/i18n.ts` — não há arquivo de ícone, e por isso não há licença a registrar. O pacote
 delegável `[D-Design]` segue previsto.
 
-**Os quatro retratos da equipe são da casa.** Conceito, personagens e o logotipo fictício
+**A equipe da agência é da casa.** Conceito, personagens e o logotipo fictício
 **ECO-GRID**, que aparece no crachá da Ana Luiza e na jaqueta do Carlos, são criação do autor do
 projeto — confirmado no chat em 2026-09-06. Nenhuma marca, empresa ou ONG real aparece na arte, que
 é o que a regra 10 barra.
 
 **O mapa-múndi também é da casa.** O `Mapa Mundi.jpeg` que o `VIS-03` pôs no jogo foi gerado pelo
-autor do projeto, como os retratos — confirmado no chat em 2026-09-16. Entrou sem edição nenhuma: as
+autor do projeto, como a equipe — confirmado no chat em 2026-09-16. Entrou sem edição nenhuma: as
 fronteiras das 8 regiões não estão na imagem, são polígonos do projeto no `src/ui/map-geometry.ts`.
 
 | Arquivo | Autor | Licença | Origem |
 |---|---|---|---|
-| `src/assets/characters/*.jpg` (4 retratos) | autor do projeto | própria | recortados de uma folha única de 1408 × 768, em 2026-09-06 |
 | `src/assets/characters/poses/*.jpg` (16 poses) | autor do projeto | própria | quatro poses de cada pessoa, recebidas em 2026-09-16; o fundo virou creme `#F4EDD0` e a altura, 480 px, no `VIS-01` (`VisTool.cs`, fora do repositório) |
 | `src/assets/map/world.jpg` | autor do projeto | própria | cópia sem edição do `Mapa Mundi.jpeg`, de 1376 × 768, em 2026-09-16 |
 

@@ -3,12 +3,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { ui } from '../src/data/i18n';
+import { passiveRun } from '../src/engine/passive-run';
+import { cast, personText } from '../src/ui/characters';
 import {
   armNewGame,
   cancelNewGame,
   createTitle,
   mountTitle,
   renderTitle,
+  renderTitleBand,
+  titleBandView,
   titleView,
   type TitleHandlers,
   type TitleState,
@@ -28,6 +32,7 @@ function handlers(over: Partial<TitleHandlers> = {}): TitleHandlers {
     onConfirmNew: vi.fn(),
     onCancelNew: vi.fn(),
     onFair: vi.fn(),
+    onToggleSound: vi.fn(),
     ...over,
   };
 }
@@ -261,7 +266,9 @@ describe('o Modo Feira no título (P7-07)', () => {
     const fileira = mount().querySelector('.title__actions');
     const rotulos = [...(fileira?.children ?? [])].map((b) => b.getAttribute('data-title'));
 
-    expect(rotulos).toEqual(['continue', 'new', 'fair']);
+    // O som (VIS-08) vem depois dos três caminhos: ele é ajuste, e não jeito de
+    // jogar.
+    expect(rotulos).toEqual(['continue', 'new', 'fair', 'sound']);
   });
 
   it('a dica promete o que o modo cumpre: não salva e não apaga', () => {
@@ -289,7 +296,7 @@ describe('o Modo Feira no título (P7-07)', () => {
 
 describe('a equipe da agência', () => {
   function faces(root: ParentNode): HTMLImageElement[] {
-    return [...root.querySelectorAll<HTMLImageElement>('img.title__face')];
+    return [...root.querySelectorAll<HTMLImageElement>('.title__face img')];
   }
 
   it('mostra os quatro rostos', () => {
@@ -297,9 +304,11 @@ describe('a equipe da agência', () => {
   });
 
   /**
-   * **O `alt` não pode ser decorativo, e é por uma razão concreta.**
+   * **O `alt` não pode ser decorativo.** Desde o VIS-08 o nome e o cargo também
+   * vão escritos na faixa embaixo de cada pose, mas a imagem continua sendo a
+   * pessoa, e o leitor de tela precisa saber quem ela é.
    *
-   * O nome e o cargo estão desenhados *dentro* da imagem, em pixels. Um
+   * Até o VIS-08, o nome e o cargo estavam desenhados *dentro* da imagem, em pixels. Um
    * `alt=""` — que seria o certo para arte puramente ornamental — esconderia de
    * quem usa leitor de tela justamente o que a arte existe para dizer. Este
    * teste é o que impede alguém de "limpar" isso mais tarde.
@@ -339,5 +348,102 @@ describe('a equipe da agência', () => {
     mountTitle(root, handlers());
 
     expect(faces(root)).toHaveLength(4);
+  });
+});
+
+describe('a tela nova (VIS-08)', () => {
+  it('escreve o ODS em cima do nome', () => {
+    const root = mount();
+    const ods = root.querySelector('.title__ods');
+
+    expect(ods?.textContent).toBe(ui.title.ods);
+    expect(ods?.nextElementSibling?.classList.contains('title__name')).toBe(true);
+  });
+
+  it('a equipe usa as poses do manifesto, com nome e cargo escritos na faixa', () => {
+    const root = mount();
+    const nomes = [...root.querySelectorAll('.title__face [data-cast="name"]')].map(
+      (node) => node.textContent,
+    );
+
+    expect(nomes).toEqual(cast.title.map((who) => personText(who.person).name));
+    expect(root.querySelector('.title__team h2')?.textContent).toBe(ui.title.team.heading);
+  });
+
+  describe('o botão de som', () => {
+    const som = (root: ParentNode): HTMLButtonElement | null =>
+      root.querySelector('[data-title="sound"]');
+
+    it('é um botão de verdade, com a dica do som', () => {
+      const root = show(mount(), null);
+
+      expect(som(root)?.type).toBe('button');
+      expect(som(root)?.title).toBe(ui.sound.hint);
+    });
+
+    it('diz a ação, e não o estado', () => {
+      const root = mount();
+
+      renderTitle(root, titleView(null, createTitle(), false));
+      expect(som(root)?.textContent).toBe(ui.sound.mute);
+
+      renderTitle(root, titleView(null, createTitle(), true));
+      expect(som(root)?.textContent).toBe(ui.sound.unmute);
+    });
+
+    it('sem save, "Começar" é o botão principal; com save, é o "Continuar"', () => {
+      const semSave = show(mount(), null);
+      expect(part(semSave, 'new').classList.contains('title__button--primary')).toBe(true);
+
+      const comSave = show(mount(), 2056);
+      expect(part(comSave, 'new').classList.contains('title__button--primary')).toBe(false);
+      expect(part(comSave, 'continue').classList.contains('title__button--primary')).toBe(true);
+    });
+
+    it('avisa quem montou', () => {
+      const onToggleSound = vi.fn();
+      const root = mount(handlers({ onToggleSound }));
+
+      som(root)?.click();
+
+      expect(onToggleSound).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('as listras de uma partida sem nenhuma compra', () => {
+    const parada = passiveRun(2025);
+
+    it('dizem onde a partida parada acabou', () => {
+      const view = titleBandView(parada);
+
+      expect(view.end).toBe(`${ui.outcome.result.defeat.icon} ${parada.year}`);
+      expect(view.caption).toBe(ui.title.band.captionDissolved);
+      expect(view.stripes.label).toContain('dissolvida');
+      expect(view.stripes.stripes.filter((stripe) => stripe.lived)).toHaveLength(
+        parada.year - 2025 + 1,
+      );
+    });
+
+    it('aparecem na tela como uma imagem com nome', () => {
+      const root = mount();
+      renderTitleBand(root, titleBandView(parada));
+      const listras = root.querySelector('.title__stripes');
+
+      expect(listras?.getAttribute('role')).toBe('img');
+      expect(listras?.getAttribute('aria-label')).toBe(titleBandView(parada).stripes.label);
+      expect(root.querySelector('[data-title="band-end"]')?.textContent).toBe(
+        titleBandView(parada).end,
+      );
+      expect(root.querySelector('.title__band')?.getAttribute('aria-label')).toBe(
+        ui.title.band.section,
+      );
+    });
+
+    it('sem derrota, a legenda não fala em não chegar a 2100', () => {
+      const chegou = { ...parada, tick: 900, year: 2100, temperature: 2.4 };
+
+      expect(titleBandView(chegou).caption).toBe(ui.title.band.caption);
+      expect(titleBandView(chegou).end).not.toContain(ui.outcome.result.defeat.icon);
+    });
   });
 });

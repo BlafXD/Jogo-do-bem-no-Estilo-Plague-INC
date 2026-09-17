@@ -151,6 +151,12 @@ Gerente; estes são os quatro especialistas que ele dirige. Pôr um rosto só im
 
 ## 5. Como a arte entrou
 
+> **Desde o `VIS-08` (2026-09-17), os quatro retratos recortados da ficha saíram do jogo.** A tela
+> de título passou a usar as poses do `src/data/characters.json`, com nome e cargo escritos na
+> faixa, e os quatro arquivos foram apagados com permissão no chat. O resto desta seção é o registro
+> de como eles entraram em 2026-09-06; a ficha original continua na pasta acima do repositório, para
+> o cartaz e os slides.
+
 As três pendências que travavam a imagem foram resolvidas em 2026-09-06.
 
 **Origem e licença.** Conceito, personagens e o logotipo fictício ECO-GRID são criação do autor do

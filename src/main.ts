@@ -30,6 +30,7 @@ import {
   type TimeCommand,
 } from './ui/controls';
 import { createSound, playSfx, toggleMute } from './ui/audio';
+import { passiveFor } from './ui/comparison';
 import { containView, mountContain, renderContain } from './ui/contain';
 import {
   criticalCardView,
@@ -75,6 +76,8 @@ import {
   createTitle,
   mountTitle,
   renderTitle,
+  renderTitleBand,
+  titleBandView,
   titleView,
 } from './ui/title';
 import {
@@ -407,6 +410,8 @@ function handleToggleSound(): void {
   playSfx(sound, 'unlock');
 
   renderControls(controls, control, sound.muted);
+  // O botão de som também mora no título (VIS-08), e os dois dizem o mesmo.
+  renderTitle(telaTitulo, titleView(savedYear, title, sound.muted));
 }
 
 /** Os cartões de evento e o aviso de auto-pausa. */
@@ -602,7 +607,7 @@ function renderGame(): void {
   const screen = currentScreen(screens, finished);
 
   renderScreens(layout, screen);
-  renderTitle(telaTitulo, titleView(savedYear, title));
+  renderTitle(telaTitulo, titleView(savedYear, title, sound.muted));
 
   renderHud(hud, hudView(state), rulerMark(state.temperature));
   renderStripes(listras, stripesView(state));
@@ -898,7 +903,11 @@ mountTitle(telaTitulo, {
     renderGame();
   },
   onFair: handleFair,
+  onToggleSound: handleToggleSound,
 });
+// As listras do título: a partida sem nenhuma compra da seed de uma partida
+// nova (VIS-08). Ela não muda, então é escrita uma vez só.
+renderTitleBand(telaTitulo, titleBandView(passiveFor(SEED)));
 mountSession(partida, {
   // Um clique só quando sair não destrói nada — que é toda partida normal, já
   // que ela é salva sozinha a cada mês e o "Continuar" espera do outro lado.

@@ -28,6 +28,99 @@ Regras curtas:
 
 ---
 
+## 2026-09-17 — A tela de título nova: a equipe em poses, o som e as listras sem compras
+
+- **Parte / tarefa:** `VIS-08` ✔
+- **Permissão do chat:** os quatro retratos recortados da ficha (`src/assets/characters/*.jpg`)
+  foram apagados, porque deixaram de ser usados. A linha deles saiu do `docs/CREDITOS.md`.
+- **O que mudou:**
+  - `src/ui/title.ts` — a tela passou a ter três blocos:
+    - **a abertura:** o ODS em cima do nome, o pitch, os botões e o **botão de som**;
+    - **a equipe:** as poses do `characters.json`, com nome e cargo escritos na faixa;
+    - **as listras:** uma partida sem nenhuma compra, que acaba em "✕ 2089". São novos o
+      `titleBandView` e o `renderTitleBand`.
+
+    Sem partida salva, "Começar" ganha o destaque de botão principal.
+  - `src/ui/title.css` — a disposição em duas colunas a partir de 64rem, o nome em placa e em duas
+    linhas, a equipe e as listras.
+  - `index.html` — o `<h1>` do título em duas linhas ("Ponto de" e "Virada"), com o mesmo texto.
+  - `src/ui/layout.css` — no título, o meio da partida perde o espaçamento. Eram os 80 px vazios
+    embaixo da tela que o `VIS-04` deixou pendentes.
+  - `src/main.ts`:
+    - o botão de som do título usa o mesmo `handleToggleSound` da barra, e os dois se redesenham
+      juntos;
+    - as listras são escritas uma vez, com a partida parada da seed de uma partida nova.
+  - `src/data/i18n.ts` — o texto do ODS e os textos das listras do título.
+  - `tests/title.dom.test.ts`:
+    - novos: a tela nova, o som e as listras;
+    - ajustados: a equipe, que agora é de poses, e a ordem dos botões, com o som depois dos três
+      caminhos de jogo.
+
+    Suíte: 905 → **914**.
+  - `docs/CREDITOS.md`, `docs/PERSONAGENS.md §5`, `docs/DIRECAO-DE-ARTE.md §8` e `PLANO.md`.
+
+### O que a tela mostrou, e o que mudou por causa dela
+
+1. **Sem partida salva, nenhum botão tinha destaque.** O principal era o "Continuar", que fica
+   escondido. Agora o "Começar" o recebe quando não há o que continuar.
+2. **Numa fileira em que um cargo quebra em duas linhas**, o cartão do lado ficava com uma tira
+   creme embaixo. A faixa de nome passou a ocupar a altura que sobra.
+3. **A página tinha 80 px a mais que a tela de título**, que era o espaçamento do `<main>` vazio.
+
+### Conferi que os testes reprovam de verdade
+
+- Com as listras sem saber que a partida acabou, um teste falhou.
+- Com o botão de som sempre dizendo "Silenciar", um falhou.
+- Sem o ano do fim ao lado das listras, um falhou.
+
+Voltei o arquivo nas três vezes. Um teste antigo do tema também reprovou quando pus o `title.css`
+na lista dele: ele lê todo `min-height` como alvo de toque, e o do título é a altura da tela. A
+folha ficou fora da lista, como estava antes.
+
+### Como foi conferido
+
+**No Edge em modo headless**, sem partida salva, em seis tamanhos: 1536 × 702, 1920 × 969,
+1366 × 657, 1280 × 600, 1024 × 700 e 390 × 844.
+- Em todos, os botões ficam na primeira dobra, e a página não rola de lado.
+- As quatro poses carregam, com o texto alternativo de nome e cargo.
+- As listras têm 65 anos pintados e "✕ 2089".
+- Em 1366 × 657 e 1280 × 600, as listras ficam logo abaixo da primeira dobra. Em 390 px, a
+  equipe e as listras ficam embaixo dos botões.
+- Depois da correção, a página em 1920 × 969 tem exatamente 969 px.
+- **O som:**
+  - o botão do título passou de "Silenciar" para "Ativar som";
+  - a barra da partida disse o mesmo;
+  - o mudo ficou guardado;
+  - depois de voltar ao título, o botão continuou dizendo "Ativar som".
+
+  O teste religou o som e apagou o save no fim.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 914 testes
+  npm run dev       # a tela de título abre primeiro
+  ```
+
+  Na tela:
+  - O ODS em cima, o nome em duas linhas e a equipe em poses à direita.
+  - Embaixo, as listras de uma partida sem compras, riscadas em 2089.
+  - O "Silenciar" do título e o da barra da partida mudam juntos.
+
+- **Pendente:**
+  - **A marca (a folha no anel) e os ícones dos botões** são do `VIS-09`.
+  - **O build da feira caiu de 1,30 MB para 1,12 MB**, sem os quatro retratos.
+  - **O título não foi aberto no build da feira por `file://`** nesta tarefa.
+  - **Numa tela baixa**, as listras só aparecem rolando.
+- **Evidência:**
+  - `docs/evidencias/2026-09-17-vis-08-titulo-1920.jpg` — o título em 1920 × 969;
+  - `docs/evidencias/2026-09-17-vis-08-titulo-1536.jpg` — o título em 1536 × 702;
+  - `docs/evidencias/2026-09-17-vis-08-titulo-tela-estreita.jpg` — o título em 390 px.
+
+---
+
 ## 2026-09-17 — A tela de fim compara a partida com a mesma partida sem nenhuma compra
 
 - **Parte / tarefa:** `VIS-10` ✔

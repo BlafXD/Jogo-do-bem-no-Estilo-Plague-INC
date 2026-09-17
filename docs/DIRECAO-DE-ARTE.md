@@ -376,6 +376,20 @@ permissão). Onde a tela saiu diferente da tabela do §7 e das peças acima:
 
 ---
 
+### Como ficou no `VIS-08`
+
+A tela de título é a do protótipo: a abertura à esquerda, a equipe à direita e as listras de uma
+partida sem nenhuma compra embaixo. Onde ela saiu diferente:
+
+- **A marca** (a folha no anel) não entrou ao lado do ODS; ela é do `VIS-09`.
+- **Os botões** usam o estilo que o título já tinha. Sem partida salva, "Começar" ganha o destaque
+  de botão principal; com partida salva, quem o ganha é "Continuar".
+- **O som** fica depois dos três caminhos de jogo e usa o mesmo mudo da barra da partida.
+- **A equipe** está em duas colunas na tela larga. A altura das poses acompanha a janela, e os
+  botões ficam na primeira dobra em todos os tamanhos conferidos.
+- **As listras** são da partida parada da seed de uma partida nova (`passiveFor` do VIS-10), e
+  acabam em "✕ 2089". Numa tela baixa, elas ficam logo abaixo da primeira dobra.
+
 ### Como ficou no `VIS-10`
 
 A tela de fim ganhou a comparação com a mesma partida sem nenhuma compra. Onde ela saiu diferente

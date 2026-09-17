@@ -9,25 +9,57 @@
    comparar nem acompanhar, só uma decisão para tomar. */
 
 .title {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
   /* `min-height` e não `height`: numa janela baixa o conteúdo continua rolando
      em vez de ser cortado. `100dvh` acompanha a barra de endereço que aparece e
      some no celular; o `100vh` fica de reserva para quem não conhece `dvh`. */
   min-height: 100vh;
   min-height: 100dvh;
   box-sizing: border-box;
-  padding: clamp(1.5rem, 6vw, 4rem);
-  gap: 1.5rem;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  gap: 2rem clamp(2rem, 5vw, 4rem);
 }
 
-.title__name {
+/* A abertura: o ODS, o nome, o pitch e os botões (VIS-08). */
+.title__opening {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.title__ods {
   margin: 0;
   color: var(--cor-destaque, #7fd1a8);
-  font-size: clamp(2rem, 7vw, 3.5rem);
-  letter-spacing: 0.02em;
-  line-height: 1.1;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* O nome em placa, em duas linhas: "Ponto de" em creme, "Virada" em latão. */
+.title__name {
+  margin: 0;
+  color: var(--cor-valor, #f2f7f4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 700;
+  font-stretch: 87.5%;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.title__name-top,
+.title__name-bottom {
+  display: block;
+}
+
+.title__name-bottom {
+  color: var(--cor-destaque, #7fd1a8);
 }
 
 .title__pitch {
@@ -114,58 +146,106 @@
   color: var(--cor-alerta, #f2a65a);
 }
 
-/* A equipe da agência (2026-09-06).
-
-   Quatro retratos, sem mecânica nenhuma por trás: eles dizem quem o jogador
-   dirige. O porquê de serem quatro e não um está no i18n, junto do texto.
-
-   `auto-fit` com `minmax` e não uma grade de 4 colunas fixas: numa janela
-   estreita eles reflui para duas linhas sozinhos, que é a mesma regra que fez
-   o P8-04 medir zero rolagem lateral a 400% de zoom. Nenhuma media query
-   entra por causa disto. */
+/* A equipe da agência (VIS-08): as quatro poses, dois a dois, em cartões
+   creme com a faixa de nome. A altura das imagens acompanha a janela, para os
+   botões da abertura continuarem na primeira dobra numa tela baixa. */
 .title__team {
-  /* `<figure>` vem com margem do agente de usuário; ela desalinharia o bloco
-     dos outros, que são todos margem zero. */
-  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  /* **Não** os 60ch do pitch. Aquela medida existe para conforto de leitura de
-     texto corrido; aplicada aqui, ela espremia os quatro retratos a ~130px e o
-     nome desenhado dentro de cada quadro ficava ilegível — que é justamente a
-     informação que eles carregam. Imagem não se mede em `ch`. */
-  max-width: 56rem;
+  min-width: 0;
 }
 
 .title__team-caption {
+  margin: 0;
   color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
   font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .title__faces {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
   gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* **O retrato é dimensionado pela altura, e não pela largura.** Medido no
-   navegador, numa janela de 717px: com os quadros crescendo pela largura, os
-   botões "Começar" e "Modo Feira" saíam da primeira dobra. Numa feira isso é
-   fatal — quem chega de pé não rola a página, vai embora.
+.title__member {
+  display: flex;
+  min-width: 0;
+}
 
-   O `clamp` prende a altura entre 9rem e 15rem, com 28vh no meio: numa tela
-   baixa os retratos encolhem para caber junto dos botões, e numa alta param de
-   crescer antes de dominar a tela. É o mesmo raciocínio do `100dvh` acima —
-   quem manda no título é a altura disponível. */
 .title__face {
-  height: clamp(9rem, 28vh, 15rem);
-  width: auto;
-  /* A proporção é a do recorte (312 × 410). Declará-la junto com `width: auto`
-     é o que deixa a altura mandar na largura, e reserva o espaço antes de a
-     imagem chegar: sem isto o bloco de botões pula no meio do carregamento,
-     debaixo do cursor de quem já ia clicar. */
-  aspect-ratio: 312 / 410;
-  object-fit: cover;
-  border: 2px solid var(--cor-borda, #4c8069);
-  border-radius: var(--raio, 0.5rem);
+  width: 100%;
+}
+
+/* A faixa ocupa a altura que sobrar: numa fileira em que um cargo quebra em
+   duas linhas, o cartão do lado não fica com uma tira creme embaixo. */
+.title__face .portrait__band {
+  flex: 1;
+  align-content: start;
+}
+
+.title__face .portrait__img {
+  height: clamp(8rem, 22vh, 13rem);
+  object-fit: contain;
+}
+
+/* As listras de uma partida sem nenhuma compra, embaixo de tudo. */
+.title__band {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.title__band-caption {
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+.title__band-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+
+/* Sem partida em curso, sem o marcador do mês. */
+.title__stripes {
+  min-width: 0;
+  padding-top: 0;
+}
+
+.title__stripes .stripes__now {
+  display: none;
+}
+
+.title__band-end {
+  color: var(--cor-alerta, #f2a65a);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--texto-medio, 1.125rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.9rem;
+}
+
+/* Na tela larga, a abertura à esquerda e a equipe à direita; as listras
+   atravessam as duas colunas embaixo. */
+@media (min-width: 64rem) {
+  .title {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .title__faces {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .title__band {
+    grid-column: 1 / -1;
+  }
 }

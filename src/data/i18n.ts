@@ -187,6 +187,23 @@ export const ui = {
   // fora da dobra. A narrativa continua sendo do pacote [D-Historia].
   title: {
     label: 'Início',
+
+    /** A linha em cima do nome (VIS-08): o ODS do projeto, por extenso. */
+    ods: 'ODS 13 · Combate às alterações climáticas',
+
+    // As listras do título (VIS-08): uma partida sem nenhuma compra. A legenda
+    // ensina a ler as listras antes de a pessoa vê-las na partida.
+    band: {
+      section: 'Uma partida sem nenhuma compra, em listras',
+      caption:
+        'Cada listra é um ano, na cor da temperatura. Estas são de uma partida sem nenhuma compra.',
+      captionDissolved:
+        'Cada listra é um ano, na cor da temperatura. Estas são de uma partida sem nenhuma compra — e ela não chega a 2100.',
+      label: (from: string, to: string, temperature: string) =>
+        `Uma partida sem nenhuma compra, em listras de ${from} a ${to}: terminou em ${temperature}.`,
+      labelDissolved: (from: string, to: string, temperature: string) =>
+        `Uma partida sem nenhuma compra, em listras de ${from} a ${to}: chegou a ${temperature}, e a agência foi dissolvida.`,
+    },
     pitch: [
       'Você é o Gerente de uma agência climática global, de 2025 a 2100.',
       'É o Plague Inc ao contrário: em vez de evoluir uma praga até o mundo cair, você evolui soluções contra um mundo que já está esquentando.',

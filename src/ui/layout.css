@@ -80,6 +80,13 @@ body {
   padding: clamp(1rem, 4vw, 2.5rem);
 }
 
+/* No título, o meio da partida está vazio: o resultado e o tabuleiro ficam
+   escondidos. Sem isto, o espaçamento dele sobrava como 80 px vazios embaixo da
+   tela de título (pendência do VIS-04). */
+.partida[data-screen='title'] .conteudo {
+  padding: 0;
+}
+
 /* O mundo: o mapa e a coluna. Em tela estreita, um embaixo do outro. */
 .tabuleiro__mundo {
   display: grid;
