@@ -170,7 +170,7 @@
    não compra mais nada (quem recusa de verdade é o `handleUnlock` do main.ts).
    O apagamento é só a pista visual — quem diz que acabou é o cartão acima, por
    escrito, que é o que o §5 cobra. */
-#app[data-finished='true'] .tree {
+.tree-panel[data-finished='true'] .tree {
   opacity: 0.55;
 }
 

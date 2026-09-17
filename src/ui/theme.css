@@ -37,11 +37,16 @@
      rótulo   #B9BFA7   sobre fundo  9,55   sobre superfície  7,92
      destaque #E2CD95   sobre fundo 11,55   sobre superfície  9,59
      alerta   #F2A65A   sobre fundo  8,95   sobre superfície  7,43
+     comprado #A4D37A   sobre fundo 10,50   sobre superfície  8,71
 
    Borda, traço e anel de foco:           exige 3:1
      borda    #A08D5E   sobre fundo  5,58   sobre superfície  4,63
      destaque #E2CD95   sobre fundo 11,55   sobre superfície  9,59
      alerta   #F2A65A   sobre fundo  8,95   sobre superfície  7,43
+     comprado #A4D37A   sobre fundo 10,50   sobre superfície  8,71
+
+   Texto sobre o creme (o fato real da árvore, VIS-05):
+     tinta    #2A281D   sobre creme 12,59
 
    Os dois fundos entre si dão 1,21:1, e isso **não** é uma falha: quem separa a
    superfície do fundo é o traço da borda, que faz 5,58:1 contra a página e
@@ -65,8 +70,9 @@
    saíram quando o mapa virou imagem, e o texto passou a morar em etiquetas de
    fundo opaco.
 
-   As duas cores que o VIS-03 trouxe — o creme e o oceano — são de desenho, e
-   nenhum texto é escrito sobre elas. As oito das listras (VIS-04) também.
+   As duas cores que o VIS-03 trouxe — o creme e o oceano — são de desenho. O
+   único texto escrito sobre uma delas é a tinta do fato real, no creme, medida
+   acima. Sobre as oito das listras (VIS-04), nenhum.
 
    **Três pares aparecem invertidos**, com o fundo escrito sobre uma cor clara:
    o alerta do mapa sobre a brasa, a velocidade escolhida e o botão da árvore
@@ -104,8 +110,8 @@
 
   /**
    * O latão: títulos, estado disponível, seleção, anel de foco dos controles.
-   * Era o verde-menta até o VIS-02; o verde agora fica reservado para o que já
-   * foi comprado, e entra com a tarefa que redesenhar a árvore.
+   * Era o verde-menta até o VIS-02; o verde ficou reservado para o que já foi
+   * comprado, e voltou no VIS-05 como `--cor-comprado`.
    */
   --cor-destaque: #e2cd95;
 
@@ -121,6 +127,19 @@
    * de 4,5:1.
    */
   --cor-borda: #a08d5e;
+
+  /**
+   * A folha: o que já foi comprado (VIS-05). É o verde que o VIS-02 guardou para
+   * uma coisa só — o nó comprado e a ligação entre dois nós comprados. É cor de
+   * texto também, no rótulo "Comprado".
+   */
+  --cor-comprado: #a4d37a;
+
+  /**
+   * A tinta: o texto escrito sobre o creme, no cartão do fato real da árvore
+   * (VIS-05). É a única cor de texto que mora num fundo claro.
+   */
+  --cor-tinta: #2a281d;
 
   /**
    * O creme dos cartões dos personagens. No mapa (VIS-03) é o contorno e a luz

@@ -80,16 +80,21 @@ const PALETTE = [
   'cor-destaque',
   'cor-alerta',
   'cor-borda',
+  'cor-comprado',
+  'cor-tinta',
 ] as const;
 
 /** As duas cores que servem de fundo para o texto. */
 const BACKGROUNDS = ['cor-fundo', 'cor-superficie'] as const;
 
-/** As quatro que o jogo usa como cor de texto. */
-const TEXT = ['cor-valor', 'cor-rotulo', 'cor-destaque', 'cor-alerta'] as const;
+/**
+ * As cinco que o jogo usa como cor de texto sobre os fundos escuros. A tinta
+ * fica de fora: ela só é escrita sobre o creme, e tem teste próprio.
+ */
+const TEXT = ['cor-valor', 'cor-rotulo', 'cor-destaque', 'cor-alerta', 'cor-comprado'] as const;
 
-/** As três que aparecem como borda, traço ou anel de foco. */
-const NON_TEXT = ['cor-borda', 'cor-destaque', 'cor-alerta'] as const;
+/** As quatro que aparecem como borda, traço ou anel de foco. */
+const NON_TEXT = ['cor-borda', 'cor-destaque', 'cor-alerta', 'cor-comprado'] as const;
 
 /** O que o §5 do GDD exige: AA. */
 const AA_TEXT = 4.5;
@@ -99,9 +104,10 @@ const AA_NON_TEXT = 3;
 const HOVER_ALPHA = 0.12;
 
 /**
- * As cores de desenho: nenhum texto é escrito sobre elas, então não entram nas
- * contas de contraste — mas continuam sendo do tema, e no mesmo formato. As
- * duas do mapa vieram no VIS-03; as oito paradas das listras, no VIS-04.
+ * As cores de desenho: não entram nas contas de contraste de texto — mas
+ * continuam sendo do tema, e no mesmo formato. A exceção é o creme, que desde o
+ * VIS-05 leva a tinta do fato real, com teste próprio acima. As duas do mapa
+ * vieram no VIS-03; as oito paradas das listras, no VIS-04.
  */
 const DRAWING = [
   'cor-creme',
@@ -110,7 +116,7 @@ const DRAWING = [
 ] as const;
 
 describe('a paleta', () => {
-  it('define as 7 cores da interface e as 10 de desenho, todas em #rrggbb', () => {
+  it('define as 9 cores da interface e as 10 de desenho, todas em #rrggbb', () => {
     for (const name of [...PALETTE, ...DRAWING]) {
       expect(token(name), name).toMatch(/^#[0-9a-f]{6}$/);
     }
@@ -126,6 +132,17 @@ describe('a paleta', () => {
         );
       }
     }
+  });
+
+  /**
+   * O fato real da árvore (VIS-05) é o único texto escrito sobre um fundo
+   * claro: a tinta sobre o creme.
+   */
+  it('passa o AA da tinta sobre o creme', () => {
+    const razao = contrast(token('cor-tinta'), token('cor-creme'));
+    expect(razao, `cor-tinta sobre cor-creme: ${razao.toFixed(2)}:1`).toBeGreaterThanOrEqual(
+      AA_TEXT,
+    );
   });
 
   it('passa o mínimo de 3:1 em borda, traço e anel de foco', () => {
@@ -257,6 +274,7 @@ describe('as folhas dos módulos', () => {
     'session.css',
     'stripes.css',
     'tree.css',
+    'tree-panel.css',
   ];
 
   /**

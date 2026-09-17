@@ -96,13 +96,29 @@ export const ui = {
   /**
    * O botão da árvore, na barra de baixo (VIS-04).
    *
-   * Por enquanto ele só leva até a árvore, que continua embaixo do mapa. O
-   * rótulo diz o que o botão mostra, e o PAC ao lado é o saldo para gastar.
+   * Desde o VIS-05 ele abre o painel da árvore por cima da partida. O rótulo
+   * diz o que o botão mostra, e o PAC ao lado é o saldo para gastar.
    */
   treeButton: {
     label: 'Árvore de habilidades',
-    hint: 'Leva até a árvore de habilidades, embaixo do mapa. O número é o PAC que você tem para gastar.',
+    hint: 'Abre a árvore de habilidades por cima da partida. O número é o PAC que você tem para gastar.',
     points: (points: string) => `${points} PAC`,
+  },
+
+  /**
+   * O painel da árvore (VIS-05): o cabeçalho, o saldo e o botão de fechar.
+   *
+   * O tempo **não** para com o painel aberto. As pausas automáticas do plano
+   * são duas — o evento crítico e o ramo novo —, e a dica do botão de fechar
+   * lembra que as teclas do tempo continuam valendo.
+   */
+  treePanel: {
+    title: 'Árvore de habilidades',
+    balance: 'PAC disponível',
+    balanceHint: 'O PAC que você tem para gastar agora. Ele entra a cada mês.',
+    close: 'Fechar',
+    closeHint:
+      'Fecha a árvore e volta ao mapa. Atalho: Esc. O tempo continua correndo; a barra de espaço pausa.',
   },
 
   /**
@@ -120,7 +136,9 @@ export const ui = {
   skipLink: {
     label: 'Atalhos de navegação',
     toContent: 'Pular para o conteúdo',
-    toTree: 'Pular para a árvore de habilidades',
+    // Desde o VIS-05 a árvore mora num painel fechado, então o atalho a abre
+    // em vez de rolar até ela.
+    toTree: 'Abrir a árvore de habilidades',
   },
 
   // A tela de título (P5-06).
@@ -328,6 +346,20 @@ export const ui = {
     cost: (points: string) => `${points} PAC`,
     missingPoints: (points: string) => `Faltam ${points} PAC`,
     requires: (names: readonly string[]) => `Exige: ${listOfNames.format(names)}`,
+
+    // O detalhe do nó escolhido (VIS-05), ao lado dos losangos.
+    detail: {
+      label: 'Nó escolhido',
+      /** A dica do nó no losango: clicar escolhe, e quem compra é o detalhe. */
+      chooseHint: 'Mostra este nó no detalhe, ao lado. A compra é feita por lá.',
+      state: (status: string, cost: string) => `${status} · ${cost}`,
+      fact: 'No mundo real',
+      buy: (cost: string) => `Comprar por ${cost}`,
+      buyHint: 'Compra o nó escolhido. O PAC sai na hora, e o efeito vale até o fim da partida.',
+      bought: 'Já comprado',
+      /** O botão depois do fim da partida: a árvore vira histórico. */
+      finished: 'A partida acabou',
+    },
   },
 
   // Os cartões de evento climático (P7-02), com a regra do docs/GDD.md §2.5.
@@ -571,13 +603,13 @@ export const ui = {
     // Um passo por assunto, e cada frase diz **o que fazer**, não o que sentir.
     steps: {
       time: 'O tempo corre sozinho, um mês por vez, até 2100. A barra de espaço pausa; as teclas 1, 2 e 4 mudam a velocidade.',
-      // Os dois passos abaixo aparecem na barra de baixo desde o VIS-04, e não
-      // mais na seção de que falam: a árvore e a contenção ficam fora da tela,
-      // embaixo do mapa. Por isso a frase diz como chegar até elas.
-      tree: 'Você já tem PAC para comprar. O botão da árvore, nesta barra, leva até os nós — cada um libera os que vêm depois dele.',
+      // Os dois passos abaixo aparecem na barra de baixo, e não na seção de que
+      // falam: desde o VIS-05 a árvore e a contenção moram num painel fechado.
+      // Por isso a frase diz como chegar até elas.
+      tree: 'Você já tem PAC para comprar. O botão da árvore, nesta barra, abre os nós — cada um libera os que vêm abaixo dele.',
       event: 'Caiu um evento. O cartão diz o que aconteceu, e o mapa marca a região onde doeu.',
       inertia:
-        'A Inércia agiu. Ela cresce quanto mais você corta, e o botão de contenção, logo acima da árvore, a segura por um tempo.',
+        'A Inércia agiu. Ela cresce quanto mais você corta, e a contenção, no painel da árvore, a segura por um tempo.',
     },
 
     // O Modo Feira: duas frases e um botão. Quem está de pé num estande não lê

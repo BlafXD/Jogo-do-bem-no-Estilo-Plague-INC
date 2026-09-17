@@ -3,7 +3,13 @@ import { unlockSkill } from '../src/engine/skills';
 import { createInitialState, SKILL_BRANCHES, skills, type GameState } from '../src/engine/state';
 import { ui } from '../src/data/i18n';
 import { hudView } from '../src/ui/hud';
-import { treeButtonView, treeView, type SkillNodeView, type TreeView } from '../src/ui/tree';
+import {
+  skillDetailView,
+  treeButtonView,
+  treeView,
+  type SkillNodeView,
+  type TreeView,
+} from '../src/ui/tree';
 
 /**
  * Estes testes cobrem só as views puras, que rodam em node: o `treeView` e, desde
@@ -270,5 +276,92 @@ describe('treeButtonView', () => {
     }
 
     expect(treeButtonView(withPoints(39.9)).points).toContain('39');
+  });
+});
+
+describe('skillDetailView', () => {
+  /**
+   * O detalhe do VIS-05. Ele sai da view da árvore, então herda dela os
+   * estados e as frases de recusa — o que se testa aqui é o que ele acrescenta:
+   * a linha de estado, o texto do botão de compra e quando ele compra.
+   */
+  const detalhe = (state: GameState, id: string, finished = false) => {
+    const view = skillDetailView(treeView(state), id, finished);
+    if (view === null) throw new Error('o detalhe saiu vazio.');
+    return view;
+  };
+
+  it('um nó disponível oferece a compra, com o preço', () => {
+    const view = detalhe(withPoints(40), 'solar');
+
+    expect(view.canBuy).toBe(true);
+    expect(view.buy).toBe(ui.tree.detail.buy('40 PAC'));
+    expect(view.state).toBe('Disponível · 40 PAC');
+    expect(view.branch).toBe(ui.tree.branches.energy);
+  });
+
+  it('sem PAC, o botão diz quanto falta, arredondado para cima', () => {
+    const view = detalhe(withPoints(39.5), 'solar');
+
+    expect(view.canBuy).toBe(false);
+    expect(view.buy).toBe(ui.tree.missingPoints('1'));
+  });
+
+  it('bloqueado, o botão diz o que falta comprar antes', () => {
+    const view = detalhe(withPoints(10_000), 'wind');
+
+    expect(view.canBuy).toBe(false);
+    expect(view.buy).toBe(ui.tree.requires(['Energia solar em escala']));
+  });
+
+  it('comprado, o botão diz que já é seu', () => {
+    const view = detalhe(unlockSkill(withPoints(40), 'solar'), 'solar');
+
+    expect(view.canBuy).toBe(false);
+    expect(view.buy).toBe(ui.tree.detail.bought);
+    expect(view.status).toBe('unlocked');
+  });
+
+  /**
+   * Depois do fim a árvore vira histórico. Um "Comprar" que não compra nada
+   * seria mentira; o que foi comprado continua dizendo que foi.
+   */
+  it('com a partida acabada, nada se compra, e o comprado continua comprado', () => {
+    const state = unlockSkill(withPoints(1000), 'solar');
+
+    expect(detalhe(state, 'wind', true).canBuy).toBe(false);
+    expect(detalhe(state, 'wind', true).buy).toBe(ui.tree.detail.finished);
+    expect(detalhe(state, 'solar', true).buy).toBe(ui.tree.detail.bought);
+  });
+
+  it('o fato real vem sempre, comprado ou não', () => {
+    // Decidido no chat em 2026-09-17: o fato aparece antes da compra.
+    for (const skill of skills) {
+      expect(detalhe(withPoints(0), skill.id).fact, skill.id).toBe(skill.fact);
+    }
+  });
+
+  it('um id que a árvore não conhece cai no primeiro nó, e não em erro', () => {
+    expect(detalhe(withPoints(0), 'nao-existe').id).toBe(skills[0]?.id);
+  });
+
+  it('só compra quando o engine deixaria comprar', () => {
+    // O detalhe não tem regra própria: ele diz "pode" exatamente quando o
+    // `unlockSkill` não devolve o estado intacto.
+    for (const pontos of [0, 40, 70, 200]) {
+      const state = unlockSkill(withPoints(pontos), 'solar');
+      for (const skill of skills) {
+        const compra = unlockSkill(state, skill.id) !== state;
+        expect(detalhe(state, skill.id).canBuy, `${skill.id} com ${pontos}`).toBe(compra);
+      }
+    }
+  });
+});
+
+describe('os pais de cada nó', () => {
+  it('a view traz os pré-requisitos do arquivo, para as ligações do losango', () => {
+    for (const skill of skills) {
+      expect(nodeOf(treeView(withPoints(0)), skill.id).requires).toEqual(skill.requires);
+    }
   });
 });

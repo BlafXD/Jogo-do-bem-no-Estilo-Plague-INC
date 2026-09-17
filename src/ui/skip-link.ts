@@ -18,32 +18,25 @@
 // focável, e o Tab seguinte recomeçaria do topo. Por isso o alvo recebe
 // `tabindex="-1"` — focável por código, nunca por Tab — e o clique chama
 // `focus()` nele.
+//
+// **Desde o VIS-05 a árvore mora num painel fechado**, e o segundo link o abre
+// em vez de rolar até ela. Os 20 nós só entram na ordem de tabulação com o
+// painel aberto, então o bloco que o link contornava deixou de estar no
+// caminho — mas abrir a árvore sem passar pelo mapa continua valendo o atalho.
 
 import { ui } from '../data/i18n';
 
 /**
  * Leva o foco e a rolagem até um bloco da página.
  *
- * Mora aqui porque é o salto do link de pulo, e o botão da árvore na barra de
- * baixo (VIS-04) precisa do mesmo: um salto que rolasse sem levar o foco
- * deixaria o próximo Tab recomeçar do lugar antigo. O alvo precisa ser focável
- * por código — o `mountSkipLink` já deu `tabindex="-1"` aos dois que existem.
- *
- * `view` é o que precisa ficar no topo da tela, quando não é o próprio alvo. O
- * botão da árvore leva o foco para a árvore, mas rola até o bloco que começa na
- * contenção: as duas competem pelo mesmo PAC, e a contenção fica logo acima.
- * O foco vai sem rolar, para as duas rolagens não brigarem.
+ * O alvo precisa ser focável por código — o `mountSkipLink` já deu
+ * `tabindex="-1"` a ele. O foco vai sem rolar e a rolagem vem depois, para as
+ * duas não brigarem: `block: 'start'` põe o topo do bloco na tela.
  */
-export function jumpTo(target: HTMLElement, view: HTMLElement = target): void {
+export function jumpTo(target: HTMLElement): void {
   target.focus({ preventScroll: true });
-  view.scrollIntoView({ block: 'start' });
+  target.scrollIntoView({ block: 'start' });
 }
-
-/** Um destino do salto: o elemento e o rótulo que o anuncia. */
-type Target = {
-  readonly target: HTMLElement;
-  readonly label: string;
-};
 
 /**
  * Monta os links de pulo.
@@ -51,36 +44,44 @@ type Target = {
  * Recebe os alvos em vez de procurá-los por seletor: quem sabe quais são os
  * blocos da página é o `main.ts`, que já os tem em mão, e um `querySelector`
  * aqui criaria uma segunda lista para discordar da primeira.
+ *
+ * `tree` é o id do painel da árvore, e `onOpenTree` o abre — é o mesmo caminho
+ * do botão da barra de baixo, que leva o foco para dentro do painel.
  */
-export function mountSkipLink(root: Element, board: HTMLElement, tree: HTMLElement): void {
+export function mountSkipLink(
+  root: Element,
+  board: HTMLElement,
+  tree: HTMLElement,
+  onOpenTree: () => void,
+): void {
   root.setAttribute('aria-label', ui.skipLink.label);
 
-  const targets: readonly Target[] = [
-    { target: board, label: ui.skipLink.toContent },
-    { target: tree, label: ui.skipLink.toTree },
+  // O tabuleiro precisa ser focável por código para o salto levar o foco junto.
+  // `-1` e não `0`: ele não pode virar uma parada de Tab a mais, senão o link
+  // que economiza paradas passa a criar duas.
+  board.tabIndex = -1;
+
+  const links = [
+    link(board, ui.skipLink.toContent, () => jumpTo(board)),
+    link(tree, ui.skipLink.toTree, onOpenTree),
   ];
 
-  const links = targets.map(({ target, label }) => {
-    // O alvo precisa ser focável por código para o salto levar o foco junto.
-    // `-1` e não `0`: ele não pode virar uma parada de Tab a mais, senão o
-    // link que economiza paradas passa a criar duas.
-    target.tabIndex = -1;
+  root.replaceChildren(...links);
+}
 
-    const link = document.createElement('a');
-    link.className = 'pular__link';
-    link.href = `#${target.id}`;
-    link.textContent = label;
+function link(target: HTMLElement, label: string, onFollow: () => void): HTMLAnchorElement {
+  const anchor = document.createElement('a');
+  anchor.className = 'pular__link';
+  anchor.href = `#${target.id}`;
+  anchor.textContent = label;
 
-    link.addEventListener('click', (event) => {
-      // `preventDefault` porque o pulo é feito aqui inteiro: deixar o navegador
-      // também navegar para o fragmento acrescentaria `#arvore` à URL, e o
-      // `vite.config.ts` registra que o jogo é página única sem rotas.
-      event.preventDefault();
-      jumpTo(target);
-    });
-
-    return link;
+  anchor.addEventListener('click', (event) => {
+    // `preventDefault` porque o pulo é feito aqui inteiro: deixar o navegador
+    // também navegar para o fragmento acrescentaria `#tabuleiro` à URL, e o
+    // `vite.config.ts` registra que o jogo é página única sem rotas.
+    event.preventDefault();
+    onFollow();
   });
 
-  root.replaceChildren(...links);
+  return anchor;
 }

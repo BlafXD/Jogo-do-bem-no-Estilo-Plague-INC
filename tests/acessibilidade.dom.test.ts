@@ -22,16 +22,24 @@ import { jumpTo, mountSkipLink } from '../src/ui/skip-link';
 
 // ---------------------------------------------------------- link de pulo ---
 
-function paginaComPulo(): { nav: HTMLElement; board: HTMLElement; tree: HTMLElement } {
+type PaginaComPulo = {
+  nav: HTMLElement;
+  board: HTMLElement;
+  tree: HTMLElement;
+  abreArvore: ReturnType<typeof vi.fn>;
+};
+
+function paginaComPulo(): PaginaComPulo {
   const nav = document.createElement('nav');
   const board = document.createElement('div');
   board.id = 'tabuleiro';
-  const tree = document.createElement('section');
-  tree.id = 'arvore';
+  const tree = document.createElement('div');
+  tree.id = 'painel-arvore';
+  const abreArvore = vi.fn();
 
   document.body.replaceChildren(nav, board, tree);
-  mountSkipLink(nav, board, tree);
-  return { nav, board, tree };
+  mountSkipLink(nav, board, tree, abreArvore);
+  return { nav, board, tree, abreArvore };
 }
 
 describe('o link de pulo', () => {
@@ -47,37 +55,51 @@ describe('o link de pulo', () => {
 
     expect([...nav.querySelectorAll('a')].map((a) => a.getAttribute('href'))).toEqual([
       '#tabuleiro',
-      '#arvore',
+      '#painel-arvore',
     ]);
   });
 
   /**
    * **O alvo precisa ser focável por código, e só por código.**
    *
-   * `<section>` não recebe foco sozinho, então o salto rolaria a página e
-   * deixaria o foco do teclado para trás — o Tab seguinte recomeçaria do topo.
+   * `<div>` não recebe foco sozinho, então o salto rolaria a página e deixaria
+   * o foco do teclado para trás — o Tab seguinte recomeçaria do topo.
    * `tabindex="-1"` resolve isso; `tabindex="0"` resolveria também e criaria
-   * duas paradas novas, transformando o atalho que economiza Tab em atalho que
+   * uma parada nova, transformando o atalho que economiza Tab em atalho que
    * cobra Tab.
    */
-  it('torna os alvos focáveis por código, sem criar parada de tabulação', () => {
-    const { board, tree } = paginaComPulo();
+  it('torna o tabuleiro focável por código, sem criar parada de tabulação', () => {
+    const { board } = paginaComPulo();
 
     // O **atributo**, e não a propriedade: `element.tabIndex` já devolve -1
     // sozinho num elemento que nunca recebeu `tabindex`, então a asserção pela
     // propriedade passaria mesmo se o `mountSkipLink` não fizesse nada. Foi o
     // que aconteceu na primeira versão deste teste.
     expect(board.getAttribute('tabindex')).toBe('-1');
-    expect(tree.getAttribute('tabindex')).toBe('-1');
   });
 
   it('o clique leva o foco junto, e não só a rolagem', () => {
-    const { nav, tree } = paginaComPulo();
-    const paraArvore = [...nav.querySelectorAll('a')][1];
+    const { nav, board } = paginaComPulo();
 
-    paraArvore?.click();
+    [...nav.querySelectorAll('a')][0]?.click();
 
-    expect(document.activeElement).toBe(tree);
+    expect(document.activeElement).toBe(board);
+  });
+
+  /**
+   * Desde o VIS-05 a árvore mora num painel fechado. O segundo link o abre pelo
+   * mesmo caminho do botão da barra de baixo — quem leva o foco para dentro é
+   * quem abre —, e não rola até ele: rolar até um painel escondido não leva a
+   * lugar nenhum.
+   */
+  it('o link da árvore abre o painel, em vez de rolar até ele', () => {
+    const { nav, tree, abreArvore } = paginaComPulo();
+    const rolagem = vi.spyOn(tree, 'scrollIntoView');
+
+    [...nav.querySelectorAll('a')][1]?.click();
+
+    expect(abreArvore).toHaveBeenCalledTimes(1);
+    expect(rolagem).not.toHaveBeenCalled();
   });
 
   /**
@@ -87,7 +109,7 @@ describe('o link de pulo', () => {
    * `tests/setup-jsdom.ts`, a chamada estourava um `TypeError` dentro do
    * ouvinte de clique — e um erro lançado ali **não derruba o teste**: o Vitest
    * o recolhe como *unhandled error* e a suíte termina verde, com o aviso num
-   * rodapé fácil de não ler. Foi assim entre o P8-04 e agora.
+   * rodapé fácil de não ler. Foi assim entre o P8-04 e o VIS-04.
    *
    * O `vi.spyOn` fecha essa porta pelo lado que importa: ele **exige** que o
    * método exista. Se o dublê sumir do setup, este teste falha na hora, com
@@ -99,56 +121,34 @@ describe('o link de pulo', () => {
    * precisa ler para saber onde caiu.
    */
   it('rola o alvo até o topo, além de focá-lo', () => {
-    const { nav, tree } = paginaComPulo();
-    const rolagem = vi.spyOn(tree, 'scrollIntoView');
+    const { nav, board } = paginaComPulo();
+    const rolagem = vi.spyOn(board, 'scrollIntoView');
 
-    [...nav.querySelectorAll('a')][1]?.click();
+    [...nav.querySelectorAll('a')][0]?.click();
 
     expect(rolagem).toHaveBeenCalledWith({ block: 'start' });
   });
 
-  /**
-   * O botão da árvore na barra de baixo (VIS-04) usa o mesmo salto. Se um dia
-   * o salto deixar de levar o foco, os dois caminhos quebram juntos — e este
-   * teste diz qual das duas metades sumiu.
-   */
-  it('o salto compartilhado leva o foco e rola até o topo do alvo', () => {
-    const { tree } = paginaComPulo();
-    const rolagem = vi.spyOn(tree, 'scrollIntoView');
+  it('o salto leva o foco e rola até o topo do alvo', () => {
+    const { board } = paginaComPulo();
+    const rolagem = vi.spyOn(board, 'scrollIntoView');
 
-    jumpTo(tree);
+    jumpTo(board);
 
-    expect(document.activeElement).toBe(tree);
+    expect(document.activeElement).toBe(board);
     expect(rolagem).toHaveBeenCalledWith({ block: 'start' });
-  });
-
-  /**
-   * O botão da árvore foca a árvore, mas rola até o bloco que começa na
-   * contenção — as duas disputam o mesmo PAC. Quem rola é o bloco, e só ele: a
-   * árvore recebe o foco sem puxar a tela para si.
-   */
-  it('pode rolar até um bloco maior do que o alvo do foco', () => {
-    const { tree } = paginaComPulo();
-    const bloco = document.createElement('div');
-    tree.before(bloco);
-    const rolaBloco = vi.spyOn(bloco, 'scrollIntoView');
-    const rolaArvore = vi.spyOn(tree, 'scrollIntoView');
-
-    jumpTo(tree, bloco);
-
-    expect(document.activeElement).toBe(tree);
-    expect(rolaBloco).toHaveBeenCalledWith({ block: 'start' });
-    expect(rolaArvore).not.toHaveBeenCalled();
   });
 
   it('não deixa a URL virar rota — o jogo é página única', () => {
-    const { nav } = paginaComPulo();
-    const link = nav.querySelector('a');
+    for (const indice of [0, 1]) {
+      const { nav } = paginaComPulo();
+      const link = [...nav.querySelectorAll('a')][indice];
 
-    const evento = new MouseEvent('click', { bubbles: true, cancelable: true });
-    link?.dispatchEvent(evento);
+      const evento = new MouseEvent('click', { bubbles: true, cancelable: true });
+      link?.dispatchEvent(evento);
 
-    expect(evento.defaultPrevented).toBe(true);
+      expect(evento.defaultPrevented, `link ${indice}`).toBe(true);
+    }
   });
 });
 

@@ -1,0 +1,196 @@
+/* O painel da árvore (VIS-05).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar
+   aqui. O contraste de cada cor está na tabela do theme.css.
+
+   **O painel cobre a janela inteira**, com o mundo escurecido por trás. Na tela
+   cheia ele tem a altura da janela: o cabeçalho em cima, os losangos à
+   esquerda e a coluna do detalhe e da contenção à direita, cada um rolando por
+   dentro. Em tela estreita, baixa ou com zoom alto, tudo vira uma coluna, e
+   quem rola é o painel. */
+
+.tree-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  /* Em coluna, a janela tem a altura do conteúdo, e quem rola é o fundo. */
+  align-items: start;
+  padding: clamp(0.5rem, 1.5vw, 1rem);
+  overflow: auto;
+  /* O fundo escurecido. O texto nunca fica sobre ele: fica no painel, que é
+     opaco. */
+  background: color-mix(in srgb, var(--cor-fundo, #0f1c17) 80%, transparent);
+}
+
+.tree-panel[hidden] {
+  display: none;
+}
+
+@supports (backdrop-filter: blur(3px)) {
+  .tree-panel {
+    backdrop-filter: blur(3px);
+  }
+}
+
+.tree-panel__dialog {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  overflow: hidden;
+  border: 1px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-fundo, #0f1c17);
+  box-shadow: 0 1.5rem 3.5rem color-mix(in srgb, var(--cor-fundo, #0f1c17) 80%, transparent);
+}
+
+/* Sem animação de entrada com movimento reduzido (§9 da direção de arte). */
+@media (prefers-reduced-motion: no-preference) {
+  .tree-panel__dialog {
+    animation: tree-panel-entra 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes tree-panel-entra {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------- o cabeçalho --- */
+
+.tree-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
+  background: var(--cor-superficie, #182c24);
+}
+
+.tree-panel__title {
+  margin: 0;
+  color: var(--cor-valor, #f2f7f4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-stretch: 87.5%;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tree-panel__intro {
+  flex: 1 1 20rem;
+  max-width: 44rem;
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+.tree-panel__balance {
+  margin: 0 0 0 auto;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.tree-panel__balance-label {
+  display: block;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tree-panel__points {
+  display: block;
+  color: var(--cor-destaque, #7fd1a8);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* O botão secundário da direção de arte: borda de fio, sem preenchimento. */
+.tree-panel__close {
+  min-height: var(--alvo-toque, 2.75rem);
+  padding: 0.4rem 1rem;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.tree-panel__close:hover {
+  background: var(--cor-superficie, #182c24);
+  border-color: var(--cor-destaque, #7fd1a8);
+}
+
+.tree-panel__close:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------ os ramos e a coluna --- */
+
+.tree-panel .tree {
+  padding: 0.9rem 1rem 1.1rem;
+}
+
+.tree-panel__side {
+  display: grid;
+  align-content: start;
+  border-top: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
+  background: var(--cor-superficie, #182c24);
+}
+
+/* ------------------------------------------------------- tela cheia --- */
+
+/* Os mesmos limites da tela cheia do layout.css. */
+@media (min-width: 77.5rem) and (min-height: 40rem) {
+  .tree-panel {
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .tree-panel__dialog {
+    grid-template-columns: minmax(0, 1fr) clamp(18rem, 24vw, 23rem);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+  }
+
+  .tree-panel__head {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+  }
+
+  .tree-panel .tree {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: auto;
+  }
+
+  /* O detalhe fica com a altura que sobra, e a contenção, embaixo dele. */
+  .tree-panel__side {
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-content: stretch;
+    min-block-size: 0;
+    border-top: 0;
+    border-left: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
+  }
+}

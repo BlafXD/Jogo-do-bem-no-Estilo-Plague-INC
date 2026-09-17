@@ -310,8 +310,8 @@ como antes. Onde a tela saiu diferente da tabela acima:
     `P8-04`, embaixo dos botões.
   - O som ficou ao lado das velocidades, e não na ponta direita, porque é montado pelo
     `controls.ts`, junto com a pausa.
-  - O botão da árvore leva até ela, embaixo do mundo, rolando o meio da tela; o painel é do
-    `VIS-05`.
+  - O botão da árvore levava até ela, embaixo do mundo, rolando o meio da tela. Desde o
+    `VIS-05`, ele abre o painel.
 - **Coluna.** A região e o boletim, com os cartões no fundo da página. Os cartões ainda não têm
   retrato (`VIS-07`).
 - **Evento crítico.** Continua como cartão no boletim, com o aviso de tempo parado; o cartão grande
@@ -319,6 +319,32 @@ como antes. Onde a tela saiu diferente da tabela acima:
 - **Tutorial.** O balão do tempo, o da árvore e o da contenção aparecem logo acima da barra de
   baixo, por cima do mundo — a árvore e a contenção ficam fora da tela. O do evento fica no
   boletim, e o painel do Modo Feira fica por cima do mapa.
+
+### Como ficou no `VIS-05`
+
+A árvore e a contenção saíram de baixo do mundo e foram para um painel por cima da partida
+(`src/ui/tree-panel.ts`). Ele abre pelo botão da barra de baixo ou pelo link de pulo, e fecha pelo
+botão "Fechar", pelo clique no fundo escurecido ou pelo `Esc`. O foco volta para quem abriu. O
+resto da página fica `inert` e o Tab não sai do painel. **O tempo continua correndo**, decisão de
+2026-09-17: as teclas `Espaço`, `1`, `2` e `4` valem com ele aberto. Onde a tela saiu diferente
+da tabela acima:
+
+- **Escolher e comprar são dois gestos.** Clicar num nó o põe no detalhe, e quem compra é o botão
+  do detalhe. Quando a compra não sai, o botão diz o porquê ("Faltam 12 PAC", "Exige: …"); depois
+  do fim da partida, diz "A partida acabou".
+- **O fato real aparece antes da compra**, no cartão creme (decisão de 2026-09-17). Até o
+  `VIS-04` ele só aparecia depois de comprar.
+- **O losango só aparece quando o ramo tem 16rem.** Com os cinco ramos lado a lado, isso só
+  acontece em telas de uns 1900 px. Abaixo disso, os dois nós do meio ficavam com uns 60 px de
+  texto e partiam "Armazenamento" no meio. Nesses casos os quatro nós ficam empilhados, e as
+  ligações descem retas por trás dos cartões. Quem decide é uma *container query* no ramo.
+- **Duas cores entraram no tema:** a folha (`--cor-comprado`), no nó comprado e na ligação entre
+  dois comprados, e a tinta (`--cor-tinta`), no texto do cartão creme.
+- **O nó escolhido** ganha um aro creme; o foco do teclado é o anel de brasa.
+- **A contenção** tem o visual da `P7-03`, embaixo do detalhe; o ícone próprio dela é do `VIS-09`.
+- **O cabeçalho** tem o título, a frase de introdução, o saldo de PAC e o botão de fechar. O traço
+  de circuito no canto ainda não entrou.
+- **Em tela estreita**, o painel vira uma coluna e rola inteiro.
 
 ---
 

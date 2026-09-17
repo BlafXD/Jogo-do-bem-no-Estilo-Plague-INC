@@ -59,7 +59,7 @@ import {
   mountSession,
   renderSession,
 } from './ui/session';
-import { jumpTo, mountSkipLink } from './ui/skip-link';
+import { mountSkipLink } from './ui/skip-link';
 import { clearGame, loadGame, loadMuted, saveGame, saveMuted } from './ui/storage';
 import { mountStripes, renderStripes, rulerMark, stripesView } from './ui/stripes';
 import {
@@ -85,13 +85,19 @@ import {
   type TutorialCues,
 } from './ui/tutorial';
 import {
+  drawTreeLinks,
+  focusChosenNode,
+  mountSkillDetail,
   mountTree,
   mountTreeButton,
+  renderSkillDetail,
   renderTree,
   renderTreeButton,
+  skillDetailView,
   treeButtonView,
   treeView,
 } from './ui/tree';
+import { focusClose, mountTreePanel, renderTreePanel, treePanelView } from './ui/tree-panel';
 // O tema vem primeiro por leitura, não por necessidade: custom property é
 // resolvida no valor computado, então um `:root` declarado por último valeria
 // igual. Está no topo porque é o arquivo que manda nos outros, e quem abrir esta
@@ -112,6 +118,7 @@ import './ui/stripes.css';
 import './ui/timeline-chart.css';
 import './ui/title.css';
 import './ui/tree.css';
+import './ui/tree-panel.css';
 import './ui/tutorial.css';
 
 /**
@@ -156,13 +163,15 @@ const tabuleiro = required<HTMLElement>('#tabuleiro');
 const app = required<HTMLElement>('#app');
 const pular = required<HTMLElement>('#pular');
 // As peças do VIS-04: o invólucro da tela cheia, o palco do mapa, e a barra de
-// baixo com as listras e o botão da árvore.
+// baixo com as listras e o botão da árvore. E as do VIS-05: o painel da árvore
+// e o detalhe do nó escolhido.
 const telaPartida = required<HTMLElement>('#tela-partida');
 const palco = required<HTMLElement>('.tabuleiro__palco');
 const base = required<HTMLElement>('#base');
 const listras = required<HTMLElement>('#listras');
 const atalhoArvore = required<HTMLElement>('#atalho-arvore');
-const acoes = required<HTMLElement>('.tabuleiro__acoes');
+const painelArvore = required<HTMLElement>('#painel-arvore');
+const detalheNo = required<HTMLElement>('#detalhe-no');
 
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
@@ -241,6 +250,24 @@ let title = createTitle();
  */
 let tutorial = createTutorial('continue');
 
+/**
+ * O painel da árvore está aberto (VIS-05), e o nó que está no detalhe.
+ *
+ * Os dois são estado **da tela**, como a região escolhida: não entram no save
+ * e não mudam o clima. O nó escolhido sobrevive a fechar e abrir o painel —
+ * quem fecha para olhar o mapa volta para o nó que estava lendo.
+ *
+ * Começa na raiz do primeiro ramo, que é o nó que a partida compra primeiro.
+ */
+let treeOpen = false;
+let chosenSkill: SkillId = treeView(state)[0]?.nodes[0]?.id ?? '';
+
+/** Quem tinha o foco quando o painel abriu. É para lá que ele volta. */
+let treeOpener: HTMLElement | null = null;
+
+/** Os blocos que ficam atrás do painel, e que ele desliga enquanto aberto. */
+const behindTreePanel: readonly HTMLElement[] = [pular, topo, app, base];
+
 const layout: ScreenLayout = {
   title: telaTitulo,
   chrome: topo,
@@ -255,10 +282,10 @@ const layout: ScreenLayout = {
  *
  * **Três dos quatro passos pousam na barra de baixo desde o VIS-04.** O do
  * tempo fala dos controles, que estão nela. Os da árvore e da contenção falam de
- * duas seções que, com a partida em tela cheia, ficam embaixo do mapa, fora da
- * tela — um balão pousado nelas não seria visto por ninguém. Na barra, ele fica
- * ao lado do botão que leva até lá, e a frase do i18n diz o caminho. O do
- * evento continua no boletim, que está na tela.
+ * duas seções que, desde o VIS-05, moram num painel fechado — um balão pousado
+ * nelas não seria visto por ninguém. Na barra, ele fica ao lado do botão que
+ * abre o painel, e a frase do i18n diz o caminho. O do evento continua no
+ * boletim, que está na tela.
  */
 const tutorialAnchors: Readonly<Record<TutorialAnchor, Element>> = {
   controls: base,
@@ -547,7 +574,8 @@ function handleReview(): void {
  * tela de fim aparecer um mês depois do fim.
  */
 function renderGame(): void {
-  const screen = currentScreen(screens, isFinished(state));
+  const finished = isFinished(state);
+  const screen = currentScreen(screens, finished);
 
   renderScreens(layout, screen);
   renderTitle(telaTitulo, titleView(savedYear, title));
@@ -555,17 +583,15 @@ function renderGame(): void {
   renderHud(hud, hudView(state), rulerMark(state.temperature));
   renderStripes(listras, stripesView(state));
   renderSelection();
-  renderTree(tree, treeView(state));
-  renderTreeButton(atalhoArvore, treeButtonView(state));
+  renderTreePanelAll(screen === 'game', finished);
   // O botão da árvore sai junto com o tabuleiro: na tela de fim a árvore está
-  // escondida, e um salto até ela levaria o foco para o nada.
+  // escondida, e abrir o painel ali não teria o que mostrar.
   atalhoArvore.hidden = screen !== 'game';
   // No título o cartão de resultado não entra, nem quando o save é de uma
   // partida encerrada: quem senta na frente do computador da feira vê o jogo
   // se apresentar, e não o fim da partida de outra pessoa.
   renderOutcome(resultado, screen === 'title' ? null : outcomeView(state), screens.reviewing);
   renderEvents();
-  renderContain(contencao, containView(state));
 
   // O tutorial depois das seções em que ele pousa: o balão é prependido no
   // container, e um render que o pusesse antes teria o `replaceChildren` do
@@ -579,10 +605,77 @@ function renderGame(): void {
     tutorialAnchors,
     screen === 'game' ? tutorialView(tutorial, tutorialCues()) : null,
   );
+}
+
+/**
+ * O painel da árvore e tudo que mora nele: os losangos, o detalhe, a contenção,
+ * o saldo e o botão que o abre (VIS-05).
+ *
+ * A árvore é classificada uma vez só, e o detalhe sai dela.
+ */
+function renderTreePanelAll(inGame: boolean, finished: boolean): void {
+  // Fora da partida o painel fecha de verdade, e não só some: a partida que
+  // acaba com a árvore aberta mostra o resultado, e o "rever o mundo" volta ao
+  // mapa, e não à árvore.
+  if (!inGame) treeOpen = false;
+
+  const view = treeView(state);
+  const panel = treePanelView(state, treeOpen, inGame);
+
+  renderTree(tree, view, chosenSkill);
+  renderSkillDetail(detalheNo, skillDetailView(view, chosenSkill, finished));
+  renderContain(contencao, containView(state));
+  renderTreeButton(atalhoArvore, treeButtonView(state), panel.open);
+  renderTreePanel(painelArvore, panel, behindTreePanel);
+
   // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só
   // existe para o CSS: quem de fato recusa é o `handleUnlock` e o
   // `handleContain`.
-  app.dataset.finished = String(isFinished(state));
+  painelArvore.dataset.finished = String(finished);
+}
+
+/**
+ * Abrir o painel da árvore — pelo botão da barra de baixo ou pelo link de pulo.
+ *
+ * O foco entra no nó que está no detalhe: é por ele que quem navega por
+ * teclado começa a ler. As ligações são desenhadas na hora, com o painel já
+ * medido; depois disso, quem as refaz é o `ResizeObserver` do tree.ts.
+ */
+function openTree(): void {
+  if (treeOpen || currentScreen(screens, isFinished(state)) !== 'game') return;
+
+  treeOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  treeOpen = true;
+  renderGame();
+  drawTreeLinks(tree);
+  if (!focusChosenNode(tree)) focusClose(painelArvore);
+}
+
+/**
+ * Fechar o painel — pelo botão, pelo fundo escurecido ou pelo `Esc`.
+ *
+ * O foco volta para quem abriu. Se quem abriu não está mais na tela (o link de
+ * pulo, por exemplo, que some sem foco), ele vai para o botão da barra, que é
+ * o caminho de volta ao painel.
+ */
+function closeTree(): void {
+  if (!treeOpen) return;
+
+  treeOpen = false;
+  renderGame();
+
+  const back =
+    treeOpener !== null && treeOpener.isConnected && treeOpener !== document.body
+      ? treeOpener
+      : atalhoArvore.querySelector('button');
+  treeOpener = null;
+  back?.focus();
+}
+
+/** Escolher um nó no losango: ele vai para o detalhe, e nada é comprado. */
+function handleChooseSkill(id: SkillId): void {
+  chosenSkill = id;
+  renderTreePanelAll(currentScreen(screens, isFinished(state)) === 'game', isFinished(state));
 }
 
 function renderSessionBar(): void {
@@ -639,14 +732,15 @@ function handleReset(): void {
  * A UI não pergunta se pode: manda comprar e olha o que voltou. Quando a compra
  * é recusada, o `unlockSkill` devolve **o mesmo objeto** de estado, e é isso que
  * a comparação por identidade detecta — sem redesenhar nada. É o que permite ao
- * cartão bloqueado continuar clicável e focável (`aria-disabled`, não
- * `disabled`), sem que a tela precise repetir a regra do engine.
+ * botão de compra do detalhe continuar clicável e focável com um nó bloqueado
+ * (`aria-disabled`, não `disabled`), sem que a tela precise repetir a regra do
+ * engine.
  */
 function handleUnlock(id: SkillId): void {
   // Partida acabada não compra mais nada. A trava mora aqui, e não no
   // `unlockSkill`, porque o engine não deve precisar do `outcome.ts` para
   // responder uma pergunta de compra — o §2.7 fala de quando a partida termina,
-  // não de quanto custa um nó. Com a árvore apagada e o cartão na tela, o
+  // não de quanto custa um nó. No "rever o mundo", o painel ainda abre, e o
   // caminho até este clique é curto: basta a tecla Tab.
   if (isFinished(state)) return;
 
@@ -690,15 +784,13 @@ function handleContain(): void {
 // Antes de tudo: ele é a primeira parada de tabulação da página, e a ordem em
 // que se monta não muda isso (a ordem é a do DOM), mas a leitura deste bloco
 // fica honesta com o que a pessoa encontra primeiro.
-mountSkipLink(pular, tabuleiro, tree);
+mountSkipLink(pular, tabuleiro, painelArvore, openTree);
 mountHud(hud);
 mountControls(controls, handleCommand, handleToggleSound);
 mountStripes(listras);
-// O botão da barra de baixo leva à árvore pelo mesmo salto do link de pulo: o
-// foco vai junto com a rolagem. O `mountSkipLink`, logo acima, é quem torna a
-// árvore focável por código. A rolagem para no bloco da contenção, que fica
-// logo acima da árvore e disputa o mesmo PAC.
-mountTreeButton(atalhoArvore, () => jumpTo(tree, acoes));
+// O botão da barra de baixo abre o painel da árvore (VIS-05), pelo mesmo
+// caminho do link de pulo.
+mountTreeButton(atalhoArvore, painelArvore.id, openTree);
 mountEventCards(eventos);
 mountMap(mapa, mapView(state, selectedRegion), handleSelect);
 mountRegionPanel(regiao, handleCloseRegion);
@@ -786,7 +878,10 @@ function handleDismissPanel(): void {
 
 const tutorialPanel = mountTutorialPanel(handleDismissPanel);
 
-mountTree(tree, treeView(state), handleUnlock);
+mountTreePanel(painelArvore, closeTree);
+mountTree(tree, treeView(state), chosenSkill, handleChooseSkill);
+// A compra sai do detalhe, e não do losango: clicar num nó só o escolhe.
+mountSkillDetail(detalheNo, handleUnlock);
 
 renderGame();
 renderControls(controls, control, sound.muted);
@@ -798,6 +893,16 @@ document.addEventListener('keydown', (event) => {
   // desiste. O §5 do GDD diz que Esc sempre fecha, e a confirmação de reinício
   // é a primeira coisa da tela que precisa fechar.
   if (event.key === 'Escape') {
+    // O painel da árvore vem antes de tudo (VIS-05): ele cobre a página
+    // inteira, e o que estiver por baixo dele — a confirmação de reinício
+    // inclusive — está fora da vista e fora do alcance do teclado. Fechar algo
+    // escondido e deixar o painel no ar seria o Esc não fazer nada visível.
+    if (treeOpen) {
+      event.preventDefault();
+      closeTree();
+      return;
+    }
+
     // A confirmação de reinício vem primeiro, e tem que vir: ela é a única coisa
     // da tela que segura uma decisão destrutiva esperando resposta. Fechar o
     // painel de detalhe por baixo dela deixaria a pergunta no ar.

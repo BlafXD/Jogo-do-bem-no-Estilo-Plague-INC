@@ -28,6 +28,157 @@ Regras curtas:
 
 ---
 
+## 2026-09-17 — A árvore e a contenção abrem num painel por cima da partida
+
+- **Parte / tarefa:** `VIS-05` ✔
+- **O que mudou:**
+  - `index.html` — a contenção e a árvore saíram de baixo do mundo e foram para o
+    `#painel-arvore`, depois da barra de baixo. Dentro dele ficam o cabeçalho, os losangos e a
+    coluna com o detalhe do nó e a contenção.
+  - `src/ui/tree-panel.ts` e `src/ui/tree-panel.css` **criados**:
+    - o cabeçalho (título, introdução, saldo de PAC e "Fechar");
+    - os três jeitos de fechar;
+    - o `inert` no resto da página e o Tab preso dentro do painel.
+  - `src/ui/tree.ts`:
+    - cada ramo virou um losango, com as ligações num `<svg>` por baixo dos cartões;
+    - o cartão agora só mostra nome, custo e estado;
+    - o detalhe do nó escolhido é novo (`skillDetailView`, `mountSkillDetail` e
+      `renderSkillDetail`);
+    - o botão da barra ganhou `aria-haspopup`, `aria-controls` e `aria-expanded`.
+  - `src/ui/tree.css` — os losangos, o empilhamento dos ramos estreitos e o detalhe.
+  - `src/ui/skip-link.ts` — o segundo link abre o painel, em vez de rolar até a árvore. O
+    `jumpTo` perdeu o segundo parâmetro, que só o botão da árvore usava.
+  - `src/ui/theme.css` — duas cores novas, com contraste medido:
+    - `--cor-comprado`, a folha: 10,50:1 sobre o fundo;
+    - `--cor-tinta`, o texto sobre o creme: 12,59:1.
+  - `src/ui/contain.css`, `src/ui/outcome.css` e `src/ui/layout.css`:
+    - a contenção ocupa a largura da coluna;
+    - o apagamento depois do fim passou a ser marcado no painel;
+    - saiu o bloco `.tabuleiro__acoes`.
+  - `src/data/i18n.ts`:
+    - os textos novos do painel e do detalhe;
+    - a dica do botão da árvore e o rótulo do link de pulo;
+    - duas frases do tutorial passaram a apontar para o painel.
+  - `src/main.ts` — o estado do painel e o nó escolhido, abrir e fechar, e o `Esc`, que fecha o
+    painel antes de qualquer outra coisa.
+  - Testes:
+    - criado: `tree-panel.dom.test.ts`;
+    - reescritos: `tree.dom.test.ts` e a parte do link de pulo em `acessibilidade.dom.test.ts`;
+    - ampliados: `tree.test.ts` (o detalhe) e `theme.test.ts` (as duas cores e a folha nova).
+
+    Suíte: 797 → **832**.
+  - `docs/DIRECAO-DE-ARTE.md §8` e `PLANO.md`.
+
+### As duas decisões do chat
+
+- **O tempo continua correndo com o painel aberto.** As pausas automáticas do plano são duas, o
+  evento crítico e o ramo novo, e abrir a árvore não é nenhuma delas. `Espaço`, `1`, `2` e `4`
+  continuam valendo, e a dica do "Fechar" lembra disso.
+- **O fato real aparece antes da compra**, no cartão creme, como no protótipo. Até aqui ele só
+  aparecia depois de comprar, e antes disso ficava na dica do nó.
+
+### Escolher e comprar viraram dois gestos
+
+Clicar num nó do losango só o põe no detalhe, e quem compra é o botão de lá. O botão diz o que
+impede a compra ("Faltam 12 PAC", "Exige: Energia solar em escala"), com `aria-disabled`, e não
+`disabled`, para continuar alcançável pelo teclado. Depois do fim, ele diz "A partida acabou".
+
+Com o painel aberto, o foco entra no nó escolhido. Ao fechar, ele volta para quem abriu; se quem
+abriu foi o link de pulo, que some sem foco, o foco vai para o botão da barra.
+
+### O losango não cabe na maioria das telas
+
+A primeira versão punha os cinco losangos lado a lado em qualquer tela cheia. A conferência mostrou
+o problema: em 1536 px cada ramo tem uns 205 px, e os dois nós do meio ficam com uns 60 px de
+texto. "Armazenamento" saiu partido em "Armazenam/ento", e em 1366 px o rótulo "Comprado" vazava do
+cartão.
+
+**O losango agora só aparece quando o ramo tem 16rem**, o que, com os cinco lado a lado, acontece
+em telas de uns 1900 px. Abaixo disso os quatro nós ficam empilhados, na ordem da profundidade, e as
+ligações descem retas por trás dos cartões. Quem decide é uma *container query* no ramo, e não a
+largura da janela. Para isso a linha de cada nó deixou de ser escrita pelo `tree.ts`: a grade põe os
+nós na linha certa sozinha, porque eles chegam em ordem.
+
+Duas correções vieram da mesma conferência:
+- **Um recuo nos dois nós do meio**, na pilha, desenhava um degrau miúdo em cada ligação. Saiu.
+- **O fundo do nó escolhido era o destaque translúcido**, e a linha da espinha aparecia por dentro
+  do cartão. Agora o destaque é pintado sobre o fundo opaco.
+
+### Conferi que os testes reprovam de verdade
+
+- Com a ligação acesa só pelo pai comprado, um teste falhou.
+- Com a compra liberada depois do fim, um falhou.
+- Sem o `inert` no resto da página, um falhou.
+
+Voltei o arquivo nas três vezes. A ligação acesa só pelo **filho** comprado passou, e está certo que
+passe: no jogo um filho só é comprado depois dos pais, então as duas regras dão sempre o mesmo
+resultado.
+
+### Como foi conferido
+
+**No Edge em modo headless**, pelo script de CDP do `VIS-04`, fora do repositório, com um save de
+2047 que tem sete nós comprados e 85 PAC:
+- **Abrir pelo botão com o mouse.** O painel abre e as quatro partes da página ficam `inert`. O
+  foco entra na solar, e o botão diz `aria-expanded="true"`.
+- **Escolher a rede inteligente.** O detalhe mostra "Faltam 55 PAC".
+- **Escolher e comprar a eletrificação das frotas.** O saldo cai de 85 para 15, e a ligação dela
+  acende.
+- **40 Tabs, um a cada três com Shift.** O foco não saiu do painel nenhuma vez.
+- **`Espaço` com o painel aberto** pausa e retoma.
+- **`Esc`** fecha, e o foco volta ao botão. **O clique no fundo** também fecha.
+- **Sete tamanhos:** 1920 × 969, 1366 × 657, 1280 × 720, 1240 × 660, 1239 × 700, 1024 × 700 e
+  390 × 844.
+  - Nenhum cartão transborda e nenhum se sobrepõe a outro.
+  - A página não rola de lado.
+  - Na tela cheia, o painel cabe na janela sem rolar.
+  - Em coluna, o painel rola inteiro.
+- **Uma partida que acaba com o painel aberto** (derrota em 2089). O painel fecha sozinho e a tela
+  de fim aparece. No "rever o mundo", o painel continua fechado; aberto, mostra a árvore apagada e
+  o botão "A partida acabou".
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`, que já eram assim. O
+save de teste foi apagado no fim.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 832 testes
+  npm run dev       # numa partida, clique em "Árvore de habilidades", na barra de baixo
+  ```
+
+  Na tela:
+  - O painel cobre a partida, e o tempo continua correndo.
+  - Clicar num nó o mostra à direita, e o botão de lá compra.
+  - `Esc`, "Fechar" ou um clique fora fecham o painel.
+  - Numa tela de ~1900 px de largura, os ramos viram losangos; abaixo disso, os nós ficam
+    empilhados.
+
+- **Pendente:**
+  - **O losango quase não aparece.** Nas telas comuns (1366, 1536 e 1920 com zoom) os nós ficam
+    empilhados. Os caminhos para o losango caber em mais telas são dois: estreitar a coluna do
+    detalhe ou pôr menos ramos por linha. Os dois são escolha de desenho, e ficam para quando
+    alguém olhar a tela.
+  - **Em 1366 × 657 o detalhe rola por dentro:** a contenção ocupa 222 px e o fato real fica
+    cortado até rolar.
+  - **Depois do fim, os nós continuam dizendo "Disponível"**, só que apagados. Só o botão do
+    detalhe diz que a partida acabou. Já era assim antes (`P6-08`).
+  - **O traço de circuito do cabeçalho** e o ícone da contenção não entraram (`VIS-09`).
+  - **O build da feira não foi aberto por `file://` nesta tarefa.** Ele foi gerado pelo
+    `npm run check`, com o mesmo CSS; a última abertura por `file://` foi a do `VIS-04`.
+  - **Os balões do tutorial** da árvore e da contenção continuam na barra de baixo. Com o painel
+    aberto, eles ficam atrás do fundo escurecido.
+  - **Os avisos do Node 26 no `npm run check`** continuam.
+- **Evidência:**
+  - `docs/evidencias/2026-09-17-vis-05-painel-da-arvore.jpg` — o painel em 1536 × 702, com os nós
+    empilhados;
+  - `docs/evidencias/2026-09-17-vis-05-losangos-1920.jpg` — os cinco losangos em 1920 × 969, com
+    a eletrificação escolhida e comprada;
+  - `docs/evidencias/2026-09-17-vis-05-rever-o-mundo.jpg` — a árvore apagada depois da derrota em
+    2089;
+  - `docs/evidencias/2026-09-17-vis-05-tela-estreita.jpg` — 390 px de largura, em coluna.
+
+---
+
 ## 2026-09-16 — A partida ocupa a tela, e as listras contam a partida
 
 - **Parte / tarefa:** `VIS-04` ✔

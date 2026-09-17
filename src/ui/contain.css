@@ -18,18 +18,20 @@
    derruba o contraste abaixo do AA que o §5 exige. Um botão bloqueado continua
    perfeitamente legível, ele só não é clicável. */
 
+/* No painel da árvore (VIS-05), embaixo do detalhe do nó: a contenção compete
+   com a compra pelo mesmo PAC. */
 .contain {
   display: block;
-  margin-bottom: 1.5rem;
+  padding: 0.9rem 1.1rem 1.1rem;
+  border-top: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
 }
 
 .contain__button {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  /* Não ocupa a largura da tela: ele é uma ação, não uma seção. A medida casa
-     com a coluna da árvore logo abaixo, então os dois se alinham. */
-  width: min(100%, 22rem);
+  /* A largura da coluna do painel, como o botão de compra acima dele. */
+  width: 100%;
   padding: 0.75rem;
   border: 2px dashed var(--cor-borda, #4c8069);
   border-radius: var(--raio, 0.5rem);
@@ -105,6 +107,6 @@
 
 /* Com a partida acabada, conter não faz mais sentido. Mesma pista visual da
    árvore; quem de fato recusa o clique é o main.ts. */
-#app[data-finished='true'] .contain {
+.tree-panel[data-finished='true'] .contain {
   opacity: 0.55;
 }

@@ -81,16 +81,6 @@
               <section id="eventos" class="events" hidden></section>
             </div>
           </div>
-
-          <!-- O que fazer a respeito, embaixo do mundo — até o VIS-05 levar os
-               dois para um painel. A contenção fica logo acima da árvore porque
-               compete com ela: gastar PAC aqui é não comprar um nó neste mês
-               (docs/GDD.md §2.6). Aparece bloqueada desde 2025 de propósito — é
-               ela que ensina que o ramo Sociedade destrava alguma coisa. -->
-          <div class="tabuleiro__acoes">
-            <section id="contencao" class="contain"></section>
-            <section id="arvore" class="tree"></section>
-          </div>
         </div>
       </main>
 
@@ -101,6 +91,28 @@
         <div id="controles" class="ctl"></div>
         <div id="listras" class="stripes"></div>
         <div id="atalho-arvore" class="base__arvore"></div>
+      </div>
+
+      <!-- O painel da árvore (VIS-05): o que fazer a respeito, por cima da
+           partida. Fica fora do meio de propósito — o meio rola e é contêiner
+           de tamanho, e o painel precisa cobrir a janela inteira. Quem o abre é
+           o botão da barra de baixo, e quem o fecha é o botão dele, o clique no
+           fundo ou o Esc (src/ui/tree-panel.ts).
+
+           Os losangos à esquerda; à direita, o detalhe do nó escolhido e, embaixo
+           dele, a contenção. A contenção fica ao lado da compra porque compete
+           com ela: gastar PAC aqui é não comprar um nó neste mês (docs/GDD.md
+           §2.6). Aparece bloqueada desde 2025 de propósito — é ela que ensina que
+           o ramo Sociedade destrava alguma coisa. -->
+      <div id="painel-arvore" class="tree-panel" hidden>
+        <div class="tree-panel__dialog" role="dialog" aria-modal="true">
+          <header class="tree-panel__head" data-tree-panel="head"></header>
+          <section id="arvore" class="tree"></section>
+          <div class="tree-panel__side">
+            <section id="detalhe-no" class="skill-detail"></section>
+            <section id="contencao" class="contain"></section>
+          </div>
+        </div>
       </div>
     </div>
 

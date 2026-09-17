@@ -9,9 +9,8 @@
    - a barra de cima: a marca, os indicadores e a sessão;
    - o meio: o mundo, com o mapa e a coluna da região e do boletim;
    - a barra de baixo: o tempo, as listras e o botão da árvore.
-   As barras ficam paradas, e quem rola é o meio. A árvore e a contenção ainda
-   moram no meio, embaixo do mundo, até o VIS-05 as levar para um painel por
-   cima da partida.
+   As barras ficam paradas, e quem rola é o meio. A árvore e a contenção moram
+   num painel por cima da partida desde o VIS-05 (tree-panel.css).
 
    **Quem decide a tela cheia é o roteador.** Ele escreve a tela no ar em
    `data-screen`, no invólucro: na partida e no fim a moldura tem a altura da
@@ -104,11 +103,6 @@ body {
   background: var(--cor-superficie, #182c24);
 }
 
-/* A contenção e a árvore, embaixo do mundo — até o VIS-05. */
-.tabuleiro__acoes {
-  margin-top: 2rem;
-}
-
 /* ----------------------------------------------------- a barra de baixo --- */
 
 .base {
@@ -177,7 +171,7 @@ body {
     }
 
     /* O mundo tem exatamente a altura do meio: o mapa e a coluna enchem a
-       janela, e a árvore começa logo abaixo, fora da tela. */
+       janela. */
     .tabuleiro__mundo {
       grid-template-columns: minmax(0, 1fr) clamp(19rem, 25vw, 24rem);
       grid-template-rows: minmax(0, 1fr);
@@ -236,12 +230,6 @@ body {
 
     .tabuleiro__lado .events__list {
       overflow-y: auto;
-    }
-
-    .tabuleiro__acoes {
-      margin: 0;
-      padding: 1.5rem clamp(1rem, 2vw, 1.5rem) 2rem;
-      border-top: 1px solid var(--cor-borda, #4c8069);
     }
 
     /* O resultado, quando a partida acabou e o jogador voltou para rever o
