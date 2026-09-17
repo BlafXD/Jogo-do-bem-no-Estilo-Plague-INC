@@ -19,10 +19,10 @@
          espalhá-los por outro arquivo. São três ocorrências, todas neste
          arquivo, e o P1-04 troca as três de uma vez.
 
-         As três telas do P5-06 são estes três blocos: #tela-titulo, o .topo e
-         o #tabuleiro. Quem liga e desliga cada um é o src/ui/screens.ts, pelo
-         atributo hidden — o porquê de cada tela mostrar o que mostra está
-         escrito lá. -->
+         As três telas do P5-06 são feitas destes blocos: #tela-titulo, o .topo,
+         a .base e o #tabuleiro. Quem liga e desliga cada um é o
+         src/ui/screens.ts, pelo atributo hidden — o porquê de cada tela mostrar
+         o que mostra está escrito lá. -->
     <!-- O link de pulo do P8-04. Primeiro elemento do corpo porque precisa ser a
          primeira parada de tabulação da página — é essa posição que faz dele um
          atalho e não mais um item da fila. Fica invisível até receber o foco
@@ -36,51 +36,73 @@
       <h1 class="title__name">Ponto de Virada</h1>
     </section>
 
-    <header class="topo">
-      <h1 class="topo__titulo">Ponto de Virada</h1>
-      <div id="hud" class="hud"></div>
-      <div id="controles" class="ctl"></div>
-      <div id="partida" class="session"></div>
-    </header>
+    <!-- A partida em três faixas (VIS-04): a barra de cima, o meio e a barra de
+         baixo. Em tela larga elas enchem a janela; em tela estreita viram uma
+         coluna só (src/ui/layout.css). O invólucro nunca some — o roteador só
+         escreve nele qual tela está no ar. -->
+    <div id="tela-partida" class="partida">
+      <header class="topo">
+        <h1 class="topo__titulo">Ponto de Virada</h1>
+        <div id="hud" class="hud"></div>
+        <div id="partida" class="session"></div>
+      </header>
 
-    <main id="app" class="conteudo">
-      <!-- O resultado fica FORA do #tabuleiro de propósito: a tela de fim
-           esconde o tabuleiro e mantém o resultado. Quem manda no hidden dele é
-           o renderOutcome, e não o roteador — dois donos do mesmo atributo se
-           apagariam um ao outro, um por quadro (src/ui/screens.ts). -->
-      <section id="resultado" class="outcome"></section>
+      <main id="app" class="conteudo">
+        <!-- O resultado fica FORA do #tabuleiro de propósito: a tela de fim
+             esconde o tabuleiro e mantém o resultado. Quem manda no hidden dele
+             é o renderOutcome, e não o roteador — dois donos do mesmo atributo
+             se apagariam um ao outro, um por quadro (src/ui/screens.ts). -->
+        <section id="resultado" class="outcome"></section>
 
-      <!-- O tabuleiro: tudo que só faz sentido com a partida em curso. É o
-           bloco que a tela de fim desliga inteiro. Existe como invólucro porque
-           o #eventos já tem dono do próprio hidden (o renderEventCards), então
-           o roteador não pode mexer nas seções uma a uma. -->
-      <div id="tabuleiro" class="tabuleiro">
-        <!-- Os eventos ficam acima da árvore e abaixo do resultado: durante a
-           partida o resultado está escondido, então o cartão de evento é a
-           primeira coisa do corpo da página — que é onde precisa estar, já que
-           o tempo pode parar sozinho por causa dele. Quando a partida acaba, o
-           resultado passa na frente. Fica escondido enquanto não cai evento. -->
-        <section id="eventos" class="events" hidden></section>
-        <!-- O mapa fica entre os eventos e as ações, e é essa a ordem de leitura
-           que ele existe para criar: o cartão diz o que aconteceu, o mapa diz
-           onde doeu, e a árvore e a contenção logo abaixo são o que fazer a
-           respeito. Abaixo do evento porque o evento pode parar o relógio;
-           acima da árvore porque olhar o mundo vem antes de agir sobre ele. -->
-        <section id="mapa" class="map"></section>
-        <!-- O detalhe vem colado no mapa, e não numa coluna ao lado: clicar numa
-           região e ler o número dela é um par que precisa caber na mesma tela.
-           Aparece com a frase que ensina o clique desde 2025, pela mesma razão
-           da contenção bloqueada — um painel que só existe depois do primeiro
-           clique não tem como ensinar que o clique existe. -->
-        <section id="regiao" class="region"></section>
-        <!-- A contenção fica logo acima da árvore porque compete com ela: gastar
-           PAC aqui é não comprar um nó neste mês (docs/GDD.md §2.6). Aparece
-           bloqueada desde 2025 de propósito — é ela que ensina que o ramo
-           Sociedade destrava alguma coisa. -->
-        <section id="contencao" class="contain"></section>
-        <section id="arvore" class="tree"></section>
+        <!-- O tabuleiro: tudo que só faz sentido com a partida em curso. É o
+             bloco que a tela de fim desliga inteiro. Existe como invólucro
+             porque o #eventos já tem dono do próprio hidden (o
+             renderEventCards), então o roteador não pode mexer nas seções uma a
+             uma. -->
+        <div id="tabuleiro" class="tabuleiro">
+          <!-- O mundo: o mapa e, ao lado dele, a região escolhida e o boletim.
+               A ordem é a de leitura da tela — o desenho primeiro, depois a
+               coluna, de cima para baixo. -->
+          <div class="tabuleiro__mundo">
+            <div class="tabuleiro__palco">
+              <section id="mapa" class="map"></section>
+            </div>
+            <div class="tabuleiro__lado">
+              <!-- O detalhe vem ao lado do mapa, na mesma altura: clicar numa
+                   região e ler o número dela é um par que precisa caber na
+                   mesma tela. Aparece com a frase que ensina o clique desde
+                   2025, pela mesma razão da contenção bloqueada — um painel que
+                   só existe depois do primeiro clique não tem como ensinar que
+                   o clique existe. -->
+              <section id="regiao" class="region"></section>
+              <!-- O boletim de eventos, embaixo do detalhe. Fica escondido
+                   enquanto não cai evento; quando o tempo para sozinho por
+                   causa de um, o aviso aparece aqui, ao lado do mapa. -->
+              <section id="eventos" class="events" hidden></section>
+            </div>
+          </div>
+
+          <!-- O que fazer a respeito, embaixo do mundo — até o VIS-05 levar os
+               dois para um painel. A contenção fica logo acima da árvore porque
+               compete com ela: gastar PAC aqui é não comprar um nó neste mês
+               (docs/GDD.md §2.6). Aparece bloqueada desde 2025 de propósito — é
+               ela que ensina que o ramo Sociedade destrava alguma coisa. -->
+          <div class="tabuleiro__acoes">
+            <section id="contencao" class="contain"></section>
+            <section id="arvore" class="tree"></section>
+          </div>
+        </div>
+      </main>
+
+      <!-- A barra de baixo: o tempo, as listras da partida e o caminho até a
+           árvore. Vem depois do meio no código porque vem depois dele na tela;
+           os atalhos de teclado do tempo valem de qualquer lugar da página. -->
+      <div id="base" class="base">
+        <div id="controles" class="ctl"></div>
+        <div id="listras" class="stripes"></div>
+        <div id="atalho-arvore" class="base__arvore"></div>
       </div>
-    </main>
+    </div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

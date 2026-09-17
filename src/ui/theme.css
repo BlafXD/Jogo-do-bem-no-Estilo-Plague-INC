@@ -9,7 +9,8 @@
    **A paleta é a da direção de arte aprovada no VIS-01**, aplicada no VIS-02: o
    verde-floresta, o latão e a brasa da ficha dos personagens. O verde-menta que
    vinha do P5-02 saiu; de onde cada cor nova vem, e quais ainda vão entrar com
-   as próximas tarefas, está no docs/DIRECAO-DE-ARTE.md §3.
+   as próximas tarefas, está no docs/DIRECAO-DE-ARTE.md §3. O VIS-03 trouxe as
+   cores do mapa, e o VIS-04 as das listras e a fonte de títulos.
 
    As folhas dos módulos continuam lendo tudo como `var(--nome, reserva)`, com o
    valor de reserva repetido no próprio `var()`. Isso é deliberado e não é
@@ -65,7 +66,13 @@
    fundo opaco.
 
    As duas cores que o VIS-03 trouxe — o creme e o oceano — são de desenho, e
-   nenhum texto é escrito sobre elas.
+   nenhum texto é escrito sobre elas. As oito das listras (VIS-04) também.
+
+   **Três pares aparecem invertidos**, com o fundo escrito sobre uma cor clara:
+   o alerta do mapa sobre a brasa, a velocidade escolhida e o botão da árvore
+   sobre o latão, e o marcador das listras sobre o texto principal. A razão de
+   contraste não depende de qual dos dois é o texto, então os números são os
+   da primeira tabela: 8,95, 11,55 e 15,72.
 
    ---------------------------------------------------------------------------
    O QUE ESTE ARQUIVO NÃO RESOLVE
@@ -83,9 +90,9 @@
   --cor-fundo: #0f1812;
 
   /**
-   * O preenchimento das formas que se destacam do fundo — hoje, as regiões do
-   * mapa. É o musgo do cartão dos personagens, quase igual ao fundo de
-   * propósito: quem desenha o limite é a borda.
+   * O preenchimento do que se destaca do fundo — desde o VIS-04, as duas barras
+   * da partida e a coluna ao lado do mapa. É o musgo do cartão dos personagens,
+   * quase igual ao fundo de propósito: quem desenha o limite é a borda.
    */
   --cor-superficie: #1b2a1f;
 
@@ -125,6 +132,23 @@
   /** O mar atrás do mapa, onde a imagem não chega. */
   --cor-oceano: #0b4c63;
 
+  /*
+   * As oito paradas das listras do aquecimento (VIS-04), da mais fria à que
+   * passa da derrota. Também são cor de desenho: nenhum texto é escrito sobre
+   * elas. A temperatura de cada parada não mora aqui — o src/ui/stripes.ts lê
+   * os tetos das medalhas do próprio engine, e a tabela está no
+   * docs/DIRECAO-DE-ARTE.md §5. A régua sob a temperatura do HUD usa quatro
+   * delas: a 1, a 3, a 5 e a 6.
+   */
+  --cor-listra-0: #1f5c73; /* frio, abaixo da partida */
+  --cor-listra-1: #6e9e8c; /* teto do ouro */
+  --cor-listra-2: #c9c98a;
+  --cor-listra-3: #e7c572; /* teto da prata */
+  --cor-listra-4: #e99a4e;
+  --cor-listra-5: #d9673a; /* teto do bronze */
+  --cor-listra-6: #b23a2e; /* derrota */
+  --cor-listra-7: #6e1c1e; /* além da derrota */
+
   /* ---------------------------------------------------------- derivadas --- */
 
   /*
@@ -145,11 +169,21 @@
   /* --------------------------------------------------------- tipografia --- */
 
   /**
-   * Pilha do sistema: sem download, sem FOUT, e funciona no build offline da
-   * feira (P8-05). Uma fonte própria é entrega do [D-Design] — e aí ela entra
-   * por aqui, com `@font-face` no arquivo dele.
+   * O texto corrido: a Segoe UI da direção de arte (docs/DIRECAO-DE-ARTE.md
+   * §4), com a pilha do sistema de reserva. Nada aqui é baixado: sem FOUT, e o
+   * build offline da feira (P8-05) continua funcionando.
    */
-  --fonte-base: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fonte-base: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+
+  /**
+   * Títulos, números e rótulos em caixa alta (VIS-04): a Bahnschrift, a fonte
+   * de sinalização que vem instalada no Windows 10 e 11. Ela não é baixada nem
+   * entra no pacote do jogo, então não há licença a registrar. Numa máquina
+   * sem ela, entra a próxima condensada da lista — o jogo continua legível, só
+   * fica menos parecido com os prints.
+   */
+  --fonte-display:
+    Bahnschrift, 'DIN Alternate', 'Barlow Condensed', 'Roboto Condensed', 'Arial Narrow', sans-serif;
 
   /**
    * **O piso de legibilidade do §5, não só o tamanho do corpo de texto.**

@@ -72,6 +72,30 @@ describe('a seção some quando não há o que mostrar', () => {
     expect(mount().hidden).toBe(true);
   });
 
+  /**
+   * O boletim divide a coluna com o painel da região desde o VIS-04. O título
+   * escrito é o que o separa do painel, e é o mesmo texto que o leitor de tela
+   * anuncia como nome da seção.
+   */
+  it('tem título escrito, igual ao nome da seção', () => {
+    const root = mount();
+    const titulo = root.querySelector('h2');
+
+    expect(titulo?.textContent).toBe(ui.events.label);
+    expect(root.getAttribute('aria-label')).toBe(ui.events.label);
+    expect(root.firstElementChild).toBe(titulo);
+  });
+
+  it('o título não some quando a lista é reconstruída', () => {
+    const root = mount();
+
+    show(root, eventCardsView(withCards(400, card(moderado.id))));
+    show(root, eventCardsView(withCards(401, card(moderado.id), card(critico.id))));
+
+    expect(root.querySelectorAll('h2')).toHaveLength(1);
+    expect(textOf(root, 'h2')).toBe(ui.events.label);
+  });
+
   it('aparece com um evento em cena e some quando o último vence', () => {
     const root = mount();
 

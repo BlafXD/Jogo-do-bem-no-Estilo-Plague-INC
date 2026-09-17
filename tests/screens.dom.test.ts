@@ -14,8 +14,10 @@ import { SCREENS, renderScreens, type Screen, type ScreenLayout } from '../src/u
 
 function montar(): ScreenLayout & { readonly botao: HTMLButtonElement } {
   const title = document.createElement('section');
+  const frame = document.createElement('div');
   const chrome = document.createElement('header');
   const board = document.createElement('div');
+  const bar = document.createElement('div');
   const skip = document.createElement('nav');
 
   // Um botão dentro da tela de título, para medir a ordem de tabulação. Na
@@ -24,8 +26,11 @@ function montar(): ScreenLayout & { readonly botao: HTMLButtonElement } {
   botao.type = 'button';
   title.append(botao);
 
-  document.body.replaceChildren(skip, title, chrome, board);
-  return { title, chrome, board, skip, botao };
+  // A mesma forma do index.html desde o VIS-04: as três faixas da partida dentro
+  // do invólucro, e o título fora dele.
+  frame.append(chrome, board, bar);
+  document.body.replaceChildren(skip, title, frame);
+  return { title, chrome, bar, board, skip, frame, botao };
 }
 
 /**
@@ -51,6 +56,7 @@ function visiveis(layout: ScreenLayout, screen: Screen): readonly string[] {
     [
       ['title', layout.title],
       ['chrome', layout.chrome],
+      ['bar', layout.bar],
       ['board', layout.board],
       ['skip', layout.skip],
     ] as const
@@ -69,8 +75,8 @@ describe('cada tela mostra o que precisa', () => {
    * contornar as 28 paradas de tabulação do mapa e da árvore, e nas outras duas
    * telas não há bloco nenhum a contornar.
    */
-  it('na partida, o topo, o tabuleiro e o link de pulo', () => {
-    expect(visiveis(montar(), 'game')).toEqual(['chrome', 'board', 'skip']);
+  it('na partida, as duas barras, o tabuleiro e o link de pulo', () => {
+    expect(visiveis(montar(), 'game')).toEqual(['chrome', 'bar', 'board', 'skip']);
   });
 
   /**
@@ -79,9 +85,27 @@ describe('cada tela mostra o que precisa', () => {
    * estão os números que o jogador quer ler quando a partida acaba". A tela de
    * fim esconde o tabuleiro, que não tem mais nada para o jogador fazer, e
    * **mantém** o topo, que é o resumo da partida.
+   *
+   * A barra de baixo fica junto com o topo (VIS-04): as listras da partida
+   * inteira são leitura de fim, e o botão de som continua servindo ali.
    */
-  it('no fim, o topo fica e o tabuleiro sai', () => {
-    expect(visiveis(montar(), 'end')).toEqual(['chrome']);
+  it('no fim, as duas barras ficam e o tabuleiro sai', () => {
+    expect(visiveis(montar(), 'end')).toEqual(['chrome', 'bar']);
+  });
+
+  /**
+   * O invólucro não some nunca: é pelo nome da tela escrito nele que o
+   * layout.css decide montar a tela cheia. Um invólucro da altura da janela no
+   * título seria uma página vazia embaixo do nome do jogo.
+   */
+  it('escreve no invólucro qual tela está no ar', () => {
+    const layout = montar();
+
+    for (const screen of SCREENS) {
+      renderScreens(layout, screen);
+      expect(layout.frame.dataset.screen).toBe(screen);
+      expect(layout.frame.hidden).toBe(false);
+    }
   });
 
   it('nunca deixa a tela de título junto com o resto', () => {

@@ -341,3 +341,52 @@ function write(button: ParentNode, name: Slot, text: string): void {
   target.textContent = text;
   target.hidden = text === '';
 }
+
+// ------------------------------------------------------ o botão da árvore ---
+
+/**
+ * O botão da barra de baixo que leva à árvore (VIS-04).
+ *
+ * Com a partida em tela cheia, a árvore fica embaixo do mapa, fora da tela. Sem
+ * um caminho à vista, quem chega ao estande não descobre que ela existe — e a
+ * árvore é onde o jogo acontece. Por enquanto o botão só leva até ela; o painel
+ * que abre por cima da partida é do VIS-05.
+ */
+export type TreeButtonView = {
+  /** O PAC para gastar, com a unidade. */
+  readonly points: string;
+};
+
+export function treeButtonView(state: GameState): TreeButtonView {
+  // Para baixo, pela regra do hud.ts: o número na tela nunca promete o que a
+  // compra vai negar. Os dois números ficam lado a lado na tela, e o
+  // tests/tree.test.ts trava que eles concordam.
+  return { points: ui.treeButton.points(whole.format(Math.floor(state.actionPoints))) };
+}
+
+/**
+ * Monta o botão uma vez. O nome que o leitor de tela anuncia é o próprio texto:
+ * "Árvore de habilidades 120 PAC".
+ */
+export function mountTreeButton(root: Element, onOpen: () => void): void {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'tree-button';
+  button.title = ui.treeButton.hint;
+
+  const points = span('tree-button__points');
+  points.dataset.treeButton = 'points';
+
+  // O espaço entre os dois é para o nome acessível: dois `<span>` colados
+  // viram "habilidades120" no leitor de tela. Na tela ele não aparece — num
+  // contêiner flex, texto só de espaço não é desenhado, e quem separa é o gap.
+  button.append(span('tree-button__label', ui.treeButton.label), ' ', points);
+  button.addEventListener('click', onOpen);
+  root.replaceChildren(button);
+}
+
+/** Escreve o saldo no botão já montado. */
+export function renderTreeButton(root: ParentNode, view: TreeButtonView): void {
+  const points = root.querySelector<HTMLElement>('[data-tree-button="points"]');
+  if (points !== null && points.textContent !== view.points) points.textContent = view.points;
+}

@@ -99,7 +99,8 @@ export function currentScreen(screens: ScreenState, finished: boolean): Screen {
 // -------------------------------------------------------------------- DOM ---
 
 /**
- * Os três blocos da página que o roteador liga e desliga.
+ * Os blocos da página que o roteador liga e desliga, e o invólucro que ele
+ * marca.
  *
  * Cada um é **dono exclusivo** do próprio `hidden`, e isso é o que torna o
  * roteador seguro. O `#resultado` de propósito não está aqui: quem manda no
@@ -114,9 +115,19 @@ export function currentScreen(screens: ScreenState, finished: boolean): Screen {
 export type ScreenLayout = {
   /** A tela de título inteira. */
   readonly title: HTMLElement;
-  /** O cabeçalho: HUD, controle de tempo e barra da partida. */
+  /** A barra de cima: o HUD e a barra da partida. */
   readonly chrome: HTMLElement;
-  /** O invólucro do tabuleiro: eventos, mapa, painel, contenção e árvore. */
+  /**
+   * A barra de baixo (VIS-04): o controle de tempo, as listras e o botão da
+   * árvore.
+   *
+   * Acompanha a barra de cima, e não o tabuleiro. Até o VIS-04 o controle de
+   * tempo morava no cabeçalho e ficava na tela de fim junto com ele — o botão de
+   * som inclusive, que continua servindo ali. As listras da partida inteira
+   * também são leitura de fim.
+   */
+  readonly bar: HTMLElement;
+  /** O invólucro do tabuleiro: mapa, painel, eventos, contenção e árvore. */
   readonly board: HTMLElement;
   /**
    * Os links de pulo (P8-04).
@@ -127,10 +138,20 @@ export type ScreenLayout = {
    * algum é pior que atalho nenhum — quem o segue perde o foco no vazio.
    */
   readonly skip: HTMLElement;
+  /**
+   * O invólucro das três faixas da partida (VIS-04): a barra de cima, o meio e a
+   * barra de baixo.
+   *
+   * Ele nunca some — só recebe o nome da tela no ar, em `data-screen`. É por
+   * esse nome que o layout.css decide montar a tela cheia: na partida e no fim,
+   * sim; no título, não, porque ali as três faixas estão escondidas e um
+   * invólucro da altura da janela seria uma página vazia embaixo do título.
+   */
+  readonly frame: HTMLElement;
 };
 
 /**
- * Liga e desliga os três blocos.
+ * Liga e desliga os blocos, e diz ao invólucro qual tela está no ar.
  *
  * `hidden` de verdade, e não `display: none` no CSS: o que sai da tela precisa
  * sair junto da ordem de tabulação e da árvore de acessibilidade. Um botão
@@ -140,6 +161,8 @@ export type ScreenLayout = {
 export function renderScreens(layout: ScreenLayout, screen: Screen): void {
   layout.title.hidden = screen !== 'title';
   layout.chrome.hidden = screen === 'title';
+  layout.bar.hidden = screen === 'title';
   layout.board.hidden = screen !== 'game';
   layout.skip.hidden = screen !== 'game';
+  layout.frame.dataset.screen = screen;
 }

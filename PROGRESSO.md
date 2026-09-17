@@ -28,6 +28,174 @@ Regras curtas:
 
 ---
 
+## 2026-09-16 — A partida ocupa a tela, e as listras contam a partida
+
+- **Parte / tarefa:** `VIS-04` ✔
+- **O que mudou:**
+  - `index.html` — a partida virou três faixas dentro de `#tela-partida`: a barra de cima, o meio e
+    a barra de baixo. O controle de tempo saiu do cabeçalho e foi para a barra de baixo. O mapa e a
+    coluna (região e boletim) ficam lado a lado, e a contenção e a árvore, embaixo deles.
+  - `src/ui/layout.css` **criado** — a página e a tela cheia. O `body`, o `.topo` e o `.conteudo`
+    saíram do `hud.css` e vieram para cá.
+  - `src/ui/stripes.ts` e `src/ui/stripes.css` **criados** — as listras, a escala de cores e a
+    régua de medalhas do HUD.
+  - `src/ui/screens.ts` — o roteador passou a cuidar da barra de baixo e a escrever no invólucro
+    qual tela está no ar.
+  - Módulos da tela:
+    - `hud.ts` e `hud.css`: a régua sob a temperatura, e os valores na fonte de títulos;
+    - `controls.ts` e `controls.css`: as velocidades num bloco só;
+    - `tree.ts` e `tree.css`: o botão da árvore, com o PAC;
+    - `event-cards.ts` e `event-cards.css`: o boletim ganhou título e foi para a coluna;
+    - `map.ts` e `map.css`: a legenda do calor no canto do desenho;
+    - `region-panel.css` e `session.css`: a coluna e o canto da barra de cima;
+    - `skip-link.ts`: o salto do link de pulo virou o `jumpTo`, que o botão da árvore também usa;
+    - `format.ts`: o `liveCelsius`, que o HUD e o marcador das listras compartilham.
+  - `src/ui/theme.css` — a fonte de títulos (`--fonte-display`), a pilha de texto da direção de
+    arte e as oito cores das listras.
+  - `src/data/i18n.ts`:
+    - os textos das listras e do botão;
+    - o boletim passou a se chamar "Boletim do clima";
+    - três frases do tutorial agora dizem onde ficam a árvore e a contenção.
+  - `src/main.ts` — a ligação das peças novas.
+  - Testes:
+    - criados: `stripes.test.ts`, `stripes.dom.test.ts` e `hud.dom.test.ts`;
+    - ajustados: `theme`, `screens.dom`, `audio.dom`, `acessibilidade.dom`, `event-cards.dom`,
+      `map.dom`, `tree` e `tree.dom`.
+
+    Suíte: 747 → **797**.
+  - `docs/CREDITOS.md` (a ideia das listras e as fontes), `docs/DIRECAO-DE-ARTE.md §4, §5, §6 e
+    §8`, `PLANO.md`.
+
+### Como a tela cheia é montada
+
+**A partida tem a altura da janela, e quem rola é o meio.** O invólucro é uma grade de três linhas:
+a barra de cima, o meio e a barra de baixo. O meio é um contêiner (*container queries*), e o mundo
+— o mapa e a coluna — tem exatamente a altura dele. A contenção e a árvore vêm logo abaixo, fora da
+tela, até o `VIS-05` as levar para um painel.
+
+**Quem liga a tela cheia é o roteador.** Ele escreve a tela em `data-screen`, e o `layout.css` só
+monta a grade na partida e no fim. No título, as três faixas estão escondidas, e um invólucro da
+altura da janela seria uma página vazia.
+
+**O mapa cresce até acabar a largura ou a altura**, e nunca fica menor que o `--largura-mundo`, que
+é onde as etiquetas cabem sem se tocar. Maior só as afasta.
+
+**Abaixo de 1240 × 640 px, tudo volta a ser uma coluna**, e a página rola como antes. É também o que
+acontece com zoom de 400%. O limite de largura é onde o mapa, no piso, ainda cabe ao lado da
+coluna com a barra de rolagem do meio aberta. Um navegador sem *container queries* também fica na
+coluna.
+
+### As listras
+
+- **São 75, uma por ano jogado**, e cada uma tem a cor da temperatura em que o ano terminou. O ano
+  corrente usa a temperatura de agora, e o marcador anda mês a mês, escrevendo o ano e a
+  temperatura.
+- **A cor é uma mistura de duas paradas vizinhas**, feita pelo `color-mix` do CSS. Onde ele não
+  existe, a barra fica em degraus.
+- **Os tetos das medalhas e a derrota são lidos do engine.** As duas paradas sem regra ficaram a
+  meio caminho entre os tetos: 1,75 e 2,275 °C, e não 2,30. Assim elas acompanham se o
+  balanceamento mudar, e a diferença não se vê.
+- **Para o leitor de tela, a barra é uma imagem**, e o nome dela é a frase que diz o que a cor quer
+  dizer.
+- **A régua sob a temperatura do HUD usa a mesma escala**, com quatro faixas proporcionais que
+  terminam na derrota.
+
+**Conferi que os testes reprovam de verdade.** Com `>=` no lugar de `>` na escala, um teste falhou
+(`numa parada exata, o ano pega a cor inteira dela`). Com a cor do ano tirada do começo dele, e não
+do fim, falharam dois. Voltei o arquivo nas duas vezes.
+
+### A árvore e o tutorial
+
+**A árvore saiu da tela, então ganhou um caminho até ela.** O botão da barra de baixo mostra o PAC,
+com o mesmo arredondamento do HUD — um teste trava os dois juntos. O clique leva o foco para a
+árvore e rola o meio até a contenção, que fica logo acima dela. A primeira versão rolava até a
+árvore e deixava a contenção fora da tela, e foi corrigida na verificação.
+
+**Três balões do tutorial passaram para a barra de baixo:** o do tempo, o da árvore e o da
+contenção. Eles aparecem por cima do mundo, e a frase diz o caminho. O do evento continua no
+boletim, que está na tela. O painel do Modo Feira fica por cima do mapa, com fundo opaco.
+
+### O que a tela mostrou, e o que mudou por causa dela
+
+1. **As listras ficaram com 224 px.** A coluna dos controles media a linha de atalhos como se ela
+   fosse uma linha só, e tomava a largura inteira. A coluna ganhou um teto de 32rem, e as listras
+   passaram a 611 px em 1536.
+2. **O "×" das velocidades parecia um asterisco** na Bahnschrift. As velocidades subiram para
+   1,125rem.
+3. **Em 1366 × 657, o mapa ganhava 18 px de rolagem.** A introdução, limitada a 70 caracteres,
+   ocupava três linhas; agora ela usa a largura do palco e ocupa duas.
+4. **Em 1280 e 1240, a barra de cima quebrava em duas linhas.** Agora quem cede é a sessão: a frase
+   desce para baixo do botão. Os valores do HUD também encolhem com a janela.
+5. **Na coluna mais estreita, o painel da região caía para uma coluna só** e dobrava de altura. O
+   mínimo por campo baixou para 7,5rem.
+6. **Dentro da barra de baixo, o balão do tutorial dobrava a altura dela.** Ele passou a ficar por
+   cima do mundo.
+7. **O teste de tema errou duas vezes.** Ele acusou a reserva de `var(--cor-listra-1, …)` como cor
+   solta, porque não aceitava dígito no nome do token. E leu a condição `(min-height: 40rem)` da
+   media query como um alvo de toque. As duas regras do teste foram corrigidas, e ele continua
+   pegando o que devia.
+
+### Como foi conferido
+
+**No Chrome, pela extensão** (1536 × 702, escala 1,25), com o save de 2047: a tela cheia, a África
+escolhida no mapa, o painel na coluna e o botão da árvore. Algumas capturas da extensão travaram e
+voltaram cortadas, então as evidências foram feitas no Edge.
+
+**No Edge em modo headless**, pelo mesmo script de CDP do `VIS-03`, fora do repositório:
+- **Nove tamanhos.** Com tela cheia: 1920 × 969, 1366 × 657, 1280 × 720 e 1240 × 660. Em coluna:
+  1280 × 600, 1239 × 700, 1024 × 700, 390 × 844 e 384 × 175.
+  - Em nenhum deles a página rola de lado.
+  - Nos de tela cheia, a barra de cima fica numa linha e o mapa cabe sem rolar.
+  - As etiquetas nunca se tocaram; a menor folga foi 21,7 px, com o mapa no piso.
+- **Uma partida nova**, com o balão do tempo por cima da barra.
+- **O Modo Feira**, com o painel por cima do mapa.
+- **A tela de fim** de uma derrota em 2089, com as listras da partida inteira, do azul ao vermelho.
+- **O build da feira aberto por `file://`** em 1366 × 657, com a tela cheia montada, as máscaras
+  prontas, a Bahnschrift e nenhum recurso externo.
+
+No console, nada além do "não havia partida salva" da primeira carga e do 404 do `favicon.ico`,
+que já era assim. **A evidência da partida usa o save de 2047 com o apoio ajustado à mão**, o mesmo
+do `VIS-03`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 797 testes
+  npm run dev       # comece uma partida: ela ocupa a janela
+  ```
+
+  Na tela:
+  - A partida ocupa a janela, e as duas barras ficam paradas.
+  - O botão "Árvore de habilidades" rola o meio até a contenção e a árvore.
+  - Estreitando a janela abaixo de 1240 px, tudo vira uma coluna.
+
+- **Pendente:**
+  - **O save de teste do `VIS-03` foi apagado do Chrome.** A pendência daquela entrada está
+    resolvida.
+  - **Em coluna, a barra de tempo fica no fim da página**, depois da árvore. Os atalhos de teclado
+    valem de qualquer lugar, mas no toque é preciso rolar até ela.
+  - **No "rever o mundo"**, depois do fim, o cartão de resultado fica em cima do mundo, e o mapa
+    pede rolagem.
+  - **A tela de título tem 80 px vazios embaixo**, que são o padding do `<main>` vazio. Já era
+    assim; fica para o `VIS-08`, que refaz o título.
+  - **O botão "Fechar" do painel e os cartões da árvore têm o visual antigo.** Ficam para o
+    `VIS-05`.
+  - **Na tela de fim, a barra de baixo ainda mostra "Pausar" e as velocidades**, como o cabeçalho
+    mostrava antes.
+  - **A tela cheia depende de *container queries*** (Chrome 105, Firefox 110, Safari 16 ou mais
+    novos). Vale confirmar a versão do navegador do computador da feira junto com o build.
+  - **Os avisos do Node 26 no `npm run check`** continuam.
+- **Evidência:**
+  - `docs/evidencias/2026-09-16-vis-04-partida-tela-cheia.jpg` — 2047 em 1536 × 702, com a África
+    escolhida;
+  - `docs/evidencias/2026-09-16-vis-04-arvore-pelo-botao.jpg` — o meio rolado até a contenção e a
+    árvore, com as duas barras no lugar;
+  - `docs/evidencias/2026-09-16-vis-04-fim-com-as-listras.jpg` — a derrota em 2089, com a partida
+    inteira nas listras;
+  - `docs/evidencias/2026-09-16-vis-04-tela-estreita.jpg` — 390 px de largura, em coluna.
+
+---
+
 ## 2026-09-16 — O mapa virou o mapa-múndi ilustrado, com as oito regiões recortadas
 
 - **Parte / tarefa:** `VIS-03` ✔

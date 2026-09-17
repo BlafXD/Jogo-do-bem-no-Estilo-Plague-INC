@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { unlockSkill } from '../src/engine/skills';
 import { createInitialState, SKILL_BRANCHES, skills, type GameState } from '../src/engine/state';
-import { treeView, type SkillNodeView, type TreeView } from '../src/ui/tree';
+import { ui } from '../src/data/i18n';
+import { hudView } from '../src/ui/hud';
+import { treeButtonView, treeView, type SkillNodeView, type TreeView } from '../src/ui/tree';
 
 /**
- * Estes testes cobrem só o `treeView`, que é puro e roda em node. O `mountTree`
- * e o `renderTree` ficam no tests/tree.dom.test.ts, que pede jsdom por arquivo.
+ * Estes testes cobrem só as views puras, que rodam em node: o `treeView` e, desde
+ * o VIS-04, o `treeButtonView`. O DOM dos dois fica no tests/tree.dom.test.ts,
+ * que pede jsdom por arquivo.
  *
  * A divisão é a mesma do hud.ts: o que decide texto e estado — profundidade,
  * arredondamento, qual recusa vira qual rótulo — está deste lado.
@@ -249,5 +252,23 @@ describe('treeView', () => {
     // O pré-requisito caiu, mas o custo não: agora falta PAC, e o texto muda.
     expect(nodeOf(treeView(state), 'wind').status).toBe('unaffordable');
     expect(nodeOf(treeView(state), 'wind').detail).toBe('Faltam 70 PAC');
+  });
+});
+
+describe('treeButtonView', () => {
+  /**
+   * O botão da barra de baixo (VIS-04) mostra o PAC ao lado do HUD. Os dois
+   * números ficam a poucos centímetros um do outro, e um arredondamento
+   * diferente seria o jeito de a tela se contradizer.
+   */
+  it('mostra o mesmo PAC do HUD, arredondado para baixo', () => {
+    for (const pontos of [0, 39.9, 40, 125.4, 999.99]) {
+      const state = withPoints(pontos);
+      expect(treeButtonView(state).points, String(pontos)).toBe(
+        ui.treeButton.points(hudView(state).actionPoints),
+      );
+    }
+
+    expect(treeButtonView(withPoints(39.9)).points).toContain('39');
   });
 });

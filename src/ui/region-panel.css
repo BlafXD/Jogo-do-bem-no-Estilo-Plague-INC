@@ -7,18 +7,21 @@
    **Nenhuma cor nova entra.** O contraste de cada uma está na tabela do
    theme.css e é recalculado pelo tests/theme.test.ts.
 
-   **O painel fica logo abaixo do mapa e é uma faixa, não uma coluna.** Uma lista
-   vertical de seis linhas empurraria a árvore para longe e obrigaria a rolar
-   entre clicar na região e ler o número dela — que é justamente o par que
-   precisa caber na mesma tela. Em faixa, os seis campos ocupam ~2 linhas e o
-   mapa continua visível acima.
+   **O painel mora na coluna ao lado do mapa desde o VIS-04.** Até ali ele era
+   uma faixa embaixo do desenho, porque uma lista vertical empurraria a árvore
+   para longe. Com a partida em tela cheia, o mapa e a coluna dividem a mesma
+   altura, e clicar numa região e ler o número dela continua cabendo numa tela
+   só. Quem desenha a caixa é a coluna (layout.css); aqui o painel não tem
+   borda própria.
+
+   Os campos se arrumam sozinhos pela largura: duas colunas na coluna estreita,
+   e de volta à faixa quando a partida vira uma coluna só, em tela estreita.
 
    Nenhum estado do jogo é comunicado por cor aqui: todo campo tem rótulo escrito
    e todo número traz a escala junto ("27 de 100", "5% do mundo"). */
 
 .region {
   display: block;
-  margin-bottom: 1.5rem;
 }
 
 /* A frase que ensina o clique, quando não há região escolhida. */
@@ -29,17 +32,11 @@
 }
 
 .region__detail {
-  /* A mesma medida do mapa, lida do mesmo token: os dois formam um bloco só, e
-     um painel que avançasse até a borda da página ficaria pendurado à direita do
-     desenho de onde ele vem. */
+  /* A mesma medida do mapa, lida do mesmo token: em tela estreita o painel fica
+     embaixo do desenho, e um painel que avançasse até a borda da página ficaria
+     pendurado à direita dele. Na coluna, a coluna já é mais estreita que isso. */
   max-width: var(--largura-mundo, 54rem);
-  /* Sem isto o painel fica 34px mais largo que o mapa: o projeto não tem reset
-     global de box-sizing, então a borda e o padding somariam por fora das 54rem
-     e as duas caixas terminariam em pontos diferentes. Medido no navegador. */
   box-sizing: border-box;
-  border: 1px solid var(--cor-borda, #4c8069);
-  border-radius: var(--raio, 0.5rem);
-  padding: 0.75rem 1rem 1rem;
 }
 
 .region__head {
@@ -54,7 +51,10 @@
 .region__name {
   margin: 0;
   color: var(--cor-destaque, #7fd1a8);
-  font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.5rem;
+  font-stretch: 87.5%;
+  line-height: 1.1;
 }
 
 .region__close {
@@ -93,6 +93,7 @@
 .region__group-title {
   margin: 0 0 0.4rem;
   color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
   /* 1rem e não menos: o §5 fixa 16px como piso para TODO texto, e um título de
      grupo que encolhe é o primeiro a virar decoração ilegível de longe. */
   font-size: var(--tamanho-base, 1rem);
@@ -101,20 +102,24 @@
   letter-spacing: 0.06em;
 }
 
-/* A faixa: os campos lado a lado, quebrando linha conforme a tela aperta. */
+/* Os campos em grade: duas colunas na coluna do lado, mais colunas quando o
+   painel tem a largura da página. A largura mínima de cada campo também evita
+   que ele dance de posição a cada mês — o valor cresce e encolhe (0,56 → 16,37;
+   8 → 100), a mesma razão do hud.css. */
 .region__rows {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem clamp(1rem, 3vw, 2.5rem);
+  display: grid;
+  /* 7,5rem é o que deixa duas colunas caberem na coluna mais estreita da tela
+     cheia (19rem, menos o padding e a barra de rolagem). Com uma coluna só, o
+     painel dobrava de altura e empurrava o boletim para fora da tela. */
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem 1rem;
   margin: 0;
 }
 
 .region__row {
   display: flex;
   flex-direction: column;
-  /* O valor cresce e encolhe (0,56 → 16,37; 8 → 100); a largura mínima evita
-     que os campos dancem de posição a cada mês — a mesma razão do hud.css. */
-  min-width: 9ch;
+  min-width: 0;
 }
 
 .region__label {
@@ -124,6 +129,7 @@
 
 .region__value {
   margin: 0;
+  font-family: var(--fonte-display, system-ui, sans-serif);
   /* Tabular: os dígitos têm todos a mesma largura, então o número não treme
      enquanto o tempo corre. */
   font-variant-numeric: tabular-nums;

@@ -467,20 +467,21 @@ export function mountMap(root: Element, view: MapView, onSelect: (id: RegionId) 
     stage.append(button);
   }
 
+  // A legenda do aquecimento (P7-04). É o que impede o aquecimento de ser só cor
+  // (§5). Desde o VIS-04 ela fica no canto de baixo do desenho, sobre o mar
+  // onde a Antártida foi cortada: embaixo do mapa, ela tirava da altura que a
+  // tela cheia precisa para o mapa crescer.
+  const caption = element('p', 'map__caption', 'heat');
+
   const frame = element('div', 'map__frame');
-  frame.append(stage);
+  frame.append(stage, caption);
   // O rolador existe por causa do §5: a etiqueta tem 16 px, e o mapa não pode
   // encolher abaixo da largura em que as oito cabem sem se tocar. Numa tela
   // estreita ele rola de lado, dentro da própria caixa; a página, não.
   const scroll = element('div', 'map__scroll');
   scroll.append(frame);
 
-  // A legenda do aquecimento (P7-04). Fica **abaixo** do desenho: ela explica
-  // uma cor que já está na tela. É também o que impede o aquecimento de ser só
-  // cor (§5).
-  const caption = element('p', 'map__caption', 'heat');
-
-  root.replaceChildren(intro, scroll, caption);
+  root.replaceChildren(intro, scroll);
   wirePointer(stage, onSelect);
   whenLoaded(image, () => applyMasks(stage, image));
   renderMap(root, view);

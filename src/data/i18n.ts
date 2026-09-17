@@ -27,7 +27,7 @@ export const ui = {
     },
     temperature: {
       label: 'Temperatura',
-      hint: 'Aquecimento acima do nível pré-industrial. Passar de 3 °C dissolve a agência.',
+      hint: 'Aquecimento acima do nível pré-industrial. Passar de 3 °C dissolve a agência. A régua embaixo do número mostra a faixa de medalha em que o mundo está agora.',
     },
     emissions: {
       label: 'Emissões',
@@ -76,6 +76,33 @@ export const ui = {
     mute: 'Silenciar',
     unmute: 'Ativar som',
     hint: 'Liga e desliga os três efeitos sonoros. A escolha vale para as próximas partidas.',
+  },
+
+  /**
+   * As listras do aquecimento, na barra de baixo (VIS-04).
+   *
+   * O bloco é uma imagem para o leitor de tela, e o rótulo é a frase que a
+   * descreve. Ele diz o que a cor quer dizer, porque o §5 do GDD não deixa a
+   * cor ser o recado sozinha. O número de cada ano está no HUD e no marcador.
+   */
+  stripes: {
+    label: (from: string, to: string) =>
+      `A partida em listras, um ano por listra, de ${from} até ${to}: cada uma tem a cor da temperatura em que o ano terminou. Os anos que faltam ficam vazios.`,
+    hint: 'Cada listra é um ano da partida, na cor da temperatura em que ele terminou. A cor muda de faixa em cada teto de medalha.',
+    /** O marcador em cima do ano corrente. */
+    now: (year: string, temperature: string) => `${year} · ${temperature}`,
+  },
+
+  /**
+   * O botão da árvore, na barra de baixo (VIS-04).
+   *
+   * Por enquanto ele só leva até a árvore, que continua embaixo do mapa. O
+   * rótulo diz o que o botão mostra, e o PAC ao lado é o saldo para gastar.
+   */
+  treeButton: {
+    label: 'Árvore de habilidades',
+    hint: 'Leva até a árvore de habilidades, embaixo do mapa. O número é o PAC que você tem para gastar.',
+    points: (points: string) => `${points} PAC`,
   },
 
   /**
@@ -310,7 +337,9 @@ export const ui = {
   // contrato para editar sem abrir um `.ts` (`PLANO.md`). Trazê-lo para cá
   // tiraria justamente o texto que o cargo de narrativa existe para escrever.
   events: {
-    label: 'Eventos climáticos',
+    // O nome da seção é também o título escrito em cima dela (VIS-04): o que o
+    // leitor de tela anuncia é o que quem enxerga lê.
+    label: 'Boletim do clima',
     hint: 'O que o clima está cobrando agora. Cada cartão fica alguns meses em cena.',
 
     // Ícone **mais** rótulo escrito, como na árvore e no cartão de fim: o §5 do
@@ -542,10 +571,13 @@ export const ui = {
     // Um passo por assunto, e cada frase diz **o que fazer**, não o que sentir.
     steps: {
       time: 'O tempo corre sozinho, um mês por vez, até 2100. A barra de espaço pausa; as teclas 1, 2 e 4 mudam a velocidade.',
-      tree: 'Você já tem PAC para comprar. Clique num nó da árvore, aqui embaixo — cada um libera os que vêm depois dele.',
+      // Os dois passos abaixo aparecem na barra de baixo desde o VIS-04, e não
+      // mais na seção de que falam: a árvore e a contenção ficam fora da tela,
+      // embaixo do mapa. Por isso a frase diz como chegar até elas.
+      tree: 'Você já tem PAC para comprar. O botão da árvore, nesta barra, leva até os nós — cada um libera os que vêm depois dele.',
       event: 'Caiu um evento. O cartão diz o que aconteceu, e o mapa marca a região onde doeu.',
       inertia:
-        'A Inércia agiu. Ela cresce quanto mais você corta, e o botão de contenção a segura por um tempo.',
+        'A Inércia agiu. Ela cresce quanto mais você corta, e o botão de contenção, logo acima da árvore, a segura por um tempo.',
     },
 
     // O Modo Feira: duas frases e um botão. Quem está de pé num estande não lê
@@ -555,7 +587,7 @@ export const ui = {
       title: 'Como jogar, em duas frases',
       lines: [
         'O tempo corre sozinho até 2100, e você acumula PAC a cada mês.',
-        'Gaste o PAC comprando habilidades na árvore, lá embaixo. É só isso.',
+        'Gaste o PAC na árvore de habilidades: o botão dela fica na barra de baixo. É só isso.',
       ],
       start: 'Começar',
       startHint: 'Fecha este aviso e põe o tempo para correr.',

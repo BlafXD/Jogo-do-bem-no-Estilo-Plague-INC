@@ -21,6 +21,24 @@
 
 import { ui } from '../data/i18n';
 
+/**
+ * Leva o foco e a rolagem até um bloco da página.
+ *
+ * Mora aqui porque é o salto do link de pulo, e o botão da árvore na barra de
+ * baixo (VIS-04) precisa do mesmo: um salto que rolasse sem levar o foco
+ * deixaria o próximo Tab recomeçar do lugar antigo. O alvo precisa ser focável
+ * por código — o `mountSkipLink` já deu `tabindex="-1"` aos dois que existem.
+ *
+ * `view` é o que precisa ficar no topo da tela, quando não é o próprio alvo. O
+ * botão da árvore leva o foco para a árvore, mas rola até o bloco que começa na
+ * contenção: as duas competem pelo mesmo PAC, e a contenção fica logo acima.
+ * O foco vai sem rolar, para as duas rolagens não brigarem.
+ */
+export function jumpTo(target: HTMLElement, view: HTMLElement = target): void {
+  target.focus({ preventScroll: true });
+  view.scrollIntoView({ block: 'start' });
+}
+
 /** Um destino do salto: o elemento e o rótulo que o anuncia. */
 type Target = {
   readonly target: HTMLElement;
@@ -58,8 +76,7 @@ export function mountSkipLink(root: Element, board: HTMLElement, tree: HTMLEleme
       // também navegar para o fragmento acrescentaria `#arvore` à URL, e o
       // `vite.config.ts` registra que o jogo é página única sem rotas.
       event.preventDefault();
-      target.focus();
-      target.scrollIntoView({ block: 'start' });
+      jumpTo(target);
     });
 
     return link;

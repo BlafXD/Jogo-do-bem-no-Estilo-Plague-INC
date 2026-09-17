@@ -1,0 +1,295 @@
+/* O layout da página e da partida (VIS-04).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar
+   aqui.
+
+   **A partida em tela cheia.** Em tela larga, a partida ocupa a altura da
+   janela em três faixas:
+   - a barra de cima: a marca, os indicadores e a sessão;
+   - o meio: o mundo, com o mapa e a coluna da região e do boletim;
+   - a barra de baixo: o tempo, as listras e o botão da árvore.
+   As barras ficam paradas, e quem rola é o meio. A árvore e a contenção ainda
+   moram no meio, embaixo do mundo, até o VIS-05 as levar para um painel por
+   cima da partida.
+
+   **Quem decide a tela cheia é o roteador.** Ele escreve a tela no ar em
+   `data-screen`, no invólucro: na partida e no fim a moldura tem a altura da
+   janela; no título, não, porque ali as três faixas estão escondidas.
+
+   **Em tela estreita, baixa ou com zoom alto**, a partida volta a ser uma
+   coluna, e a página rola como antes — é o que o §5 pede para o zoom de 400%. O
+   limite de largura é onde o mapa, com a largura mínima dele, ainda cabe ao
+   lado da coluna com a barra de rolagem do meio aberta; o de altura é onde ele
+   ainda cabe entre as duas barras.
+
+   **A tela cheia depende de container queries** (`container-type` e as
+   unidades `cqw` e `cqh`), que todo navegador tem desde 2023. Onde elas não
+   existirem, a partida fica em coluna — legível, só menos parecida com os
+   prints. */
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo, #0f1c17);
+  color: var(--cor-valor, #f2f7f4);
+  font-family: var(--fonte-base, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  /* 16px é o mínimo do §5: o jogo é visto de pé, de longe, numa feira. */
+  font-size: var(--tamanho-base, 1rem);
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------ a barra de cima --- */
+
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.4rem clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid var(--cor-borda, #4c8069);
+  background: var(--cor-superficie, #182c24);
+}
+
+/* A marca, em placa: caixa alta e condensada. Na tela cheia ela ganha um fio
+   que a separa dos indicadores; em coluna ela fica sozinha na linha, e o fio
+   não teria o que separar. */
+.topo__titulo {
+  margin: 0;
+  color: var(--cor-destaque, #7fd1a8);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.375rem;
+  font-weight: 700;
+  font-stretch: 75%;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* A sessão vai para o canto direito. */
+.topo .session {
+  margin-left: auto;
+}
+
+/* --------------------------------------------------------------- o meio --- */
+
+.conteudo {
+  padding: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* O mundo: o mapa e a coluna. Em tela estreita, um embaixo do outro. */
+.tabuleiro__mundo {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.tabuleiro__palco {
+  position: relative;
+  min-width: 0;
+}
+
+/* A coluna da região e do boletim. Ela é a caixa dos dois: o painel e o
+   boletim não têm borda própria. */
+.tabuleiro__lado {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-superficie, #182c24);
+}
+
+/* A contenção e a árvore, embaixo do mundo — até o VIS-05. */
+.tabuleiro__acoes {
+  margin-top: 2rem;
+}
+
+/* ----------------------------------------------------- a barra de baixo --- */
+
+.base {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding: 0.5rem clamp(1rem, 2vw, 1.5rem) 0.6rem;
+  border-top: 1px solid var(--cor-borda, #4c8069);
+  background: var(--cor-superficie, #182c24);
+}
+
+.base__arvore {
+  justify-self: start;
+}
+
+/* ---------------------------------------------------------- tela cheia --- */
+
+@media (min-width: 77.5rem) and (min-height: 40rem) {
+  @supports (container-type: size) {
+    .partida[data-screen='game'],
+    .partida[data-screen='end'] {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* O meio rola por dentro, e é o contêiner que dá a altura do mundo. */
+    .partida[data-screen='game'] .conteudo,
+    .partida[data-screen='end'] .conteudo {
+      overflow: auto;
+      container-type: size;
+    }
+
+    .partida[data-screen='game'] .conteudo {
+      padding: 0;
+    }
+
+    /* A barra de cima numa linha só. Quando falta largura, quem cede é a
+       sessão: a frase de status desce para baixo do botão, em vez de a sessão
+       inteira descer para uma segunda linha e roubar a altura do mapa. */
+    .topo {
+      flex-wrap: nowrap;
+    }
+
+    .topo__titulo {
+      padding-right: 1rem;
+      border-right: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
+    }
+
+    .topo .hud {
+      flex: none;
+    }
+
+    .topo .session {
+      flex: 0 1 30rem;
+      justify-content: flex-end;
+      row-gap: 0.25rem;
+      min-width: 11rem;
+    }
+
+    .topo .session__status {
+      max-width: none;
+      text-align: right;
+    }
+
+    /* O mundo tem exatamente a altura do meio: o mapa e a coluna enchem a
+       janela, e a árvore começa logo abaixo, fora da tela. */
+    .tabuleiro__mundo {
+      grid-template-columns: minmax(0, 1fr) clamp(19rem, 25vw, 24rem);
+      grid-template-rows: minmax(0, 1fr);
+      gap: 0;
+      height: 100cqh;
+    }
+
+    .tabuleiro__palco {
+      overflow: hidden;
+      padding: 0.75rem clamp(0.75rem, 1.5vw, 1.25rem);
+    }
+
+    /* A introdução em cima; o resto da altura é do desenho. */
+    .tabuleiro__palco .map {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      margin: 0;
+    }
+
+    /* A introdução usa a largura do palco: em três linhas, ela tirava do mapa a
+       altura que faltava para ele caber sem rolar em 1366 × 657. */
+    .tabuleiro__palco .map__intro {
+      max-width: none;
+    }
+
+    .tabuleiro__palco .map__scroll {
+      display: flex;
+      flex: 1 1 0;
+      container-type: size;
+    }
+
+    /* O mapa cresce até acabar a largura ou a altura do rolador — a que acabar
+       primeiro —, e nunca fica menor que a largura do tema, que é onde as
+       etiquetas cabem sem se tocar. Abaixo dela, o rolador rola. As margens
+       automáticas centralizam sem esconder nada quando ele transborda, e o
+       `flex: none` impede o flex de espremê-lo abaixo da largura escolhida. */
+    .tabuleiro__palco .map__frame {
+      flex: none;
+      width: max(var(--largura-mundo, 54rem), min(100cqw, 100cqh * 1376 / 620));
+      margin: auto;
+    }
+
+    /* A coluna vira a faixa da direita, com a altura do mundo. O boletim fica
+       com o que sobra embaixo do painel, e a lista de cartões rola por dentro. */
+    .tabuleiro__lado {
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: auto;
+      border-width: 0 0 0 1px;
+      border-radius: 0;
+    }
+
+    .tabuleiro__lado .events {
+      overflow: hidden;
+    }
+
+    .tabuleiro__lado .events__list {
+      overflow-y: auto;
+    }
+
+    .tabuleiro__acoes {
+      margin: 0;
+      padding: 1.5rem clamp(1rem, 2vw, 1.5rem) 2rem;
+      border-top: 1px solid var(--cor-borda, #4c8069);
+    }
+
+    /* O resultado, quando a partida acabou e o jogador voltou para rever o
+       mundo: ele fica em cima do mundo, e o meio rola até o mapa. */
+    .partida[data-screen='game'] .outcome {
+      padding: 1rem clamp(1rem, 2vw, 1.5rem) 0;
+    }
+
+    /* Os controles com largura contida: sem o teto, a coluna deles tomaria a
+       largura da linha de atalhos inteira, lida como se fosse uma linha só, e
+       as listras ficariam espremidas no piso. Com 32rem os botões cabem numa
+       fileira e a linha de atalhos, na de baixo. */
+    .base {
+      position: relative;
+      grid-template-columns: fit-content(32rem) minmax(14rem, 1fr) auto;
+    }
+
+    /* O balão do tutorial fica logo acima da barra, por cima do mundo, em vez
+       de dentro dela: dentro, a barra dobrava de altura e o mapa encolhia
+       enquanto a pessoa lia. Por cima da imagem, o fundo precisa ser opaco — é
+       ele que garante o contraste do texto. */
+    .base > .tutorial {
+      position: absolute;
+      bottom: calc(100% + 0.5rem);
+      left: clamp(1rem, 2vw, 1.5rem);
+      z-index: 3;
+      width: min(56rem, calc(100% - 3rem));
+      margin: 0;
+      border: 1px solid var(--cor-destaque, #7fd1a8);
+      border-left-width: 4px;
+      background: var(--cor-fundo, #0f1c17);
+      box-shadow: 0 0.75rem 2rem color-mix(in srgb, var(--cor-fundo, #0f1c17) 70%, transparent);
+    }
+
+    /* O painel do Modo Feira pousa por cima do mapa, e não em cima dele na
+       página: empurrar o mundo para baixo encolheria o mapa enquanto a pessoa
+       lê. O fundo é opaco porque embaixo dele está a imagem, e é o fundo que
+       garante o contraste do texto. */
+    .tabuleiro__palco > .tutorial-panel {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      width: min(36rem, calc(100% - 2rem));
+      margin: 0;
+      transform: translate(-50%, -50%);
+      background: var(--cor-fundo, #0f1c17);
+      box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--cor-fundo, #0f1c17) 70%, transparent);
+    }
+  }
+}

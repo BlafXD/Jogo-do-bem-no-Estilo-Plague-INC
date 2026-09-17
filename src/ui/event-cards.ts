@@ -195,6 +195,13 @@ function cardElement(card: EventCardView): HTMLLIElement {
 export function mountEventCards(root: Element): void {
   root.setAttribute('aria-label', ui.events.label);
 
+  // O título escrito (VIS-04). Na coluna ao lado do mapa, a seção divide a
+  // altura com o painel da região, e um bloco de cartões sem nome pareceria
+  // continuação do painel. O texto é o mesmo do rótulo da seção.
+  const title = document.createElement('h2');
+  title.className = 'events__title';
+  title.textContent = ui.events.label;
+
   const notice = document.createElement('p');
   notice.className = 'events__notice';
   notice.dataset.events = 'notice';
@@ -212,7 +219,7 @@ export function mountEventCards(root: Element): void {
   list.dataset.events = 'list';
   list.title = ui.events.hint;
 
-  root.replaceChildren(notice, list);
+  root.replaceChildren(title, notice, list);
   renderEventCards(root, { cards: [], notice: '' });
 }
 

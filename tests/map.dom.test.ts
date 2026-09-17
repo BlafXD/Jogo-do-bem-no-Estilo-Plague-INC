@@ -327,6 +327,20 @@ describe('o aquecimento e os alertas no desenho (P7-04)', () => {
     expect(legenda()).toContain('2,55');
   });
 
+  /**
+   * Desde o VIS-04 a legenda fica no canto do desenho, e não embaixo dele: na
+   * tela cheia, cada linha embaixo do mapa é altura que o mapa não tem. Dentro
+   * da moldura, e fora do palco — o palco é maior que a moldura, e o canto de
+   * baixo dele fica escondido pelo recorte da Antártida.
+   */
+  it('a legenda mora dentro da moldura, fora do palco', () => {
+    const root = mount();
+    const legenda = root.querySelector('[data-map="heat"]');
+
+    expect(legenda?.parentElement?.classList.contains('map__frame')).toBe(true);
+    expect(stage(root).contains(legenda)).toBe(false);
+  });
+
   it('o alerta aparece com ícone e palavra, e some quando passa', () => {
     const root = mount();
 

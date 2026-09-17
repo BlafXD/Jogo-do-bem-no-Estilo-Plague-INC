@@ -3,7 +3,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { unlockSkill } from '../src/engine/skills';
 import { createInitialState, skills, type GameState, type SkillId } from '../src/engine/state';
-import { mountTree, renderTree, treeView } from '../src/ui/tree';
+import { ui } from '../src/data/i18n';
+import {
+  mountTree,
+  mountTreeButton,
+  renderTree,
+  renderTreeButton,
+  treeButtonView,
+  treeView,
+} from '../src/ui/tree';
 
 /**
  * O primeiro arquivo de teste do projeto que roda com DOM. O jsdom entrou no
@@ -227,5 +235,61 @@ describe('renderTree', () => {
       // o rótulo escrito.
       expect(button.querySelector('[data-tree="icon"]')?.getAttribute('aria-hidden')).toBe('true');
     }
+  });
+});
+
+describe('o botão da árvore na barra de baixo (VIS-04)', () => {
+  function montarBotao(onOpen: () => void = () => {}): HTMLElement {
+    const root = document.createElement('div');
+    document.body.replaceChildren(root);
+    mountTreeButton(root, onOpen);
+    return root;
+  }
+
+  const botao = (root: ParentNode): HTMLButtonElement | null => root.querySelector('button');
+
+  it('é um botão de verdade, com dica', () => {
+    const alvo = botao(montarBotao());
+
+    expect(alvo?.type).toBe('button');
+    expect(alvo?.title).toBe(ui.treeButton.hint);
+  });
+
+  it('avisa quem montou, uma vez por clique', () => {
+    const onOpen = vi.fn();
+    const root = montarBotao(onOpen);
+
+    botao(root)?.click();
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * O nome acessível é o texto do botão. Sem o espaço entre os dois pedaços, o
+   * leitor de tela leria "habilidades120".
+   */
+  it('diz o que é e quanto PAC há, com espaço entre os dois', () => {
+    const root = montarBotao();
+
+    renderTreeButton(root, treeButtonView(rich(120)));
+
+    expect(botao(root)?.textContent).toBe(
+      `${ui.treeButton.label} ${treeButtonView(rich(120)).points}`,
+    );
+  });
+
+  it('atualiza o saldo sem recriar o botão', () => {
+    const root = montarBotao();
+    const antes = botao(root);
+    antes?.focus();
+
+    renderTreeButton(root, treeButtonView(rich(10)));
+    renderTreeButton(root, treeButtonView(rich(55)));
+
+    expect(botao(root)).toBe(antes);
+    expect(document.activeElement).toBe(antes);
+    expect(root.querySelector('[data-tree-button="points"]')?.textContent).toBe(
+      treeButtonView(rich(55)).points,
+    );
   });
 });

@@ -112,6 +112,10 @@ variável que nenhuma folha lê é uma promessa que o teste de contraste não te
 **Risco a conferir antes da feira:** numa máquina sem Windows a identidade perde a condensada. O
 jogo continua legível, mas fica menos parecido com os prints.
 
+**No jogo desde o `VIS-04`:** as duas pilhas são o `--fonte-display` e o `--fonte-base` do
+`theme.css`. A Bahnschrift está na marca, nos indicadores, nos botões das barras, nas listras e nos
+títulos da coluna; o texto corrido segue na Segoe UI.
+
 ---
 
 ## 5. A assinatura: as listras do aquecimento
@@ -143,6 +147,18 @@ faixa da nota o mundo estava naquele ano:
 
 **A cor nunca é o recado sozinha** (§5). A temperatura está sempre escrita ao lado: no indicador,
 no marcador da barra e na legenda do mapa.
+
+**Como ficou no `VIS-04`:**
+- As oito cores são `--cor-listra-0` a `--cor-listra-7` no `theme.css`. As temperaturas das
+  paradas moram no `src/ui/stripes.ts`, que lê os tetos das medalhas e a derrota do próprio
+  engine.
+- As duas paradas sem regra ficaram **a meio caminho entre os tetos vizinhos**: 1,75 e 2,275 °C, e
+  não 2,30. Assim elas acompanham se o balanceamento mexer num teto, e a diferença de cor não se
+  vê.
+- A cor de cada ano é a temperatura em que ele **terminou**. O ano corrente usa a de agora, e o
+  marcador anda mês a mês.
+- A régua sob a temperatura do HUD usa a mesma escala: quatro faixas (ouro, prata, bronze e sem
+  medalha), com largura proporcional a cada uma, terminando na derrota.
 
 ---
 
@@ -200,10 +216,16 @@ gerada entra no repositório, e o build da feira funciona por `file://`, porque 
 embutida no HTML. Se o canvas falhar, as camadas ficam escondidas: o desenho não reage, e as
 etiquetas continuam funcionando.
 
-**Em tela estreita ou com zoom alto**, o mapa tem **largura fixa**, a do `--largura-mundo`, e rola
-de lado **dentro da própria caixa**. A página não rola, como já era. A largura é fixa, e não
-mínima, porque as etiquetas têm tamanho em `rem`: com o mapa também em `rem`, a distância entre
-elas não muda com o zoom, e o teste de sobreposição vale para qualquer zoom.
+**O `--largura-mundo` é a menor largura do mapa.** Na tela cheia (`VIS-04`), o mapa cresce até
+ocupar o centro, até acabar a largura ou a altura. Em tela estreita ou com zoom alto, ele fica
+nessa largura e rola de lado **dentro da própria caixa** — a página não rola, como já era. O piso
+existe porque as etiquetas têm tamanho em `rem`: nessa largura as oito cabem sem se tocar, e
+maior só as afasta. O teste de sobreposição mede no piso, então vale para qualquer tamanho e
+qualquer zoom.
+
+**A legenda do calor fica no canto de baixo do desenho** desde o `VIS-04`, como no protótipo. Ela
+fica à esquerda, sobre o mar aberto, porque o canto direito cobriria a Nova Zelândia. Embaixo do
+mapa, ela tirava a altura de que a tela cheia precisa.
 
 ---
 
@@ -273,6 +295,30 @@ passo do tutorial, o fato do evento. Voz própria é trabalho do `[D-Historia]`.
 | **Fim** | medalha, quatro números, as listras, o gráfico, "o que ficou para trás" e as três ações |
 | **Enfeites** | o traço de circuito no canto do cabeçalho dos painéis |
 | **Botões** | principal (fundo latão, texto tinta), secundário (borda fio), texto (sublinhado) |
+
+### Como ficou no `VIS-04`
+
+A partida ocupa a janela a partir de **1240 × 640 px**, em três faixas (`src/ui/layout.css`):
+a barra de cima, o mundo e a barra de baixo. Abaixo disso, tudo vira uma coluna e a página rola,
+como antes. Onde a tela saiu diferente da tabela acima:
+
+- **Barra de cima.** A marca está sem o símbolo da folha, e os indicadores estão sem ícone: os dois
+  entram com os ícones do `VIS-09`. Quando falta largura, a frase da sessão desce para baixo do
+  botão, e a barra continua numa linha só.
+- **Barra de baixo.**
+  - A pausa não tem a tecla `Espaço` desenhada. Quem cumpre esse papel é a linha de atalhos do
+    `P8-04`, embaixo dos botões.
+  - O som ficou ao lado das velocidades, e não na ponta direita, porque é montado pelo
+    `controls.ts`, junto com a pausa.
+  - O botão da árvore leva até ela, embaixo do mundo, rolando o meio da tela; o painel é do
+    `VIS-05`.
+- **Coluna.** A região e o boletim, com os cartões no fundo da página. Os cartões ainda não têm
+  retrato (`VIS-07`).
+- **Evento crítico.** Continua como cartão no boletim, com o aviso de tempo parado; o cartão grande
+  com retrato é do `VIS-07`.
+- **Tutorial.** O balão do tempo, o da árvore e o da contenção aparecem logo acima da barra de
+  baixo, por cima do mundo — a árvore e a contenção ficam fora da tela. O do evento fica no
+  boletim, e o painel do Modo Feira fica por cima do mapa.
 
 ---
 

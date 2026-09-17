@@ -8,7 +8,7 @@ import { activatesFocusedButton, commandForKey, mountControls } from '../src/ui/
 import { celsius } from '../src/ui/format';
 import { mountHud } from '../src/ui/hud';
 import { mountSession } from '../src/ui/session';
-import { mountSkipLink } from '../src/ui/skip-link';
+import { jumpTo, mountSkipLink } from '../src/ui/skip-link';
 
 /**
  * A passagem de acessibilidade (P8-04).
@@ -105,6 +105,40 @@ describe('o link de pulo', () => {
     [...nav.querySelectorAll('a')][1]?.click();
 
     expect(rolagem).toHaveBeenCalledWith({ block: 'start' });
+  });
+
+  /**
+   * O botão da árvore na barra de baixo (VIS-04) usa o mesmo salto. Se um dia
+   * o salto deixar de levar o foco, os dois caminhos quebram juntos — e este
+   * teste diz qual das duas metades sumiu.
+   */
+  it('o salto compartilhado leva o foco e rola até o topo do alvo', () => {
+    const { tree } = paginaComPulo();
+    const rolagem = vi.spyOn(tree, 'scrollIntoView');
+
+    jumpTo(tree);
+
+    expect(document.activeElement).toBe(tree);
+    expect(rolagem).toHaveBeenCalledWith({ block: 'start' });
+  });
+
+  /**
+   * O botão da árvore foca a árvore, mas rola até o bloco que começa na
+   * contenção — as duas disputam o mesmo PAC. Quem rola é o bloco, e só ele: a
+   * árvore recebe o foco sem puxar a tela para si.
+   */
+  it('pode rolar até um bloco maior do que o alvo do foco', () => {
+    const { tree } = paginaComPulo();
+    const bloco = document.createElement('div');
+    tree.before(bloco);
+    const rolaBloco = vi.spyOn(bloco, 'scrollIntoView');
+    const rolaArvore = vi.spyOn(tree, 'scrollIntoView');
+
+    jumpTo(tree, bloco);
+
+    expect(document.activeElement).toBe(tree);
+    expect(rolaBloco).toHaveBeenCalledWith({ block: 'start' });
+    expect(rolaArvore).not.toHaveBeenCalled();
   });
 
   it('não deixa a URL virar rota — o jogo é página única', () => {

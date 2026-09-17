@@ -1,0 +1,162 @@
+/* As listras do aquecimento (VIS-04).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar
+   aqui.
+
+   **A cor de cada ano é uma mistura de duas paradas do tema.** O stripes.ts diz
+   entre quais duas o ano cai (`data-tone`) e quanto do caminho ele andou
+   (`--mistura`); esta folha faz a conta com `color-mix`. Onde `color-mix` não
+   existe, o ano pega a parada de baixo inteira — a barra fica em degraus, mas
+   continua dizendo a mesma coisa.
+
+   **Sobre o §5.** A cor não é o recado sozinha: o marcador escreve o ano e a
+   temperatura, o HUD escreve a temperatura, e a legenda do mapa escreve a
+   faixa. As listras são o desenho da partida inteira, e o bloco tem nome
+   escrito para o leitor de tela. Nenhum texto é escrito sobre elas. */
+
+.stripes {
+  position: relative;
+  min-width: 14rem;
+  /* O espaço de cima é o do rótulo do marcador. */
+  padding-top: 1.45rem;
+  cursor: help;
+}
+
+.stripes__band {
+  display: flex;
+  height: 1.9rem;
+  overflow: hidden;
+  border-radius: var(--raio-pequeno, 0.375rem);
+  box-shadow: 0 0 0 1px var(--cor-borda, #4c8069);
+}
+
+.stripes__year {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Os anos que ainda não aconteceram: vazios, com um fio de latão bem claro
+   separando um do outro — a barra inteira existe desde 2025, só não foi
+   pintada. */
+.stripes__year[data-empty] {
+  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--cor-destaque, #7fd1a8) 14%, transparent);
+}
+
+.stripes__year[data-tone='0'] {
+  --de: var(--cor-listra-0, #1f5c73);
+  --para: var(--cor-listra-1, #6e9e8c);
+}
+
+.stripes__year[data-tone='1'] {
+  --de: var(--cor-listra-1, #6e9e8c);
+  --para: var(--cor-listra-2, #c9c98a);
+}
+
+.stripes__year[data-tone='2'] {
+  --de: var(--cor-listra-2, #c9c98a);
+  --para: var(--cor-listra-3, #e7c572);
+}
+
+.stripes__year[data-tone='3'] {
+  --de: var(--cor-listra-3, #e7c572);
+  --para: var(--cor-listra-4, #e99a4e);
+}
+
+.stripes__year[data-tone='4'] {
+  --de: var(--cor-listra-4, #e99a4e);
+  --para: var(--cor-listra-5, #d9673a);
+}
+
+.stripes__year[data-tone='5'] {
+  --de: var(--cor-listra-5, #d9673a);
+  --para: var(--cor-listra-6, #b23a2e);
+}
+
+.stripes__year[data-tone='6'] {
+  --de: var(--cor-listra-6, #b23a2e);
+  --para: var(--cor-listra-7, #6e1c1e);
+}
+
+.stripes__year[data-tone] {
+  background: var(--de);
+}
+
+/* A mistura fica atrás do @supports de propósito. Uma declaração com var() só é
+   julgada depois da substituição, e uma inválida ali não volta para a de cima:
+   vira `unset`, e a listra ficaria transparente em vez de em degrau. */
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  .stripes__year[data-tone] {
+    background: color-mix(in srgb, var(--para) var(--mistura, 0%), var(--de));
+  }
+}
+
+/* O marcador do mês corrente: um fio claro que atravessa a barra, com o ano e a
+   temperatura escritos em cima. */
+.stripes__now {
+  position: absolute;
+  top: 1.2rem;
+  left: 0;
+  width: 0;
+  height: 2.4rem;
+  margin-left: -1.5px;
+  border-left: 3px solid var(--cor-valor, #f2f7f4);
+  box-shadow:
+    -1px 0 0 var(--cor-fundo, #0f1c17),
+    1px 0 0 var(--cor-fundo, #0f1c17);
+  pointer-events: none;
+}
+
+/* O fundo escrito sobre o texto principal: o par de 15,72:1 da tabela do
+   theme.css, lido ao contrário. */
+.stripes__now-text {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  transform: translateX(-50%);
+  padding: 0 0.45rem;
+  border-radius: 4px;
+  background: var(--cor-valor, #f2f7f4);
+  color: var(--cor-fundo, #0f1c17);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+/* Perto das pontas, o rótulo encosta para dentro da barra em vez de sair dela. */
+.stripes__now[data-edge='start'] .stripes__now-text {
+  transform: translateX(-0.3rem);
+}
+
+.stripes__now[data-edge='end'] .stripes__now-text {
+  transform: translateX(calc(-100% + 0.3rem));
+}
+
+.stripes__ticks {
+  position: relative;
+  height: 1.35rem;
+  margin-top: 0.15rem;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.stripes__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.stripes__tick:first-child {
+  transform: none;
+}
+
+.stripes__tick:last-child {
+  transform: translateX(-100%);
+}

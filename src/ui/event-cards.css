@@ -11,10 +11,26 @@
    do GDD proíbe comunicar estado só por cor. Quem diz a gravidade é o ícone
    (triângulo ou círculo — formas diferentes, não só tons) mais a palavra
    "Crítico" ou "Moderado" escrita ao lado. Rode a página em escala de cinza e
-   nada se perde. */
+   nada se perde.
+
+   **O boletim mora na coluna ao lado do mapa desde o VIS-04**, embaixo do
+   painel da região. Os cartões ganharam o fundo da página, para se separarem
+   da coluna, e a lista rola por dentro quando não cabe (layout.css). */
 
 .events {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.events__title {
+  margin: 0 0 0.5rem;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  /* O piso do §5 vale para título também. */
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 /* O aviso da auto-pausa. Cor de alerta e borda à esquerda: ele precisa ser
@@ -40,7 +56,8 @@
 
      São no máximo 6 em cena: um por mês, e o cartão vive 6 meses. Numa tela
      estreita eles caem para uma coluna sem media query. */
-  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
+  align-content: start;
   gap: 0.75rem;
   margin: 0;
   padding: 0;
@@ -48,6 +65,7 @@
 }
 
 .events__card {
+  background: var(--cor-fundo, #0f1c17);
   border: 1px solid var(--cor-borda, #4c8069);
   /* A faixa da esquerda é o que diferencia os dois níveis a três metros de
      distância. O ícone e a palavra fazem o trabalho de perto. */
@@ -114,8 +132,9 @@
 .events__name {
   flex: 1 0 100%;
   color: var(--cor-valor, #f2f7f4);
-  font-size: 1.0625rem;
-  font-weight: 700;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 
 .events__where {

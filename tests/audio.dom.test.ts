@@ -93,13 +93,30 @@ describe('o botão de som', () => {
     const root = barra();
     mountControls(root, vi.fn(), vi.fn());
 
+    // Desde o VIS-04 as três velocidades moram num bloco só, e é o bloco que é
+    // filho da barra. Os índices são conferidos antes da ordem: um `-1` de quem
+    // não foi achado passaria em qualquer "menor que".
     const filhos = [...root.children];
     const som = filhos.findIndex((filho) => filho.matches('[data-control="sound"]'));
     const atalhos = filhos.findIndex((filho) => filho.matches('.ctl__shortcuts'));
-    const ultimaVelocidade = filhos.findIndex((filho) => filho.matches('[data-speed="4"]'));
+    const velocidades = filhos.findIndex((filho) => filho.querySelector('[data-speed="4"]'));
 
-    expect(ultimaVelocidade).toBeLessThan(som);
+    expect([som, atalhos, velocidades]).not.toContain(-1);
+    expect(velocidades).toBeLessThan(som);
     expect(som).toBeLessThan(atalhos);
+  });
+
+  it('as três velocidades ficam juntas, num bloco só (VIS-04)', () => {
+    const root = barra();
+    mountControls(root, vi.fn(), vi.fn());
+
+    const bloco = root.querySelector('.ctl__speeds');
+    expect(bloco?.parentElement).toBe(root);
+    expect([...(bloco?.children ?? [])].map((botao) => botao.getAttribute('data-speed'))).toEqual([
+      '1',
+      '2',
+      '4',
+    ]);
   });
 });
 

@@ -100,12 +100,17 @@ const HOVER_ALPHA = 0.12;
 
 /**
  * As cores de desenho: nenhum texto é escrito sobre elas, então não entram nas
- * contas de contraste — mas continuam sendo do tema, e no mesmo formato.
+ * contas de contraste — mas continuam sendo do tema, e no mesmo formato. As
+ * duas do mapa vieram no VIS-03; as oito paradas das listras, no VIS-04.
  */
-const DRAWING = ['cor-creme', 'cor-oceano'] as const;
+const DRAWING = [
+  'cor-creme',
+  'cor-oceano',
+  ...Array.from({ length: 8 }, (_, parada) => `cor-listra-${parada}`),
+] as const;
 
 describe('a paleta', () => {
-  it('define as 7 cores da interface e as 2 de desenho, todas em #rrggbb', () => {
+  it('define as 7 cores da interface e as 10 de desenho, todas em #rrggbb', () => {
     for (const name of [...PALETTE, ...DRAWING]) {
       expect(token(name), name).toMatch(/^#[0-9a-f]{6}$/);
     }
@@ -221,6 +226,22 @@ describe('a tipografia', () => {
   it('tem uma pilha de fontes com reserva, e não uma família só', () => {
     expect(token('fonte-base').split(',').length).toBeGreaterThan(1);
   });
+
+  /**
+   * A fonte de títulos (VIS-04) é a Bahnschrift, que só existe no Windows. Sem
+   * reserva, qualquer outra máquina cairia na fonte serifada padrão do
+   * navegador — e a pilha termina numa família genérica para isso nunca
+   * acontecer.
+   */
+  it('põe a Bahnschrift na frente da fonte de títulos, com reserva até o genérico', () => {
+    const familias = token('fonte-display')
+      .split(',')
+      .map((familia) => familia.trim());
+
+    expect(familias[0]).toBe('Bahnschrift');
+    expect(familias.length).toBeGreaterThan(2);
+    expect(familias.at(-1)).toBe('sans-serif');
+  });
 });
 
 describe('as folhas dos módulos', () => {
@@ -229,10 +250,12 @@ describe('as folhas dos módulos', () => {
     'controls.css',
     'event-cards.css',
     'hud.css',
+    'layout.css',
     'map.css',
     'outcome.css',
     'region-panel.css',
     'session.css',
+    'stripes.css',
     'tree.css',
   ];
 
@@ -248,8 +271,10 @@ describe('as folhas dos módulos', () => {
       // Tira as reservas de dentro dos `var()`: elas são deliberadas — sem o
       // theme.css a página continua legível. Uma reserva nunca atravessa o `;`
       // que fecha a declaração, então o corte é seguro. O que sobrar é cor
-      // escrita solta, que é o que a troca de paleta não alcançaria.
-      const semReservas = semComentarios.replace(/var\(--[a-z-]+,[^;]*\)/g, '');
+      // escrita solta, que é o que a troca de paleta não alcançaria. O nome do
+      // token pode ter dígito: as paradas das listras são `--cor-listra-0` a
+      // `-7`, e sem o dígito a reserva delas seria acusada de cor solta.
+      const semReservas = semComentarios.replace(/var\(--[a-z0-9-]+,[^;]*\)/g, '');
       const soltas = semReservas.match(/#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/gi) ?? [];
 
       expect(soltas, `${name} escreve cor fora do tema`).toEqual([]);
@@ -281,7 +306,10 @@ describe('as folhas dos módulos', () => {
     for (const name of sheets) {
       const semComentarios = readCss(name).replace(/\/\*[\s\S]*?\*\//g, '');
 
-      for (const [linha] of semComentarios.matchAll(/min-height:[^;]+;/g)) {
+      // Só declarações, que começam depois de `{` ou `;`. A condição de uma media
+      // query — `(min-height: 40rem)`, a altura mínima da tela cheia no
+      // layout.css — também se escreve assim, e não é alvo de toque nenhum.
+      for (const [linha] of semComentarios.matchAll(/[{;]\s*min-height:[^;]+;/g)) {
         expect(linha, name).toContain('--alvo-toque');
       }
     }

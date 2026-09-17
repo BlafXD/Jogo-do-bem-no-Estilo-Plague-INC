@@ -1,34 +1,41 @@
-/* Barra de controle de tempo (P5-05).
+/* Barra de controle de tempo (P5-05), na barra de baixo desde o VIS-04.
 
    Mesmo contrato do hud.css: tudo lido de custom properties com valor de
    reserva dentro do próprio var(), para o theme.css do P5-02 assumir sem
    encostar aqui.
 
    O §5 proíbe comunicar estado só por cor. A velocidade ativa é marcada por
-   três coisas ao mesmo tempo, e duas delas não são cor: o marcador ● fica
-   visível, o peso da fonte sobe e a borda engrossa. O botão de pausa nem
-   depende disso — ele troca o próprio rótulo entre "Pausar" e "Retomar". */
+   quatro coisas ao mesmo tempo, e três delas não são cor: o marcador ● fica
+   visível, o peso da fonte sobe, o botão fica preenchido e o `aria-pressed`
+   muda. O botão de pausa nem depende disso — ele troca o próprio rótulo entre
+   "Pausar" e "Retomar". */
 
 .ctl {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  margin-top: 1rem;
 }
 
 .ctl__button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   border: 2px solid var(--cor-borda, #4c8069);
   border-radius: var(--raio-pequeno, 0.375rem);
   background: transparent;
   color: var(--cor-valor, #f2f7f4);
   font: inherit;
+  /* Os botões da barra falam na fonte de títulos, em caixa alta, como as
+     placas da direção de arte. */
+  font-family: var(--fonte-display, system-ui, sans-serif);
   /* 16px é o piso do §5 e vale para botão também — numa feira o jogo é visto
      de pé e de longe, e um controle que não dá para ler não dá para usar. */
   font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   /* Alvo de toque confortável: o dedo de quem passa no estande não mira bem. */
   min-height: var(--alvo-toque, 2.75rem);
   padding: 0 0.875rem;
@@ -50,8 +57,6 @@
   /* Largura fixa para a barra não pular quando o rótulo vai de "Pausar" (6
      letras) para "Retomar" (7). */
   min-width: 8.5rem;
-  justify-content: center;
-  font-weight: 600;
 }
 
 /* O botão de som (P7-05).
@@ -64,8 +69,7 @@
    e inventar um segundo vocabulário visual para dizer a mesma coisa custaria
    leitura sem ganhar nada. */
 .ctl__sound {
-  min-width: 9.5rem;
-  justify-content: center;
+  min-width: 10rem;
 }
 
 .ctl__marker {
@@ -84,6 +88,54 @@
 
 .ctl__button.is-active .ctl__marker {
   visibility: visible;
+}
+
+/* As velocidades encostadas (VIS-04): um seletor de três posições. A escolhida
+   fica preenchida de latão, com o fundo escrito por cima — o par de 11,55:1 da
+   tabela do theme.css, lido ao contrário. A borda não engrossa aqui, porque
+   dentro do bloco quem marca é o preenchimento e o ●. */
+.ctl__speeds {
+  display: flex;
+}
+
+/* Um degrau acima do piso: o "×" da fonte de títulos é pequeno, e no tamanho
+   base ele se lê como asterisco. */
+.ctl__speeds .ctl__button {
+  min-width: 3.4rem;
+  padding: 0 0.6rem;
+  border-radius: 0;
+  font-size: var(--texto-medio, 1.125rem);
+}
+
+.ctl__speeds .ctl__button + .ctl__button {
+  margin-left: -2px;
+}
+
+.ctl__speeds .ctl__button:first-child {
+  border-radius: var(--raio-pequeno, 0.375rem) 0 0 var(--raio-pequeno, 0.375rem);
+}
+
+.ctl__speeds .ctl__button:last-child {
+  border-radius: 0 var(--raio-pequeno, 0.375rem) var(--raio-pequeno, 0.375rem) 0;
+}
+
+/* O botão em foco ou sob o ponteiro sobe à frente dos vizinhos, senão a borda
+   de um cobriria a do outro. */
+.ctl__speeds .ctl__button:hover,
+.ctl__speeds .ctl__button:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+.ctl__speeds .ctl__button.is-active {
+  position: relative;
+  border-width: 2px;
+  background: var(--cor-destaque, #7fd1a8);
+  color: var(--cor-fundo, #0f1c17);
+}
+
+.ctl__speeds .ctl__button.is-active .ctl__marker {
+  color: inherit;
 }
 
 /* Os atalhos escritos na tela (P8-04).

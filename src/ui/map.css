@@ -22,7 +22,7 @@
    - região atingida por evento: um pulso de brasa, e **"◉ evento" escrito**;
    - apoio abaixo do piso: **hachura** no desenho — textura, não cor —, e
      "▲ crítico" escrito quando não há evento na frente;
-   - aquecimento: a terra seca, e **a legenda embaixo diz a faixa por escrito**. */
+   - aquecimento: a terra seca, e **a legenda no canto diz a faixa por escrito**. */
 
 .map {
   display: block;
@@ -37,17 +37,21 @@
 
 /* Rola de lado em vez de deixar o desenho encolher: abaixo da largura do tema
    as etiquetas começariam a se tocar, e é nessa largura que o
-   tests/map-geometry.test.ts mede a distância entre elas. */
+   tests/map-geometry.test.ts mede a distância entre elas. Na tela cheia ele
+   também é quem mede o espaço do mapa (layout.css). */
 .map__scroll {
   overflow-x: auto;
 }
 
 .map__frame {
   position: relative;
-  /* A mesma largura do painel de detalhe, que precisa terminar no mesmo ponto
-     para os dois se lerem como uma coisa só. Aqui ela é fixa, e não máxima: as
-     etiquetas têm tamanho em rem, e o mapa também, então a proporção entre eles
-     não muda nem com o zoom do navegador. */
+  /* As etiquetas pintam por cima com z-index; o isolamento as mantém dentro do
+     mapa, sem disputar lugar com o que estiver por cima da página. */
+  isolation: isolate;
+  /* A largura do tema, em rem como as etiquetas: é nela que as oito cabem sem se
+     tocar, e a proporção entre os dois não muda com o zoom do navegador. Na
+     tela cheia (layout.css) o mapa cresce a partir daqui para ocupar o centro —
+     esta é a menor largura dele, e maior só afasta as etiquetas. */
   width: var(--largura-mundo, 54rem);
   /* A imagem inteira na largura, com a faixa da Antártida cortada embaixo. */
   aspect-ratio: 1376 / 620;
@@ -346,11 +350,23 @@
   color: var(--cor-fundo, #0f1c17);
 }
 
-/* A legenda do aquecimento (P7-04). */
+/* A legenda do aquecimento (P7-04), no canto de baixo do desenho desde o
+   VIS-04. O canto esquerdo é mar aberto — o da direita cobriria a Nova
+   Zelândia. O fundo é opaco pela mesma razão das etiquetas: sobre a imagem, só
+   ele garante o contraste da tabela do theme.css. */
 .map__caption {
-  margin: 0.75rem 0 0;
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  z-index: 1;
+  box-sizing: border-box;
+  max-width: calc(100% - 1rem);
+  margin: 0;
+  padding: 0.1rem 0.75rem;
+  border-radius: 999px;
+  background: var(--cor-fundo, #0f1c17);
   color: var(--cor-rotulo, #a7c0b4);
-  max-width: 70ch;
+  line-height: 1.4;
 }
 
 @media (prefers-reduced-motion: reduce) {

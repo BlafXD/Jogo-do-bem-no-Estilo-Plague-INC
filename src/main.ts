@@ -1,5 +1,6 @@
-// Ponto de entrada da aplicação: monta o HUD, a barra de tempo, a barra da
-// partida, o cartão de resultado e a árvore, retoma o save e roda o relógio.
+// Ponto de entrada da aplicação: monta o HUD, a barra de tempo com as listras,
+// a barra da partida, o cartão de resultado e a árvore, retoma o save e roda o
+// relógio.
 //
 // Este arquivo é o **único motorista** do engine. Ele é quem finalmente chama o
 // `advanceRealTime`, que estava escrito e testado desde o P6-04 e sem ninguém
@@ -58,8 +59,9 @@ import {
   mountSession,
   renderSession,
 } from './ui/session';
-import { mountSkipLink } from './ui/skip-link';
+import { jumpTo, mountSkipLink } from './ui/skip-link';
 import { clearGame, loadGame, loadMuted, saveGame, saveMuted } from './ui/storage';
+import { mountStripes, renderStripes, rulerMark, stripesView } from './ui/stripes';
 import {
   armNewGame,
   cancelNewGame,
@@ -82,7 +84,14 @@ import {
   type TutorialAnchor,
   type TutorialCues,
 } from './ui/tutorial';
-import { mountTree, renderTree, treeView } from './ui/tree';
+import {
+  mountTree,
+  mountTreeButton,
+  renderTree,
+  renderTreeButton,
+  treeButtonView,
+  treeView,
+} from './ui/tree';
 // O tema vem primeiro por leitura, não por necessidade: custom property é
 // resolvida no valor computado, então um `:root` declarado por último valeria
 // igual. Está no topo porque é o arquivo que manda nos outros, e quem abrir esta
@@ -92,12 +101,14 @@ import './ui/contain.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
 import './ui/hud.css';
+import './ui/layout.css';
 import './ui/map.css';
 import './ui/outcome.css';
 import './ui/region-panel.css';
 import './ui/screens.css';
 import './ui/session.css';
 import './ui/skip-link.css';
+import './ui/stripes.css';
 import './ui/timeline-chart.css';
 import './ui/title.css';
 import './ui/tree.css';
@@ -144,6 +155,14 @@ const topo = required<HTMLElement>('.topo');
 const tabuleiro = required<HTMLElement>('#tabuleiro');
 const app = required<HTMLElement>('#app');
 const pular = required<HTMLElement>('#pular');
+// As peças do VIS-04: o invólucro da tela cheia, o palco do mapa, e a barra de
+// baixo com as listras e o botão da árvore.
+const telaPartida = required<HTMLElement>('#tela-partida');
+const palco = required<HTMLElement>('.tabuleiro__palco');
+const base = required<HTMLElement>('#base');
+const listras = required<HTMLElement>('#listras');
+const atalhoArvore = required<HTMLElement>('#atalho-arvore');
+const acoes = required<HTMLElement>('.tabuleiro__acoes');
 
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
@@ -225,16 +244,27 @@ let tutorial = createTutorial('continue');
 const layout: ScreenLayout = {
   title: telaTitulo,
   chrome: topo,
+  bar: base,
   board: tabuleiro,
   skip: pular,
+  frame: telaPartida,
 };
 
-/** As quatro seções em que o balão do tutorial pousa. */
+/**
+ * Onde o balão de cada passo do tutorial pousa.
+ *
+ * **Três dos quatro passos pousam na barra de baixo desde o VIS-04.** O do
+ * tempo fala dos controles, que estão nela. Os da árvore e da contenção falam de
+ * duas seções que, com a partida em tela cheia, ficam embaixo do mapa, fora da
+ * tela — um balão pousado nelas não seria visto por ninguém. Na barra, ele fica
+ * ao lado do botão que leva até lá, e a frase do i18n diz o caminho. O do
+ * evento continua no boletim, que está na tela.
+ */
 const tutorialAnchors: Readonly<Record<TutorialAnchor, Element>> = {
-  controls,
-  tree,
+  controls: base,
+  tree: base,
   events: eventos,
-  contain: contencao,
+  contain: base,
 };
 
 /**
@@ -522,9 +552,14 @@ function renderGame(): void {
   renderScreens(layout, screen);
   renderTitle(telaTitulo, titleView(savedYear, title));
 
-  renderHud(hud, hudView(state));
+  renderHud(hud, hudView(state), rulerMark(state.temperature));
+  renderStripes(listras, stripesView(state));
   renderSelection();
   renderTree(tree, treeView(state));
+  renderTreeButton(atalhoArvore, treeButtonView(state));
+  // O botão da árvore sai junto com o tabuleiro: na tela de fim a árvore está
+  // escondida, e um salto até ela levaria o foco para o nada.
+  atalhoArvore.hidden = screen !== 'game';
   // No título o cartão de resultado não entra, nem quando o save é de uma
   // partida encerrada: quem senta na frente do computador da feira vê o jogo
   // se apresentar, e não o fim da partida de outra pessoa.
@@ -535,7 +570,10 @@ function renderGame(): void {
   // O tutorial depois das seções em que ele pousa: o balão é prependido no
   // container, e um render que o pusesse antes teria o `replaceChildren` do
   // vizinho arrancando-o no mesmo quadro.
-  renderTutorialPanel(tutorialPanel, tabuleiro, screen === 'game' && showsPanel(tutorial));
+  //
+  // O painel do Modo Feira pousa no palco do mapa (VIS-04): na tela cheia ele
+  // fica por cima do desenho, em vez de empurrar o mundo para baixo.
+  renderTutorialPanel(tutorialPanel, palco, screen === 'game' && showsPanel(tutorial));
   renderTutorial(
     tutorialCallout,
     tutorialAnchors,
@@ -655,6 +693,12 @@ function handleContain(): void {
 mountSkipLink(pular, tabuleiro, tree);
 mountHud(hud);
 mountControls(controls, handleCommand, handleToggleSound);
+mountStripes(listras);
+// O botão da barra de baixo leva à árvore pelo mesmo salto do link de pulo: o
+// foco vai junto com a rolagem. O `mountSkipLink`, logo acima, é quem torna a
+// árvore focável por código. A rolagem para no bloco da contenção, que fica
+// logo acima da árvore e disputa o mesmo PAC.
+mountTreeButton(atalhoArvore, () => jumpTo(tree, acoes));
 mountEventCards(eventos);
 mountMap(mapa, mapView(state, selectedRegion), handleSelect);
 mountRegionPanel(regiao, handleCloseRegion);

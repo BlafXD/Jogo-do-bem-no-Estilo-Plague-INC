@@ -216,10 +216,18 @@ export function mountControls(
   shortcuts.className = 'ctl__shortcuts';
   shortcuts.textContent = ui.controls.shortcuts;
 
+  // As três velocidades encostadas umas nas outras, num bloco só (VIS-04): são
+  // três respostas para a mesma pergunta, e a direção de arte as desenha como
+  // um seletor. O invólucro não tem papel nem nome — o grupo com nome é a barra
+  // inteira, e cada botão já diz a própria velocidade.
+  const speedGroup = document.createElement('div');
+  speedGroup.className = 'ctl__speeds';
+  speedGroup.append(...speeds);
+
   // O som depois das velocidades e antes dos atalhos: a linha de atalhos ocupa a
   // fileira inteira (`flex: 1 0 100%`), então qualquer botão depois dela cairia
   // sozinho numa terceira linha.
-  root.replaceChildren(pause, ...speeds, sound, shortcuts);
+  root.replaceChildren(pause, speedGroup, sound, shortcuts);
 }
 
 /**

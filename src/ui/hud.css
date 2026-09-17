@@ -1,4 +1,4 @@
-/* Estilo do HUD (P5-03).
+/* Estilo do HUD (P5-03), na barra de cima desde o VIS-04.
 
    As cores e as medidas são lidas de custom properties **com valor de reserva
    no próprio var()**. Quem as define é o `theme.css` — o arquivo que o pacote
@@ -12,71 +12,109 @@
    e em `rem` em outro, e dois textos abaixo do piso de 16px.
 
    O contraste que o docs/GDD.md §5 exige está na tabela do theme.css, recalculada
-   pelo tests/theme.test.ts: valor e rótulo nos indicadores, destaque no título,
-   borda na divisória.
+   pelo tests/theme.test.ts: valor e rótulo sobre a superfície da barra.
+
+   A página, o cabeçalho e as três faixas da partida moravam aqui até o VIS-04.
+   Agora estão no layout.css, e esta folha cuida só dos indicadores.
 
    Nenhum estado do jogo é comunicado por cor aqui: todo indicador tem rótulo
-   escrito. Quando o HUD ganhar alerta (P7-04), o alerta precisa de ícone e
-   texto, não de ficar vermelho. */
-
-:root {
-  color-scheme: dark;
-}
-
-body {
-  margin: 0;
-  background: var(--cor-fundo, #0f1c17);
-  color: var(--cor-valor, #f2f7f4);
-  font-family: var(--fonte-base, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
-  /* 16px é o mínimo do §5: o jogo é visto de pé, de longe, numa feira. */
-  font-size: var(--tamanho-base, 1rem);
-  line-height: 1.5;
-}
-
-.topo {
-  border-bottom: 1px solid var(--cor-borda, #4c8069);
-  padding: 1rem clamp(1rem, 4vw, 2.5rem);
-}
-
-.topo__titulo {
-  margin: 0 0 0.75rem;
-  color: var(--cor-destaque, #7fd1a8);
-  font-size: clamp(1.25rem, 3vw, 1.75rem);
-  letter-spacing: 0.02em;
-}
+   escrito, e a régua de medalhas é reforço de um número que está escrito logo
+   acima dela. */
 
 .hud {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(1rem, 3vw, 2.5rem);
+  align-items: stretch;
 }
 
 .hud__item {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   /* O valor pode encolher e crescer (2025 → 2100, 0 → 750); a largura mínima
-     evita que as cinco caixas dancem de posição a cada tick. */
+     evita que as caixas dancem de posição a cada tick. */
   min-width: 7ch;
+  padding: 0.35rem clamp(0.5rem, 0.9vw, 1rem);
+  /* O fio entre os indicadores: o latão diluído, para separar sem gritar. Não
+     tem texto em cima. */
+  border-right: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
+  /* Todo indicador tem dica no `title`; o cursor avisa que ela existe. */
+  cursor: help;
+}
+
+.hud__item:last-child {
+  border-right: 0;
 }
 
 .hud__label {
   color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
   /* 1rem e não 0,875: o §5 fixa 16px como piso para TODO texto, e o rótulo é o
      que diz o que o número significa. Encolher justamente ele seria comunicar
      o indicador só pelo valor. */
   font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  font-stretch: 87.5%;
+  line-height: 1.15;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
 }
 
 .hud__value {
+  font-family: var(--fonte-display, system-ui, sans-serif);
   /* Tabular: os dígitos têm todos a mesma largura, então o número não treme
      enquanto o tempo corre. */
   font-variant-numeric: tabular-nums;
-  font-size: clamp(1.25rem, 2.5vw, 1.625rem);
+  /* Encolhe com a janela até 1,25rem: é o que deixa a barra de cima numa linha
+     só a partir de 1240 px, onde a partida vira tela cheia. */
+  font-size: clamp(1.25rem, 1.7vw, 1.625rem);
   font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
-.conteudo {
-  padding: clamp(1rem, 4vw, 2.5rem);
+/* A régua de medalhas sob a temperatura (VIS-04). As larguras vêm do hud.ts,
+   proporcionais às faixas; as cores são as paradas das listras. */
+.hud__ruler {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  width: 7.5rem;
+  height: 5px;
+  margin-top: 0.3rem;
+}
+
+.hud__ruler i {
+  flex-basis: 0;
+  border-radius: 1px;
+}
+
+.hud__ruler [data-band='gold'] {
+  background: var(--cor-listra-1, #6e9e8c);
+}
+
+.hud__ruler [data-band='silver'] {
+  background: var(--cor-listra-3, #e7c572);
+}
+
+.hud__ruler [data-band='bronze'] {
+  background: var(--cor-listra-5, #d9673a);
+}
+
+.hud__ruler [data-band='over'] {
+  background: var(--cor-listra-6, #b23a2e);
+}
+
+/* O marcador: um traço claro, com um aro da cor da barra para se destacar sobre
+   qualquer uma das quatro faixas. */
+.hud__ruler b {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 3px;
+  height: 13px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--cor-valor, #f2f7f4);
+  box-shadow: 0 0 0 1px var(--cor-superficie, #182c24);
 }

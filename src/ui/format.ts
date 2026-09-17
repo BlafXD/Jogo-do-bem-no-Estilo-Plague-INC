@@ -36,6 +36,23 @@ export function celsius(value: number): string {
   return `${thresholdFormat.format(value)} ${ui.units.celsius}`;
 }
 
+const liveFormat = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * A temperatura que muda a cada mês: **duas casas, sempre** (VIS-04).
+ *
+ * É o caso oposto do `celsius`, pela razão que o comentário dele registra: um
+ * número que anda precisa de largura fixa, senão treme a cada tick. Mora aqui
+ * porque dois lugares a escrevem — o HUD e o marcador das listras —, e os dois
+ * precisam mostrar o mesmo "1,82 °C" lado a lado.
+ */
+export function liveCelsius(value: number): string {
+  return `${liveFormat.format(value)} ${ui.units.celsius}`;
+}
+
 /** Só o número, para quem tem outra unidade para colar. */
 export function threshold(value: number): string {
   return thresholdFormat.format(value);

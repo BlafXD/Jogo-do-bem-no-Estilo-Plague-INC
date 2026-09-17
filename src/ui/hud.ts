@@ -6,7 +6,8 @@
 //      a lógica onde cabe bug (arredondamento, unidade, média) mora aqui, e o
 //      tests/hud.test.ts roda em node, sem jsdom.
 //   2. `mountHud` e `renderHud` são as únicas funções que tocam no DOM, e são
-//      burras de propósito: montam cinco caixas e escrevem textContent.
+//      burras de propósito: montam as caixas, escrevem textContent e, desde o
+//      VIS-04, põem o marcador da régua de medalhas no lugar.
 //
 // O `document` só aparece dentro do corpo dessas duas funções, nunca no topo do
 // módulo — é isso que deixa o arquivo ser importado por um teste em node.
@@ -17,6 +18,8 @@
 import { ui } from '../data/i18n';
 import { globalEmissions } from '../engine/climate';
 import { averageSupport, type GameState } from '../engine/state';
+import { liveCelsius } from './format';
+import { RULER_BANDS } from './stripes';
 
 export const HUD_FIELDS = [
   'year',
@@ -43,7 +46,6 @@ function decimals(digits: number): Intl.NumberFormat {
   });
 }
 
-const twoDecimals = decimals(2);
 const oneDecimal = decimals(1);
 const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
@@ -62,7 +64,9 @@ const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 export function hudView(state: GameState): HudView {
   return {
     year: String(state.year),
-    temperature: `${twoDecimals.format(state.temperature)} ${ui.units.celsius}`,
+    // O formatador é o do format.ts desde o VIS-04: o marcador das listras
+    // escreve a mesma temperatura, e os dois precisam concordar na casa.
+    temperature: liveCelsius(state.temperature),
     emissions: `${oneDecimal.format(globalEmissions(state))} ${ui.units.emissionsPerYear}`,
     actionPoints: whole.format(Math.floor(state.actionPoints)),
     support: whole.format(Math.round(averageSupport(state))),
@@ -107,15 +111,52 @@ export function mountHud(root: Element): void {
       value.dataset.hud = field;
 
       item.append(label, value);
+      if (field === 'temperature') item.append(rulerElement());
       return item;
     }),
   );
 }
 
-/** Escreve os valores nas caixas montadas pelo mountHud. */
-export function renderHud(root: ParentNode, view: HudView): void {
+/**
+ * A régua sob a temperatura (VIS-04): as quatro faixas de medalha, com a
+ * largura de cada uma, e um marcador onde o mundo está.
+ *
+ * **É reforço, e fica fora do leitor de tela.** O número está escrito logo
+ * acima, e a faixa por extenso está na legenda do mapa. A régua só deixa ler de
+ * relance quanto falta para o próximo teto — o §5 não deixa a cor dela ser o
+ * recado sozinha.
+ */
+function rulerElement(): HTMLSpanElement {
+  const ruler = document.createElement('span');
+  ruler.className = 'hud__ruler';
+  ruler.setAttribute('aria-hidden', 'true');
+
+  for (const { band, from, to } of RULER_BANDS) {
+    const segment = document.createElement('i');
+    segment.dataset.band = band;
+    segment.style.flexGrow = String(to - from);
+    ruler.append(segment);
+  }
+
+  const mark = document.createElement('b');
+  mark.dataset.hud = 'mark';
+  ruler.append(mark);
+  return ruler;
+}
+
+/**
+ * Escreve os valores nas caixas montadas pelo mountHud.
+ *
+ * `mark` é onde a temperatura cai na régua, de 0 a 1 (o `rulerMark` do
+ * stripes.ts). Vem à parte, e não dentro da view, porque a view são os textos
+ * que o jogador lê; a posição do marcador é desenho.
+ */
+export function renderHud(root: ParentNode, view: HudView, mark = 0): void {
   for (const field of HUD_FIELDS) {
     const target = root.querySelector(`[data-hud="${field}"]`);
     if (target !== null) target.textContent = view[field];
   }
+
+  const ruler = root.querySelector<HTMLElement>('[data-hud="mark"]');
+  if (ruler !== null) ruler.style.left = `${(Math.min(1, Math.max(0, mark)) * 100).toFixed(1)}%`;
 }

@@ -60,10 +60,25 @@ apagado no mesmo dia. A trilha em loop continua sendo do pacote.
 | `src/assets/audio/alert.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
 | `src/assets/audio/outcome.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
 
+## Ideias e linguagens visuais
+
+**As listras do aquecimento são uma linguagem, e não um arquivo.** Desde o `VIS-04`, a barra de
+baixo da partida desenha uma listra por ano, na cor da temperatura daquele ano. É a ideia das
+*warming stripes*, criadas por Ed Hawkins, da Universidade de Reading. Nenhuma imagem dele entra no
+jogo: as cores são as do `src/ui/theme.css` e os números são os da partida. O crédito fica aqui
+porque a ideia é dele, como o `docs/DIRECAO-DE-ARTE.md §5` combinou.
+
+| Ideia | Autor | Onde aparece | Origem |
+|---|---|---|---|
+| *Warming stripes* | Ed Hawkins, Universidade de Reading | as listras da barra de baixo (`src/ui/stripes.ts`) | https://showyourstripes.info/ |
+
 ## Fontes tipográficas
 
-Nenhuma ainda. Enquanto não houver, a interface usa a pilha de fontes do sistema —
-que não precisa de licença e carrega instantâneo, o que ajuda no build offline da feira.
+**Nenhuma fonte é baixada nem entra no pacote do jogo.** Desde o `VIS-04`, os títulos e os números
+usam a Bahnschrift, que vem instalada no Windows 10 e 11, e o texto corrido usa a Segoe UI, também
+do sistema. As duas são lidas da máquina de quem joga, então não há licença a registrar. Numa máquina
+sem elas, entra a próxima fonte da pilha do `src/ui/theme.css`. Isso também ajuda o build offline da
+feira: nada precisa ser carregado.
 
 | Fonte | Autor | Licença | Origem |
 |---|---|---|---|
