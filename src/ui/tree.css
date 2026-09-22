@@ -389,6 +389,17 @@
   cursor: pointer;
 }
 
+/* Com o ícone do VIS-09 o botão passou de 317 para 347 px, e numa coluna de
+   celular ele vazava. Ele nunca passa da largura de quem o contém: quando falta
+   espaço, o rótulo quebra em duas linhas, e o ícone e o saldo ficam inteiros. */
+.tree-button {
+  max-width: 100%;
+}
+
+.tree-button__label {
+  white-space: normal;
+}
+
 .tree-button:hover {
   box-shadow: 0 0 0 2px var(--cor-valor, #f2f7f4);
 }

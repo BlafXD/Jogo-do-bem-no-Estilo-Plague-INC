@@ -69,7 +69,9 @@
    e inventar um segundo vocabulário visual para dizer a mesma coisa custaria
    leitura sem ganhar nada. */
 .ctl__sound {
-  min-width: 10rem;
+  /* 10,25 e não 10rem desde o ícone do VIS-09: com ele, "Ativar som" pedia
+     163 px, e a barra voltou a pular 3 px a cada clique. */
+  min-width: 10.25rem;
 }
 
 .ctl__marker {

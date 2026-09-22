@@ -641,6 +641,7 @@ export function mountTreeButton(root: Element, panelId: string, onOpen: () => vo
   // viram "habilidades120" no leitor de tela. Na tela ele não aparece — num
   // contêiner flex, texto só de espaço não é desenhado, e quem separa é o gap.
   button.append(span('tree-button__label', ui.treeButton.label), ' ', points);
+  prependIcon(button, 'tree', 'icon--button');
   button.addEventListener('click', onOpen);
   root.replaceChildren(button);
 }

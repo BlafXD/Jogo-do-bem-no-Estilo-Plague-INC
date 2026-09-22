@@ -24,6 +24,7 @@
 // sabe cobrar: foco, rótulo escrito, `Esc`.
 
 import { ui } from '../data/i18n';
+import { prependIcon } from './icons';
 
 export type Session = {
   /** O jogador pediu para sair e a confirmação está na tela. */
@@ -106,6 +107,9 @@ export function mountSession(
 
   const reset = button('session__button', 'arm', ui.session.leave, ui.session.leaveHint);
   reset.addEventListener('click', handlers.onArm);
+  // A seta de volta (VIS-09). Confirmar e cancelar ficam só com o texto: são
+  // uma pergunta, e quem responde precisa ler a consequência.
+  prependIcon(reset, 'leave', 'icon--button');
 
   const confirm = button(
     'session__button session__button--danger',

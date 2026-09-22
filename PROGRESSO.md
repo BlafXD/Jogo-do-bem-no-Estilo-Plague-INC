@@ -28,6 +28,103 @@ Regras curtas:
 
 ---
 
+## 2026-09-22 — Os botões ganham ícone, e o VIS-09 fecha
+
+- **Parte / tarefa:** `VIS-09` ✔, 2ª entrega. A 1ª é a entrada logo abaixo, do mesmo dia.
+- **Do chat, no mesmo dia:** as quatro silhuetas da Inércia foram geradas pela equipe. A resposta
+  foi anotada no `VIS-11`, que ainda espera duas decisões: o escopo e a ordem.
+- **O que mudou:**
+  - `src/assets/icons/` — **mais oito ícones do protótipo**, com o mesmo traçado: `pause`, `play`,
+    `sound`, `mute`, `tree`, `close`, `leave` e `globe`. A pasta chegou a vinte.
+  - `src/ui/icons.ts` — os oito nomes e dois auxiliares:
+    - `setIcon` troca o ícone de um botão, e só mexe no DOM quando o ícone muda;
+    - `writeLabel` escreve o texto num `<span>` à parte, sem apagar o ícone.
+  - `src/ui/icons.css` — o tamanho dos ícones de botão: 20 px.
+  - `src/ui/controls.ts` — a pausa troca entre pausa e play, e o som entre alto-falante e
+    alto-falante riscado, junto com o estado.
+  - `src/ui/title.ts` — o play vai no caminho principal ("Começar" sem save, "Continuar" com ele), e
+    o som troca como o da barra.
+  - `src/ui/tree.ts`, `tree-panel.ts`, `region-panel.ts`, `critical-card.ts`, `outcome.ts` e
+    `session.ts` — os ícones fixos: a árvore, os dois "Fechar", o "Retomar" do cartão crítico,
+    "Jogar de novo", "Ver o mundo" e "Voltar ao início".
+  - As folhas `title.css`, `session.css`, `tree-panel.css`, `region-panel.css`, `outcome.css`,
+    `controls.css` e `tree.css` — o ícone alinhado com o texto nos botões que ainda não eram flex, e
+    os três ajustes da tela, abaixo.
+  - `tests/icons.dom.test.ts` — o `setIcon`, o `writeLabel`, a troca da pausa e do som, o play do
+    título e os botões fixos.
+
+    Suíte: 934 → **943**.
+  - `README.md`, `docs/CREDITOS.md`, `docs/DIRECAO-DE-ARTE.md` e `PLANO.md`.
+
+### O que a tela mostrou, e o que mudou por causa dela
+
+1. **Em 1024 px, os botões do título quebravam em duas linhas.** Somavam 471 px numa coluna de
+   448, e as listras desciam da primeira dobra. O espaço interno de cada botão caiu de 1,25 para
+   1rem, e o espaço entre eles, de 0,75 para 0,625rem. Depois disso, o título mede o mesmo que no
+   `VIS-08` nas seis telas conferidas.
+2. **O som pulava 3 px a cada clique.** Com o ícone, "Ativar som" pedia 163 px, e a largura mínima
+   era de 160. Ela subiu para 10,25rem (164 px), e os dois estados medem 164.
+3. **Numa coluna de celular, o botão da árvore vazava.** Com o ícone ele tem 347 px, e a coluna de
+   390 px tem 343. Agora o rótulo quebra em duas linhas quando falta espaço, e o botão cabe em 390 e
+   em 360 px.
+
+### Conferi que os testes reprovam de verdade
+
+Cinco estragos, um de cada vez:
+- o `setIcon` recriando o ícone sempre;
+- a pausa sempre com o ícone de pausar;
+- `textContent` no lugar do `writeLabel`;
+- o play sempre em "Nova partida";
+- a sessão sem ícone.
+
+**O terceiro passou na primeira rodada.** O `textContent` apagava o ícone, e o `setIcon` o recriava
+logo em seguida. A tela ficava certa, mas o `<svg>` era refeito a cada quadro. Entrou um teste que
+redesenha a barra sem mudar o estado e exige o mesmo `<svg>`. Com ele, os cinco reprovam. Voltei o
+arquivo nas cinco vezes.
+
+### Como foi conferido
+
+**No Edge em modo headless**, com uma partida de 2047 plantada:
+- **Barra de baixo:** medida em oito tamanhos, de 360 a 1920 px, antes e depois, com o jogo pausado,
+  correndo e mudo. Nada rola de lado.
+  - Em 1240 px, as listras passaram de 315 para 285 px, porque o botão da árvore cresceu.
+  - A pausa continua com 136 px nos dois estados.
+- **Os botões de cada momento:**
+  - o título sem save e com save;
+  - o "Fechar" da região e o do painel da árvore;
+  - o cartão crítico, com um crítico de verdade caindo;
+  - a tela de fim de uma partida sem nenhuma compra.
+
+  Todo ícone tem 20 px, está centrado na altura do texto e fica fora do leitor de tela.
+- **Build da feira aberto por `file://`:** os ícones do título e das duas barras.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 943 testes
+  npm run dev
+  ```
+
+  Na tela:
+  - A pausa vira play quando o tempo para, e o som mostra o alto-falante riscado no mudo.
+  - "Começar" tem o play sem partida salva; com ela, o play passa para "Continuar".
+  - Os dois "Fechar", o "Retomar" do evento crítico e os dois botões da tela de fim.
+
+- **Pendente:**
+  - **O `VIS-11`** (a Inércia em silhueta) espera duas decisões: o escopo e a ordem em relação aos
+    sons do Kenney.
+  - **O 404 do `favicon.ico`**, como na entrada abaixo.
+  - **O `[D-Musica]` do `README.md`**, que ainda diz que não há áudio. É do `P7-09`.
+- **Evidência:**
+  - `docs/evidencias/2026-09-22-vis-09-barra-de-baixo-1536.jpg` — pausa, som e árvore;
+  - `docs/evidencias/2026-09-22-vis-09-cartao-critico.jpg` — o "Retomar" com o play;
+  - `docs/evidencias/2026-09-22-vis-09-botoes-do-titulo.jpg` — "Começar" e o som;
+  - `docs/evidencias/2026-09-22-vis-09-botoes-do-fim.jpg` — "Jogar de novo" e "Ver o mundo".
+
+---
+
 ## 2026-09-22 — Os ícones viram arquivo: indicadores, ramos, contenção e a marca da folha
 
 - **Parte / tarefa:** `VIS-09`, 1ª entrega de duas (decidido no chat nesta data). O checkbox ficou em

@@ -25,6 +25,7 @@ import { eventById, isCritical, startTickOf } from '../engine/events';
 import type { GameState } from '../engine/state';
 import { yearForTick } from '../engine/tick';
 import { eventCast, mountPortrait, renderPortrait, type Appearance } from './characters';
+import { prependIcon } from './icons';
 import { trapTab } from './modal';
 
 // --------------------------------------------------------------- a view ---
@@ -137,6 +138,7 @@ export function mountCriticalCard(root: HTMLElement, onResume: () => void): void
   // A tecla desenhada é decoração: a dica do botão diz os atalhos por escrito.
   key.setAttribute('aria-hidden', 'true');
   resume.append(ui.events.critical.resume, ' ', key);
+  prependIcon(resume, 'play', 'icon--button');
   resume.addEventListener('click', onResume);
 
   const body = document.createElement('div');

@@ -165,8 +165,9 @@ Duas travas que o arquivo já carrega:
   ícone + rótulo em texto ao lado; se o seu tema depender de verde vs. vermelho para dizer alguma
   coisa, ele está dizendo menos do que o jogo precisa.
 
-**Os ícones, desde o `VIS-09`.** Os doze de `src/assets/icons/` — os seis indicadores da barra de
-cima, os cinco ramos da árvore e a contenção — são arquivos `.svg` no formato do contrato: 24×24,
+**Os ícones, desde o `VIS-09`.** Os vinte de `src/assets/icons/` — os seis indicadores da barra de
+cima, os cinco ramos da árvore, a contenção e os oito dos botões — são arquivos `.svg` no formato do
+contrato: 24×24,
 traço de 2 px, uma cor só e sem texto. A cor é `currentColor`, a do texto ao lado, e por isso
 continua morando só no `theme.css`. Você troca o arquivo, com o mesmo nome, e não abre código
 nenhum. O `tests/icons.test.ts` confere o formato de cada um e reprova arquivo sobrando ou faltando
@@ -176,8 +177,9 @@ na pasta.
   cores, todas lidas do `theme.css`, com a reserva escrita no próprio arquivo.
 - **Os sinais de estado** (`✔`, `●`, `◌`, `✕`, `▲`, `◉`) continuam sendo texto, no
   `src/data/i18n.ts`, grudados no rótulo. Não são arquivo.
-- **Os ícones dos botões** (pausar, som, fechar e os outros) ainda não existem: entram com a segunda
-  entrega do `VIS-09`, no mesmo formato.
+- **Os ícones dos botões** são oito: `pause`, `play`, `sound`, `mute`, `tree`, `close`, `leave` e
+  `globe`. A pausa e o som trocam de ícone sozinhos, conforme o estado, e isso não pede nada de
+  você: basta os dois arquivos de cada par existirem.
 
 ### `[D-Musica]` — trilha e efeitos
 

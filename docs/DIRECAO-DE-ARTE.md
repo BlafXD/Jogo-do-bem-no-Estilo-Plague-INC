@@ -435,6 +435,43 @@ da 2ª entrega. Onde a tela saiu diferente:
   mais só para o logotipo seria uma cor que nenhuma folha lê. A folha é `--cor-comprado`, e o fundo
   do anel, `--cor-superficie`.
 
+### Como ficou no `VIS-09` (2ª entrega: os botões)
+
+Mais oito ícones do protótipo viraram arquivo, com o mesmo traçado. Nos botões eles têm 20 px, um
+degrau abaixo dos 24 dos indicadores, ao lado de um rótulo de 16 px.
+
+| Botão | Ícone |
+|---|---|
+| Pausar / Retomar | pausa ⇄ play |
+| Silenciar / Ativar som, na barra e no título | alto-falante ⇄ alto-falante riscado |
+| Árvore de habilidades | a árvore |
+| Fechar, no painel da árvore e na região | o X |
+| Voltar ao início | a seta de volta |
+| Começar ou Continuar, Retomar do cartão crítico e Jogar de novo | play |
+| Ver o mundo, na tela de fim | o globo |
+
+Onde a tela saiu diferente do protótipo:
+
+- **Os dois ícones que trocam leem de jeitos diferentes, como no protótipo.** A pausa mostra o que
+  o clique faz (parado, é o play), como o rótulo ao lado. O som mostra o estado (mudo, é o
+  alto-falante riscado), como o marcador ● que o botão já tinha.
+- **O play do título segue o caminho principal.** Sem partida salva, fica em "Começar"; com ela,
+  fica em "Continuar", e "Nova partida" fica sem ícone. O protótipo só tinha "Começar".
+- **Confirmar e cancelar o reinício ficam só com o texto.** São a resposta a uma pergunta que apaga
+  a partida, e quem responde precisa ler a consequência.
+- **O alerta e o boletim do protótipo não entraram.** Ele os desenhou, mas nenhum botão os usava.
+- **Os botões do título ficaram mais justos**: 1rem de espaço interno em vez de 1,25, e 0,625rem
+  entre eles em vez de 0,75. Com os ícones, os três somavam 471 px numa coluna de 448 em 1024 px,
+  quebravam em duas linhas, e as listras desciam da primeira dobra. O título continua medindo o mesmo
+  que no `VIS-08` nas seis telas conferidas.
+- **O som da barra tem 10,25rem de largura mínima**, e não 10: com o ícone, "Ativar som" pedia 163
+  px, e a barra pulava 3 px a cada clique.
+- **O botão da árvore quebra o rótulo quando falta espaço.** Com o ícone ele tem 347 px, e numa
+  coluna de celular vazava. Agora, em 390 e 360 px, "Árvore de habilidades" desce em duas linhas, e
+  o ícone e o saldo ficam inteiros.
+- **As listras da barra de baixo perdem 30 px**, porque o botão da árvore cresceu: em 1240 px, elas
+  passaram de 315 para 285.
+
 ---
 
 ## 9. O que continua valendo do §5

@@ -117,6 +117,11 @@
 }
 
 .outcome__again {
+  /* O ícone do VIS-09 e o texto lado a lado, centrados. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: 2px solid var(--cor-destaque, #7fd1a8);
   border-radius: var(--raio-pequeno, 0.375rem);
   background: transparent;
@@ -146,6 +151,11 @@
    cor de rótulo e sem o peso da fonte. Quem acabou de perder normalmente quer
    jogar de novo; quem quer entender por que perdeu vai atrás do mapa. */
 .outcome__review {
+  /* O ícone do VIS-09 e o texto lado a lado, centrados. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: 2px solid var(--cor-borda, #4c8069);
   border-radius: var(--raio-pequeno, 0.375rem);
   background: transparent;

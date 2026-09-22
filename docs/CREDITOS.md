@@ -23,7 +23,7 @@ Assets feitos pela equipe não precisam de linha aqui — mas se for um pacote i
 Os ícones de estado da interface são **caracteres Unicode** (`✔`, `●`, `◌`, `✕`, `▲`, `◉`) escritos
 no `src/data/i18n.ts` — não há arquivo de ícone, e por isso não há licença a registrar.
 
-**Os ícones desenhados também são da casa.** Os doze de `src/assets/icons/` e a marca da folha foram
+**Os ícones desenhados também são da casa.** Os vinte de `src/assets/icons/` e a marca da folha foram
 escritos em SVG, caminho por caminho, no protótipo do `VIS-01` (2026-09-16), e o `VIS-09` os passou
 para arquivo sem mudar o desenho. Nenhum vem de biblioteca de ícones. A marca só trocou o latão-forte do
 protótipo pelo creme do tema, que é quase a mesma cor.
@@ -41,7 +41,7 @@ fronteiras das 8 regiões não estão na imagem, são polígonos do projeto no `
 |---|---|---|---|
 | `src/assets/characters/poses/*.jpg` (16 poses) | autor do projeto | própria | quatro poses de cada pessoa, recebidas em 2026-09-16; o fundo virou creme `#F4EDD0` e a altura, 480 px, no `VIS-01` (`VisTool.cs`, fora do repositório) |
 | `src/assets/map/world.jpg` | autor do projeto | própria | cópia sem edição do `Mapa Mundi.jpeg`, de 1376 × 768, em 2026-09-16 |
-| `src/assets/icons/*.svg` (12 ícones) | autor do projeto | própria | desenhados no protótipo do `VIS-01` em 2026-09-16; viraram arquivo no `VIS-09`, em 2026-09-22 |
+| `src/assets/icons/*.svg` (20 ícones) | autor do projeto | própria | desenhados no protótipo do `VIS-01` em 2026-09-16; viraram arquivo no `VIS-09`, em 2026-09-22 |
 | `src/assets/brand/mark.svg` | autor do projeto | própria | a folha no anel de circuito, desenhada no protótipo do `VIS-01` a partir da folha da ficha dos personagens |
 
 ## Áudio

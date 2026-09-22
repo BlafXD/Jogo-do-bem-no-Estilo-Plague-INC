@@ -30,6 +30,7 @@
 import { ui } from '../data/i18n';
 import { globalEmissions } from '../engine/climate';
 import type { GameState, Region, RegionId } from '../engine/state';
+import { prependIcon } from './icons';
 
 // ----------------------------------------------------------------- a view ---
 
@@ -245,6 +246,7 @@ export function mountRegionPanel(root: Element, onClose: () => void): void {
   close.className = 'region__close';
   close.dataset.panel = 'close';
   close.textContent = ui.regionPanel.close;
+  prependIcon(close, 'close', 'icon--button');
   close.title = ui.regionPanel.closeHint;
   close.addEventListener('click', onClose);
 

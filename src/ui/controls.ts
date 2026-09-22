@@ -10,6 +10,7 @@
 // decisão de quem jogou, não um fato do mundo.
 
 import { ui } from '../data/i18n';
+import { setIcon, writeLabel } from './icons';
 
 export const SPEEDS = [1, 2, 4] as const;
 
@@ -249,12 +250,17 @@ export function renderControls(root: ParentNode, control: TimeControl, muted: bo
     // nome já alterna, ele anunciaria o estado duas vezes e com sinais opostos
     // ("Silenciar, pressionado" com o som ligado).
     sound.classList.toggle('is-active', !muted);
+    // O ícone diz o estado, como o marcador: o alto-falante riscado é o mudo.
+    setIcon(sound, muted ? 'mute' : 'sound', 'icon--button');
   }
 
   const pause = root.querySelector('[data-control="pause"]');
 
   if (pause !== null) {
-    pause.textContent = control.paused ? ui.controls.resume : ui.controls.pause;
+    writeLabel(pause, control.paused ? ui.controls.resume : ui.controls.pause);
+    // Este ícone, ao contrário do do som, diz o que o clique faz — como o
+    // rótulo ao lado. Parado, é o play.
+    setIcon(pause, control.paused ? 'play' : 'pause', 'icon--button');
     pause.setAttribute('aria-pressed', String(control.paused));
   }
 

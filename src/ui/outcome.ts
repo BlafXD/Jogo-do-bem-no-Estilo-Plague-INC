@@ -45,6 +45,7 @@ import {
 } from './comparison';
 import { celsius } from './format';
 import { hudView } from './hud';
+import { prependIcon } from './icons';
 import {
   mountTimelineChart,
   renderTimelineChart,
@@ -407,6 +408,7 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
   again.type = 'button';
   again.className = 'outcome__again';
   again.textContent = ui.outcome.playAgain;
+  prependIcon(again, 'play', 'icon--button');
   again.title = ui.outcome.playAgainHint;
   again.addEventListener('click', onPlayAgain);
 
@@ -423,6 +425,7 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
     review.className = 'outcome__review';
     review.dataset.outcome = 'review';
     review.textContent = ui.outcome.review;
+    prependIcon(review, 'globe', 'icon--button');
     review.title = ui.outcome.reviewHint;
     review.addEventListener('click', onReview);
     actions.append(review);

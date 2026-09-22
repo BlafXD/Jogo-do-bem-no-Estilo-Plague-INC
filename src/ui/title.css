@@ -103,15 +103,24 @@
   font-size: clamp(1.125rem, 2.5vw, 1.375rem);
 }
 
+/* Os botões numa linha só até 1024 px. Com os ícones do VIS-09 eles somavam
+   471 px numa coluna de 448, quebravam em duas linhas, e as listras desciam da
+   primeira dobra. O espaço entre eles (0,625rem) e o de dentro deles (1rem)
+   devolvem 28 px. */
 .title__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
 .title__button {
+  /* O ícone do VIS-09 e o texto lado a lado, centrados. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   min-height: var(--alvo-toque, 2.75rem);
-  padding: 0.5rem 1.25rem;
+  padding: 0.5rem 1rem;
   border: 2px solid var(--cor-borda, #4c8069);
   border-radius: var(--raio, 0.5rem);
   background: transparent;

@@ -122,6 +122,11 @@
 
 /* O botão secundário da direção de arte: borda de fio, sem preenchimento. */
 .tree-panel__close {
+  /* O ícone do VIS-09 e o texto lado a lado, centrados. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   min-height: var(--alvo-toque, 2.75rem);
   padding: 0.4rem 1rem;
   border: 2px solid var(--cor-borda, #4c8069);

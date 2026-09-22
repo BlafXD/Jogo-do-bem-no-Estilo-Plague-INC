@@ -58,6 +58,11 @@
 }
 
 .region__close {
+  /* O ícone do VIS-09 e o texto lado a lado, centrados. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   /* Alvo de toque confortável, a mesma medida dos controles: o dedo de quem
      passa num estande não mira bem. Estava escrito aqui como `44px` até o
      P5-02 — o token é em `rem`, que é o que faz o botão crescer junto quando

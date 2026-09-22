@@ -23,6 +23,11 @@
 }
 
 .session__button {
+  /* O ícone do VIS-09 e o texto lado a lado, centrados. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: 2px solid var(--cor-borda, #4c8069);
   border-radius: var(--raio-pequeno, 0.375rem);
   background: transparent;

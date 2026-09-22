@@ -41,6 +41,15 @@ export const ICON_NAMES = [
   'industry',
   'society',
   'contain',
+  // Os botões (2ª entrega do VIS-09).
+  'pause',
+  'play',
+  'sound',
+  'mute',
+  'tree',
+  'close',
+  'leave',
+  'globe',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];
@@ -139,6 +148,41 @@ export function prependIcon(target: Element, name: IconName, className = ''): vo
 
   svg.dataset.icon = name;
   target.prepend(svg);
+}
+
+/**
+ * Deixa `target` com o ícone `name` na frente, ou sem ícone nenhum com `null`.
+ *
+ * É para o botão cujo ícone acompanha o estado — a pausa vira play, o som vira
+ * mudo. Ele é chamado a cada quadro, e por isso **só mexe no DOM quando o ícone
+ * muda**: redesenhar o `<svg>` sessenta vezes por segundo seria ler o arquivo
+ * sessenta vezes à toa.
+ */
+export function setIcon(target: Element, name: IconName | null, className = ''): void {
+  const current = target.querySelector<SVGSVGElement>(':scope > svg.icon');
+  if ((current?.dataset.icon ?? null) === name) return;
+
+  current?.remove();
+  if (name !== null) prependIcon(target, name, className);
+}
+
+/**
+ * Escreve o texto de um botão com ícone, sem apagar o ícone.
+ *
+ * Um `textContent =` no próprio botão levaria o `<svg>` junto. O texto mora
+ * num `<span>` à parte, criado na primeira escrita, e só é reescrito quando
+ * muda — é o mesmo cuidado dos outros redesenhos por quadro.
+ */
+export function writeLabel(button: Element, text: string): void {
+  let label = button.querySelector<HTMLElement>(':scope > [data-label]');
+
+  if (label === null) {
+    label = document.createElement('span');
+    label.dataset.label = '';
+    button.append(label);
+  }
+
+  if (label.textContent !== text) label.textContent = text;
 }
 
 /**

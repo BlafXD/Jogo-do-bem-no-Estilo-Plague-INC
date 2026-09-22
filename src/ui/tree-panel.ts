@@ -21,6 +21,7 @@
 
 import { ui } from '../data/i18n';
 import type { GameState } from '../engine/state';
+import { prependIcon } from './icons';
 import { trapTab } from './modal';
 import { wholePoints } from './tree';
 
@@ -84,6 +85,7 @@ export function mountTreePanel(root: HTMLElement, onClose: () => void): void {
   close.className = 'tree-panel__close';
   close.dataset.treePanel = 'close';
   close.textContent = ui.treePanel.close;
+  prependIcon(close, 'close', 'icon--button');
   close.title = ui.treePanel.closeHint;
   close.addEventListener('click', onClose);
 

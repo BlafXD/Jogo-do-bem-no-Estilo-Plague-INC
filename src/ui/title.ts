@@ -31,7 +31,7 @@ import { outcomeOf } from '../engine/outcome';
 import type { GameState } from '../engine/state';
 import { cast, mountPortrait, renderPortrait } from './characters';
 import { liveCelsius } from './format';
-import { prependBrandMark } from './icons';
+import { prependBrandMark, prependIcon, setIcon, writeLabel } from './icons';
 import { mountStripes, renderStripes, stripesView, type StripesView } from './stripes';
 
 export type TitleState = {
@@ -158,7 +158,7 @@ function button(className: string, slot: Slot, label: string, hint: string): HTM
   element.type = 'button';
   element.className = className;
   element.dataset.title = slot;
-  element.textContent = label;
+  writeLabel(element, label);
   element.title = hint;
   return element;
 }
@@ -221,6 +221,9 @@ export function mountTitle(root: Element, handlers: TitleHandlers): void {
     ui.title.continueHint,
   );
   keep.addEventListener('click', handlers.onContinue);
+  // O play vai no caminho principal, como no protótipo (VIS-09). Com save, é
+  // este; sem save, ele some, e o play passa para o "Começar" (renderTitle).
+  prependIcon(keep, 'play', 'icon--button');
 
   const fresh = button('title__button', 'new', ui.title.start, ui.title.newGameHint);
   fresh.addEventListener('click', handlers.onNew);
@@ -336,7 +339,7 @@ function slot(root: ParentNode, name: Slot | 'confirm-box'): HTMLElement | null 
 export function renderTitle(root: ParentNode, view: TitleView): void {
   const keep = slot(root, 'continue');
   if (keep !== null) {
-    keep.textContent = view.continueLabel;
+    writeLabel(keep, view.continueLabel);
     // `hidden` e não `disabled`: sem save, "Continuar" não é uma ação
     // indisponível, é uma ação que não existe. Um botão apagado ali faria a
     // pessoa procurar o que fazer para destravá-lo.
@@ -345,13 +348,15 @@ export function renderTitle(root: ParentNode, view: TitleView): void {
 
   const fresh = slot(root, 'new');
   if (fresh !== null) {
-    fresh.textContent = view.newLabel;
+    writeLabel(fresh, view.newLabel);
     // Enquanto a pergunta está no ar, o botão que a abriu sai da tela: deixá-lo
     // ao lado de "Apagar e recomeçar" daria dois caminhos para a mesma coisa,
     // um deles sem aviso.
     fresh.hidden = view.armed;
-    // Sem save, "Começar" é o caminho principal, e ganha o destaque (VIS-08).
+    // Sem save, "Começar" é o caminho principal, e ganha o destaque (VIS-08) e
+    // o play (VIS-09).
     fresh.classList.toggle('title__button--primary', !view.canContinue);
+    setIcon(fresh, view.canContinue ? null : 'play', 'icon--button');
   }
 
   // O Modo Feira some junto com o "Nova partida" enquanto a pergunta está no
@@ -367,7 +372,8 @@ export function renderTitle(root: ParentNode, view: TitleView): void {
 
   const sound = slot(root, 'sound');
   if (sound !== null) {
-    sound.textContent = view.soundLabel;
+    writeLabel(sound, view.soundLabel);
+    setIcon(sound, view.muted ? 'mute' : 'sound', 'icon--button');
     // O mesmo sinal do botão da barra: com som, ele fica marcado.
     sound.classList.toggle('is-active', !view.muted);
   }
