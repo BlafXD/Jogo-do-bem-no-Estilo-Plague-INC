@@ -47,25 +47,28 @@ fronteiras das 8 regiões não estão na imagem, são polígonos do projeto no `
 
 ## Áudio
 
-**Os três efeitos são da casa, e nenhum deles foi baixado.** O `P7-05` pedia "3 efeitos CC0", e o
-contrato do `[D-Musica]` no `PLANO.md` aceita "autoral **ou** CC0"; a segunda metade é a que valeu,
-por duas razões práticas. Esta máquina não tem `ffmpeg` nem `oggenc`, então produzir `.ogg` aqui não
-era possível — e trazer arquivo de terceiro obrigaria a verificar de fora uma licença que a regra 10
-não deixa errar, escolhendo som pelo nome do arquivo em vez de pelo som.
+**Os seis efeitos são do pacote _Interface Sounds_, do Kenney, com licença CC0** — domínio público,
+sem obrigação de crédito. O crédito fica aqui mesmo assim, porque a regra 10 pede a origem de todo
+asset de terceiro, e porque o Kenney pede. Entraram no `P7-09`, em 2026-09-22, a pedido do chat: o
+autor do projeto trouxe o zip. A licença foi conferida duas vezes: no `License.txt` de dentro do zip
+e na página do pacote.
 
-O `scripts/gerar-audio.mjs` soma seno e decaimento exponencial e escreve os três WAV. **A autoria
-fica satisfeita por construção, não por promessa**, e o resultado é reproduzível: rodar o script de
-novo escreve exatamente os mesmos bytes (não há sorteio nenhum ali — regra 7).
+**Os arquivos foram renomeados pelo momento em que tocam**, e o conteúdo é o do pacote, sem edição.
+Trocar um som é pôr outro `.ogg` na pasta e corrigir o campo `file` do `src/data/audio.json`, sem
+tocar em `.ts`. O `tests/audio.test.ts` cobra o contrato do `[D-Musica]`: até seis efeitos, em Ogg
+de verdade, com menos de 100 KB cada.
 
-**São andaime, e existem para serem trocados.** O `[D-Musica]` entrega `.ogg` na mesma pasta e
-corrige o campo `file` do `src/data/audio.json`; nenhum arquivo `.ts` muda, e o script pode ser
-apagado no mesmo dia. A trilha em loop continua sendo do pacote.
+**Os três sons de teste do `P7-05` saíram** junto com o `scripts/gerar-audio.mjs`, que os gerava,
+com permissão no chat. A trilha em loop continua sendo do `[D-Musica]`: o pacote só tem efeitos.
 
 | Arquivo | Autor | Licença | Origem |
 |---|---|---|---|
-| `src/assets/audio/unlock.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
-| `src/assets/audio/alert.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
-| `src/assets/audio/outcome.wav` | autor do projeto | própria | gerado por `scripts/gerar-audio.mjs` em 2026-09-09 |
+| `src/assets/audio/unlock.ogg` | Kenney | CC0 | `confirmation_001.ogg` do *Interface Sounds* — https://kenney.nl/assets/interface-sounds |
+| `src/assets/audio/contain.ogg` | Kenney | CC0 | `minimize_008.ogg` do mesmo pacote |
+| `src/assets/audio/refuse.ogg` | Kenney | CC0 | `error_004.ogg` do mesmo pacote |
+| `src/assets/audio/alert.ogg` | Kenney | CC0 | `bong_001.ogg` do mesmo pacote |
+| `src/assets/audio/inertia.ogg` | Kenney | CC0 | `glitch_002.ogg` do mesmo pacote |
+| `src/assets/audio/outcome.ogg` | Kenney | CC0 | `confirmation_004.ogg` do mesmo pacote |
 
 ## Ideias e linguagens visuais
 

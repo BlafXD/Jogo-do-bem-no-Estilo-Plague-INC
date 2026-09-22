@@ -28,6 +28,97 @@ Regras curtas:
 
 ---
 
+## 2026-09-22 — Os sons do Kenney: seis efeitos, três deles em momentos que eram calados
+
+- **Parte / tarefa:** `P7-09` ✔.
+- **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
+  Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.
+- **O que mudou:**
+  - `src/assets/audio/` — **seis `.ogg` do pacote**, renomeados pelo momento e sem edição.
+  - Apagados, com permissão: os três `.wav` de teste e o `scripts/gerar-audio.mjs`.
+  - `src/ui/audio.ts` — três momentos novos: `contain`, `refuse` e `inertia`.
+  - `src/data/audio.json` — os seis arquivos e o volume de cada um.
+  - `src/main.ts`:
+    - `refuse` na compra e na contenção recusadas;
+    - `contain` na contenção aceita;
+    - `inertia` quando o aviso da Inércia entra no boletim.
+  - `eslint.config.js` — saiu o bloco que servia só ao gerador apagado.
+  - `tests/audio.test.ts` — o contrato do `[D-Musica]` cobrado nos arquivos: até seis efeitos, Ogg
+    de verdade (a assinatura "OggS", e não só a extensão), menos de 100 KB cada.
+    `tests/node-io.d.ts` ganhou o `statSync`, para medir o tamanho.
+
+    Suíte: 970 → **973**.
+  - `docs/CREDITOS.md`, `README.md` (o `[D-Musica]` ainda dizia que não havia áudio) e `PLANO.md`.
+
+### Como cada som foi escolhido
+
+**Sem ouvir.** Medi os cem arquivos no Edge sem janela: o próprio navegador decodificou cada um e
+calculou a duração, o pico, o volume médio e a altura aproximada. Todos têm menos de meio segundo
+(os "scroll" têm um), e vêm no mesmo pico de volume. A escolha saiu do nome mais a medida:
+
+| Momento | Arquivo do pacote | Por quê |
+|---|---|---|
+| comprar um nó | `confirmation_001` | 0,28 s, o mais cheio dos de confirmação |
+| conter a Inércia | `minimize_008` | 0,22 s e grave: ela "encolhe" |
+| clique recusado | `error_004` | 0,09 s: curto, para não soar como castigo |
+| evento crítico | `bong_001` | grave (~180 Hz), como um sino |
+| aviso da Inércia | `glitch_002` | um "defeito" curto, como a desinformação |
+| fim da partida | `confirmation_004` | 0,46 s, o mais longo dos de confirmação |
+
+**A recusa ganhou som, e isso muda uma decisão antiga.** Até aqui ela era calada de propósito: o
+único som de compra soaria igual para o nó caro demais e para o que deu certo. Com dois sons, cada
+um diz o que aconteceu.
+
+### Conferi que os testes reprovam de verdade
+
+- Um arquivo que começa com "RIFF" no lugar de um `.ogg` reprovou o teste do Ogg.
+- Um arquivo de 120 KB reprovou o teste do tamanho.
+
+Voltei o arquivo original nas duas vezes e conferi que ele ficou idêntico ao de antes.
+
+### Como foi conferido
+
+**No Edge em modo headless, no jogo de verdade.** Troquei o `play()` do navegador por um gravador,
+que anota o arquivo pedido sem tocar nada, e cliquei nos botões:
+- **compra recusada** (5 PAC): `refuse.ogg`;
+- **contenção recusada**: `refuse.ogg`;
+- **compra aceita**: `unlock.ogg`;
+- **contenção aceita**: `contain.ogg`;
+- **o aviso da Inércia**, que chegou sozinho a 4x: `inertia.ogg`;
+- **no mudo**: nada;
+- **ao religar o som**: `unlock.ogg`, a amostra que já existia.
+
+Além disso:
+- o Edge diz que toca Ogg Vorbis ("probably");
+- os seis arquivos decodificam pelo mesmo caminho que o jogo usa;
+- os dois builds levam os seis sons, e o da feira caiu de 1,25 para **1,21 MB** (os `.ogg` somam
+  47 KB, contra 73 KB dos WAV).
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 973 testes
+  npm run dev
+  ```
+
+  Na tela, com o som ligado:
+  - Clicar em "Comprar" sem PAC dá o som da recusa, e comprando de verdade, o da compra.
+  - Com o ramo Sociedade aberto, "Conter a Inércia" tem som próprio.
+
+- **Pendente:**
+  - **Ouvir.** Os sons foram escolhidos sem ouvir. Trocar um é pôr outro `.ogg` na pasta e mudar uma
+    linha do `src/data/audio.json`.
+  - **O Safari** do Mac e do iPhone pode não tocar Ogg Vorbis nas versões antigas. A feira roda em
+    Windows, e o contrato do `[D-Musica]` já pedia `.ogg`.
+  - **A trilha em loop** continua do cargo: o pacote só tem efeitos.
+  - **O evento crítico e o fim da partida** não foram disparados nesta conferência. Só os arquivos
+    mudaram, e os dois decodificam.
+- **Evidência:** sem imagem, porque é som. A conferência está no bloco acima.
+
+---
+
 ## 2026-09-22 — A Inércia avisa quando fica mais forte, e o VIS-11 fecha
 
 - **Parte / tarefa:** `VIS-11` ✔, 2ª entrega. A 1ª é a entrada logo abaixo, do mesmo dia.

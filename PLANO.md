@@ -167,11 +167,11 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P7-02` Cartão de evento com o fato real + auto-pausa em evento crítico — **M**
 - [x] `P7-03` `engine/inertia.ts`: ações do antagonista a cada ~6 ticks — **M**
 - [x] `P7-04` Feedback visual: o mapa muda com a temperatura; alertas por região — **M**
-- [x] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P** — *os efeitos saíram **autorais** e não CC0: sem `ffmpeg` na máquina não dava para produzir `.ogg`, e o contrato do `[D-Musica]` aceita "autoral ou CC0". O `scripts/gerar-audio.mjs` escreve os três WAV; o cargo troca por `.ogg` e corrige o `src/data/audio.json`, sem tocar em `.ts`*
+- [x] `P7-05` `[D]` Áudio: 3 efeitos CC0 + botão de mudo (a trilha vem com o cargo) — **P** — *os efeitos saíram **autorais** e não CC0: sem `ffmpeg` na máquina não dava para produzir `.ogg`, e o contrato do `[D-Musica]` aceita "autoral ou CC0". O `scripts/gerar-audio.mjs` escreve os três WAV; o cargo troca por `.ogg` e corrige o `src/data/audio.json`, sem tocar em `.ts` — **os WAV e o script saíram no `P7-09`**, trocados pelos sons do Kenney*
 - [x] `P7-06` Telas de fim com gráfico da linha do tempo da partida — **G**
 - [x] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**
 - [x] `P7-08` Tutorial: **4 passos contextuais** no modo padrão e **um painel curto** no Modo Feira, com "Pular" nos dois — **M** — *o painel da feira foi decidido no chat em 2026-08-26; ele substitui os 4 passos, não soma com eles*
-- [ ] `P7-09` `[D]` Sons de interface do pacote *Interface Sounds*, do Kenney (CC0) — **M** — *pedido do chat em 2026-09-22, para depois do `VIS-11`. O zip está na pasta acima do repositório (`kenney_interface-sounds.zip`: 100 `.ogg`, de 4 a 30 KB, licença CC0 no `License.txt`). Só efeitos, sem trilha. Escolher poucos, cada um com um papel claro, pela pasta e pelo manifesto que o `P7-05` deixou; a linha do `docs/CREDITOS.md` entra junto*
+- [x] `P7-09` `[D]` Sons de interface do pacote *Interface Sounds*, do Kenney (CC0) — **M** — *pedido do chat em 2026-09-22, e feito no mesmo dia. Seis efeitos, o teto do contrato do `[D-Musica]`: os três de antes (compra, evento crítico e fim) trocados, e três momentos que eram calados — a contenção, o clique recusado e o aviso da Inércia. Os WAV de teste e o `scripts/gerar-audio.mjs` foram apagados, com permissão no chat. A escolha de cada som foi pelo nome e pela medida (duração, altura, volume), sem ouvir: trocar um é uma linha no `src/data/audio.json`. A trilha em loop continua do cargo*
 
 ---
 

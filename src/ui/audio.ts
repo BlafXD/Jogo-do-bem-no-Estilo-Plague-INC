@@ -1,4 +1,5 @@
-// Os três efeitos sonoros e o estado de mudo (P7-05).
+// Os efeitos sonoros e o estado de mudo (P7-05). Desde o P7-09, são os seis sons
+// do pacote *Interface Sounds*, do Kenney (CC0), no lugar dos três de teste.
 //
 // Mora em `ui/` e não em `engine/`: a regra de ouro do §3 diz que o engine não
 // sabe que existe uma tela, e som é tela. O engine continua sem saber que a
@@ -9,7 +10,7 @@
 // arquivo para a URL que o Vite gerar. É o que faz o contrato do `[D-Musica]`
 // (PLANO.md) valer de verdade: quando o cargo entregar `.ogg`, ele põe os
 // arquivos na pasta e corrige o campo `file` do JSON. Nenhuma linha de código
-// muda, e os `.wav` de andaime do scripts/gerar-audio.mjs podem ser apagados.
+// muda. Foi assim que os sons do Kenney entraram no P7-09.
 //
 // **Nada aqui pode lançar**, pela mesma razão do storage.ts: um jogo que não
 // abre porque não conseguiu tocar um som seria o pior desfecho possível para uma
@@ -18,14 +19,23 @@
 import manifest from '../data/audio.json';
 
 /**
- * Os três momentos que fazem barulho.
+ * Os momentos que fazem barulho. São seis, o teto de efeitos do contrato do
+ * `[D-Musica]` (PLANO.md):
+ *
+ * - `unlock`: a compra de um nó;
+ * - `contain`: a contenção da Inércia (P7-09);
+ * - `refuse`: um clique recusado — a compra sem PAC, a contenção bloqueada
+ *   (P7-09);
+ * - `alert`: o evento crítico que para o tempo;
+ * - `inertia`: o aviso da Inércia no boletim (P7-09);
+ * - `outcome`: o fim da partida.
  *
  * União fechada, e não `string`: é o que faz o `tsc` cobrar o dia em que alguém
  * remover uma entrada do JSON sem remover a chamada — ou o contrário.
  */
-export type SfxName = 'unlock' | 'alert' | 'outcome';
+export const SFX_NAMES = ['unlock', 'contain', 'refuse', 'alert', 'inertia', 'outcome'] as const;
 
-export const SFX_NAMES = ['unlock', 'alert', 'outcome'] as const;
+export type SfxName = (typeof SFX_NAMES)[number];
 
 export type Sfx = {
   /** O nome do arquivo dentro de `src/assets/audio/`, sem caminho. */
@@ -39,7 +49,7 @@ export const sfx: Readonly<Record<SfxName, Sfx>> = manifest;
 /**
  * As URLs que o Vite gerou para os arquivos de som.
  *
- * O padrão é a pasta inteira, e não os três nomes: um `.ogg` que o cargo de
+ * O padrão é a pasta inteira, e não os seis nomes: um `.ogg` que o cargo de
  * Música ponha ali passa a ser resolvido sem tocar neste arquivo. Em troca, um
  * arquivo esquecido na pasta entra no bundle sem ninguém pedir — é o que o
  * `tests/audio.test.ts` confere, varrendo o disco contra o manifesto.

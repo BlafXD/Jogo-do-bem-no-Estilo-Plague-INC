@@ -46,7 +46,7 @@ import {
 } from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
 import { prependBrandMark } from './ui/icons';
-import { updateNotices, type InertiaNotice } from './ui/inertia-notices';
+import { crossedLevel, updateNotices, type InertiaNotice } from './ui/inertia-notices';
 import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
@@ -841,12 +841,16 @@ function handleUnlock(id: SkillId): void {
   if (isFinished(state)) return;
 
   const next = unlockSkill(state, id);
-  if (next === state) return;
+  // A recusa tem som próprio desde o P7-09. Até ali ela era calada, porque o
+  // único som de compra soaria igual para o nó caro demais e para o que deu
+  // certo — o clique mais frustrante do jogo mentiria. Com dois sons, cada um
+  // diz o que aconteceu, e o botão escreve o porquê ("Faltam 12 PAC").
+  if (next === state) {
+    playSfx(sound, 'refuse');
+    return;
+  }
 
   state = next;
-  // Depois da comparação por identidade, e não antes: uma compra recusada não
-  // faz barulho, senão o som viraria mentira — o clique mais frustrante do jogo
-  // é o do nó caro demais, e ele soaria igual ao que deu certo.
   playSfx(sound, 'unlock');
   renderGame();
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
@@ -870,9 +874,15 @@ function handleContain(): void {
   if (isFinished(state)) return;
 
   const next = contain(state);
-  if (next === state) return;
+  // A mesma regra da compra (P7-09): recusada, o som da recusa; aceita, o da
+  // contenção, que é outro gesto e tem outro som.
+  if (next === state) {
+    playSfx(sound, 'refuse');
+    return;
+  }
 
   state = next;
+  playSfx(sound, 'contain');
   renderGame();
   persist();
 }
@@ -1123,7 +1133,12 @@ function frame(now: number): void {
 
   // O aviso da Inércia (VIS-11): o estado de antes contra o de depois do passo.
   // Só quando o mês virou — a Inércia não anda entre dois quadros do mesmo mês.
-  if (state.tick !== before.tick) inertiaNotices = updateNotices(inertiaNotices, before, state);
+  // O aviso novo tem som próprio (P7-09), e só ele: a Inércia age a cada seis
+  // meses, mas só avisa quando passa de um nível.
+  if (state.tick !== before.tick) {
+    inertiaNotices = updateNotices(inertiaNotices, before, state);
+    if (crossedLevel(before.inertia, state.inertia) !== null) playSfx(sound, 'inertia');
+  }
 
   if (!finishedBefore && isFinished(state)) playSfx(sound, 'outcome');
 

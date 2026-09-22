@@ -17,7 +17,10 @@
 // implementação real. Se uma destas assinaturas estiver errada, o `tsc` passa e
 // o erro só aparece ao rodar — o que, para todas elas, o próprio teste ou o
 // próprio build faz na hora. São funções de biblioteca padrão que não mudam de
-// forma há uma década. Se um dia mais de um punhado de arquivos precisar de
+// forma há uma década. O `P7-09` somou o `statSync`, para o tests/audio.test.ts
+// medir o tamanho de cada som contra o contrato do `[D-Musica]`.
+//
+// Se um dia mais de um punhado de arquivos precisar de
 // Node, a saída certa passa a ser `@types/node` com um tsconfig separado.
 
 declare module 'node:fs' {
@@ -27,4 +30,5 @@ declare module 'node:fs' {
   export function readdirSync(path: string, options?: { recursive?: boolean }): string[];
   export function unlinkSync(path: string): void;
   export function rmdirSync(path: string): void;
+  export function statSync(path: string): { readonly size: number };
 }

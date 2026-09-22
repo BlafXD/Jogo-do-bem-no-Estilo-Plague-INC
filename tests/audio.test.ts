@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   audioAssets,
@@ -29,7 +29,7 @@ describe('o estado de som', () => {
     expect(toggleMute(mudo).muted).toBe(false);
   });
 
-  it('no mudo não sai som nenhum, em nenhum dos três efeitos', () => {
+  it('no mudo não sai som nenhum, em nenhum dos efeitos', () => {
     const mudo = createSound(true);
 
     for (const name of SFX_NAMES) {
@@ -47,7 +47,7 @@ describe('o estado de som', () => {
 });
 
 describe('o manifesto de áudio', () => {
-  it('cobre exatamente os três nomes que o código conhece', () => {
+  it('cobre exatamente os nomes que o código conhece', () => {
     expect(Object.keys(sfx).sort()).toEqual([...SFX_NAMES].sort());
   });
 
@@ -65,10 +65,9 @@ describe('o manifesto de áudio', () => {
   });
 
   /**
-   * **O teste que o cargo de Música vai encontrar.** Trocar os `.wav` de andaime
-   * por `.ogg` é editar o campo `file` e subir o arquivo; esquecer uma das duas
-   * metades é o erro provável, e ele fica vermelho aqui em vez de virar silêncio
-   * na feira.
+   * **O teste que o cargo de Música vai encontrar.** Trocar um som é editar o
+   * campo `file` e subir o arquivo; esquecer uma das duas metades é o erro
+   * provável, e ele fica vermelho aqui em vez de virar silêncio na feira.
    */
   it('aponta para arquivos que existem de verdade na pasta', () => {
     const naPasta = readdirSync('src/assets/audio');
@@ -90,5 +89,37 @@ describe('o manifesto de áudio', () => {
 
     expect(readdirSync('src/assets/audio').sort()).toEqual(usados);
     expect(audioAssets()).toEqual(usados);
+  });
+});
+
+/**
+ * O contrato do `[D-Musica]` (PLANO.md), cobrado nos arquivos de verdade desde
+ * o P7-09: até seis efeitos, em `.ogg`, com menos de 100 KB cada. O limite de
+ * tamanho não é enfeite — o build da feira embute todo som no HTML único.
+ */
+describe('o contrato do [D-Musica]', () => {
+  const PASTA = 'src/assets/audio';
+
+  it('tem no máximo seis efeitos', () => {
+    expect(SFX_NAMES.length).toBeLessThanOrEqual(6);
+  });
+
+  /**
+   * A extensão não basta: um `.wav` renomeado para `.ogg` passaria por ela. Todo
+   * arquivo Ogg começa com a assinatura "OggS".
+   */
+  it('todo efeito é um arquivo Ogg de verdade', () => {
+    for (const name of SFX_NAMES) {
+      const arquivo = sfx[name].file;
+      expect(arquivo, name).toMatch(/.ogg$/);
+      expect(readFileSync(`${PASTA}/${arquivo}`, 'utf8').startsWith('OggS'), arquivo).toBe(true);
+    }
+  });
+
+  it('todo efeito tem menos de 100 KB', () => {
+    for (const name of SFX_NAMES) {
+      const arquivo = sfx[name].file;
+      expect(statSync(`${PASTA}/${arquivo}`).size, arquivo).toBeLessThan(100 * 1024);
+    }
   });
 });

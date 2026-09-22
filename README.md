@@ -196,10 +196,22 @@ asset, nunca para a home do site.
 **O limite de tamanho não é frescura.** O `npm run build:feira` empacota o jogo inteiro num
 `index.html` único, para rodar de um pendrive sem internet; áudio embutido entra nesse arquivo.
 
-**Estado hoje:** não há áudio nenhum, nem código que toque áudio — o `P7-05` (três efeitos CC0 e um
-botão de mudo) ainda não foi feito, e a pasta de assets **ainda não existe**; ela nasce com o
-primeiro arquivo. Combine o caminho junto com quem for fazer o `P7-05`, para não entregar num lugar
-onde o código não vai procurar.
+**Estado hoje:** os seis efeitos já existem, e são do pacote _Interface Sounds_, do Kenney (CC0),
+desde o `P7-09`. Eles ficam em `src/assets/audio/`, e o `src/data/audio.json` diz qual arquivo toca
+em cada momento, com o volume de cada um:
+
+| Momento | Arquivo |
+| --- | --- |
+| comprar um nó | `unlock.ogg` |
+| conter a Inércia | `contain.ogg` |
+| um clique recusado (sem PAC, contenção bloqueada) | `refuse.ogg` |
+| o evento crítico que para o tempo | `alert.ogg` |
+| o aviso da Inércia no boletim | `inertia.ogg` |
+| o fim da partida | `outcome.ogg` |
+
+Trocar um som é pôr o seu `.ogg` na pasta e corrigir o campo `file` daquele momento no JSON — e
+apagar o arquivo antigo, porque o `npm test` reprova arquivo sobrando. **Falta a trilha em loop**:
+o jogo ainda não toca música, e ligá-la pede código.
 
 ### `[D-Historia]` — narrativa e texto
 
