@@ -57,6 +57,9 @@ body {
    que a separa dos indicadores; em coluna ela fica sozinha na linha, e o fio
    não teria o que separar. */
 .topo__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   margin: 0;
   color: var(--cor-destaque, #7fd1a8);
   font-family: var(--fonte-display, system-ui, sans-serif);
@@ -67,6 +70,12 @@ body {
   line-height: 1.1;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+/* A marca da folha na frente do nome (VIS-09), menor que a do título. */
+.topo__marca {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 /* A sessão vai para o canto direito. */
@@ -175,6 +184,22 @@ body {
     .topo .session__status {
       max-width: none;
       text-align: right;
+    }
+
+    /* Até 85rem, a barra não tem largura para o nome, os seis indicadores com
+       ícone (VIS-09) e a sessão numa linha só: medido, em 1240 px a página
+       rolava de lado, e em 1280 px a sessão ficava com 11rem e a barra
+       engordava. O nome sai da vista, e a marca fica no lugar dele. O <h1>
+       continua dizendo "Ponto de Virada" para o leitor de tela. */
+    @media (max-width: 84.99rem) {
+      .topo__nome {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
     }
 
     /* O mundo tem exatamente a altura do meio: o mapa e a coluna enchem a

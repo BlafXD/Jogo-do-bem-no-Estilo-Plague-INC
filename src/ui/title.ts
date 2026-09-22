@@ -31,6 +31,7 @@ import { outcomeOf } from '../engine/outcome';
 import type { GameState } from '../engine/state';
 import { cast, mountPortrait, renderPortrait } from './characters';
 import { liveCelsius } from './format';
+import { prependBrandMark } from './icons';
 import { mountStripes, renderStripes, stripesView, type StripesView } from './stripes';
 
 export type TitleState = {
@@ -272,10 +273,12 @@ export function mountTitle(root: Element, handlers: TitleHandlers): void {
   // vezes dá o mesmo resultado — em vez de apagar o nome na segunda.
   const name = root.querySelector('.title__name');
 
-  // A abertura: o ODS em cima do nome, o pitch e os botões.
+  // A abertura: o ODS em cima do nome, o pitch e os botões. A marca da folha
+  // (VIS-09) vai na frente do ODS, como no protótipo.
   const ods = document.createElement('p');
   ods.className = 'title__ods';
   ods.textContent = ui.title.ods;
+  prependBrandMark(ods, 'title__mark');
 
   const opening = document.createElement('div');
   opening.className = 'title__opening';

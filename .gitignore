@@ -43,3 +43,8 @@ desktop.ini
 
 # Arquivos locais soltos
 *.local
+
+# Referências de arte guardadas pelo autor (o mapa, a ficha e as 16 poses
+# originais). Ficam na máquina, fora do histórico: o que o jogo usa já está
+# tratado em src/assets/.
+/Inútil/

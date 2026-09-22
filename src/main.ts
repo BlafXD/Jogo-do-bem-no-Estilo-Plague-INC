@@ -45,6 +45,7 @@ import {
   renderEventCards,
 } from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
+import { prependBrandMark } from './ui/icons';
 import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
@@ -119,6 +120,7 @@ import './ui/critical-card.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
 import './ui/hud.css';
+import './ui/icons.css';
 import './ui/layout.css';
 import './ui/map.css';
 import './ui/outcome.css';
@@ -171,6 +173,7 @@ const contencao = required('#contencao');
 const tree = required<HTMLElement>('#arvore');
 const telaTitulo = required<HTMLElement>('#tela-titulo');
 const topo = required<HTMLElement>('.topo');
+const topoTitulo = required<HTMLElement>('.topo__titulo');
 const tabuleiro = required<HTMLElement>('#tabuleiro');
 const app = required<HTMLElement>('#app');
 const pular = required<HTMLElement>('#pular');
@@ -865,6 +868,9 @@ function handleContain(): void {
 // que se monta não muda isso (a ordem é a do DOM), mas a leitura deste bloco
 // fica honesta com o que a pessoa encontra primeiro.
 mountSkipLink(pular, tabuleiro, painelArvore, openTree);
+// A marca da folha na frente do nome (VIS-09). O nome continua sendo o texto
+// do index.html, e a marca fica fora do leitor de tela.
+prependBrandMark(topoTitulo, 'topo__marca');
 mountHud(hud);
 mountControls(controls, handleCommand, handleToggleSound);
 mountStripes(listras);

@@ -130,7 +130,7 @@ Tudo aqui é `[D-Historia]` no futuro. Agora: versão mínima, curta, funcional.
 - [x] `P4-02` Cronograma aula a aula — **M** — *`docs/CRONOGRAMA.md`; retrospectivo em dois terços, e falta a data da feira para o resto virar calendário*
 - [x] `P4-03` Estimativa de custo: horas × valor-hora, assets, hospedagem — **P** — *`docs/CUSTO.md`; o valor-hora é premissa sua, está isolado numa seção só*
 - [x] `P4-04` `README.md` de onboarding: como rodar o projeto + os 3 contratos de pacote acima — **M** — *destrava a entrada do grupo sem me custar tempo depois*
-- [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes.* **2026-09-09: o `[D-Musica]` ficou pronto para entregar** — o `P7-05` deixou a pasta, o manifesto e o teste que cobra os dois; falta só a metade dos ícones do `[D-Design]`
+- [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes.* **2026-09-09: o `[D-Musica]` ficou pronto para entregar** — o `P7-05` deixou a pasta, o manifesto e o teste que cobra os dois; falta só a metade dos ícones do `[D-Design]`. **2026-09-22: a metade dos ícones começou a existir** — a pasta `src/assets/icons/` e o teste que cobra o formato vieram com a 1ª entrega do `VIS-09`; os ícones dos botões ficam para a 2ª
 - [x] `P4-06` **M1** — `SETUP-01` a `SETUP-07` concluídos e Pages no ar — **marco**
 
 ---
@@ -171,6 +171,7 @@ Objetivo: **M2 — o jogo vira jogo.**
 - [x] `P7-06` Telas de fim com gráfico da linha do tempo da partida — **G**
 - [x] `P7-07` **Modo Feira**: partida rápida de ~5 min — **M**
 - [x] `P7-08` Tutorial: **4 passos contextuais** no modo padrão e **um painel curto** no Modo Feira, com "Pular" nos dois — **M** — *o painel da feira foi decidido no chat em 2026-08-26; ele substitui os 4 passos, não soma com eles*
+- [ ] `P7-09` `[D]` Sons de interface do pacote *Interface Sounds*, do Kenney (CC0) — **M** — *pedido do chat em 2026-09-22, para depois do `VIS-11`. O zip está na pasta acima do repositório (`kenney_interface-sounds.zip`: 100 `.ogg`, de 4 a 30 KB, licença CC0 no `License.txt`). Só efeitos, sem trilha. Escolher poucos, cada um com um papel claro, pela pasta e pelo manifesto que o `P7-05` deixou; a linha do `docs/CREDITOS.md` entra junto*
 
 ---
 
@@ -208,8 +209,9 @@ mudar depois deles, os quatro precisam ser refeitos.
 - [x] `VIS-06` As 16 poses tratadas + um manifesto de qual pose aparece em cada momento, editável sem `.ts` — **M** — *`src/data/characters.json` e `src/ui/characters.ts`; nada muda na tela até o `VIS-07`. Decidido no chat em 2026-09-17: no evento crítico, cada especialista usa a pose de alerta. As poses só entram no build quando o `VIS-07` as usar*
 - [x] `VIS-07` Personagens no tutorial, nos eventos e no fim, sem bônus — **M** — *feito em 2026-09-17, com permissão no chat para mudar o `docs/PERSONAGENS.md §4`. O evento crítico ganhou o cartão central (decisão do chat), e fechá-lo solta o tempo. Saiu maior que M: o cartão crítico é uma peça nova*
 - [x] `VIS-08` Tela de título nova, com o botão de som e as listras da partida sem compras — **M** — *feito em 2026-09-17, com as poses do manifesto na equipe. Os quatro retratos recortados da ficha foram apagados, com permissão no chat*
-- [ ] `VIS-09` Ícones SVG próprios nos indicadores e nos ramos — a metade que faltava do `[D-Design]` — **M**
+- [~] `VIS-09` Ícones SVG próprios nos indicadores e nos ramos — a metade que faltava do `[D-Design]` — **M** — *em duas entregas, decidido no chat em 2026-09-22. **A 1ª foi feita em 2026-09-22:** a pasta `src/assets/icons/`, o teste do contrato e os ícones nos indicadores, nos ramos e na contenção, mais a marca da folha na barra de cima e no título. Falta a 2ª: os ícones dos botões*
 - [x] `VIS-10` Tela de fim nova: medalha, números, gráfico e as listras da partida contra uma partida sem nenhuma compra — **M** — *feito em 2026-09-17, com permissão no chat para mudar o `docs/GDD.md §2.7`. A partida parada sai do `src/engine/passive-run.ts` e acaba em 2089; o `VIS-08` já pode usá-la*
+- [ ] `VIS-11` A Inércia em silhueta: quatro poses de uma figura preta, sem rosto, com fumaça — **M** — *pedido do chat em 2026-09-22, para depois do `VIS-09`. As imagens estão na pasta acima do repositório (`WhatsApp Image 2026-09-22 at 09.17.43` a `09.18.09`). **Três respostas antes de começar:** a autoria das imagens (regra 10); o escopo — só a versão mínima (o passo do tutorial, a contenção e a derrota por apoio) ou também um aviso quando ela age, que é funcionalidade nova; e a ordem. A proposta do chat é mantê-la sem nome além de "A Inércia" e sem fala inventada, porque o `docs/GDD.md §2.6` diz que ela não é vilão de bigode*
 
 ---
 

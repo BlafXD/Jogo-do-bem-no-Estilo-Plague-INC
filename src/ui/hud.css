@@ -27,10 +27,13 @@
   align-items: stretch;
 }
 
+/* Duas colunas desde o VIS-09: o ícone à esquerda, da altura do rótulo com o
+   valor, e o texto à direita, um embaixo do outro. */
 .hud__item {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-content: center;
+  column-gap: 0.55rem;
   /* O valor pode encolher e crescer (2025 → 2100, 0 → 750); a largura mínima
      evita que as caixas dancem de posição a cada tick. */
   min-width: 7ch;
@@ -44,6 +47,18 @@
 
 .hud__item:last-child {
   border-right: 0;
+}
+
+/* O ícone ocupa as linhas do rótulo, do valor e da régua; o texto fica todo na
+   segunda coluna, tenha o indicador ícone ou não. */
+.hud__icon {
+  grid-row: span 3;
+  align-self: center;
+  color: var(--cor-destaque, #7fd1a8);
+}
+
+.hud__item > :not(.hud__icon) {
+  grid-column: 2;
 }
 
 .hud__label {

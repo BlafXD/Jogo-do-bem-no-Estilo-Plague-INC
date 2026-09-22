@@ -1,0 +1,22 @@
+/* Os ícones e a marca (VIS-09), com o desenho que vem de src/assets/.
+
+   O traço, a espessura e a cor já vêm escritos em cada arquivo do ícone — o
+   contrato do [D-Design] pede que ele se sustente sozinho, aberto fora do jogo.
+   Aqui só se decide o tamanho, e cada lugar que usa um ícone ajusta o seu na
+   própria folha.
+
+   A cor é a do texto em volta (`currentColor`), e por isso nenhum ícone precisa
+   de contraste próprio: ele nunca é o recado sozinho. Ao lado de todo ícone há
+   um rótulo escrito (docs/GDD.md §5). */
+
+.icon {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.brand-mark {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+}

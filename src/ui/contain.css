@@ -64,15 +64,25 @@
   background: var(--cor-alerta-suave, rgb(242 166 90 / 12%));
 }
 
+/* Centrado, e não pela linha de base, desde que o nome ganhou o escudo do
+   VIS-09: um ícone não tem linha de base, e o custo cairia para o pé dele. */
 .contain__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
 .contain__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-weight: 600;
+}
+
+/* O escudo na brasa, a cor de destaque da contenção. */
+.contain__name .icon {
+  color: var(--cor-alerta, #f2a65a);
 }
 
 .contain__cost {

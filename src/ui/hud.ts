@@ -19,6 +19,7 @@ import { ui } from '../data/i18n';
 import { globalEmissions } from '../engine/climate';
 import { averageSupport, type GameState } from '../engine/state';
 import { liveCelsius } from './format';
+import { prependIcon } from './icons';
 import { RULER_BANDS } from './stripes';
 
 export const HUD_FIELDS = [
@@ -86,7 +87,7 @@ export function hudView(state: GameState): HudView {
  *
  * Cada caixa carrega **rótulo de texto mais valor**, nunca só o número, e um
  * `title` explicando o indicador. É o §5 do GDD: nada é comunicado só por cor,
- * e tudo que tem número tem dica.
+ * e tudo que tem número tem dica. O ícone da frente (VIS-09) é enfeite.
  */
 export function mountHud(root: Element): void {
   // `role="group"` junto do rótulo (P8-04). Num `<div>` sem papel — que é o que
@@ -112,6 +113,8 @@ export function mountHud(root: Element): void {
 
       item.append(label, value);
       if (field === 'temperature') item.append(rulerElement());
+      // Cada campo tem um ícone de mesmo nome (icons.ts).
+      prependIcon(item, field, 'hud__icon');
       return item;
     }),
   );

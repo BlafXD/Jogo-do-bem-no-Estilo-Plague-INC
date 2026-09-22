@@ -33,7 +33,11 @@
   container-type: inline-size;
 }
 
+/* O nome do ramo vem com o ícone dele na frente (VIS-09), na cor do nome. */
 .tree__branch-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
   padding-bottom: 0.45rem;
   border-bottom: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
@@ -42,6 +46,11 @@
   font-size: var(--tamanho-base, 1rem);
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.tree__branch-name .icon {
+  width: 1.375rem;
+  height: 1.375rem;
 }
 
 /* --------------------------------------------------------- o losango --- */

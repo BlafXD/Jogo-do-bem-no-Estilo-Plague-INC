@@ -34,6 +34,7 @@ import {
   type SkillBranch,
   type SkillId,
 } from '../engine/state';
+import { prependIcon } from './icons';
 
 // --------------------------------------------------------------- a view ---
 
@@ -383,6 +384,8 @@ export function mountTree(
     const title = document.createElement('h3');
     title.className = 'tree__branch-name';
     title.textContent = branch.name;
+    // O ícone do ramo (VIS-09) tem o nome do ramo no skills.json.
+    prependIcon(title, branch.branch);
 
     const places = placesOf(branch.nodes);
     const list = document.createElement('ol');

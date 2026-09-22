@@ -47,7 +47,10 @@
          escreve nele qual tela está no ar. -->
     <div id="tela-partida" class="partida">
       <header class="topo">
-        <h1 class="topo__titulo">Ponto de Virada</h1>
+        <!-- A marca da folha entra na frente do nome pelo main.ts (VIS-09). O
+             nome fica num <span> porque sai da vista quando falta largura
+             (src/ui/layout.css), e continua no <h1> para o leitor de tela. -->
+        <h1 class="topo__titulo"><span class="topo__nome">Ponto de Virada</span></h1>
         <div id="hud" class="hud"></div>
         <div id="partida" class="session"></div>
       </header>

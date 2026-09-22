@@ -30,7 +30,27 @@
   min-width: 0;
 }
 
+/* O ODS com a marca da folha na frente (VIS-09). Duas medidas decididas na
+   tela, e não no gosto:
+
+   - A marca tem 40 px, e a linha do ODS, uns 24. A margem negativa a deixa
+     passar da linha sem aumentá-la: inteira, ela empurrava a tela 20 px para
+     baixo, e as listras saíam da primeira dobra em 1536 × 702, onde o VIS-08 as
+     tinha deixado inteiras.
+   - 40 px e o espaço de 0,5rem, e não os 44 px e 0,75rem do protótipo: em
+     1024 px a coluna tem 448 px, e o ODS precisa de 395 numa linha só. Com a
+     medida do protótipo sobravam 392, ele quebrava em duas linhas, e as listras
+     desciam da dobra do mesmo jeito. */
+.title__mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-block: -0.5rem;
+}
+
 .title__ods {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0;
   color: var(--cor-destaque, #7fd1a8);
   font-family: var(--fonte-display, system-ui, sans-serif);

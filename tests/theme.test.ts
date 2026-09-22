@@ -303,6 +303,7 @@ describe('as folhas dos módulos', () => {
     'characters.css',
     'critical-card.css',
     'tutorial.css',
+    'icons.css',
   ];
 
   /**

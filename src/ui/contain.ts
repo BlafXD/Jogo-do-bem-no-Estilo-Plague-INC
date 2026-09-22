@@ -20,6 +20,7 @@ import { ui } from '../data/i18n';
 import { balance, type GameState } from '../engine/state';
 import { canContain, containCost, CONTAIN_REQUIRES, type ContainRefusal } from '../engine/inertia';
 import { skillById } from '../engine/skills';
+import { prependIcon } from './icons';
 
 // --------------------------------------------------------------- a view ---
 
@@ -131,9 +132,11 @@ export function mountContain(root: Element, onContain: () => void): void {
   button.title = ui.contain.hint;
 
   const head = span('contain__head');
+  const name = span('contain__name', ui.contain.name);
+  prependIcon(name, 'contain');
   const cost = span('contain__cost');
   cost.dataset.contain = 'cost';
-  head.append(span('contain__name', ui.contain.name), cost);
+  head.append(name, cost);
 
   const status = span('contain__status');
   const icon = span('contain__icon');

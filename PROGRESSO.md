@@ -28,6 +28,126 @@ Regras curtas:
 
 ---
 
+## 2026-09-22 — Os ícones viram arquivo: indicadores, ramos, contenção e a marca da folha
+
+- **Parte / tarefa:** `VIS-09`, 1ª entrega de duas (decidido no chat nesta data). O checkbox ficou em
+  `[~]`: os ícones dos botões são a 2ª entrega.
+- **Pedidos do chat, no mesmo dia:**
+  - a pasta `Inútil/`, com as referências de arte que o autor guardou dentro do repositório, entrou
+    no `.gitignore`;
+  - duas tarefas novas no `PLANO.md`, sem código: o `VIS-11` (a Inércia em silhueta) e o `P7-09` (os
+    sons do Kenney, CC0).
+- **O que mudou:**
+  - `src/assets/icons/*.svg` — **os doze ícones do protótipo do `VIS-01`, agora em arquivo**, com o
+    mesmo traçado:
+    - os seis indicadores, com o nome do campo do HUD (`year`, `temperature`, `emissions`,
+      `action-points`, `support` e `inertia`);
+    - os cinco ramos, com o nome do ramo no `skills.json`;
+    - a contenção.
+
+    Cada um no formato do contrato do `[D-Design]`: 24×24, traço de 2 px, `currentColor` e sem texto.
+  - `src/assets/brand/mark.svg` — a marca: a folha no anel de circuito. As três cores saem do tema,
+    com a reserva escrita no próprio arquivo.
+  - `src/ui/icons.ts` — lê a pasta pelo `import.meta.glob`, como o `audio.ts`, e põe o ícone na página
+    como `<svg>` de verdade, escondido do leitor de tela. Nunca lança erro: sem o arquivo, fica só o
+    rótulo.
+  - `src/ui/icons.css` — o tamanho padrão do ícone e da marca.
+  - `src/ui/hud.ts` e `hud.css` — o ícone à esquerda de cada indicador, em latão. O indicador virou
+    uma grade de duas colunas.
+  - `src/ui/tree.ts` e `tree.css` — o ícone na frente do nome de cada ramo.
+  - `src/ui/contain.ts` e `contain.css` — o escudo na frente de "Conter a Inércia", em brasa.
+  - `src/main.ts`, `index.html` e `src/ui/layout.css` — a marca na frente do nome da barra de cima. O
+    nome foi para um `<span>`, que sai da vista entre 1240 e 1360 px.
+  - `src/ui/title.ts` e `title.css` — a marca na frente do ODS.
+  - `tests/icons.test.ts` (novo, em node) — o contrato de cada arquivo, a pasta contra a lista e a
+    marca.
+  - `tests/icons.dom.test.ts` (novo) — como o ícone entra na página e os quatro lugares.
+  - `tests/theme.test.ts` — a `icons.css` entrou na lista de folhas vigiadas.
+
+    Suíte: 914 → **934**.
+  - `README.md`, `docs/CREDITOS.md`, `docs/DIRECAO-DE-ARTE.md` e `PLANO.md`.
+
+### O que a tela mostrou, e o que mudou por causa dela
+
+1. **A barra de cima não cabia.** Os seis ícones somaram 145 px, e a marca, mais 46:
+   - em 1240 px a página passou a rolar de lado;
+   - em 1280 px a sessão ficou com 11rem, e a barra engordou de 83 para 103 px.
+
+   Até 85rem, o nome sai da vista e a marca fica no lugar dele. Depois disso, nenhuma das oito
+   larguras medidas, de 1240 a 1920 px, rola de lado, e a barra voltou aos 79–83 px de antes.
+2. **A marca do título empurrava a tela 20 px para baixo**, porque ela tem 44 px e a linha do ODS,
+   24. Em 1536 × 702 as listras saíram da primeira dobra, onde o `VIS-08` as tinha deixado. Uma margem
+   negativa deixa a marca passar da linha sem aumentá-la.
+3. **Em 1024 px o ODS quebrava em duas linhas**, e as listras desciam da dobra do mesmo jeito. O ODS
+   precisa de 395 px numa linha, e com a marca de 44 px sobravam 392. A marca do título ficou com
+   40 px, e o espaço ao lado caiu de 0,75 para 0,5rem. Depois disso, o título mede exatamente o que
+   media no `VIS-08` nas seis telas: a mesma altura de página, e as listras no mesmo lugar.
+4. **O desenho trazia texto junto.** O arquivo tem quebra de linha e indentação entre os caminhos, e
+   isso ia parar no `textContent` de quem recebia o ícone. Um teste do título pegou. O `icons.ts`
+   tira esses nós de texto ao ler o arquivo.
+
+### Conferi que os testes reprovam de verdade
+
+Seis estragos, um de cada vez, e cada um deixou pelo menos um teste vermelho:
+- os nós de texto vazios de volta;
+- traço de 1,5 num ícone;
+- um arquivo sobrando na pasta;
+- o HUD sem o ícone;
+- uma cor escrita solta na marca;
+- um ícone verde no lugar de `currentColor`.
+
+Voltei o arquivo nas seis vezes.
+
+### Como foi conferido
+
+**No Edge em modo headless**, com uma partida de 2047 plantada (750 PAC e Inércia em 100, os números
+mais largos):
+- **Barra de cima:** medida em oito larguras, de 1240 a 1920 px, antes e depois. O nome some em
+  1359 px e volta em 1360.
+- **Painel da árvore:** em 1920, 1536, 1024 e 390 px, com a contenção disponível. Os cinco ramos têm
+  o ícone certo na cor do nome, e o escudo está em brasa.
+- **Título:** em seis tamanhos, comparado com as medidas do `VIS-08`.
+- **Tela estreita:** abaixo de 1240 px a barra fica de 12 a 64 px mais alta. Em 768 px os
+  indicadores passam a ocupar duas linhas, e em 1024 px a sessão desce para uma linha própria. Nada
+  rola de lado.
+- **Build da feira aberto por `file://`:** a marca no título, e os ícones do HUD, dos ramos e da
+  contenção na partida. Os ícones viram texto dentro do JS, e não há arquivo a buscar. Isso fecha a
+  pendência do `VIS-08` de abrir o título no build da feira.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 934 testes
+  npm run dev
+  ```
+
+  Na tela:
+  - Os seis indicadores com ícone à esquerda e a marca da folha antes do nome.
+  - Numa janela entre 1240 e 1360 px, só a marca.
+  - No painel da árvore, o ícone de cada ramo e o escudo da contenção.
+  - No título, a marca antes do ODS.
+
+- **Pendente:**
+  - **A 2ª entrega do `VIS-09`:** os ícones dos botões (pausar e retomar, som e mudo, fechar, árvore,
+    "Retomar" do cartão crítico, "Jogar de novo", "Voltar ao início" e o título do boletim). Hoje
+    esses botões reescrevem o próprio texto a cada quadro, e o ícone seria apagado; o texto de cada
+    um vai para um trecho à parte.
+  - **O nome sumir da barra de cima entre 1240 e 1360 px** foi decisão minha, tomada na tela. Se
+    preferir o nome sempre à vista, o preço é tirar os ícones dos indicadores nessa faixa.
+  - **O 404 do `favicon.ico`** continua. A marca pode virar o ícone da aba, mas fica fora desta
+    entrega: no build da feira, o arquivo teria de entrar embutido no HTML.
+  - **O `[D-Musica]` do `README.md`** ainda diz que "não há áudio nenhum", o que deixou de ser verdade
+    no `P7-05`. É do `P7-09`.
+- **Evidência:**
+  - `docs/evidencias/2026-09-22-vis-09-barra-de-cima-1920.jpg` — a barra com os seis ícones e a marca;
+  - `docs/evidencias/2026-09-22-vis-09-barra-de-cima-1240.jpg` — a mesma barra, com só a marca;
+  - `docs/evidencias/2026-09-22-vis-09-arvore-1920.jpg` — o painel com os ícones dos ramos e o escudo;
+  - `docs/evidencias/2026-09-22-vis-09-titulo-1536.jpg` — o título com a marca antes do ODS.
+
+---
+
 ## 2026-09-17 — A tela de título nova: a equipe em poses, o som e as listras sem compras
 
 - **Parte / tarefa:** `VIS-08` ✔

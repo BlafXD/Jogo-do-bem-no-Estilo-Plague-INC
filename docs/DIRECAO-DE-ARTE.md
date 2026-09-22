@@ -408,6 +408,33 @@ da tabela acima:
 - **O balão da Juliana e o texto "Resultado da partida"** do protótipo não entraram: a legenda da
   faixa dela já diz o que ela faz ali.
 
+### Como ficou no `VIS-09` (1ª entrega: indicadores, ramos, contenção e marca)
+
+Os ícones do protótipo viraram arquivos: doze em `src/assets/icons/` e a marca em
+`src/assets/brand/mark.svg`. O traçado é o mesmo do protótipo, sem mudança. Os ícones dos botões são
+da 2ª entrega. Onde a tela saiu diferente:
+
+- **Barra de cima.** Cada indicador tem o ícone à esquerda, em latão, da altura do rótulo com o
+  valor. O tamanho é de 24 px, e não os 26 do protótipo, para o traço cair inteiro no pixel.
+- **O nome some da barra entre 1240 e 1360 px (85rem), e fica só a marca.** Com os seis ícones, a
+  marca e o nome, a barra não cabia numa linha: medido, em 1240 px a página rolava de lado, e em
+  1280 px a sessão ficava com 11rem e a barra engordava 20 px. O `<h1>` continua dizendo "Ponto de
+  Virada" para o leitor de tela. A partir de 1360 px o nome volta.
+- **Tela estreita.** Abaixo de 1240 px a barra de cima quebra em linhas, como antes, e fica de 12 a
+  64 px mais alta: em 768 px os indicadores passam a ocupar duas linhas, e em 1024 px a sessão desce
+  para uma linha própria. Nessa faixa a página já rolava.
+- **Ramos.** O ícone vai na frente do nome, na cor do nome, com 22 px.
+- **Contenção.** O escudo vai na frente de "Conter a Inércia", em brasa, a cor dela. O custo passou
+  a se alinhar pelo centro, e não pela linha de base, porque ícone não tem linha de base.
+- **A marca no título tem 40 px, e não 44.** Inteira, ela empurrava a tela 20 px para baixo, e as
+  listras saíam da primeira dobra em 1536 × 702. E, em 1024 px, o ODS quebrava em duas linhas: ele
+  precisa de 395 px, e sobravam 392. Agora a marca passa da linha do ODS sem aumentá-la, e o título
+  mede o mesmo que no `VIS-08` nas seis telas conferidas.
+- **As cores da marca saem do tema.** O anel e o circuito usam o creme (`--cor-creme`) no lugar do
+  latão-forte do §3, que não entrou no `theme.css`: são `#F4EDD0` contra `#F1DEB0`, e uma variável a
+  mais só para o logotipo seria uma cor que nenhuma folha lê. A folha é `--cor-comprado`, e o fundo
+  do anel, `--cor-superficie`.
+
 ---
 
 ## 9. O que continua valendo do §5

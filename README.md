@@ -149,7 +149,7 @@ rodar `npm test`. Se a suíte passar, você não quebrou nada.
 
 ### `[D-Design]` — identidade visual
 
-**Você entrega:** `src/ui/theme.css`.
+**Você entrega:** `src/ui/theme.css` e os ícones de `src/assets/icons/`.
 
 Só **variáveis CSS**, e é ao pé da letra: nenhum seletor, nenhuma regra de layout, nenhuma cor
 escrita fora daquele arquivo. Você troca os valores e não abre mais nada — nem `.ts`, nem as outras
@@ -165,12 +165,19 @@ Duas travas que o arquivo já carrega:
   ícone + rótulo em texto ao lado; se o seu tema depender de verde vs. vermelho para dizer alguma
   coisa, ele está dizendo menos do que o jogo precisa.
 
-**Sobre os ícones, leia antes de desenhar.** O contrato do `PLANO.md` prevê `assets/icons/*.svg`,
-24×24, traço de 2px, monocromáticos, sem texto embutido. **Essa metade ainda não está ligada:** hoje
-os ícones do jogo são caracteres Unicode (`✔`, `●`, `◌`, `✕`, `▲`, `◉`) escritos no
-`src/data/i18n.ts`, e trocá-los por arquivos exige uma mudança de código que ninguém fez ainda. A
-substituição do `theme.css` é drop-in hoje; a dos ícones não é. Combine antes de produzir os
-arquivos.
+**Os ícones, desde o `VIS-09`.** Os doze de `src/assets/icons/` — os seis indicadores da barra de
+cima, os cinco ramos da árvore e a contenção — são arquivos `.svg` no formato do contrato: 24×24,
+traço de 2 px, uma cor só e sem texto. A cor é `currentColor`, a do texto ao lado, e por isso
+continua morando só no `theme.css`. Você troca o arquivo, com o mesmo nome, e não abre código
+nenhum. O `tests/icons.test.ts` confere o formato de cada um e reprova arquivo sobrando ou faltando
+na pasta.
+
+- **A marca da folha** (`src/assets/brand/mark.svg`) é o logotipo e fica fora dessa regra: tem três
+  cores, todas lidas do `theme.css`, com a reserva escrita no próprio arquivo.
+- **Os sinais de estado** (`✔`, `●`, `◌`, `✕`, `▲`, `◉`) continuam sendo texto, no
+  `src/data/i18n.ts`, grudados no rótulo. Não são arquivo.
+- **Os ícones dos botões** (pausar, som, fechar e os outros) ainda não existem: entram com a segunda
+  entrega do `VIS-09`, no mesmo formato.
 
 ### `[D-Musica]` — trilha e efeitos
 
