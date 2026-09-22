@@ -231,3 +231,57 @@ describe('newestCriticalTick', () => {
     expect(primeira).toBeGreaterThan(balance.startYear + 20);
   });
 });
+
+describe('o aviso da Inércia no boletim (VIS-11)', () => {
+  const aviso = { level: 50, tick: 298 };
+
+  it('vira um cartão com selo próprio, a silhueta apontando e sem "por"', () => {
+    const [view] = eventCardsView(withCards(300), false, [aviso]).cards;
+
+    expect(view?.severity).toBe('inertia');
+    expect(view?.severityLabel).toBe(ui.events.severity.inertia.label);
+    expect(view?.name).toBe(ui.events.inertia.name('50'));
+    expect(view?.where).toBe(ui.events.where(ui.events.inertia.where, String(yearForTick(298))));
+    expect(view?.speaker).toEqual({ person: 'inercia', pose: 'aponta' });
+    expect(view?.by).toBe('');
+  });
+
+  /**
+   * A frase diz a cadência e a força com os números do balance.json, e não
+   * escritos à mão: a força de cada turno é o nível em porcentagem, porque o
+   * engine multiplica a mordida por `inercia / 100`.
+   */
+  it('diz de quanto em quanto tempo ela age e com quanta força', () => {
+    const [view] = eventCardsView(withCards(300), false, [aviso]).cards;
+
+    expect(view?.fact).toBe(ui.events.inertia.fact(String(balance.inertiaActionEveryTicks), '50'));
+    expect(view?.fact).toContain('50%');
+  });
+
+  it('entra na ordem do mês, entre os eventos', () => {
+    // A seca entrou em 297, o aviso em 298 e a enchente em 299.
+    const state = withCards(300, card('drought', CARD_TICKS - 3), card('flood', CARD_TICKS - 1));
+    const nome = (id: string): string | undefined => climateEvents.find((e) => e.id === id)?.name;
+
+    expect(eventCardsView(state, false, [aviso]).cards.map((c) => c.name)).toEqual([
+      nome('flood'),
+      ui.events.inertia.name('50'),
+      nome('drought'),
+    ]);
+  });
+
+  it('sai do boletim no mesmo tempo que um evento', () => {
+    expect(eventCardsView(withCards(298 + CARD_TICKS), false, [aviso]).cards).toEqual([]);
+  });
+
+  /** A pausa é por evento crítico, e o aviso não pausa nada. */
+  it('não entra no aviso de tempo parado', () => {
+    const [critico] = CRITICO;
+    if (critico === undefined) throw new Error('sem evento crítico no catálogo');
+    const state = withCards(300, card(critico.id, CARD_TICKS - 2));
+    const view = eventCardsView(state, true, [{ level: 75, tick: 300 }]);
+
+    expect(view.cards[0]?.severity).toBe('inertia');
+    expect(view.notice).toBe(ui.events.paused(critico.name));
+  });
+});

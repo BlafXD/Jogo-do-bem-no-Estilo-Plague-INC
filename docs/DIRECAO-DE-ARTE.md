@@ -490,6 +490,22 @@ aparece onde está na tabela do §7, e o que ela é, no `docs/PERSONAGENS.md §6
   que ela é na faixa. O retrato é uns 70 px mais alto que o da Juliana, porque a pose é de corpo
   inteiro e a frase ocupa duas linhas na faixa. O cartão de fim já rola, e nada foi ajustado.
 
+### Como ficou no `VIS-11` (2ª entrega: o aviso)
+
+Quando a Inércia passa de 25, 50 ou 75 subindo, entra um cartão no boletim, com a mesma forma dos
+eventos:
+
+- **O selo é o terceiro do boletim:** `◆ Inércia`, ao lado de `▲ Crítico` e `● Moderado`. A faixa da
+  esquerda, o losango e a palavra ficam no tom claro do texto, que não é nem a brasa do crítico nem
+  o cinza do moderado. Quem separa o aviso dos eventos de longe é a forma do losango; a cor é
+  reforço.
+- **O avatar é a silhueta apontando**, com a ampliação menor da Inércia. Não há "por" depois do
+  ano, porque ela não é da equipe.
+- **O texto** diz o nível, "As oito regiões" no lugar da região, e uma frase sobre o que ela faz,
+  com a força de agora e o que a segura. Os números saem do `balance.json`.
+- **Ele fica seis meses em cena**, como um evento, entra na ordem do mês entre os eventos, não pausa
+  o jogo e não é anunciado ao leitor de tela — a mesma regra dos eventos moderados.
+
 ---
 
 ## 9. O que continua valendo do §5

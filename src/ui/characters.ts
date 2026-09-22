@@ -54,10 +54,11 @@ export const FIGURE_IDS = [...PERSON_IDS, 'inercia'] as const;
 export type FigureId = (typeof FIGURE_IDS)[number];
 
 /**
- * Os momentos com uma figura fixa: os quatro passos do tutorial, a contenção
- * e a tela de fim — com a derrota por apoio à parte, porque ali quem aparece é
- * a Inércia (VIS-11). A tela de título tem a equipe inteira, e o evento tem o
- * especialista do assunto; os dois moram em campos próprios do manifesto.
+ * Os momentos com uma figura fixa: os quatro passos do tutorial, a contenção,
+ * a tela de fim — com a derrota por apoio à parte, porque ali quem aparece é a
+ * Inércia (VIS-11) — e o aviso da Inércia no boletim. A tela de título tem a
+ * equipe inteira, e o evento tem o especialista do assunto; os dois moram em
+ * campos próprios do manifesto.
  */
 export const CAST_MOMENTS = [
   'tutorial-time',
@@ -67,6 +68,7 @@ export const CAST_MOMENTS = [
   'contain',
   'outcome',
   'defeat-support',
+  'inertia-notice',
 ] as const;
 
 export type CastMoment = (typeof CAST_MOMENTS)[number];

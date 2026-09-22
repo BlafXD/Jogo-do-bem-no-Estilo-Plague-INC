@@ -28,6 +28,94 @@ Regras curtas:
 
 ---
 
+## 2026-09-22 — A Inércia avisa quando fica mais forte, e o VIS-11 fecha
+
+- **Parte / tarefa:** `VIS-11` ✔, 2ª entrega. A 1ª é a entrada logo abaixo, do mesmo dia.
+- **O que mudou:**
+  - `src/ui/inertia-notices.ts` (novo) — **a regra do aviso**, sem DOM:
+    - `crossedLevel` diz de que nível a Inércia passou subindo;
+    - `noticesInScene` diz quais avisos ainda estão em cena;
+    - `updateNotices` atualiza a lista a cada passo do relógio.
+  - `src/data/balance.json` e o tipo em `src/engine/state.ts` — os níveis, `inertiaNoticeLevels:
+    [25, 50, 75]`. O engine não lê a chave; ela mora ali porque o `balance.json` é onde ficam as
+    constantes ajustáveis.
+  - `src/ui/event-cards.ts` — o aviso vira cartão, com um terceiro selo, e entra no boletim na
+    ordem do mês, entre os eventos.
+  - `src/ui/event-cards.css` — o selo, o losango e a faixa do aviso.
+  - `src/data/i18n.ts` — o selo `◆ Inércia` e o texto do cartão, com a cadência e a força como
+    argumentos.
+  - `src/data/characters.json` e `src/ui/characters.ts` — o momento `inertia-notice`: a silhueta
+    apontando.
+  - `src/main.ts`:
+    - a lista de avisos na memória, ao lado do `autoPaused`;
+    - a atualização a cada mês;
+    - a lista zerada nos três lugares que trocam a partida inteira: o Modo Feira, a volta ao título
+      e o reinício.
+  - Os testes:
+    - `tests/inertia-notices.test.ts` (novo) — a regra;
+    - `tests/event-cards.test.ts` e `event-cards.dom.test.ts` — o cartão.
+
+    Suíte: 952 → **970**.
+  - `docs/PERSONAGENS.md`, `docs/DIRECAO-DE-ARTE.md` e `PLANO.md`.
+
+### As regras do aviso
+
+- **Só subindo.** A contenção derruba a Inércia, e descer não é notícia. Se ela voltar a subir e
+  passar do mesmo nível, o aviso volta.
+- **Um por mês, o do nível mais alto.** O relógio entrega até doze meses num quadro quando a aba
+  volta do segundo plano, e passar de 25 e de 50 no mesmo lote vira um aviso só, o de 50.
+- **Seis meses em cena**, o mesmo tempo de um evento. Um aviso e um evento do mesmo mês vêm com o
+  aviso primeiro.
+- **Não pausa o jogo e não é anunciado ao leitor de tela**, como os eventos moderados. A região viva
+  do boletim continua só para a pausa automática.
+- **Não fica salvo.** Salvar exigiria um campo novo no `GameState` e um `SAVE_VERSION` novo, o que o
+  `docs/GDD.md §3` protege. Recarregar a partida perde só os avisos que estavam no boletim.
+
+### Conferi que os testes reprovam de verdade
+
+Quatro estragos, um de cada vez, e cada um deixou pelo menos um teste vermelho:
+- avisar também descendo;
+- o aviso nunca sair de cena;
+- o boletim ignorar os avisos;
+- o aviso sempre no topo, fora da ordem do mês.
+
+Voltei o arquivo nas quatro vezes. **O `main.ts` não tem teste**, como antes desta tarefa: a ligação
+dele foi conferida na tela.
+
+### Como foi conferido
+
+**No Edge em modo headless, no jogo de verdade.** Plantei uma partida de 2047 com a Inércia em 49,7,
+o apoio no piso de apatia e cinco nós de corte, para ela crescer. A 4x, sem mexer em nada:
+1. **O aviso chegou sozinho:** "A Inércia passou de 50", com o selo `◆ Inércia`, a silhueta
+   apontando, "As oito regiões · 2047" e a frase com "a cada 6 meses" e "50% da força máxima". Uma
+   seca caiu no mesmo ano e ficou embaixo dele.
+2. **Recarregando a página**, a partida voltou pelo save do próprio jogo: a seca continuou no
+   boletim, e o aviso não, como combinado.
+3. **Jogando de novo**, o aviso saiu de cena sozinho. A Inércia já estava em 51.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 970 testes
+  npm run dev
+  ```
+
+  Na tela: numa partida em que o apoio cai perto do piso, a Inércia sobe. Quando ela passa de 25,
+  de 50 ou de 75, o boletim ganha o cartão dela.
+
+- **Pendente:**
+  - **Numa partida bem jogada, o aviso pode nunca aparecer.** Com o apoio alto, o amortecimento
+    segura a Inércia em zero. Isso é a regra do §2.6 funcionando, e não defeito.
+  - **A chave nova não está no `docs/GDD.md §4`**, que lista o `balance.json`. Outras chaves também
+    não estão lá, como os tetos das medalhas. Editar o GDD pede permissão.
+  - **O 404 do `favicon.ico`** continua.
+- **Evidência:** `docs/evidencias/2026-09-22-vis-11-aviso-no-boletim.jpg` — o aviso de 50 em cima
+  de uma seca, no boletim.
+
+---
+
 ## 2026-09-22 — A Inércia ganha corpo: uma silhueta no tutorial, na contenção e na derrota
 
 - **Parte / tarefa:** `VIS-11`, 1ª entrega de duas. O checkbox ficou em `[~]`: o aviso no boletim é

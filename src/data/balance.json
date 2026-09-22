@@ -16,6 +16,7 @@
   "inertiaSubsidyBite": 0.002,
   "inertiaDisinformationBite": 0.5,
   "inertiaActionEveryTicks": 6,
+  "inertiaNoticeLevels": [25, 50, 75],
   "containCost": 30,
   "containDiscountPerNode": 0.2,
   "containRelief": 25,

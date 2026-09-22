@@ -186,6 +186,13 @@ export type Balance = {
   readonly inertiaDisinformationBite: number;
   /** De quantos em quantos ticks a Inércia age — o "~6 ticks" do §2.6. */
   readonly inertiaActionEveryTicks: number;
+  /**
+   * Os níveis da Inércia que, passados para cima, põem um aviso no boletim
+   * (VIS-11). **O engine não lê**: é a UI que decide quando avisar, como é ela
+   * que decide pausar. Mora aqui porque o `balance.json` é onde ficam as
+   * constantes ajustáveis.
+   */
+  readonly inertiaNoticeLevels: readonly number[];
   /** Custo em PAC de uma contenção, com só o nó raiz do ramo Sociedade comprado. */
   readonly containCost: number;
   /** Desconto no custo da contenção por nó de Sociedade além do primeiro. */

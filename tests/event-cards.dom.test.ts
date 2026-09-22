@@ -250,3 +250,19 @@ describe('quem deu a notícia (VIS-07)', () => {
     expect(img?.style.getPropertyValue('--rosto-y')).toBe(String(faceOf(quem)[1]));
   });
 });
+
+describe('o aviso da Inércia no boletim (VIS-11)', () => {
+  it('aparece com o selo dela e a silhueta no avatar', () => {
+    const root = mount();
+    renderEventCards(root, eventCardsView(withCards(300), false, [{ level: 25, tick: 299 }]));
+    const cartao = root.querySelector<HTMLElement>('.events__card');
+
+    expect(root.hidden).toBe(false);
+    expect(cartao?.dataset.severity).toBe('inertia');
+    expect(cartao?.querySelector('.events__icon')?.textContent).toBe(
+      ui.events.severity.inertia.icon,
+    );
+    expect(cartao?.querySelector<HTMLElement>('.avatar')?.dataset.person).toBe('inercia');
+    expect(cartao?.querySelector('.events__by')).toBeNull();
+  });
+});

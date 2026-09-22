@@ -99,6 +99,10 @@
     "defeat-support": {
       "person": "inercia",
       "pose": "de-pe"
+    },
+    "inertia-notice": {
+      "person": "inercia",
+      "pose": "aponta"
     }
   },
   "title": [

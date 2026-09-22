@@ -220,7 +220,7 @@ juntos. As mesmas regras da equipe valem para ela:
 | `cruza` | braços cruzados: a recusa | o passo do tutorial que explica a Inércia |
 | `barra` | mãos espalmadas para a frente: barrando | o cartão da contenção, em avatar redondo |
 | `de-pe` | de pé, corpo inteiro | a tela de fim da derrota por apoio, no lugar da Juliana |
-| `aponta` | o dedo apontado: a desinformação | o aviso no boletim, na 2ª entrega do `VIS-11` |
+| `aponta` | o dedo apontado: a desinformação | o aviso no boletim, quando ela passa de 25, 50 ou 75 |
 
 **Por que a derrota por apoio, e não as duas derrotas.** É a derrota em que ela põe a mão: a
 desinformação dela derruba o apoio das regiões furando o piso de apatia (§2.6), e os eventos fazem o

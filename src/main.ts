@@ -46,6 +46,7 @@ import {
 } from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
 import { prependBrandMark } from './ui/icons';
+import { updateNotices, type InertiaNotice } from './ui/inertia-notices';
 import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
@@ -231,6 +232,15 @@ let pausedForTick = state.tick;
  * primeira, e o reinício desfaz só a primeira.
  */
 let autoPaused = false;
+
+/**
+ * Os avisos da Inércia em cena no boletim (VIS-11).
+ *
+ * Como o `autoPaused`, é estado da tela, e não da partida: não entra no save, e
+ * uma partida carregada começa sem nenhum. O porquê está no
+ * src/ui/inertia-notices.ts.
+ */
+let inertiaNotices: readonly InertiaNotice[] = [];
 
 /**
  * A região escolhida no mapa (P5-01), ou nenhuma.
@@ -419,7 +429,7 @@ function handleToggleSound(): void {
 
 /** Os cartões de evento e o aviso de auto-pausa. */
 function renderEvents(): void {
-  renderEventCards(eventos, eventCardsView(state, autoPaused));
+  renderEventCards(eventos, eventCardsView(state, autoPaused, inertiaNotices));
 }
 
 /**
@@ -544,6 +554,7 @@ function handleFair(): void {
   session = createSession(null, true);
   shownTick = state.tick;
   pausedForTick = state.tick;
+  inertiaNotices = [];
   autoPaused = false;
 
   tutorial = createTutorial('fair');
@@ -584,6 +595,7 @@ function handleBackToTitle(): void {
   session = createSession(savedYear);
   shownTick = state.tick;
   pausedForTick = state.tick;
+  inertiaNotices = [];
   autoPaused = false;
 
   renderGame();
@@ -797,6 +809,7 @@ function handleReset(): void {
   tutorial = createTutorial(fairMode ? 'fair' : 'new');
   shownTick = state.tick;
   pausedForTick = state.tick;
+  inertiaNotices = [];
 
   // Um reinício desfaz a **auto**-pausa, e só ela. A pausa que o jogador pediu
   // continua valendo — é a regra que o controls.ts registra, e ela não muda
@@ -1089,6 +1102,7 @@ function frame(now: number): void {
   // zerada no reinício, no Modo Feira e na volta ao título; esta não tem como
   // ficar desatualizada.
   const finishedBefore = isFinished(state);
+  const before = state;
 
   const step = advanceRealTime(
     state,
@@ -1106,6 +1120,10 @@ function frame(now: number): void {
   previousFrame = now;
   state = step.state;
   clock = step.clock;
+
+  // O aviso da Inércia (VIS-11): o estado de antes contra o de depois do passo.
+  // Só quando o mês virou — a Inércia não anda entre dois quadros do mesmo mês.
+  if (state.tick !== before.tick) inertiaNotices = updateNotices(inertiaNotices, before, state);
 
   if (!finishedBefore && isFinished(state)) playSfx(sound, 'outcome');
 

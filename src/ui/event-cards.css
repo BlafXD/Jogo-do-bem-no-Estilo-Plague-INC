@@ -82,6 +82,19 @@
   border-left-color: var(--cor-rotulo, #a7c0b4);
 }
 
+/* O aviso da Inércia (VIS-11): a faixa, o losango e a palavra no tom claro
+   da silhueta dela, que não é nem a brasa do crítico nem o cinza do moderado.
+   Quem o separa dos eventos de longe é a forma do losango e a palavra
+   "Inércia"; a cor é reforço. */
+.events__card[data-severity='inertia'] {
+  border-left-color: var(--cor-valor, #f2f7f4);
+}
+
+.events__card[data-severity='inertia'] .events__icon,
+.events__card[data-severity='inertia'] .events__severity {
+  color: var(--cor-valor, #f2f7f4);
+}
+
 .events__head {
   display: flex;
   align-items: baseline;

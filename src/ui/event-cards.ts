@@ -25,13 +25,19 @@
 
 import { ui } from '../data/i18n';
 import { eventById, isCritical, startTickOf } from '../engine/events';
-import type { ActiveEvent, GameState } from '../engine/state';
+import { balance, type ActiveEvent, type GameState } from '../engine/state';
 import { yearForTick } from '../engine/tick';
-import { eventCast, mountAvatar, personText, type Appearance } from './characters';
+import { eventCast, momentCast, mountAvatar, personText, type Appearance } from './characters';
+import { noticesInScene, type InertiaNotice } from './inertia-notices';
 
 // --------------------------------------------------------------- a view ---
 
-export const EVENT_SEVERITIES = ['critical', 'moderate'] as const;
+/**
+ * O selo de cada cartão. O terceiro não é gravidade de evento: é o aviso da
+ * Inércia (VIS-11), que mora no mesmo boletim e precisa do próprio selo — ícone
+ * e palavra, como os outros dois (docs/GDD.md §5).
+ */
+export const EVENT_SEVERITIES = ['critical', 'moderate', 'inertia'] as const;
 
 export type EventSeverity = (typeof EVENT_SEVERITIES)[number];
 
@@ -125,23 +131,57 @@ export function newestCriticalTick(state: GameState): number | null {
 }
 
 /**
+ * O aviso da Inércia como cartão (VIS-11): a silhueta apontando, o nível que
+ * ela passou e o que isso quer dizer. Sem "por", porque ela não é da equipe.
+ */
+function noticeCard(notice: InertiaNotice): EventCardView {
+  const badge = ui.events.severity.inertia;
+
+  return {
+    key: `inercia-${notice.level}@${notice.tick}`,
+    name: ui.events.inertia.name(String(notice.level)),
+    where: ui.events.where(ui.events.inertia.where, String(yearForTick(notice.tick))),
+    fact: ui.events.inertia.fact(String(balance.inertiaActionEveryTicks), String(notice.level)),
+    speaker: momentCast('inertia-notice'),
+    by: '',
+    severity: 'inertia',
+    severityIcon: badge.icon,
+    severityLabel: badge.label,
+  };
+}
+
+/**
  * Os cartões em cena, do mais novo para o mais velho.
  *
- * A ordem sai do `ticksRemaining` — quanto maior, mais recente — e não da ordem
- * do array. As duas coincidem hoje (o `applyEvent` sempre acrescenta no fim),
- * mas depender disso seria depender de um detalhe interno de outro módulo: no
- * dia em que o `advanceEvents` reordenasse a lista, os cartões apareceriam
- * embaralhados sem nada quebrar. Empate é impossível, porque só entra um evento
- * por tick.
+ * A ordem sai do mês em que cada um entrou — o `startTickOf` do evento, o
+ * `tick` do aviso — e não da ordem do array. As duas coincidem hoje (o
+ * `applyEvent` sempre acrescenta no fim), mas depender disso seria depender de
+ * um detalhe interno de outro módulo: no dia em que o `advanceEvents`
+ * reordenasse a lista, os cartões apareceriam embaralhados sem nada quebrar.
+ * Só entra um evento por mês; um aviso da Inércia no mesmo mês vem antes dele.
  *
- * `autoPaused` vem do main.ts em vez de ser deduzido aqui: pausa é estado da
- * UI, e o controls.ts registra por que ela não mora no GameState.
+ * `autoPaused` e `notices` vêm do main.ts em vez de serem deduzidos aqui:
+ * os dois são estado da UI, e o controls.ts registra por que a pausa não mora
+ * no GameState. O inertia-notices.ts diz o mesmo dos avisos.
  */
-export function eventCardsView(state: GameState, autoPaused = false): EventCardsView {
-  const cards = [...state.activeEvents]
-    .sort((a, b) => b.ticksRemaining - a.ticksRemaining)
-    .map((active) => cardFor(state, active))
-    .filter((card): card is EventCardView => card !== null);
+export function eventCardsView(
+  state: GameState,
+  autoPaused = false,
+  notices: readonly InertiaNotice[] = [],
+): EventCardsView {
+  const events = state.activeEvents.flatMap((active) => {
+    const card = cardFor(state, active);
+    return card === null ? [] : [{ tick: startTickOf(active, state.tick), rank: 1, card }];
+  });
+  const warnings = noticesInScene(notices, state.tick).map((notice) => ({
+    tick: notice.tick,
+    rank: 0,
+    card: noticeCard(notice),
+  }));
+
+  const cards = [...events, ...warnings]
+    .sort((a, b) => b.tick - a.tick || a.rank - b.rank)
+    .map((entry) => entry.card);
 
   // O crítico mais recente é o que parou o relógio — o main.ts pausa pelo tick
   // mais novo, que é o primeiro crítico desta lista já ordenada.

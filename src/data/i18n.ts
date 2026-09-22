@@ -430,13 +430,29 @@ export const ui = {
     // Ícone **mais** rótulo escrito, como na árvore e no cartão de fim: o §5 do
     // GDD proíbe comunicar gravidade só por cor. Os dois ícones têm formas
     // diferentes de longe — triângulo e círculo —, não só tons diferentes.
+    // O terceiro, desde o VIS-11, é o aviso da Inércia: não é evento, mas mora
+    // no mesmo boletim, e o losango o separa dos dois de longe.
     severity: {
       critical: { icon: '▲', label: 'Crítico' },
       moderate: { icon: '●', label: 'Moderado' },
+      inertia: { icon: '◆', label: 'Inércia' },
     },
 
     /** O cabeçalho do cartão: onde bateu, e em que ano. */
     where: (region: string, year: string) => `${region} · ${year}`,
+
+    /**
+     * O aviso da Inércia (VIS-11): o nível que ela passou, o que ela faz e o
+     * que a segura. Os números chegam como argumento — a cadência e o nível são
+     * do balance.json, e a força de cada turno é o nível em porcentagem (o
+     * `applyInertiaAction` multiplica a mordida por `inercia / 100`).
+     */
+    inertia: {
+      name: (level: string) => `A Inércia passou de ${level}`,
+      where: 'As oito regiões',
+      fact: (months: string, level: string) =>
+        `A cada ${months} meses ela alterna desinformação, que derruba o apoio, e subsídios, que sobem as emissões — agora com ${level}% da força máxima. A contenção, no painel da árvore, a empurra para baixo.`,
+    },
 
     /**
      * O aviso da auto-pausa.
