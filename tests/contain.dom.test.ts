@@ -143,3 +143,13 @@ describe('o botão de conter', () => {
     expect(document.activeElement).toBe(antes);
   });
 });
+
+describe('a Inércia no cartão da contenção (VIS-11)', () => {
+  it('aparece ao lado do texto, como enfeite, com as mãos espalmadas', () => {
+    const avatar = mount().querySelector<HTMLElement>('.contain__avatar');
+
+    expect(avatar?.dataset.person).toBe('inercia');
+    expect(avatar?.getAttribute('aria-hidden')).toBe('true');
+    expect(avatar?.querySelector('img')?.getAttribute('src')).toContain('inercia-barra');
+  });
+});

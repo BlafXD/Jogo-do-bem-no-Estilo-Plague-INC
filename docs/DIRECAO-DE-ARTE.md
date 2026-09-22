@@ -262,11 +262,13 @@ quase não aparece; num cartaz grande, aparece.
 | Tutorial — o tempo | Ana Luiza, `aponta` | canto de baixo à esquerda, perto dos controles |
 | Tutorial — a árvore | Carlos, `explica` | canto de baixo à direita, perto do botão da árvore |
 | Tutorial — o evento | Ricardo, `aponta` | à direita, apontando para o boletim |
-| Tutorial — a Inércia | Juliana, `atencao` | no alto, apontando para o indicador |
+| Tutorial — a Inércia | **a Inércia, `cruza`** (desde o `VIS-11`; antes, Juliana `atencao`) | no balão, logo acima da barra de baixo |
+| Contenção | **a Inércia, `barra`**, em avatar redondo (`VIS-11`) | à direita do texto, no cartão da contenção |
 | Evento crítico | o especialista do assunto (tabela abaixo) | cartão central, com o tempo parado |
 | Boletim do clima | o mesmo especialista, em avatar redondo | ao lado de cada evento |
 | Tela de título | os quatro: `acolhe`, `conversa`, `apresenta`, `painel` | a equipe da agência |
 | Tela de fim | Juliana, `painel` | ao lado do resultado |
+| Tela de fim — derrota por apoio | **a Inércia, `de-pe`** (`VIS-11`) | ao lado do resultado, no lugar da Juliana |
 
 **Quem dá cada notícia** (proposta 2, §10). A tabela vive num arquivo de dados, editável pelo
 `[D-Historia]` sem tocar em `.ts`:
@@ -471,6 +473,22 @@ Onde a tela saiu diferente do protótipo:
   o ícone e o saldo ficam inteiros.
 - **As listras da barra de baixo perdem 30 px**, porque o botão da árvore cresceu: em 1240 px, elas
   passaram de 315 para 285.
+
+### Como ficou no `VIS-11` (1ª entrega: a Inércia em três lugares)
+
+A Inércia virou uma silhueta sem rosto, com fumaça, em quatro poses geradas pela equipe. Quem
+aparece onde está na tabela do §7, e o que ela é, no `docs/PERSONAGENS.md §6`. Onde a tela saiu:
+
+- **Tutorial.** O passo "A Inércia agiu" tem a silhueta de braços cruzados no retrato, e a linha de
+  cima diz "A Inércia · A força que resiste à mudança".
+- **Contenção.** O cartão virou uma grade: o texto à esquerda e, à direita, um avatar redondo de
+  56 px com a borda na brasa, a cor da contenção.
+- **O avatar da Inércia amplia menos.** O da equipe amplia a pose 2,6 vezes em volta do rosto; numa
+  silhueta sem rosto, o círculo ficaria só preto. O dela amplia 1,5 vez e mostra a cabeça, os
+  ombros e a fumaça.
+- **Tela de fim.** Na derrota por apoio, a silhueta de pé fica no lugar da Juliana, com o nome e o
+  que ela é na faixa. O retrato é uns 70 px mais alto que o da Juliana, porque a pose é de corpo
+  inteiro e a frase ocupa duas linhas na faixa. O cartão de fim já rola, e nada foi ajustado.
 
 ---
 

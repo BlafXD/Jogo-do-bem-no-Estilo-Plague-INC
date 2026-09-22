@@ -42,16 +42,31 @@ export const PERSON_IDS = [
 export type PersonId = (typeof PERSON_IDS)[number];
 
 /**
- * Os momentos com uma pessoa fixa: os quatro passos do tutorial e a tela de
- * fim. A tela de título tem a equipe inteira, e o evento tem o especialista do
- * assunto; os dois moram em campos próprios do manifesto.
+ * Todo mundo que tem pose: a equipe e, desde o VIS-11, a Inércia.
+ *
+ * A Inércia é o antagonista do docs/GDD.md §2.6, desenhada como uma silhueta
+ * sem rosto. Ela **não é da equipe**: não aparece na tela de título, que é "a
+ * equipe da agência", nem dá notícia de evento. O `parseCast` recusa as duas
+ * coisas. Ela só aparece nos momentos fixos abaixo.
+ */
+export const FIGURE_IDS = [...PERSON_IDS, 'inercia'] as const;
+
+export type FigureId = (typeof FIGURE_IDS)[number];
+
+/**
+ * Os momentos com uma figura fixa: os quatro passos do tutorial, a contenção
+ * e a tela de fim — com a derrota por apoio à parte, porque ali quem aparece é
+ * a Inércia (VIS-11). A tela de título tem a equipe inteira, e o evento tem o
+ * especialista do assunto; os dois moram em campos próprios do manifesto.
  */
 export const CAST_MOMENTS = [
   'tutorial-time',
   'tutorial-tree',
   'tutorial-event',
   'tutorial-inertia',
+  'contain',
   'outcome',
+  'defeat-support',
 ] as const;
 
 export type CastMoment = (typeof CAST_MOMENTS)[number];
@@ -62,15 +77,18 @@ export type CastMoment = (typeof CAST_MOMENTS)[number];
  */
 export type Face = readonly [x: number, y: number];
 
-/** Uma pessoa numa pose. */
+/**
+ * Uma figura numa pose. O campo se chama `person` desde o VIS-06, quando só
+ * havia a equipe; a Inércia usa o mesmo campo.
+ */
 export type Appearance = {
-  readonly person: PersonId;
+  readonly person: FigureId;
   readonly pose: string;
 };
 
 export type Cast = {
-  /** As poses de cada pessoa, na ordem do manifesto. */
-  readonly poses: Readonly<Record<PersonId, readonly string[]>>;
+  /** As poses de cada figura, na ordem do manifesto. */
+  readonly poses: Readonly<Record<FigureId, readonly string[]>>;
   /** O rosto de cada pose, pelo nome do arquivo sem extensão. */
   readonly faces: Readonly<Record<string, Face>>;
   readonly moments: Readonly<Record<CastMoment, Appearance>>;
@@ -110,6 +128,10 @@ function isPerson(id: string): id is PersonId {
   return (PERSON_IDS as readonly string[]).includes(id);
 }
 
+function isFigure(id: string): id is FigureId {
+  return (FIGURE_IDS as readonly string[]).includes(id);
+}
+
 /** As chaves de um objeto têm que ser exatamente as esperadas — nem mais, nem menos. */
 function sameKeys(what: string, found: readonly string[], expected: readonly string[]): void {
   const missing = expected.filter((key) => !found.includes(key));
@@ -130,11 +152,11 @@ function parseFace(where: string, raw: readonly number[]): Face {
 }
 
 function parsePoses(people: RawCast['people']): Pick<Cast, 'poses' | 'faces'> {
-  sameKeys('"people"', Object.keys(people), PERSON_IDS);
+  sameKeys('"people"', Object.keys(people), FIGURE_IDS);
 
-  const poses = {} as Record<PersonId, readonly string[]>;
+  const poses = {} as Record<FigureId, readonly string[]>;
   const faces: Record<string, Face> = {};
-  for (const person of PERSON_IDS) {
+  for (const person of FIGURE_IDS) {
     const entries = Object.entries(people[person] ?? {});
     if (entries.length === 0) fail(`"${person}" não tem pose nenhuma.`);
     for (const [pose, data] of entries) {
@@ -148,12 +170,20 @@ function parsePoses(people: RawCast['people']): Pick<Cast, 'poses' | 'faces'> {
   return { poses, faces };
 }
 
+/**
+ * Uma aparição conferida. Com `teamOnly`, só vale alguém da equipe: é o caso
+ * da tela de título e do cartão crítico, onde a Inércia não tem lugar.
+ */
 function appearance(
   where: string,
   raw: RawAppearance,
-  poses: Readonly<Record<PersonId, readonly string[]>>,
+  poses: Readonly<Record<FigureId, readonly string[]>>,
+  teamOnly = false,
 ): Appearance {
-  if (!isPerson(raw.person)) fail(`${where} cita a pessoa "${raw.person}", que não existe.`);
+  if (!isFigure(raw.person)) fail(`${where} cita a pessoa "${raw.person}", que não existe.`);
+  if (teamOnly && !isPerson(raw.person)) {
+    fail(`${where} cita "${raw.person}", que não é da equipe.`);
+  }
   if (!poses[raw.person].includes(raw.pose)) {
     fail(`${where} pede a pose "${raw.pose}", que "${raw.person}" não tem.`);
   }
@@ -184,7 +214,7 @@ export function parseCast(raw: RawCast, eventIds: readonly string[]): Cast {
 
   if (raw.title.length === 0) fail('"title" está vazio.');
   const title = raw.title.map((entry, index) =>
-    appearance(`o título (${index + 1}º)`, entry, poses),
+    appearance(`o título (${index + 1}º)`, entry, poses, true),
   );
 
   sameKeys('"events.pose"', Object.keys(raw.events.pose), PERSON_IDS);
@@ -194,6 +224,7 @@ export function parseCast(raw: RawCast, eventIds: readonly string[]): Cast {
       `"events.pose"`,
       { person, pose: raw.events.pose[person] ?? '' },
       poses,
+      true,
     ).pose;
   }
 
@@ -229,8 +260,11 @@ export function eventCast(eventId: string): Appearance | null {
   return person === undefined ? null : { person, pose: cast.eventPose[person] };
 }
 
-/** O nome, o nome curto e o cargo de uma pessoa (regra 8: no i18n). */
-export function personText(person: PersonId): {
+/**
+ * O nome, o nome curto e o cargo de uma figura (regra 8: no i18n). Para a
+ * Inércia, o "cargo" é o que ela é: a força que resiste à mudança (§2.6).
+ */
+export function personText(person: FigureId): {
   readonly name: string;
   readonly short: string;
   readonly role: string;
@@ -239,7 +273,7 @@ export function personText(person: PersonId): {
 }
 
 /** "Ana Luiza, engenheira elétrica": o texto alternativo de um retrato. */
-export function personLabel(person: PersonId): string {
+export function personLabel(person: FigureId): string {
   return ui.cast.people[person].alt;
 }
 

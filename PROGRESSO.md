@@ -28,6 +28,116 @@ Regras curtas:
 
 ---
 
+## 2026-09-22 — A Inércia ganha corpo: uma silhueta no tutorial, na contenção e na derrota
+
+- **Parte / tarefa:** `VIS-11`, 1ª entrega de duas. O checkbox ficou em `[~]`: o aviso no boletim é
+  a 2ª.
+- **Decidido no chat, no mesmo dia:**
+  - as quatro silhuetas foram geradas pela equipe;
+  - a Inércia vem na versão com o aviso quando ela age;
+  - ela vem antes dos sons do Kenney (`P7-09`).
+- **O que mudou:**
+  - `src/assets/characters/poses/inercia-*.jpg` — **as quatro silhuetas**, com 480 px de altura, no
+    creme da equipe: `cruza`, `barra`, `de-pe` e `aponta`. A pose `aponta` é da 2ª entrega.
+  - `src/ui/characters.ts`:
+    - a Inércia entra como uma figura à parte (`FIGURE_IDS`), ao lado das quatro pessoas;
+    - dois momentos novos: `contain` e `defeat-support`;
+    - o `parseCast` recusa a Inércia no título e dando notícia de evento, porque ela não é da equipe.
+  - `src/data/characters.json` — as poses dela, o rosto de cada uma e os três momentos. O passo do
+    tutorial sobre a Inércia deixou a Juliana e passou para ela.
+  - `src/data/i18n.ts` — "A Inércia" e, no lugar do cargo, "A força que resiste à mudança", a frase
+    do `docs/GDD.md §2.6`.
+  - `src/ui/contain.ts` e `contain.css` — o avatar redondo dela à direita do cartão, que virou uma
+    grade.
+  - `src/ui/characters.css` — o avatar da Inércia amplia menos que o da equipe.
+  - `src/ui/outcome.ts` — quem aparece na tela de fim passou a sair da view: a Juliana, ou a Inércia
+    na derrota por apoio.
+  - Os testes:
+    - `tests/characters.test.ts` — as vinte poses, a tabela nova, a Inércia fora do título e das
+      notícias, e dois manifestos quebrados a mais;
+    - `tests/contain.dom.test.ts`, `outcome.dom.test.ts` e `tutorial.dom.test.ts` — um lugar em
+      cada.
+
+    Suíte: 943 → **952**.
+  - `docs/PERSONAGENS.md` (seção nova, §6), `docs/DIRECAO-DE-ARTE.md` (a tabela do §7 e o registro
+    da entrega), `docs/CREDITOS.md` e `PLANO.md`.
+
+### Como as imagens foram tratadas
+
+**O `recolor` do protótipo não servia.** Ele troca só o fundo, e a fumaça, que é cinza translúcida
+por cima do creme, ficaria com o creme antigo, num tom diferente do fundo novo. Um utilitário novo,
+o `Tinge.cs`, fora do repositório como o `VisTool.cs`, retinge cada pixel pela luminosidade:
+- o creme vira o `#F4EDD0` da equipe;
+- o preto continua preto;
+- a fumaça acompanha.
+
+O fundo saiu `#F3ECCF`, contra `#F4ECCF` nas poses da equipe. **A de corpo inteiro perdeu os 15 px
+da direita**, onde havia um pedaço de outra figura: medido por coluna, o corpo vai só até a coluna
+370, e o pedaço começa na 440.
+
+### Conferi que os testes reprovam de verdade
+
+Quatro estragos, um de cada vez, e cada um deixou pelo menos um teste vermelho:
+- a tela de fim sempre com a Juliana;
+- a contenção sem o retrato;
+- a Inércia aceita na tela de título;
+- o passo do tutorial de volta para a Juliana.
+
+Voltei o arquivo nas quatro vezes.
+
+### Como foi conferido
+
+**No Edge em modo headless:**
+- **Tutorial:** o balão do passo da Inércia, montado na página com o módulo do próprio jogo e na
+  mesma âncora do `main.ts`. Não dá para chegar nele jogando, pelo motivo abaixo. O retrato
+  carrega, e a linha de cima diz "A Inércia · A força que resiste à mudança".
+- **Contenção:** em 1920, 1536 e 390 px, com o ramo Sociedade aberto. O avatar tem 56 px mais a
+  borda, cabe dentro do cartão, e nada rola de lado.
+- **Tela de fim:**
+  - uma partida plantada com o apoio zerado mostra a Inércia de pé, com "A força que resiste à
+    mudança" na faixa;
+  - uma partida sem nenhuma compra, que acaba por temperatura, continua com a Juliana e "Auditoria
+    da partida".
+
+**Numa partida nova, o passo da Inércia não chegou até 2038**, jogando a 4x por um minuto. Não é
+defeito: com o apoio acima do piso de apatia, o amortecimento segura a Inércia em zero, e ela só
+passa de 1 quando o apoio cai. O passo continua certo, só que chega tarde. Isso já era assim antes
+desta tarefa.
+
+No console, nada além do "não havia partida salva" e do 404 do `favicon.ico`.
+
+- **Como verificar:**
+
+  ```bash
+  npm run check     # 952 testes
+  npm run dev
+  ```
+
+  Na tela:
+  - Com o ramo Sociedade aberto, o cartão "Conter a Inércia" tem a silhueta à direita.
+  - Uma partida que perde por apoio mostra a Inércia de pé na tela de fim.
+
+- **Pendente:**
+  - **A 2ª entrega:** o aviso no boletim quando a Inércia passa de 25, 50 e 75, com a pose
+    `aponta`. Ele não pausa o jogo e não fica salvo.
+  - **O topo da tela de fim fica uns 70 px mais alto** na derrota por apoio: a pose é de corpo
+    inteiro, e a frase da faixa ocupa duas linhas. O cartão já rola, e nada foi ajustado.
+  - **O build da feira passou de 1,13 para 1,24 MB**, com as quatro silhuetas em base64.
+  - **A pose `atencao` da Juliana ficou sem uso** desde que o passo do tutorial passou para a
+    Inércia. Ela se junta a outras cinco da equipe que já não apareciam em lugar nenhum:
+    - `energia` e `planta`, da Ana Luiza;
+    - `aponta`, do Carlos;
+    - `folha`, do Ricardo;
+    - `aponta`, da Juliana.
+
+    As seis continuam no manifesto e no build.
+- **Evidência:**
+  - `docs/evidencias/2026-09-22-vis-11-tutorial.jpg` — o balão do passo da Inércia;
+  - `docs/evidencias/2026-09-22-vis-11-contencao.jpg` — o cartão da contenção com o avatar;
+  - `docs/evidencias/2026-09-22-vis-11-derrota-por-apoio.jpg` — a tela de fim com a Inércia de pé.
+
+---
+
 ## 2026-09-22 — Os botões ganham ícone, e o VIS-09 fecha
 
 - **Parte / tarefa:** `VIS-09` ✔, 2ª entrega. A 1ª é a entrada logo abaixo, do mesmo dia.

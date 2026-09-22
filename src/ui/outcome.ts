@@ -35,7 +35,7 @@ import {
   type RealWorldAction,
 } from '../engine/review';
 import { balance, skills, SKILL_BRANCHES, type GameState } from '../engine/state';
-import { momentCast, mountPortrait, renderPortrait } from './characters';
+import { momentCast, mountPortrait, renderPortrait, type Appearance } from './characters';
 import {
   comparisonView,
   mountComparison,
@@ -101,6 +101,15 @@ export type OutcomeView = {
   readonly lookBack: readonly string[];
   /** As 3 ações do mundo real, já escolhidas pelo que esta partida deixou de lado. */
   readonly realWorld: readonly RealWorldAction[];
+  /**
+   * Quem aparece ao lado do resultado. É a Juliana (VIS-07), menos quando a
+   * agência foi dissolvida por falta de apoio: aí é a Inércia, de pé (VIS-11).
+   * É a derrota em que ela põe a mão — a desinformação dela fura o piso de
+   * apatia (docs/GDD.md §2.6).
+   */
+  readonly cast: Appearance;
+  /** A legenda da faixa, ou `null` para o que a figura é — o cargo. */
+  readonly castRole: string | null;
 };
 
 /**
@@ -218,9 +227,13 @@ export function outcomeView(state: GameState, passive?: GameState): OutcomeView 
 
   const hud = hudView(state);
   const whole = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+  const dissolved = outcome.kind === 'defeat' && outcome.cause === 'support';
 
   return {
     ...resultFor(outcome),
+    cast: momentCast(dissolved ? 'defeat-support' : 'outcome'),
+    // A Juliana ganha a legenda do que faz aqui; a Inércia fica com o que ela é.
+    castRole: dissolved ? null : ui.cast.outcome,
     chart: timelineChartView(state, passiveState),
     comparison,
     lookBack: lookBackFor(state),
@@ -438,9 +451,9 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
   // último porque são a saída, não parte do que se lê.
   // A Juliana, com o painel no tablet, ao lado do resultado (VIS-07): a
   // auditora da agência lê a partida junto com o jogador. A legenda é o que ela
-  // faz aqui, e não o cargo — o cargo está no texto alternativo.
+  // faz aqui, e não o cargo — o cargo está no texto alternativo. Quem aparece
+  // sai da view desde o VIS-11, porque a derrota por apoio mostra a Inércia.
   const portrait = mountPortrait('outcome__portrait', true);
-  renderPortrait(portrait, momentCast('outcome'), ui.cast.outcome);
 
   const top = document.createElement('div');
   top.className = 'outcome__top';
@@ -484,6 +497,9 @@ export function renderOutcome(root: Element, view: OutcomeView | null, reviewing
   renderTimelineChart(root, view.chart);
   renderComparison(root, view.comparison);
   renderMedal(root, view.medal);
+
+  const portrait = root.querySelector<HTMLElement>('.outcome__portrait');
+  if (portrait !== null) renderPortrait(portrait, view.cast, view.castRole ?? undefined);
 
   const lookBack = slot(root, 'lookback');
   if (lookBack !== null) {

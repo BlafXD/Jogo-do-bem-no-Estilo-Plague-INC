@@ -363,6 +363,32 @@ describe('a Juliana ao lado do resultado (VIS-07)', () => {
     );
     expect(retrato?.querySelector('[data-cast="role"]')?.textContent).toBe(ui.cast.outcome);
   });
+
+  /**
+   * A derrota por apoio é a derrota em que a Inércia põe a mão: a desinformação
+   * dela fura o piso de apatia (docs/GDD.md §2.6). Ali quem aparece é ela, de
+   * pé, e a faixa diz o que ela é — não "Auditoria da partida".
+   */
+  it('na derrota por apoio, quem aparece é a Inércia (VIS-11)', () => {
+    const regions: Partial<Record<RegionId, Region>> = {};
+    for (const id of REGION_IDS) regions[id] = { ...start().regions[id], support: 0 };
+    const root = show(mount(), { ...start(), regions: regions as Record<RegionId, Region> });
+    const retrato = root.querySelector<HTMLElement>('.outcome__top .outcome__portrait');
+
+    expect(retrato?.dataset.person).toBe('inercia');
+    expect(retrato?.querySelector('img')?.getAttribute('src')).toContain('inercia-de-pe');
+    expect(retrato?.querySelector('[data-cast="role"]')?.textContent).toBe(
+      personText('inercia').role,
+    );
+  });
+
+  it('na derrota por temperatura, continua a Juliana', () => {
+    const root = show(mount(), ended(balance.loseTemperature + 0.2));
+    const retrato = root.querySelector<HTMLElement>('.outcome__top .outcome__portrait');
+
+    expect(textOf(root, 'lead')).not.toBe(ui.outcome.ending.support);
+    expect(retrato?.dataset.person).toBe('juliana-almeida');
+  });
 });
 
 describe('a medalha e a comparação (VIS-10)', () => {

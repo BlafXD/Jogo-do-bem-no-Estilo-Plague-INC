@@ -194,3 +194,43 @@ teste:
 2. Soltos para crescer pela largura, empurraram "Começar" e "Modo Feira" para fora da primeira
    dobra numa janela de 717 px. Numa feira isso é fatal: quem chega de pé não rola a página. Agora
    a altura manda — `clamp(9rem, 28vh, 15rem)` —, e os botões voltaram para dentro.
+
+---
+
+## 6. A Inércia (`VIS-11`)
+
+> **Pedido do chat em 2026-09-22.** As quatro silhuetas foram geradas pela equipe, como as poses e
+> o mapa, e estão no `docs/CREDITOS.md`.
+
+**Ela não é da equipe.** A Inércia é o antagonista do `docs/GDD.md §2.6`: a força que resiste à
+mudança, e não um vilão de bigode. Por isso ela é uma **silhueta sem rosto**, envolta em fumaça. Ela
+não é ninguém em particular: é o lobby, a desinformação, o subsídio e a prioridade de curto prazo
+juntos. As mesmas regras da equipe valem para ela:
+
+- **Nada muda no jogo.** Nenhum número do `balance.json`, nada no `GameState`.
+- **Nenhuma fala inventada.** No lugar do cargo, a faixa diz o que ela é, com a frase do GDD: "A
+  força que resiste à mudança". O texto do balão continua sendo o do passo do tutorial.
+- **Ela não entra onde a equipe está.** Fica fora da tela de título ("a equipe da agência") e não dá
+  notícia de evento. O `parseCast` recusa as duas coisas.
+
+**As quatro poses** (`src/assets/characters/poses/inercia-*.jpg`):
+
+| Pose | O gesto | Onde aparece |
+|---|---|---|
+| `cruza` | braços cruzados: a recusa | o passo do tutorial que explica a Inércia |
+| `barra` | mãos espalmadas para a frente: barrando | o cartão da contenção, em avatar redondo |
+| `de-pe` | de pé, corpo inteiro | a tela de fim da derrota por apoio, no lugar da Juliana |
+| `aponta` | o dedo apontado: a desinformação | o aviso no boletim, na 2ª entrega do `VIS-11` |
+
+**Por que a derrota por apoio, e não as duas derrotas.** É a derrota em que ela põe a mão: a
+desinformação dela derruba o apoio das regiões furando o piso de apatia (§2.6), e os eventos fazem o
+resto. A derrota por temperatura continua com a Juliana, que audita a partida.
+
+**Como as imagens foram tratadas.** A silhueta é preto sobre creme, com a fumaça cinza e
+translúcida por cima do creme. O `recolor` que tratou as poses da equipe troca só o fundo, e a
+fumaça ficaria com o creme antigo, num tom diferente do fundo novo. Aqui cada pixel foi retingido
+pela luminosidade: o creme vira o `#F4EDD0` da equipe, o preto continua preto, e a fumaça acompanha.
+
+As quatro saíram com 480 px de altura e JPEG 84, como as da equipe. A de corpo inteiro perdeu os
+15 px da direita, onde havia um pedaço de outra figura. O utilitário (`Tinge.cs`) fica fora do
+repositório, como o `VisTool.cs`.

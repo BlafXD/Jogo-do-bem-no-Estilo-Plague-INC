@@ -46,6 +46,15 @@ const team = {
   ),
 };
 
+/**
+ * A Inércia, o antagonista do docs/GDD.md §2.6 (VIS-11). Não é da equipe, mas
+ * tem retrato, e o retrato precisa de nome e de texto alternativo. No lugar do
+ * cargo vai o que ela é, na frase do próprio GDD — nenhuma fala inventada.
+ */
+const antagonist = {
+  inercia: person('A Inércia', 'Inércia', 'A força que resiste à mudança'),
+};
+
 export const ui = {
   hud: {
     year: {
@@ -677,7 +686,7 @@ export const ui = {
    * do evento. Voz própria é trabalho do `[D-Historia]`.
    */
   cast: {
-    people: team,
+    people: { ...team, ...antagonist },
     /** A linha de quem fala, em cima da fala. */
     speaker: (name: string, role: string) => `${name} · ${role}`,
     /** Quem deu a notícia, no cartão do boletim. */

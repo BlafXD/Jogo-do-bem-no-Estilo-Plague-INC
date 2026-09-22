@@ -20,6 +20,7 @@ import { ui } from '../data/i18n';
 import { balance, type GameState } from '../engine/state';
 import { canContain, containCost, CONTAIN_REQUIRES, type ContainRefusal } from '../engine/inertia';
 import { skillById } from '../engine/skills';
+import { momentCast, mountAvatar } from './characters';
 import { prependIcon } from './icons';
 
 // --------------------------------------------------------------- a view ---
@@ -150,7 +151,13 @@ export function mountContain(root: Element, onContain: () => void): void {
   const detail = span('contain__detail');
   detail.dataset.contain = 'detail';
 
-  button.append(head, status, span('contain__description', ''), detail);
+  // A Inércia, em pessoa (VIS-11): o retrato redondo dela ao lado do texto,
+  // com as mãos espalmadas para a frente. É decoração — o nome dela já está
+  // escrito no botão.
+  const avatar = mountAvatar(momentCast('contain'));
+  avatar.classList.add('contain__avatar');
+
+  button.append(head, status, span('contain__description', ''), detail, avatar);
   button.addEventListener('click', onContain);
 
   root.replaceChildren(button);

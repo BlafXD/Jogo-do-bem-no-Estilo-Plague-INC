@@ -74,3 +74,9 @@
   height: auto;
   transform: translate(calc(var(--rosto-x, 0.5) * -100%), calc(var(--rosto-y, 0.2) * -100%));
 }
+
+/* A Inércia (VIS-11) não tem rosto: ampliada como a equipe, o círculo seria só
+   preto. Menos ampliada, aparecem a cabeça, os ombros e a fumaça em volta. */
+.avatar[data-person='inercia'] .avatar__img {
+  width: 150%;
+}

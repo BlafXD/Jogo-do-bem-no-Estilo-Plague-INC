@@ -55,6 +55,20 @@
       "mapa": {
         "face": [0.55, 0.25]
       }
+    },
+    "inercia": {
+      "cruza": {
+        "face": [0.58, 0.14]
+      },
+      "barra": {
+        "face": [0.52, 0.11]
+      },
+      "de-pe": {
+        "face": [0.51, 0.09]
+      },
+      "aponta": {
+        "face": [0.48, 0.13]
+      }
     }
   },
   "moments": {
@@ -71,12 +85,20 @@
       "pose": "aponta"
     },
     "tutorial-inertia": {
-      "person": "juliana-almeida",
-      "pose": "atencao"
+      "person": "inercia",
+      "pose": "cruza"
+    },
+    "contain": {
+      "person": "inercia",
+      "pose": "barra"
     },
     "outcome": {
       "person": "juliana-almeida",
       "pose": "painel"
+    },
+    "defeat-support": {
+      "person": "inercia",
+      "pose": "de-pe"
     }
   },
   "title": [

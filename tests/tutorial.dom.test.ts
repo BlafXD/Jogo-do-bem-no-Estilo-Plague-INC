@@ -233,3 +233,33 @@ describe('quem fala em cada passo (VIS-07)', () => {
     );
   });
 });
+
+describe('a Inércia no passo dela (VIS-11)', () => {
+  /**
+   * O passo que explica a Inércia mostra a própria Inércia. A faixa diz o nome
+   * e o que ela é, na frase do GDD §2.6 — a fala continua sendo o texto do
+   * passo, e não uma fala inventada para ela.
+   */
+  it('mostra a silhueta, com o nome e o que ela é', () => {
+    const alvos = ancoras();
+    const callout = mountTutorial(
+      () => {},
+      () => {},
+    );
+    let tutorial = createTutorial('new');
+    for (const step of ['time', 'tree', 'event'] as const) tutorial = completeStep(tutorial, step);
+
+    renderTutorial(callout, alvos, tutorialView(tutorial, cues({ inertiaActed: true })));
+
+    const inercia = personText('inercia');
+    expect(callout.querySelector('[data-tutorial="text"]')?.textContent).toBe(
+      ui.tutorial.steps.inertia,
+    );
+    expect(callout.querySelector('[data-tutorial="speaker"]')?.textContent).toBe(
+      ui.cast.speaker(inercia.name, inercia.role),
+    );
+    expect(callout.querySelector<HTMLImageElement>('.tutorial__portrait img')?.alt).toBe(
+      personLabel('inercia'),
+    );
+  });
+});

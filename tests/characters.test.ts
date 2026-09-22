@@ -5,6 +5,7 @@ import { ui } from '../src/data/i18n';
 import { climateEvents } from '../src/engine/state';
 import {
   CAST_MOMENTS,
+  FIGURE_IDS,
   PERSON_IDS,
   cast,
   eventCast,
@@ -51,14 +52,15 @@ function todasAsAparicoes(): Appearance[] {
 }
 
 describe('as poses na pasta', () => {
-  it('são dezesseis: quatro pessoas, quatro poses cada', () => {
+  it('são vinte: as quatro pessoas e a Inércia, quatro poses cada', () => {
     expect(PERSON_IDS).toHaveLength(4);
-    for (const person of PERSON_IDS) expect(cast.poses[person], person).toHaveLength(4);
-    expect(readdirSync(PASTA)).toHaveLength(16);
+    expect(FIGURE_IDS).toEqual([...PERSON_IDS, 'inercia']);
+    for (const person of FIGURE_IDS) expect(cast.poses[person], person).toHaveLength(4);
+    expect(readdirSync(PASTA)).toHaveLength(20);
   });
 
   it('toda pose do manifesto tem arquivo, e o Vite a resolve', () => {
-    for (const person of PERSON_IDS) {
+    for (const person of FIGURE_IDS) {
       for (const pose of cast.poses[person]) {
         expect(readdirSync(PASTA), `${person} ${pose}`).toContain(poseFile({ person, pose }));
         expect(poseUrl({ person, pose }), `${person} ${pose}`).not.toBeNull();
@@ -71,7 +73,7 @@ describe('as poses na pasta', () => {
    * esquecido ali entra no `dist-feira/index.html` como base64.
    */
   it('não deixa arquivo órfão na pasta', () => {
-    const usados = PERSON_IDS.flatMap((person) =>
+    const usados = FIGURE_IDS.flatMap((person) =>
       cast.poses[person].map((pose) => poseFile({ person, pose })),
     ).sort();
 
@@ -97,17 +99,32 @@ describe('quem aparece onde', () => {
     expect(momentCast('tutorial-time')).toEqual({ person: 'ana-luiza', pose: 'aponta' });
     expect(momentCast('tutorial-tree')).toEqual({ person: 'carlos-mendes', pose: 'explica' });
     expect(momentCast('tutorial-event')).toEqual({ person: 'ricardo-souza', pose: 'aponta' });
-    expect(momentCast('tutorial-inertia')).toEqual({ person: 'juliana-almeida', pose: 'atencao' });
     expect(momentCast('outcome')).toEqual({ person: 'juliana-almeida', pose: 'painel' });
+  });
+
+  /** O VIS-11: a Inércia nos três lugares combinados no chat em 2026-09-22. */
+  it('põe a Inércia no tutorial dela, na contenção e na derrota por apoio', () => {
+    expect(momentCast('tutorial-inertia')).toEqual({ person: 'inercia', pose: 'cruza' });
+    expect(momentCast('contain')).toEqual({ person: 'inercia', pose: 'barra' });
+    expect(momentCast('defeat-support')).toEqual({ person: 'inercia', pose: 'de-pe' });
   });
 
   it('a tela de título mostra a equipe inteira, cada pessoa uma vez', () => {
     expect(cast.title.map((quem) => quem.person).sort()).toEqual([...PERSON_IDS].sort());
   });
 
-  it('as quatro pessoas aparecem em algum lugar da partida', () => {
-    const naPartida = new Set(CAST_MOMENTS.map((moment) => momentCast(moment).person));
-    expect([...naPartida].sort()).toEqual([...PERSON_IDS].sort());
+  it('toda a equipe aparece em algum lugar da partida', () => {
+    const naPartida = new Set<string>(CAST_MOMENTS.map((moment) => momentCast(moment).person));
+    for (const person of PERSON_IDS) expect(naPartida.has(person), person).toBe(true);
+  });
+
+  /**
+   * A Inércia não é da equipe (docs/GDD.md §2.6): o título é "a equipe da
+   * agência", e quem dá notícia de evento é um especialista.
+   */
+  it('a Inércia fica fora do título e das notícias', () => {
+    expect(cast.title.map((quem) => quem.person)).not.toContain('inercia');
+    for (const id of EVENT_IDS) expect(eventCast(id)?.person, id).not.toBe('inercia');
   });
 });
 
@@ -204,6 +221,19 @@ describe('parseCast', () => {
       /pede a pose "folha"/,
     ],
     [
+      'a Inércia no título',
+      (raw) => ({ ...raw, title: [...raw.title, { person: 'inercia', pose: 'cruza' }] }),
+      /"inercia", que não é da equipe/,
+    ],
+    [
+      'a Inércia dando notícia',
+      (raw) => ({
+        ...raw,
+        events: { ...raw.events, speaker: { ...raw.events.speaker, flood: 'inercia' } },
+      }),
+      /"flood" cita a pessoa "inercia"/,
+    ],
+    [
       'pessoa que não existe no título',
       (raw) => ({ ...raw, title: [{ person: 'gerente', pose: 'aponta' }] }),
       /pessoa "gerente"/,
@@ -256,7 +286,7 @@ describe('parseCast', () => {
 
 describe('o rosto e o nome', () => {
   it('toda pose tem o rosto dentro da imagem', () => {
-    for (const person of PERSON_IDS) {
+    for (const person of FIGURE_IDS) {
       for (const pose of cast.poses[person]) {
         const [x, y] = faceOf({ person, pose });
         expect(x, `${person} ${pose}`).toBeGreaterThan(0);
@@ -276,5 +306,12 @@ describe('o rosto e o nome', () => {
     expect(personLabel('ana-luiza')).toBe(ui.title.team.alt.anaLuiza);
     expect(personLabel('juliana-almeida')).toBe(ui.title.team.alt.julianaAlmeida);
     expect(personText('carlos-mendes').short).toBe('Carlos');
+  });
+
+  /** Nenhuma fala inventada: no lugar do cargo, a frase do GDD §2.6. */
+  it('a Inércia tem nome e, no lugar do cargo, o que ela é', () => {
+    expect(personText('inercia').name).toBe('A Inércia');
+    expect(personText('inercia').role).toBe('A força que resiste à mudança');
+    expect(personLabel('inercia')).toBe('A Inércia, a força que resiste à mudança');
   });
 });

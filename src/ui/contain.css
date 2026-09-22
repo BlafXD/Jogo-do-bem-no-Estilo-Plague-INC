@@ -26,10 +26,13 @@
   border-top: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
 }
 
+/* Uma grade desde o VIS-11: o texto na primeira coluna, um pedaço embaixo do
+   outro, e o retrato da Inércia na segunda, da altura do cartão. */
 .contain__button {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: 0.35rem 0.75rem;
   /* A largura da coluna do painel, como o botão de compra acima dele. */
   width: 100%;
   padding: 0.75rem;
@@ -62,6 +65,21 @@
 
 .contain__button[data-status='available']:hover {
   background: var(--cor-alerta-suave, rgb(242 166 90 / 12%));
+}
+
+.contain__button > :not(.contain__avatar) {
+  grid-column: 1;
+}
+
+/* A Inércia (VIS-11): o retrato redondo, maior que o do boletim, na borda da
+   brasa, a cor da contenção. */
+.contain__avatar {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  align-self: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-color: var(--cor-alerta, #f2a65a);
 }
 
 /* Centrado, e não pela linha de base, desde que o nome ganhou o escudo do
