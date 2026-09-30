@@ -180,6 +180,30 @@ Regras curtas:
   medalha alcançável por personagem e que nenhum trivializa a partida. Próximo: `REF-06` (apoio por
   região).
 
+## 2026-09-30 (noite) — O apoio deixa de andar em bloco: decaimento por região (REF-06)
+
+- **Parte / tarefa:** `REF-06` ✔. Realiza o §2.3 do GDD. Edição autorizada do GDD (§3 e §4).
+- **O que mudou:**
+  - `src/data/regions.json` — cada região ganhou `supportDecay` (me 1,9 … la 1,1), correlato à
+    sujeira da matriz. **Média mantida em 1,5** para não deslocar o agregado; apoio inicial fica em
+    50 (a divergência vem do decaimento, não do ponto de partida).
+  - `src/engine/state.ts` — `Region.supportDecay` (campo novo no contrato); `RawRegion` o torna
+    opcional (ausente = base do `balance.json`); `parseRegions` valida (0–10).
+  - `src/engine/tick.ts` — `decayedSupport(support, decayPerYear)` lê a taxa **da região**; saiu a
+    constante única `SUPPORT_DECAY_PER_TICK`.
+  - `docs/GDD.md` — `supportDecay` no `Region` (§3) e a nota de que `supportDecayPerYear` virou
+    base/média (§4).
+  - `tests/tick.test.ts` — dois testes re-ancorados na taxa da região, um teste novo de divergência
+    (Oriente Médio decai mais que América Latina), e a temperatura da Inércia re-pinada (3,3663 →
+    3,3655). Suíte **993 → 994**.
+- **Balanceamento:** o `docs/planilha/` **regenerou** (6 arquivos) — é o sinal esperado de mudança
+  de balanceamento. As **propriedades** seguem (ordens das estratégias, sobrevive/perde, faixa
+  25–45%); só as trajetórias exatas mudaram. Revisar e commitar o diff de `docs/planilha/` junto.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+  Numa partida, o apoio das 8 regiões diverge ao longo do tempo (painel da região).
+- **Pendente:** nós de `support` com **alvo regional** (não só `global`) — mais balanceamento,
+  adiado para o `REF-09`. Próximo: `REF-07` (árvore 20 → 40 + 5º personagem + remap do Ricardo).
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.

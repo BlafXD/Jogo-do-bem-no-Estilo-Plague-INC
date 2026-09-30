@@ -102,14 +102,20 @@ describe('o apoio público', () => {
   /** O apoio com que toda região começa, lido do regions.json e não chutado aqui. */
   const initial = createInitialState(1).regions.na.support;
 
-  it('desgasta por mês, à fração da taxa anual', () => {
-    const perMonth = balance.supportDecayPerYear / balance.ticksPerYear;
+  it('desgasta por mês, à fração da taxa anual da própria região (REF-06)', () => {
+    // Cada região tem o seu `supportDecay`; a América do Norte, o dela.
+    const naDecay = createInitialState(1).regions.na.supportDecay;
+    const perMonth = naDecay / balance.ticksPerYear;
 
     expect(run(1).regions.na.support).toBeCloseTo(initial - perMonth, 6);
-    expect(run(balance.ticksPerYear).regions.na.support).toBeCloseTo(
-      initial - balance.supportDecayPerYear,
-      6,
-    );
+    expect(run(balance.ticksPerYear).regions.na.support).toBeCloseTo(initial - naDecay, 6);
+  });
+
+  it('regiões diferentes decaem em ritmos diferentes — o apoio não anda em bloco (REF-06)', () => {
+    // O Oriente Médio (matriz mais suja) perde apoio mais rápido que a América
+    // Latina (mais limpa); depois de um ano, seus apoios divergem.
+    const um = run(balance.ticksPerYear);
+    expect(um.regions.me.support).toBeLessThan(um.regions.la.support);
   });
 
   // Desde o P7-01 o `advanceTick` também sorteia eventos, e evento **fura o
@@ -135,10 +141,11 @@ describe('o apoio público', () => {
     }
   });
 
-  it('encosta no piso até 2041, e evento só antecipa', () => {
-    // 200 ticks é a conta do desgaste puro — ano de 2041. Com eventos batendo,
-    // uma região chega antes; nunca depois. O `<=` é a propriedade, e o valor
-    // exato do desgaste puro está travado no teste de cima.
+  it('encosta no piso pelo desgaste puro da região, e evento só antecipa', () => {
+    // Com eventos batendo, uma região chega ao piso antes do desgaste puro;
+    // nunca depois. O `<=` é a propriedade; o desgaste puro é a conta da taxa da
+    // própria região (REF-06), e não mais de uma taxa única.
+    const naDecay = createInitialState(1).regions.na.supportDecay;
     let state = createInitialState(1);
     let floorTick = 0;
     while (state.regions.na.support > balance.supportFloor) {
@@ -146,10 +153,8 @@ describe('o apoio público', () => {
       floorTick++;
     }
 
-    const pureDecayTicks = (initial - balance.supportFloor) / (balance.supportDecayPerYear / 12);
-    expect(pureDecayTicks).toBe(200);
-    expect(yearForTick(pureDecayTicks)).toBe(2041);
-    expect(floorTick).toBeLessThanOrEqual(pureDecayTicks);
+    const pureDecayTicks = (initial - balance.supportFloor) / (naDecay / balance.ticksPerYear);
+    expect(floorTick).toBeLessThanOrEqual(Math.ceil(pureDecayTicks));
   });
 
   it('ACEITE: 2058 deixa de decidir a partida sozinho', () => {
@@ -240,7 +245,9 @@ describe('o fim da partida', () => {
     const semAntagonista = 3.3548;
 
     expect(end.temperature).toBeGreaterThan(semAntagonista);
-    expect(end.temperature).toBeCloseTo(3.3663, 4);
+    // Re-pinado no REF-06: o apoio por região mexeu de leve no amortecimento da
+    // Inércia (era 3,3663 com o decaimento uniforme).
+    expect(end.temperature).toBeCloseTo(3.3655, 4);
     expect(end.temperature).toBeGreaterThan(balance.loseTemperature);
   });
 

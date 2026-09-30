@@ -6,6 +6,7 @@
     "emissions": 5.682,
     "cleanShare": 0.46,
     "support": 50,
+    "supportDecay": 1.3,
     "resilience": 50,
     "economy": 100
   },
@@ -16,6 +17,7 @@
     "emissions": 3.342,
     "cleanShare": 0.646,
     "support": 50,
+    "supportDecay": 1.1,
     "resilience": 50,
     "economy": 100
   },
@@ -26,6 +28,7 @@
     "emissions": 5.249,
     "cleanShare": 0.603,
     "support": 50,
+    "supportDecay": 1.2,
     "resilience": 50,
     "economy": 100
   },
@@ -36,6 +39,7 @@
     "emissions": 2.707,
     "cleanShare": 0.25,
     "support": 50,
+    "supportDecay": 1.7,
     "resilience": 50,
     "economy": 100
   },
@@ -46,6 +50,7 @@
     "emissions": 3.377,
     "cleanShare": 0.148,
     "support": 50,
+    "supportDecay": 1.9,
     "resilience": 50,
     "economy": 100
   },
@@ -56,6 +61,7 @@
     "emissions": 16.367,
     "cleanShare": 0.334,
     "support": 50,
+    "supportDecay": 1.6,
     "resilience": 50,
     "economy": 100
   },
@@ -66,6 +72,7 @@
     "emissions": 3.469,
     "cleanShare": 0.232,
     "support": 50,
+    "supportDecay": 1.8,
     "resilience": 50,
     "economy": 100
   },
@@ -76,6 +83,7 @@
     "emissions": 0.56,
     "cleanShare": 0.419,
     "support": 50,
+    "supportDecay": 1.4,
     "resilience": 50,
     "economy": 100
   }

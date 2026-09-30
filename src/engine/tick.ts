@@ -24,15 +24,6 @@ import { balance, REGION_IDS, type GameState, type Region, type RegionId } from 
 export const TOTAL_TICKS = (balance.endYear - balance.startYear) * balance.ticksPerYear;
 
 /**
- * Apoio que cada região perde por mês, derivado da perda anual.
- *
- * Divisão simples, e não a raiz de ordem 12 que o climate.ts usa: aquele
- * crescimento é multiplicativo, este desgaste é aditivo. Doze parcelas de
- * `taxa / 12` somam exatamente a taxa anual, sem resto para acumular.
- */
-const SUPPORT_DECAY_PER_TICK = balance.supportDecayPerYear / balance.ticksPerYear;
-
-/**
  * O ano em que um tick acontece. O tick 0 é o primeiro mês de `startYear`, e o
  * tick `TOTAL_TICKS` cai exatamente em `endYear` — o instante em que a partida
  * acaba, não um mês a ser jogado.
@@ -51,32 +42,35 @@ export function isOver(state: GameState): boolean {
 /**
  * O apoio de uma região depois de um mês de desgaste.
  *
- * Cai `supportDecayPerYear` ao ano e **para no piso de apatia**. O piso não é
- * detalhe: sem ele, os 50 pontos iniciais chegariam a zero no tick 400 — ano de
- * 2058 — e como o docs/GDD.md §2.7 dá derrota por apoio médio zero, toda partida
- * se perderia ali, fizesse o jogador o que fizesse.
+ * Cai o `supportDecay` **daquela região** ao ano (REF-06) e **para no piso de
+ * apatia**. Antes a taxa era única para as oito; agora cada uma tem a sua, e é
+ * o que tira o apoio de andar em bloco (docs/GDD.md §2.3). A divisão por 12 é
+ * simples, e não a raiz de ordem 12 do climate.ts: aquele crescimento é
+ * multiplicativo, este desgaste é aditivo, e doze parcelas de `taxa / 12` somam
+ * exatamente a taxa anual.
  *
- * Quem já está no piso ou abaixo dele não se move. As duas metades importam: o
- * desgaste do tempo não empurra mais para baixo, e **também não puxa de volta
- * para cima** — uma região derrubada a 10 por um evento (P7-01) continua em 10.
- * Furar o piso é trabalho de evento e da Inércia (P7-03), que agem por cima
- * deste desgaste; recuperar é do ramo Sociedade (§2.4).
+ * O piso segue global e não é detalhe: sem ele, os 50 pontos iniciais chegariam
+ * a zero e, como o docs/GDD.md §2.7 dá derrota por apoio médio zero, a partida
+ * se perderia sozinha. Quem já está no piso ou abaixo dele não se move: o
+ * desgaste do tempo não empurra mais para baixo nem puxa de volta para cima —
+ * furar o piso é trabalho de evento e da Inércia (P7-03), e recuperar é do ramo
+ * Sociedade (§2.4).
  */
-function decayedSupport(support: number): number {
+function decayedSupport(support: number, decayPerYear: number): number {
   if (support <= balance.supportFloor) {
     return support;
   }
 
-  return Math.max(balance.supportFloor, support - SUPPORT_DECAY_PER_TICK);
+  return Math.max(balance.supportFloor, support - decayPerYear / balance.ticksPerYear);
 }
 
-/** Aplica um mês de desgaste ao apoio das 8 regiões. */
+/** Aplica um mês de desgaste ao apoio das 8 regiões, cada uma no seu ritmo. */
 function decaySupport(regions: GameState['regions']): GameState['regions'] {
   const decayed: Partial<Record<RegionId, Region>> = {};
 
   for (const id of REGION_IDS) {
     const region = regions[id];
-    decayed[id] = { ...region, support: decayedSupport(region.support) };
+    decayed[id] = { ...region, support: decayedSupport(region.support, region.supportDecay) };
   }
 
   return decayed as Record<RegionId, Region>;

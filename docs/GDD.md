@@ -198,6 +198,7 @@ type Region = {
   emissions: number;         // GtCO₂/ano (fóssil + uso da terra)
   cleanShare: number;        // 0..1 da matriz elétrica
   support: number;           // 0..100
+  supportDecay: number;      // apoio perdido por ano, por região (REF-06); ausente no JSON = base do balance.json
   resilience: number;        // 0..100
   economy: number;           // índice relativo, base 100
 };
@@ -268,7 +269,7 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "tcre": 0.00045,                 // °C por GtCO₂ acumulado
   "baselineGrowthPerYear": 0.0093, // crescimento anual das emissões sem ação
   "basePointsPerYear": 10,
-  "supportDecayPerYear": 1.5,      // pontos de apoio perdidos por ano, por região
+  "supportDecayPerYear": 1.5,      // base/média do decaimento; cada região tem o seu em regions.json (REF-06)
   "supportFloor": 25,              // piso de apatia: o decaimento para aqui
   "inertiaGrowthPerYear": 0.5,     // crescimento de base da Inércia
   "inertiaGrowthPerCutPercent": 1, // quanto cada 1%/ano de corte a alimenta
@@ -298,10 +299,14 @@ não no lugar dela.**
 **22,5 min a 1x** (dentro da faixa de 20–30) e **5,6 min a 4x**, que é o Modo Feira — sem
 precisar de um modo à parte com regras próprias.
 
-**Apoio (`supportDecayPerYear` e `supportFloor`).** O apoio de cada região perde 1,5 ponto por
-ano e **para no piso de apatia**; sozinho, o decaimento nunca desce abaixo dele. O piso existe
-porque sem ele a constante decidiria toda partida: 50 pontos caindo 1,5 ao ano zeram em 2058, e
-o §2.7 dá derrota por apoio médio zero — o jogador perderia em 2058 fizesse o que fizesse.
+**Apoio (`supportDecay` por região e `supportFloor`).** Cada região perde o seu `supportDecay` de
+apoio por ano (REF-06) e **para no piso de apatia**; sozinho, o decaimento nunca desce abaixo dele.
+O `supportDecayPerYear` do `balance.json` deixou de ser a taxa única — virou a **base/média** e o
+valor padrão de uma região que omita o campo; os valores de cada região vivem no `regions.json`, com
+a média mantida em 1,5 para não deslocar o agregado. É o que tira o apoio de "andar em bloco" (§2.3).
+O piso existe porque sem ele a constante decidiria toda partida: 50 pontos caindo ~1,5 ao ano zeram
+por volta de 2058, e o §2.7 dá derrota por apoio médio zero — o jogador perderia ali fizesse o que
+fizesse.
 **Furar o piso para baixo é trabalho de evento (§2.5) e da Inércia (§2.6)**, que agem por cima
 dele; o ramo Sociedade (§2.4) é o que empurra de volta para cima.
 

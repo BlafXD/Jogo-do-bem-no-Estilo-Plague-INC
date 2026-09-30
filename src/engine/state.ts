@@ -31,6 +31,14 @@ export type Region = {
   readonly cleanShare: number;
   /** Apoio público, de 0 a 100. */
   readonly support: number;
+  /**
+   * Quanto de apoio esta região perde por ano com o só passar do tempo (REF-06).
+   * Regiões diferentes decaem diferente — matriz mais suja perde apoio mais
+   * rápido —, e é o que tira o apoio de "andar em bloco" (docs/GDD.md §2.3). O
+   * piso de apatia (`supportFloor`) segue global; quem fura o piso é evento e
+   * Inércia. Ausente no JSON assume o `supportDecayPerYear` do balance.json.
+   */
+  readonly supportDecay: number;
   /** Resiliência, de 0 a 100. */
   readonly resilience: number;
   /** Índice econômico relativo, base 100. */
@@ -351,7 +359,11 @@ export const balance: Balance = balanceData;
  * `tsc` não tem como saber que o texto do arquivo é um dos oito ids válidos.
  * É `parseRegions` que faz essa passagem.
  */
-export type RawRegion = Omit<Region, 'id'> & { readonly id: string };
+export type RawRegion = Omit<Region, 'id' | 'supportDecay'> & {
+  readonly id: string;
+  /** Opcional no arquivo: ausente assume o `supportDecayPerYear` do balance.json. */
+  readonly supportDecay?: number;
+};
 
 function isRegionId(value: string): value is RegionId {
   return (REGION_IDS as readonly string[]).includes(value);
@@ -391,7 +403,12 @@ export function parseRegions(raw: readonly RawRegion[]): Readonly<Record<RegionI
     assertRange(region.support, 0, 100, 'support', id);
     assertRange(region.resilience, 0, 100, 'resilience', id);
 
-    byId[id] = { ...region, id };
+    // Ausente no arquivo assume a base do balance.json; presente precisa ser um
+    // decaimento anual sensato (0 a 10 pontos/ano).
+    const supportDecay = region.supportDecay ?? balance.supportDecayPerYear;
+    assertRange(supportDecay, 0, 10, 'supportDecay', id);
+
+    byId[id] = { ...region, id, supportDecay };
   }
 
   const missing = REGION_IDS.filter((id) => byId[id] === undefined);
