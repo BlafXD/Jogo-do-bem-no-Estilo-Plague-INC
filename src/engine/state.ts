@@ -55,6 +55,39 @@ export const TARGETED_EFFECTS = ['emissionCut', 'resilience', 'support'] as cons
 /** Kinds de Effect que valem para a partida inteira e não levam alvo. */
 export const UNTARGETED_EFFECTS = ['pointsPerYear', 'inertiaCut'] as const;
 
+// ------------------------------------------------------------- personagem ---
+
+/**
+ * Os personagens jogáveis — o especialista que o jogador escolhe dirigir no
+ * começo. O tipo sai daqui, como o RegionId sai de REGION_IDS: a lista é a fonte
+ * única, e a validação do save usa a mesma.
+ *
+ * Por enquanto são os quatro da equipe (docs/PERSONAGENS.md). O 5º, de Transporte
+ * e Cidades, entra no REF-07, junto com o remapeamento do Ricardo para Indústria.
+ * **Nenhum deles dá bônus ainda** — isso é o REF-05. Aqui (REF-04) o campo só
+ * existe no GameState e sobrevive ao save.
+ */
+export const CHARACTER_IDS = [
+  'ana-luiza',
+  'carlos-mendes',
+  'ricardo-souza',
+  'juliana-almeida',
+] as const;
+
+export type CharacterId = (typeof CHARACTER_IDS)[number];
+
+/**
+ * O personagem de uma partida que ninguém escolheu ainda. Até a tela de seleção
+ * existir (REF-08), toda partida nasce com ele; como nenhum personagem dá bônus
+ * antes do REF-05, a escolha não muda nada por enquanto.
+ */
+export const DEFAULT_CHARACTER: CharacterId = 'ana-luiza';
+
+/** O `value` é um id de personagem jogável? Usado pela validação do save. */
+export function isCharacterId(value: unknown): value is CharacterId {
+  return typeof value === 'string' && (CHARACTER_IDS as readonly string[]).includes(value);
+}
+
 export type Effect =
   | { readonly kind: 'emissionCut'; readonly target: RegionId | 'global'; readonly value: number }
   | { readonly kind: 'pointsPerYear'; readonly value: number }
@@ -131,6 +164,12 @@ export type GameState = {
   readonly cumulativeCO2: number;
   /** °C acima do pré-industrial. */
   readonly temperature: number;
+  /**
+   * O personagem que o jogador escolheu dirigir (REF-04). Faz parte da
+   * identidade da partida, como a `seed`: escolhido no começo, nunca muda. O
+   * efeito dele (bônus de ramo) entra no REF-05.
+   */
+  readonly character: CharacterId;
   readonly regions: Readonly<Record<RegionId, Region>>;
   readonly unlockedSkills: readonly SkillId[];
   readonly activeEvents: readonly ActiveEvent[];
@@ -535,13 +574,17 @@ export function averageSupport(state: GameState): number {
  * serem valores ajustáveis. Se algum dia precisarem começar diferentes, o lugar
  * deles é o balance.json, não aqui (regra 8).
  */
-export function createInitialState(seed: number): GameState {
+export function createInitialState(
+  seed: number,
+  character: CharacterId = DEFAULT_CHARACTER,
+): GameState {
   return {
     year: balance.startYear,
     tick: 0,
     actionPoints: 0,
     cumulativeCO2: 0,
     temperature: balance.startTemperature,
+    character,
     regions: parseRegions(regionsData),
     unlockedSkills: [],
     activeEvents: [],

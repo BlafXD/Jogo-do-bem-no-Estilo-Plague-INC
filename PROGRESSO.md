@@ -108,6 +108,26 @@ Regras curtas:
 - **Pendente:** a **saída** dos cartões ficou de fora de propósito (segurar o nó removido; baixo
   valor). Próximo: `REF-04` — o campo `character` no `GameState` (contrato §3) e o `SAVE_VERSION` 3.
 
+## 2026-09-30 (noite) — A fundação dos personagens: o campo `character` (REF-04)
+
+- **Parte / tarefa:** `REF-04` ✔. Começa a Fase 2. **Edição autorizada do `docs/GDD.md §3`** e
+  **`SAVE_VERSION` 2→3**, os dois aprovados no plano da reforma.
+- **O que mudou:**
+  - `src/engine/state.ts` — `CHARACTER_IDS` (os 4 da equipe; o 5º e o remap do Ricardo são o REF-07),
+    `CharacterId`, `DEFAULT_CHARACTER` (`ana-luiza`) e `isCharacterId`. `GameState` ganhou
+    `character`. `createInitialState(seed, character = DEFAULT_CHARACTER)` — o default mantém os
+    chamadores e os testes atuais funcionando sem mudança.
+  - `src/engine/save.ts` — `SAVE_VERSION = 3`; valida `character` (recusa `badCharacter`) e o
+    reconstrói. Um save v2 é recusado pela versão (a partida em andamento recomeça).
+  - `src/ui/storage.ts` — mensagem de console para `badCharacter`.
+  - `docs/GDD.md §3` — tipo `CharacterId` e o campo `character` no `GameState`.
+  - `tests/state.test.ts` (+2: default e escolhido) e `tests/save.test.ts` (+2: round-trip e recusa).
+    Suíte **981 → 985**.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+- **Atenção:** **um save de partida em andamento (v2) será recusado e recomeça** — esperado pela
+  subida do `SAVE_VERSION`. **Nenhum bônus ainda:** o personagem existe e sobrevive ao save, mas não
+  muda nada na partida. Próximo: `REF-05` — aplicar os bônus de ramo no engine.
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.

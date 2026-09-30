@@ -133,6 +133,22 @@ describe('o formato do save', () => {
     expect(fromSave(quebrado)).toEqual({ ok: false, reason: 'badSkills' });
   });
 
+  it('leva o personagem escolhido (REF-04)', () => {
+    const antes: GameState = { ...partidaEmAndamento(), character: 'juliana-almeida' };
+
+    expect(idaEVolta(antes).character).toBe('juliana-almeida');
+  });
+
+  it('recusa um save com personagem que não existe', () => {
+    const envelope = toSave(createInitialState(1));
+    const quebrado = {
+      ...envelope,
+      state: { ...envelope.state, character: 'fulano-de-tal' },
+    };
+
+    expect(fromSave(quebrado)).toEqual({ ok: false, reason: 'badCharacter' });
+  });
+
   it('não confia no ano nem na temperatura: recalcula os dois', () => {
     // São derivados — o ano sai do tick, a temperatura sai do CO₂ acumulado.
     // Um save adulterado não consegue entregar um par que não combina.

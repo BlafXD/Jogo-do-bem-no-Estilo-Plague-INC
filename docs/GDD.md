@@ -186,6 +186,11 @@ Tela final: a medalha, os números finais, as listras e o gráfico da linha do t
 ```ts
 type RegionId = 'na' | 'la' | 'eu' | 'af' | 'me' | 'ea' | 'sa' | 'oc';
 
+// O personagem que o jogador dirige (REF-04). Hoje são os quatro da equipe; o
+// 5º (Transporte e Cidades) e o remapeamento do Ricardo para Indústria entram
+// no REF-07. O bônus de ramo de cada um é o REF-05.
+type CharacterId = 'ana-luiza' | 'carlos-mendes' | 'ricardo-souza' | 'juliana-almeida';
+
 type Region = {
   id: RegionId;
   name: string;
@@ -203,6 +208,7 @@ type GameState = {
   actionPoints: number;      // PAC
   cumulativeCO2: number;     // GtCO₂ desde 2025
   temperature: number;       // °C acima do pré-industrial
+  character: CharacterId;    // o especialista escolhido no começo — nunca muda (REF-04)
   regions: Record<RegionId, Region>;
   unlockedSkills: SkillId[];
   activeEvents: ActiveEvent[];

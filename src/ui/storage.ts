@@ -31,6 +31,7 @@ const REFUSAL_MESSAGES: Readonly<Record<SaveRefusal, string>> = {
   wrongVersion: 'o save é de outra versão do jogo.',
   wrongShape: 'o save não tem o formato esperado.',
   badNumber: 'o save tem um número inválido.',
+  badCharacter: 'o save cita um personagem que não existe.',
   badRegions: 'as regiões do save não fecham.',
   badSkills: 'o save cita uma habilidade que não existe mais na árvore.',
   badHistory: 'a linha do tempo do save está incompleta ou fora de ordem.',

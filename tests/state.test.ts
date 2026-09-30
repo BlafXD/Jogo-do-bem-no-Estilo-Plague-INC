@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   balance,
   createInitialState,
+  DEFAULT_CHARACTER,
   parseRegions,
   REGION_IDS,
   type RawRegion,
@@ -63,6 +64,14 @@ describe('createInitialState', () => {
 
   it('seeds diferentes começam em posições diferentes do gerador', () => {
     expect(createInitialState(1).rngState).not.toBe(createInitialState(2).rngState);
+  });
+
+  it('começa com o personagem padrão quando nenhum é escolhido (REF-04)', () => {
+    expect(createInitialState(1).character).toBe(DEFAULT_CHARACTER);
+  });
+
+  it('guarda o personagem escolhido', () => {
+    expect(createInitialState(1, 'juliana-almeida').character).toBe('juliana-almeida');
   });
 });
 

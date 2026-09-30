@@ -23,7 +23,14 @@
 
 import { temperatureFor } from './climate';
 import { skillById } from './skills';
-import { parseRegions, type GameState, type RawRegion, type SkillId, type Snapshot } from './state';
+import {
+  isCharacterId,
+  parseRegions,
+  type GameState,
+  type RawRegion,
+  type SkillId,
+  type Snapshot,
+} from './state';
 import { yearForTick } from './tick';
 
 /**
@@ -38,8 +45,13 @@ import { yearForTick } from './tick';
  * carregado, sem nada antes, e sem nenhum sinal de que falta metade. O registro
  * de uma partida não dá para reconstruir depois: ele depende de quando cada
  * habilidade foi comprada, de quais eventos caíram e do que a Inércia fez.
+ *
+ * **3 (REF-04):** o GameState ganhou o campo `character` — o personagem que o
+ * jogador escolheu. Um save da versão 2 não o tem, e uma partida sem personagem
+ * é a "meio remendada" da regra acima: daqui a poucas tarefas (REF-05) o
+ * personagem passa a dar bônus, e um save sem ele não saberia qual aplicar.
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export type SaveEnvelope = {
   readonly version: number;
@@ -53,6 +65,7 @@ export type SaveRefusal =
   | 'wrongVersion'
   | 'wrongShape'
   | 'badNumber'
+  | 'badCharacter'
   | 'badRegions'
   | 'badSkills'
   | 'badHistory';
@@ -164,6 +177,11 @@ export function fromSave(raw: unknown): LoadResult {
     if (!isFiniteNumber(saved[field])) return { ok: false, reason: 'badNumber' };
   }
 
+  // O personagem tem de ser um dos jogáveis. Um save da versão 2 nem chega aqui
+  // (foi recusado pela versão acima); esta checagem cobre um save v3 adulterado
+  // ou de um dia em que a lista de personagens mudar sem o SAVE_VERSION subir.
+  if (!isCharacterId(saved.character)) return { ok: false, reason: 'badCharacter' };
+
   if (!isRecord(saved.regions)) return { ok: false, reason: 'badRegions' };
 
   let regions: GameState['regions'];
@@ -206,6 +224,8 @@ export function fromSave(raw: unknown): LoadResult {
       year: yearForTick(tick),
       temperature: temperatureFor(cumulativeCO2),
       cumulativeCO2,
+      // Narrowed pelo isCharacterId acima — é um CharacterId, não um string solto.
+      character: saved.character,
       actionPoints: saved.actionPoints as number,
       inertia: saved.inertia as number,
       seed: saved.seed as number,
