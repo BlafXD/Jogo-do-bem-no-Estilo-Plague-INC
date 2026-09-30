@@ -20,10 +20,12 @@ import {
   characterBuffs,
   REGION_IDS,
   skills,
+  type CharacterBuff,
   type GameState,
   type Region,
   type RegionId,
   type Skill,
+  type SkillBranch,
   type SkillId,
 } from './state';
 
@@ -38,6 +40,21 @@ export function isUnlocked(state: GameState, id: SkillId): boolean {
 }
 
 /**
+ * O buff do personagem desta partida, ou `undefined` no baseline (`character`
+ * nulo). É a porta única dos bônus: sem personagem, tudo aqui vira "sem efeito",
+ * o que mantém o harness de balanceamento e os testes neutros.
+ */
+function buffOf(state: GameState): CharacterBuff | undefined {
+  return state.character === null ? undefined : characterBuffs[state.character];
+}
+
+/** O multiplicador do corte de emissão de um ramo, dado o personagem (1 = neutro). */
+function emissionFactor(state: GameState, branch: SkillBranch): number {
+  const buff = buffOf(state);
+  return buff !== undefined && buff.branch === branch ? 1 + buff.emissionBoost : 1;
+}
+
+/**
  * O custo de um nó para o personagem desta partida (REF-05).
  *
  * O personagem escolhido desconta o custo dos nós do ramo dele
@@ -47,9 +64,7 @@ export function isUnlocked(state: GameState, id: SkillId): boolean {
  * discordando na tela. Arredonda porque PAC é inteiro no bolso do jogador.
  */
 export function costFor(state: GameState, skill: Skill): number {
-  // Sem personagem (baseline), custo cheio. É o que mantém o harness de
-  // balanceamento e a árvore neutros até alguém escolher um especialista.
-  const buff = state.character === null ? undefined : characterBuffs[state.character];
+  const buff = buffOf(state);
   const discount = buff !== undefined && buff.branch === skill.branch ? buff.costDiscount : 0;
   return Math.round(skill.cost * (1 - discount));
 }
@@ -167,9 +182,22 @@ function* unlockedEffects(state: GameState) {
  */
 export function emissionCutFor(state: GameState, region: RegionId): number {
   let percent = 0;
-  for (const effect of unlockedEffects(state)) {
-    if (effect.kind === 'emissionCut' && (effect.target === 'global' || effect.target === region)) {
-      percent += effect.value;
+  // Percorre por habilidade, e não pelos efeitos soltos, porque o reforço do
+  // personagem (REF-05) depende do **ramo** do nó — que o `unlockedEffects`
+  // perde ao achatar a lista. No baseline o `emissionFactor` é 1, e a conta é a
+  // mesma de antes.
+  for (const id of state.unlockedSkills) {
+    const skill = byId.get(id);
+    if (skill === undefined) continue;
+
+    const factor = emissionFactor(state, skill.branch);
+    for (const effect of skill.effects) {
+      if (
+        effect.kind === 'emissionCut' &&
+        (effect.target === 'global' || effect.target === region)
+      ) {
+        percent += effect.value * factor;
+      }
     }
   }
   return Math.min(1, percent / 100);
@@ -191,17 +219,30 @@ export function emissionCutFor(state: GameState, region: RegionId): number {
  */
 export function purchasedCutPercent(state: GameState): number {
   let percent = 0;
-  for (const effect of unlockedEffects(state)) {
-    if (effect.kind === 'emissionCut') percent += effect.value;
+  // Com o reforço do personagem (REF-05), o corte real é maior — e é o corte
+  // real que o lobby enxerga —, então a Inércia reage ao valor reforçado. Como o
+  // `emissionFactor`, no baseline isto é 1 e nada muda.
+  for (const id of state.unlockedSkills) {
+    const skill = byId.get(id);
+    if (skill === undefined) continue;
+
+    const factor = emissionFactor(state, skill.branch);
+    for (const effect of skill.effects) {
+      if (effect.kind === 'emissionCut') percent += effect.value * factor;
+    }
   }
   return percent;
 }
 
-/** PAC por ano: a entrada de base do balance.json mais o que a árvore acrescenta. */
+/**
+ * PAC por ano: a entrada de base do balance.json, o que a árvore acrescenta e o
+ * bônus do personagem (REF-05) — o "financiamento" da Juliana. No baseline o
+ * bônus é 0.
+ */
 export function pointsPerYear(state: GameState): number {
   let extra = 0;
   for (const effect of unlockedEffects(state)) {
     if (effect.kind === 'pointsPerYear') extra += effect.value;
   }
-  return balance.basePointsPerYear + extra;
+  return balance.basePointsPerYear + extra + (buffOf(state)?.pointsPerYearBonus ?? 0);
 }

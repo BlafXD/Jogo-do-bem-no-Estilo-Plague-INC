@@ -498,3 +498,44 @@ describe('costFor — o desconto de ramo do personagem', () => {
     expect(depois.actionPoints).toBe(40 - comDesconto);
   });
 });
+
+/**
+ * Os buffs contínuos do personagem (REF-05, 2ª fatia): reforço de corte (Ana e
+ * Ricardo), PAC/ano (Juliana) e resiliência inicial (Carlos). No baseline, sem
+ * personagem, nenhum deles soma nada.
+ */
+describe('os buffs contínuos do personagem', () => {
+  // `solar` é a raiz de Energia, com emissionCut global de 0,5%/ano.
+  const comSolar = (character: Parameters<typeof createInitialState>[1]) =>
+    unlockSkill({ ...createInitialState(1, character), actionPoints: 100 }, 'solar');
+
+  it('a Ana Luiza reforça o corte de emissão do ramo dela em 15%', () => {
+    const base = emissionCutFor(comSolar(null), 'na');
+    expect(emissionCutFor(comSolar('ana-luiza'), 'na')).toBeCloseTo(base * 1.15, 10);
+  });
+
+  it('o reforço não alcança um ramo que não é o do personagem', () => {
+    // Carlos é de Natureza; solar é de Energia.
+    expect(emissionCutFor(comSolar('carlos-mendes'), 'na')).toBeCloseTo(
+      emissionCutFor(comSolar(null), 'na'),
+      10,
+    );
+  });
+
+  it('a Juliana financia +3 PAC por ano', () => {
+    expect(pointsPerYear(createInitialState(1, 'juliana-almeida'))).toBe(
+      pointsPerYear(createInitialState(1)) + 3,
+    );
+  });
+
+  it('o Carlos começa com +8 de resiliência em todas as regiões', () => {
+    const base = createInitialState(1);
+    const carlos = createInitialState(1, 'carlos-mendes');
+
+    for (const id of REGION_IDS) {
+      expect(carlos.regions[id].resilience).toBe(
+        Math.min(100, base.regions[id].resilience + 8),
+      );
+    }
+  });
+});

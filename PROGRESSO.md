@@ -160,6 +160,26 @@ Regras curtas:
   Carlos, PAC/ano ou apoio da Juliana, peso de evento) — `docs/PERSONAGENS.md §2`. É a próxima fatia
   da `REF-05`.
 
+## 2026-09-30 (noite) — O buff temático de cada personagem fecha a REF-05
+
+- **Parte / tarefa:** `REF-05` ✔ (2ª fatia).
+- **O que mudou:**
+  - `src/data/character-buffs.json` — cada personagem ganhou o 2º campo: Ana e Ricardo
+    `emissionBoost: 0.15` (reforço de corte no ramo deles), Carlos `startResilience: 8`, Juliana
+    `pointsPerYearBonus: 3`. Campos opcionais; ausente = 0.
+  - `src/engine/state.ts` — `CharacterBuff` ganhou os três campos; `parseCharacterBuffs` valida cada
+    reforço na faixa (`readBuffNumber`). `createInitialState` aplica a resiliência inicial
+    (`withStartResilience`, preso a 0–100).
+  - `src/engine/skills.ts` — `buffOf`/`emissionFactor`. `emissionCutFor` e `purchasedCutPercent`
+    passaram a percorrer por habilidade (para saber o ramo) e aplicam o reforço; a Inércia reage ao
+    corte reforçado. `pointsPerYear` soma o financiamento. No baseline (`null`) tudo é neutro.
+  - `tests/skills.test.ts` — +4 testes (reforço de corte, ramo alheio, PAC/ano, resiliência inicial).
+    Suíte **989 → 993**. `docs/planilha/` não mudou — o baseline neutro segue medindo a árvore crua.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+- **Atenção:** os números dos buffs são **provisórios** — o REF-09 afina com o harness, garantindo
+  medalha alcançável por personagem e que nenhum trivializa a partida. Próximo: `REF-06` (apoio por
+  região).
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.

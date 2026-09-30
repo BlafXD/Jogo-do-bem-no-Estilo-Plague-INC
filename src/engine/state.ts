@@ -83,23 +83,52 @@ export function isCharacterId(value: unknown): value is CharacterId {
 }
 
 /**
- * O bônus de um personagem (REF-05). Por enquanto é um só: o desconto no custo
- * dos nós do ramo dele — o "Desconto de Rede" da Ana Luiza, generalizado para
- * cada personagem (docs/PERSONAGENS.md §2). Há precedente: o
+ * O bônus de um personagem (REF-05), tudo ligado ao tema dele
+ * (docs/PERSONAGENS.md §2). Há precedente para descontos assim: o
  * `containDiscountPerNode` já desconta a contenção. Os números são provisórios;
  * quem os afina é o REF-09.
+ *
+ * Um personagem usa só os campos que combinam com ele; os demais ficam em 0 e o
+ * `costFor`/`emissionCutFor`/`pointsPerYear` simplesmente não somam nada.
  */
 export type CharacterBuff = {
   readonly branch: SkillBranch;
   /** Fração de 0 a 1 descontada do custo dos nós do `branch`. */
   readonly costDiscount: number;
+  /** Fração somada ao corte de emissão dos nós do `branch` (0,15 = +15%). */
+  readonly emissionBoost: number;
+  /** Pontos de resiliência somados a todas as regiões no começo da partida. */
+  readonly startResilience: number;
+  /** PAC por ano a mais, enquanto este personagem dirige. */
+  readonly pointsPerYearBonus: number;
 };
 
-/** O buff como sai do JSON, com o ramo ainda como string solta. */
-export type RawCharacterBuff = { readonly branch: string; readonly costDiscount: number };
+/** O buff como sai do JSON: o ramo é string solta, e os reforços são opcionais. */
+export type RawCharacterBuff = {
+  readonly branch: string;
+  readonly costDiscount: number;
+  readonly emissionBoost?: number;
+  readonly startResilience?: number;
+  readonly pointsPerYearBonus?: number;
+};
 
 function isSkillBranch(value: string): value is SkillBranch {
   return (SKILL_BRANCHES as readonly string[]).includes(value);
+}
+
+/** Lê um reforço opcional do JSON: ausente vira 0, presente precisa estar na faixa. */
+function readBuffNumber(
+  value: number | undefined,
+  min: number,
+  max: number,
+  id: string,
+  field: string,
+): number {
+  if (value === undefined) return 0;
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`character-buffs.json: "${id}" tem ${field} = ${value}, fora de ${min} a ${max}.`);
+  }
+  return value;
 }
 
 /**
@@ -120,12 +149,14 @@ export function parseCharacterBuffs(
     if (!isSkillBranch(entry.branch)) {
       throw new Error(`character-buffs.json: "${id}" tem ramo desconhecido "${entry.branch}".`);
     }
-    if (!Number.isFinite(entry.costDiscount) || entry.costDiscount < 0 || entry.costDiscount > 1) {
-      throw new Error(
-        `character-buffs.json: "${id}" tem costDiscount = ${entry.costDiscount}, fora de 0 a 1.`,
-      );
-    }
-    byId[id] = { branch: entry.branch, costDiscount: entry.costDiscount };
+
+    byId[id] = {
+      branch: entry.branch,
+      costDiscount: readBuffNumber(entry.costDiscount, 0, 1, id, 'costDiscount'),
+      emissionBoost: readBuffNumber(entry.emissionBoost, 0, 2, id, 'emissionBoost'),
+      startResilience: readBuffNumber(entry.startResilience, 0, 100, id, 'startResilience'),
+      pointsPerYearBonus: readBuffNumber(entry.pointsPerYearBonus, 0, 50, id, 'pointsPerYearBonus'),
+    };
   }
 
   return byId as Record<CharacterId, CharacterBuff>;
@@ -618,16 +649,44 @@ export function averageSupport(state: GameState): number {
 }
 
 /**
+ * Soma um bônus de resiliência a todas as regiões, preso entre 0 e 100.
+ *
+ * É o buff "Remediação Ágil" do Carlos (REF-05): resiliência reduz o dano dos
+ * eventos (§2.5), e começar mais resiliente é o equivalente, neste jogo, a
+ * limpar a área mais rápido. Bônus 0 devolve o mesmo mapa, sem cópia à toa.
+ */
+function withStartResilience(
+  regions: Readonly<Record<RegionId, Region>>,
+  bonus: number,
+): Readonly<Record<RegionId, Region>> {
+  if (bonus <= 0) return regions;
+
+  const out: Partial<Record<RegionId, Region>> = {};
+  for (const id of REGION_IDS) {
+    const region = regions[id];
+    out[id] = { ...region, resilience: Math.max(0, Math.min(100, region.resilience + bonus)) };
+  }
+  return out as Record<RegionId, Region>;
+}
+
+/**
  * Monta o estado do começo da partida.
  *
  * `actionPoints` e `inertia` começam em zero por serem "nada ainda", não por
  * serem valores ajustáveis. Se algum dia precisarem começar diferentes, o lugar
  * deles é o balance.json, não aqui (regra 8).
+ *
+ * O `character` (REF-04) entra na identidade da partida, e o buff dele que vale
+ * **no começo** — a resiliência inicial — é aplicado aqui; os buffs contínuos
+ * (desconto, reforço de corte, PAC/ano) moram no `skills.ts`, lidos a cada uso.
  */
 export function createInitialState(
   seed: number,
   character: CharacterId | null = null,
 ): GameState {
+  const buff = character === null ? undefined : characterBuffs[character];
+  const regions = withStartResilience(parseRegions(regionsData), buff?.startResilience ?? 0);
+
   return {
     year: balance.startYear,
     tick: 0,
@@ -635,7 +694,7 @@ export function createInitialState(
     cumulativeCO2: 0,
     temperature: balance.startTemperature,
     character,
-    regions: parseRegions(regionsData),
+    regions,
     unlockedSkills: [],
     activeEvents: [],
     inertia: 0,
