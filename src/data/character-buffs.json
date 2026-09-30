@@ -1,0 +1,6 @@
+{
+  "ana-luiza": { "branch": "energy", "costDiscount": 0.1 },
+  "carlos-mendes": { "branch": "nature", "costDiscount": 0.1 },
+  "ricardo-souza": { "branch": "industry", "costDiscount": 0.1 },
+  "juliana-almeida": { "branch": "society", "costDiscount": 0.1 }
+}

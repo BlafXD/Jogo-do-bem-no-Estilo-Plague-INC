@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   canUnlock,
+  costFor,
   emissionCutFor,
   isUnlocked,
   pointsPerYear,
+  skillById,
   unlockSkill,
 } from '../src/engine/skills';
 import {
@@ -458,5 +460,41 @@ describe('a árvore ligada à simulação', () => {
 
     expect(plain.actionPoints).toBeCloseTo(balance.basePointsPerYear, 6);
     expect(taught.actionPoints).toBeCloseTo(balance.basePointsPerYear + 2, 6);
+  });
+});
+
+/**
+ * O desconto de custo por personagem (REF-05). `solar` é de Energia e custa 40;
+ * a Ana Luiza desconta Energia em 10%, então paga 36. Quem não é do ramo paga
+ * cheio, e o baseline (sem personagem) também.
+ */
+describe('costFor — o desconto de ramo do personagem', () => {
+  const solar = skillById('solar');
+  if (solar === undefined) throw new Error('catálogo incompleto: falta "solar".');
+
+  it('cobra o custo cheio no baseline, sem personagem', () => {
+    expect(costFor(createInitialState(1), solar)).toBe(solar.cost);
+  });
+
+  it('desconta o ramo do personagem', () => {
+    expect(costFor(createInitialState(1, 'ana-luiza'), solar)).toBe(Math.round(solar.cost * 0.9));
+  });
+
+  it('não desconta um ramo que não é o do personagem', () => {
+    // Carlos é de Natureza; solar é de Energia.
+    expect(costFor(createInitialState(1, 'carlos-mendes'), solar)).toBe(solar.cost);
+  });
+
+  it('a compra cobra o custo com desconto, e a checagem o enxerga', () => {
+    const comDesconto = costFor(createInitialState(1, 'ana-luiza'), solar);
+
+    // Com o valor exato do desconto, a Ana Luiza compra; o baseline, não.
+    expect(canUnlock({ ...createInitialState(1, 'ana-luiza'), actionPoints: comDesconto }, 'solar').ok).toBe(
+      true,
+    );
+    expect(canUnlock({ ...createInitialState(1), actionPoints: comDesconto }, 'solar').ok).toBe(false);
+
+    const depois = unlockSkill({ ...createInitialState(1, 'ana-luiza'), actionPoints: 40 }, 'solar');
+    expect(depois.actionPoints).toBe(40 - comDesconto);
   });
 });

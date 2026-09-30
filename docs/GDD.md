@@ -208,7 +208,7 @@ type GameState = {
   actionPoints: number;      // PAC
   cumulativeCO2: number;     // GtCO₂ desde 2025
   temperature: number;       // °C acima do pré-industrial
-  character: CharacterId;    // o especialista escolhido no começo — nunca muda (REF-04)
+  character: CharacterId | null; // especialista escolhido; null = nenhum (baseline) até a seleção do REF-08
   regions: Record<RegionId, Region>;
   unlockedSkills: SkillId[];
   activeEvents: ActiveEvent[];

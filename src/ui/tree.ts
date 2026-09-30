@@ -25,7 +25,7 @@
 // escolhido. O painel que os envolve é do tree-panel.ts.
 
 import { ui } from '../data/i18n';
-import { canUnlock, skillById, type UnlockRefusal } from '../engine/skills';
+import { canUnlock, costFor, skillById, type UnlockRefusal } from '../engine/skills';
 import {
   SKILL_BRANCHES,
   skills,
@@ -149,7 +149,7 @@ function detailFor(state: GameState, skill: Skill, status: NodeStatus): string {
   }
 
   if (status === 'unaffordable') {
-    return ui.tree.missingPoints(whole.format(Math.ceil(skill.cost - state.actionPoints)));
+    return ui.tree.missingPoints(whole.format(Math.ceil(costFor(state, skill) - state.actionPoints)));
   }
 
   return '';
@@ -164,7 +164,7 @@ function nodeView(state: GameState, skill: Skill): SkillNodeView {
     name: skill.name,
     depth: DEPTHS.get(skill.id) ?? 0,
     requires: skill.requires,
-    cost: ui.tree.cost(whole.format(skill.cost)),
+    cost: ui.tree.cost(whole.format(costFor(state, skill))),
     description: skill.description,
     fact: skill.fact,
     status,

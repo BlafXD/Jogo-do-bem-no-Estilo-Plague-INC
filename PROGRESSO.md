@@ -128,6 +128,38 @@ Regras curtas:
   subida do `SAVE_VERSION`. **Nenhum bônus ainda:** o personagem existe e sobrevive ao save, mas não
   muda nada na partida. Próximo: `REF-05` — aplicar os bônus de ramo no engine.
 
+## 2026-09-30 (noite) — O personagem começa a valer: desconto de ramo (REF-05, 1ª fatia)
+
+- **Parte / tarefa:** `REF-05` (`[~]`, 1ª fatia). **Revisou o REF-04:** `character` virou
+  `CharacterId | null`.
+- **A decisão que moldou a fatia:** aplicar o desconto ao personagem **padrão** (ana-luiza) quebrou
+  12 testes que usam `solar` (custo 40) — o baseline deixaria de ser neutro. Então `character` passou
+  a ser anulável: **`null` = nenhum especialista = baseline sem bônus**. Assim o harness de
+  balanceamento e todos os testes seguem neutros, e o buff só age quando um personagem é escolhido de
+  fato (o que só acontece a partir do REF-08). O `docs/planilha/` **não mudou** — prova de que o
+  baseline continua idêntico.
+- **O que mudou:**
+  - `src/data/character-buffs.json` (novo) — cada personagem → `{ branch, costDiscount: 0.1 }`
+    (números provisórios; o REF-09 afina). O Ricardo já aponta para Indústria (o remap do REF-07).
+  - `src/engine/state.ts` — `CharacterBuff`, `parseCharacterBuffs` (cobra um buff por personagem),
+    `characterBuffs`. `character: CharacterId | null`; `createInitialState(seed, character = null)`.
+    Removido o `DEFAULT_CHARACTER`.
+  - `src/engine/skills.ts` — `costFor(state, skill)`: desconta o ramo do personagem (ou custo cheio
+    no baseline). É a porta única do custo — `canUnlock` e `unlockSkill` leem dela.
+  - `src/ui/tree.ts` — a árvore e o detalhe mostram o custo com desconto (via `costFor`).
+  - `src/main.ts` — o rótulo voador usa o gasto real (diferença de saldo); saiu o `skillById`.
+  - `src/engine/save.ts` — aceita `character` `null` ou válido.
+  - `docs/GDD.md §3` — `character: CharacterId | null`.
+  - `tests/planilha-engine.ts` — `spentPoints` pela diferença de saldo (traz o desconto), sem o
+    `costById`.
+  - Testes: `tests/skills.test.ts` (+4 do `costFor`), `tests/state.test.ts` e `tests/save.test.ts`
+    ajustados ao `null`. Suíte **985 → 989**.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+  Escolhendo a Ana Luiza (quando o REF-08 existir), os nós de Energia custam 10% menos.
+- **Pendente:** o **2º buff temático** de cada personagem (reforço de corte da Ana, resiliência do
+  Carlos, PAC/ano ou apoio da Juliana, peso de evento) — `docs/PERSONAGENS.md §2`. É a próxima fatia
+  da `REF-05`.
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.

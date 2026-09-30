@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   balance,
   createInitialState,
-  DEFAULT_CHARACTER,
   parseRegions,
   REGION_IDS,
   type RawRegion,
@@ -66,8 +65,8 @@ describe('createInitialState', () => {
     expect(createInitialState(1).rngState).not.toBe(createInitialState(2).rngState);
   });
 
-  it('começa com o personagem padrão quando nenhum é escolhido (REF-04)', () => {
-    expect(createInitialState(1).character).toBe(DEFAULT_CHARACTER);
+  it('começa sem personagem — o baseline neutro — quando nenhum é escolhido (REF-04)', () => {
+    expect(createInitialState(1).character).toBeNull();
   });
 
   it('guarda o personagem escolhido', () => {

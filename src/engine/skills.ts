@@ -17,6 +17,7 @@
 
 import {
   balance,
+  characterBuffs,
   REGION_IDS,
   skills,
   type GameState,
@@ -34,6 +35,23 @@ export function skillById(id: SkillId): Skill | undefined {
 
 export function isUnlocked(state: GameState, id: SkillId): boolean {
   return state.unlockedSkills.includes(id);
+}
+
+/**
+ * O custo de um nó para o personagem desta partida (REF-05).
+ *
+ * O personagem escolhido desconta o custo dos nós do ramo dele
+ * (`characterBuffs`, docs/PERSONAGENS.md §2). É a única porta por onde o custo
+ * passa: `canUnlock` decide se dá para comprar, `unlockSkill` cobra, e a árvore
+ * escreve — os três leem daqui, para não existir um custo cru e um com desconto
+ * discordando na tela. Arredonda porque PAC é inteiro no bolso do jogador.
+ */
+export function costFor(state: GameState, skill: Skill): number {
+  // Sem personagem (baseline), custo cheio. É o que mantém o harness de
+  // balanceamento e a árvore neutros até alguém escolher um especialista.
+  const buff = state.character === null ? undefined : characterBuffs[state.character];
+  const discount = buff !== undefined && buff.branch === skill.branch ? buff.costDiscount : 0;
+  return Math.round(skill.cost * (1 - discount));
 }
 
 // ------------------------------------------------------------- a compra ---
@@ -60,7 +78,7 @@ export function canUnlock(state: GameState, id: SkillId): UnlockCheck {
   if (!skill.requires.every((required) => isUnlocked(state, required))) {
     return { ok: false, reason: 'missingRequirement' };
   }
-  if (state.actionPoints < skill.cost) return { ok: false, reason: 'notEnoughPoints' };
+  if (state.actionPoints < costFor(state, skill)) return { ok: false, reason: 'notEnoughPoints' };
 
   return { ok: true };
 }
@@ -124,7 +142,7 @@ export function unlockSkill(state: GameState, id: SkillId): GameState {
 
   return {
     ...applyImmediateEffects(state, skill),
-    actionPoints: state.actionPoints - skill.cost,
+    actionPoints: state.actionPoints - costFor(state, skill),
     unlockedSkills: [...state.unlockedSkills, id],
   };
 }

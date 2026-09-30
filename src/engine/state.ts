@@ -4,6 +4,7 @@
 // no código (regra 8).
 
 import balanceData from '../data/balance.json';
+import characterBuffsData from '../data/character-buffs.json';
 import eventsData from '../data/events.json';
 import regionsData from '../data/regions.json';
 import skillsData from '../data/skills.json';
@@ -76,17 +77,62 @@ export const CHARACTER_IDS = [
 
 export type CharacterId = (typeof CHARACTER_IDS)[number];
 
-/**
- * O personagem de uma partida que ninguém escolheu ainda. Até a tela de seleção
- * existir (REF-08), toda partida nasce com ele; como nenhum personagem dá bônus
- * antes do REF-05, a escolha não muda nada por enquanto.
- */
-export const DEFAULT_CHARACTER: CharacterId = 'ana-luiza';
-
 /** O `value` é um id de personagem jogável? Usado pela validação do save. */
 export function isCharacterId(value: unknown): value is CharacterId {
   return typeof value === 'string' && (CHARACTER_IDS as readonly string[]).includes(value);
 }
+
+/**
+ * O bônus de um personagem (REF-05). Por enquanto é um só: o desconto no custo
+ * dos nós do ramo dele — o "Desconto de Rede" da Ana Luiza, generalizado para
+ * cada personagem (docs/PERSONAGENS.md §2). Há precedente: o
+ * `containDiscountPerNode` já desconta a contenção. Os números são provisórios;
+ * quem os afina é o REF-09.
+ */
+export type CharacterBuff = {
+  readonly branch: SkillBranch;
+  /** Fração de 0 a 1 descontada do custo dos nós do `branch`. */
+  readonly costDiscount: number;
+};
+
+/** O buff como sai do JSON, com o ramo ainda como string solta. */
+export type RawCharacterBuff = { readonly branch: string; readonly costDiscount: number };
+
+function isSkillBranch(value: string): value is SkillBranch {
+  return (SKILL_BRANCHES as readonly string[]).includes(value);
+}
+
+/**
+ * Converte `character-buffs.json` no mapa tipado, cobrando um buff por
+ * personagem jogável. Mesmo espírito do `parseRegions`: o `tsc` garante o
+ * formato, não os valores — nem que todos os personagens estão presentes.
+ */
+export function parseCharacterBuffs(
+  raw: Readonly<Record<string, RawCharacterBuff>>,
+): Readonly<Record<CharacterId, CharacterBuff>> {
+  const byId: Partial<Record<CharacterId, CharacterBuff>> = {};
+
+  for (const id of CHARACTER_IDS) {
+    const entry = raw[id];
+    if (entry === undefined) {
+      throw new Error(`character-buffs.json: falta o personagem "${id}".`);
+    }
+    if (!isSkillBranch(entry.branch)) {
+      throw new Error(`character-buffs.json: "${id}" tem ramo desconhecido "${entry.branch}".`);
+    }
+    if (!Number.isFinite(entry.costDiscount) || entry.costDiscount < 0 || entry.costDiscount > 1) {
+      throw new Error(
+        `character-buffs.json: "${id}" tem costDiscount = ${entry.costDiscount}, fora de 0 a 1.`,
+      );
+    }
+    byId[id] = { branch: entry.branch, costDiscount: entry.costDiscount };
+  }
+
+  return byId as Record<CharacterId, CharacterBuff>;
+}
+
+export const characterBuffs: Readonly<Record<CharacterId, CharacterBuff>> =
+  parseCharacterBuffs(characterBuffsData);
 
 export type Effect =
   | { readonly kind: 'emissionCut'; readonly target: RegionId | 'global'; readonly value: number }
@@ -165,11 +211,15 @@ export type GameState = {
   /** °C acima do pré-industrial. */
   readonly temperature: number;
   /**
-   * O personagem que o jogador escolheu dirigir (REF-04). Faz parte da
-   * identidade da partida, como a `seed`: escolhido no começo, nunca muda. O
-   * efeito dele (bônus de ramo) entra no REF-05.
+   * O personagem que o jogador escolheu dirigir. Faz parte da identidade da
+   * partida, como a `seed`: escolhido no começo, nunca muda. O bônus de ramo
+   * dele é aplicado pelo `costFor` (REF-05).
+   *
+   * **`null` = nenhum especialista** — o baseline sem bônus. É o que a partida
+   * usa antes de a tela de seleção existir (REF-08), e é o que o harness de
+   * balanceamento mede: a economia crua da árvore, independente de quem joga.
    */
-  readonly character: CharacterId;
+  readonly character: CharacterId | null;
   readonly regions: Readonly<Record<RegionId, Region>>;
   readonly unlockedSkills: readonly SkillId[];
   readonly activeEvents: readonly ActiveEvent[];
@@ -576,7 +626,7 @@ export function averageSupport(state: GameState): number {
  */
 export function createInitialState(
   seed: number,
-  character: CharacterId = DEFAULT_CHARACTER,
+  character: CharacterId | null = null,
 ): GameState {
   return {
     year: balance.startYear,

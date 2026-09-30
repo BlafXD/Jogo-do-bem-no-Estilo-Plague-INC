@@ -16,7 +16,7 @@
 
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
-import { canUnlock, skillById, unlockSkill } from './engine/skills';
+import { canUnlock, unlockSkill } from './engine/skills';
 import { createInitialState, skills, type RegionId, type SkillId } from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
 import {
@@ -853,6 +853,9 @@ function handleUnlock(id: SkillId): void {
     return;
   }
 
+  // Quanto saiu do caixa: a diferença do saldo é o custo já com o desconto do
+  // personagem (REF-05), sem a UI precisar recalcular o buff.
+  const spent = Math.round(state.actionPoints - next.actionPoints);
   state = next;
   playSfx(sound, 'unlock');
   renderGame();
@@ -863,7 +866,7 @@ function handleUnlock(id: SkillId): void {
   flyCost(
     detalheNo.querySelector('[data-detail="buy"]'),
     painelArvore.querySelector('[data-tree-panel="points"]'),
-    `−${ui.tree.cost(String(skillById(id)?.cost ?? ''))}`,
+    `−${ui.tree.cost(String(spent))}`,
   );
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
   // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá

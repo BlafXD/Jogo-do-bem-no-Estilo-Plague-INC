@@ -111,8 +111,6 @@ export const STRATEGIES: readonly Strategy[] = [
   },
 ];
 
-const costById = new Map(skills.map((s) => [s.id, s.cost]));
-
 /**
  * O jogador contém neste mês? Devolve o estado depois da contenção e o que ela
  * custou, ou `null` quando ele não contém — porque a política não manda, porque
@@ -206,8 +204,12 @@ export function simulate(strategy: Strategy): SimResult {
         // permite esconderia o ritmo — que é justamente o que a planilha mostra.
         for (const id of strategy.wishlist) {
           if (canUnlock(state, id).ok) {
+            // O gasto sai da diferença de saldo, e não de um custo de tabela: com
+            // o REF-05 o custo depende do personagem, e a diferença já traz o
+            // desconto aplicado — o mesmo motivo de a UI ler o `costFor`.
+            const before = state.actionPoints;
             state = unlockSkill(state, id);
-            spentPoints += costById.get(id) ?? 0;
+            spentPoints += before - state.actionPoints;
             boughtThisYear.push(id);
             break;
           }

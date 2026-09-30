@@ -177,10 +177,13 @@ export function fromSave(raw: unknown): LoadResult {
     if (!isFiniteNumber(saved[field])) return { ok: false, reason: 'badNumber' };
   }
 
-  // O personagem tem de ser um dos jogáveis. Um save da versão 2 nem chega aqui
-  // (foi recusado pela versão acima); esta checagem cobre um save v3 adulterado
-  // ou de um dia em que a lista de personagens mudar sem o SAVE_VERSION subir.
-  if (!isCharacterId(saved.character)) return { ok: false, reason: 'badCharacter' };
+  // O personagem tem de ser `null` (baseline, sem especialista) ou um dos
+  // jogáveis. Um save da versão 2 nem chega aqui (foi recusado pela versão
+  // acima); esta checagem cobre um save v3 adulterado ou de um dia em que a
+  // lista de personagens mudar sem o SAVE_VERSION subir.
+  if (saved.character !== null && !isCharacterId(saved.character)) {
+    return { ok: false, reason: 'badCharacter' };
+  }
 
   if (!isRecord(saved.regions)) return { ok: false, reason: 'badRegions' };
 
