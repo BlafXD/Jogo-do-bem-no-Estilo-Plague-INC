@@ -480,6 +480,14 @@ describe('costFor — o desconto de ramo do personagem', () => {
     expect(costFor(createInitialState(1, 'ana-luiza'), solar)).toBe(Math.round(solar.cost * 0.9));
   });
 
+  it('a Marina (5º personagem, REF-07) desconta o ramo Transporte', () => {
+    const transit = skillById('transit');
+    if (transit === undefined) throw new Error('catálogo incompleto: falta "transit".');
+    expect(costFor(createInitialState(1, 'marina-costa'), transit)).toBe(
+      Math.round(transit.cost * 0.9),
+    );
+  });
+
   it('não desconta um ramo que não é o do personagem', () => {
     // Carlos é de Natureza; solar é de Energia.
     expect(costFor(createInitialState(1, 'carlos-mendes'), solar)).toBe(solar.cost);

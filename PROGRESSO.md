@@ -204,6 +204,36 @@ Regras curtas:
 - **Pendente:** nós de `support` com **alvo regional** (não só `global`) — mais balanceamento,
   adiado para o `REF-09`. Próximo: `REF-07` (árvore 20 → 40 + 5º personagem + remap do Ricardo).
 
+## 2026-09-30 (noite) — A 5ª personagem jogável e o mapa 1:1 (REF-07, 1ª fatia)
+
+- **Parte / tarefa:** `REF-07` (`[~]`, fatia segura). O usuário ia sair para a faculdade; fiz a parte
+  independente de balanceamento e deixei os 20 nós para a próxima sessão.
+- **Descoberta que guiou o corte:** o **personagem jogável** (`CHARACTER_IDS`, `state.ts`) é separado
+  do **elenco visual** (`PERSON_IDS`, `characters.ts`, que narra tutorial/eventos). O elenco visual
+  exige arte (o `characters.test.ts` cobra manifesto↔arquivo), mas o jogável **não** — só id + buff.
+  Então dá para adicionar a 5ª jogável sem arte.
+- **O que mudou:**
+  - `src/engine/state.ts` — `CHARACTER_IDS` ganhou `marina-costa` (Transporte). Comentário atualizado.
+  - `src/data/character-buffs.json` — buff da Marina (transport: desconto 0,1 + emissionBoost 0,15;
+    provisório, REF-09 afina; pode virar apoio no futuro, tema "Cidade para Pessoas").
+  - `docs/GDD.md §3` — `CharacterId` com os cinco.
+  - `docs/PERSONAGENS.md §3` — reescrito: mapa 1:1 fechado (Ricardo→Indústria, Marina→Transporte);
+    contrato de arte da Marina anotado (JPEG ~480px, creme, 2 poses).
+  - `tests/skills.test.ts` — teste do desconto da Marina no Transporte. Suíte **994 → 995**.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+  `docs/planilha/` não mudou (o 5º jogável não afeta o baseline neutro).
+- **PENDENTE / PRÓXIMA SESSÃO — os 20 nós novos da árvore (REF-07, 2ª metade):**
+  - 4 → 8 nós por ramo em `src/data/skills.json`, estendendo os diamantes (pré-requisitos).
+  - Cada nó novo precisa de **1 fato real com fonte** — pesquisar (IPCC AR6, IEA, Global Carbon
+    Budget) e registrar em `docs/CIENCIA.md` (regra §1.9).
+  - **Isso mexe na economia de PAC**: `TREE_COST` sobe, e o teste da planilha `missing < 45%`
+    (`tests/planilha.test.ts`) pode estourar → **fazer junto com a REF-09** (rebalancear
+    `balance.json`, garantir medalha por personagem). Não dá para entregar os 20 nós "verde" sem
+    tocar em balanceamento.
+  - `docs/GDD.md §2.4` — tirar a nota do corte solo de 20 quando os 40 entrarem.
+  - A **arte da Marina** (e o elenco visual `PERSON_IDS`) é do REF-08, quando a equipe entregar.
+- **Próximo:** `REF-07` 2ª metade (20 nós) + `REF-09` juntas, ou `REF-08` (seleção) se a arte chegar.
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.

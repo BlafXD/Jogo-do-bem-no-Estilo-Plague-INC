@@ -71,16 +71,19 @@ export const UNTARGETED_EFFECTS = ['pointsPerYear', 'inertiaCut'] as const;
  * começo. O tipo sai daqui, como o RegionId sai de REGION_IDS: a lista é a fonte
  * única, e a validação do save usa a mesma.
  *
- * Por enquanto são os quatro da equipe (docs/PERSONAGENS.md). O 5º, de Transporte
- * e Cidades, entra no REF-07, junto com o remapeamento do Ricardo para Indústria.
- * **Nenhum deles dá bônus ainda** — isso é o REF-05. Aqui (REF-04) o campo só
- * existe no GameState e sobrevive ao save.
+ * São cinco, um por ramo (docs/PERSONAGENS.md §3): Ana Luiza→Energia,
+ * Carlos→Natureza, Ricardo→Indústria, Juliana→Sociedade e Marina→Transporte. O
+ * 5º (`marina-costa`) entrou no REF-07 **só na camada jogável** — o buff existe,
+ * o retrato e o elenco visual (PERSON_IDS, characters.ts) vêm com a arte no
+ * REF-08. O `marina-costa` é um id de rascunho; renomear é barato enquanto não há
+ * save que o cite (a seleção é o REF-08).
  */
 export const CHARACTER_IDS = [
   'ana-luiza',
   'carlos-mendes',
   'ricardo-souza',
   'juliana-almeida',
+  'marina-costa',
 ] as const;
 
 export type CharacterId = (typeof CHARACTER_IDS)[number];

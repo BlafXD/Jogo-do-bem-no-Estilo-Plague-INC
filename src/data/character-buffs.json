@@ -2,5 +2,6 @@
   "ana-luiza": { "branch": "energy", "costDiscount": 0.1, "emissionBoost": 0.15 },
   "carlos-mendes": { "branch": "nature", "costDiscount": 0.1, "startResilience": 8 },
   "ricardo-souza": { "branch": "industry", "costDiscount": 0.1, "emissionBoost": 0.15 },
-  "juliana-almeida": { "branch": "society", "costDiscount": 0.1, "pointsPerYearBonus": 3 }
+  "juliana-almeida": { "branch": "society", "costDiscount": 0.1, "pointsPerYearBonus": 3 },
+  "marina-costa": { "branch": "transport", "costDiscount": 0.1, "emissionBoost": 0.15 }
 }

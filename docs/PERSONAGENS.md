@@ -93,30 +93,26 @@ jogo de orçamento climático global. A coluna da direita é a ponte, se um dia 
 
 ---
 
-## 3. O mapa contra os cinco ramos
+## 3. O mapa contra os cinco ramos — resolvido no REF-07
 
-O `PLANO.md` já avisava, no Gelo, que "são 5 ramos, não 4". Com as fichas na mão, o problema tem
-nome:
+O `PLANO.md` avisava, no Gelo, que "são 5 ramos, não 4". **Decidido no chat em 2026-09-30
+(AskUserQuestion): a saída 1 — remapear o Ricardo para Indústria e criar um 5º personagem para
+Transporte.** O mapa agora fecha 1:1:
 
 | Personagem | Ramo | |
 |---|---|---|
 | Ana Luiza | **Energia** | encaixe limpo |
 | Carlos Mendes | **Natureza** | encaixe limpo — ecossistemas, parques, corredores verdes |
+| Ricardo Souza | **Indústria** | remapeado — o "processos industriais" da Otimização de Ciclo |
 | Juliana Almeida | **Sociedade** | encaixe limpo — acordos, stakeholders, alerta precoce |
-| Ricardo Souza | **nenhum** | água não é ramo deste jogo |
-| — | **Transporte** | sem personagem |
-| — | **Indústria** | sem personagem |
+| Marina Costa | **Transporte** | 5º personagem — mobilidade urbana e planejamento de cidades |
 
-**Três ramos cobertos, dois vazios e um personagem órfão.** As saídas, se a versão mecânica for
-adiante um dia:
-
-1. **Remapear Ricardo** para Indústria (o "processos industriais" da Otimização de Ciclo puxa para
-   lá) e criar um quinto personagem para Transporte.
-2. **Criar dois** — Transporte e Indústria — e remapear Ricardo, chegando a seis.
-3. **Abandonar o 1:1** e escrever a regra de qual bônus cobre o quê, que é o que o `PLANO.md`
-   pedia desde o início.
-
-Nada disso precisa ser decidido agora. Como identidade visual, quatro é um número perfeitamente bom.
+**Estado no REF-07:** a camada **jogável** dos cinco existe (`CHARACTER_IDS` no `state.ts`, buffs no
+`character-buffs.json`). A **Marina Costa** é um id de rascunho (`marina-costa`) — nome e ficha
+completa ficam com o `[D-Historia]`, e o **retrato/arte** com o `[D-Design]` (contrato: JPEG ~480px,
+fundo creme `#F4EDD0`, meio-corpo, uma pose de apresentação e uma de alerta). Enquanto a arte não
+chega, ela não tem retrato: entra na tela de seleção do REF-08 quando a imagem existir. As outras
+saídas consideradas — criar dois personagens (seis no total) ou abandonar o 1:1 — foram descartadas.
 
 ---
 

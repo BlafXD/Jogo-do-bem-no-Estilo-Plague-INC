@@ -186,10 +186,16 @@ Tela final: a medalha, os números finais, as listras e o gráfico da linha do t
 ```ts
 type RegionId = 'na' | 'la' | 'eu' | 'af' | 'me' | 'ea' | 'sa' | 'oc';
 
-// O personagem que o jogador dirige (REF-04). Hoje são os quatro da equipe; o
-// 5º (Transporte e Cidades) e o remapeamento do Ricardo para Indústria entram
-// no REF-07. O bônus de ramo de cada um é o REF-05.
-type CharacterId = 'ana-luiza' | 'carlos-mendes' | 'ricardo-souza' | 'juliana-almeida';
+// O personagem que o jogador dirige (REF-04/07). Cinco, um por ramo
+// (docs/PERSONAGENS.md §3): Ana→Energia, Carlos→Natureza, Ricardo→Indústria,
+// Juliana→Sociedade, Marina→Transporte. O bônus de cada um é o REF-05; o retrato
+// e a seleção, o REF-08.
+type CharacterId =
+  | 'ana-luiza'
+  | 'carlos-mendes'
+  | 'ricardo-souza'
+  | 'juliana-almeida'
+  | 'marina-costa';
 
 type Region = {
   id: RegionId;
