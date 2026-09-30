@@ -51,6 +51,25 @@ Regras curtas:
 - **Pendente:** evidência em `docs/evidencias/` fica melhor como GIF (o pulso não aparece em print
   estático) — posso gravar. Próxima fatia: `REF-02` (vida na compra e na árvore).
 
+## 2026-09-30 (mais tarde) — Vida na árvore: a compra comemora e o ramo reage (REF-02, 1ª metade)
+
+- **Parte / tarefa:** `REF-02` (`[~]`, primeira metade). Definido no chat: tema do 5º personagem é
+  **Transporte e Cidades** (mobilidade urbana / planejamento de cidades); o usuário vai acionar a
+  equipe para a arte. Ricardo muda para Indústria na `REF-07`.
+- **O que mudou:**
+  - `src/ui/tree.ts` — o `renderTree` guarda o estado anterior de cada nó e, quando ele vira
+    `unlocked` (compra) ou `available` (ficou comprável — a cadeia quando o pai é comprado), dá um
+    pulso. O `nodeElement` registra o `animationend` que tira a classe. Não pulsa no primeiro render
+    nem nas transições negativas.
+  - `src/ui/tree.css` — `tree-bought` (salto + anel de folha) e `tree-ready` (aceno discreto), as
+    duas dentro de `@media (prefers-reduced-motion: no-preference)`.
+  - `tests/tree.dom.test.ts` — dois testes: não pulsa na carga; pulsa o comprado e os que viraram
+    compráveis, e nenhum outro. Suíte **975 → 977**.
+- **Como verificar:** `npm run typecheck && npm run test && npm run build` (limpos). Na tela: comprar
+  um nó faz ele saltar e os filhos acenarem. Com "reduzir movimento", só troca a borda, como antes.
+- **Pendente:** a 2ª metade da `REF-02` — o custo "voando" do nó até o contador de PAC (cruza a
+  fronteira árvore↔HUD, mais delicado).
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.

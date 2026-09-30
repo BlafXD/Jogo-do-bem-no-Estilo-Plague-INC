@@ -327,6 +327,9 @@ function nodeElement(node: SkillNodeView, place: string, onChoose: (id: SkillId)
   // barra: sem eles, o leitor de tela leria "Energia solar em escala40 PAC".
   button.append(span('tree__name', node.name), ' ', span('tree__cost', node.cost), ' ', status);
   button.addEventListener('click', () => onChoose(node.id));
+  // O pulso de conquista se remove sozinho ao terminar, como no HUD: sem isso a
+  // classe ficaria grudada e a próxima mudança não reiniciaria a animação.
+  button.addEventListener('animationend', () => button.classList.remove(GAIN_CLASS));
 
   const item = document.createElement('li');
   item.className = 'tree__item';
@@ -419,12 +422,34 @@ export function mountTree(
   }
 }
 
+/** A classe do pulso de conquista: o CSS anima, o nodeElement a remove no fim. */
+const GAIN_CLASS = 'tree__node--gained';
+
+/**
+ * Faz um nó pulsar quando ele acabou de ser comprado ou de ficar comprável.
+ *
+ * Remover a classe e forçar um reflow antes de pô-la de volta reinicia a
+ * animação — sem isso, dois nós que mudam no mesmo render, ou o mesmo nó em
+ * meses seguidos, só animariam uma vez. É o mesmo truque do `bump` do hud.ts.
+ */
+function gain(button: HTMLElement): void {
+  button.classList.remove(GAIN_CLASS);
+  void button.offsetWidth;
+  button.classList.add(GAIN_CLASS);
+}
+
 /**
  * Escreve o estado atual nos cartões já montados.
  *
  * **Atualiza em vez de reconstruir**, e isso não é otimização: a árvore
  * redesenha a cada mês de jogo, e recriar os botões arrancaria o foco do
  * teclado de quem estivesse navegando — a cada 1,5 segundo, na velocidade 1x.
+ *
+ * **O pulso de vida só dispara em transição positiva já em cena**: um nó que
+ * vira `unlocked` (a compra) ou `available` (ficou comprável — a reação em
+ * cadeia quando o pai é comprado, ou quando o PAC do mês entrou). No primeiro
+ * render não há `previous`, então a árvore não acende inteira na carga; e a
+ * volta para `unaffordable`/`locked` não pulsa, porque não é conquista.
  */
 export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): void {
   let changed = false;
@@ -435,8 +460,12 @@ export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): 
       if (button === null) continue;
 
       if (button.dataset.status !== node.status) {
+        const previous = button.dataset.status;
         button.dataset.status = node.status;
         changed = true;
+        if (previous !== undefined && (node.status === 'unlocked' || node.status === 'available')) {
+          gain(button);
+        }
       }
 
       // `aria-pressed`, como as regiões do mapa: é o que diz ao leitor de tela

@@ -245,6 +245,52 @@
   font-weight: 600;
 }
 
+/* Vida na árvore: o nó comprado comemora, e o nó que acabou de ficar comprável
+   chama a atenção de leve — a reação em cadeia quando o pai é comprado. É
+   reforço de movimento sobre um estado que o rótulo escrito e a borda já dizem
+   (§5). Sai inteiro com movimento reduzido (§5 / P8-04): sem a media query, a
+   classe não casa com regra nenhuma e o nó só troca de borda, como antes. */
+@media (prefers-reduced-motion: no-preference) {
+  .tree__node[data-status='unlocked'].tree__node--gained {
+    animation: tree-bought 0.6s ease-out;
+  }
+
+  .tree__node[data-status='available'].tree__node--gained {
+    animation: tree-ready 0.5s ease-out;
+  }
+}
+
+/* A compra: um salto curto com um anel de folha que se abre e some. */
+@keyframes tree-bought {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cor-comprado, #7fd1a8) 55%, transparent);
+  }
+  35% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--cor-comprado, #7fd1a8) 35%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+/* Ficou comprável: um aceno mais discreto, sem tanto salto. */
+@keyframes tree-ready {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--cor-destaque, #7fd1a8) 28%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
 /* --------------------------------------------------------- o detalhe --- */
 
 /* O nó escolhido: o texto rola por dentro, e a compra fica sempre à vista,

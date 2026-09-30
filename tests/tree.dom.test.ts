@@ -487,3 +487,33 @@ describe('o botão da árvore na barra de baixo (VIS-04, VIS-05)', () => {
     );
   });
 });
+
+/**
+ * O pulso de vida (Fase 1 da reforma de 2026-09-30): um nó comprado, e um nó
+ * que acabou de ficar comprável, ganham a classe da animação. O primeiro render
+ * não pulsa nada, e um nó que não muda de estado fica quieto.
+ */
+describe('o pulso de conquista', () => {
+  const GANHO = 'tree__node--gained';
+
+  it('não pulsa no primeiro render', () => {
+    const root = mount(rich(200), 'solar');
+
+    expect(nodeButton(root, 'solar').classList.contains(GANHO)).toBe(false);
+    expect(nodeButton(root, 'wind').classList.contains(GANHO)).toBe(false);
+  });
+
+  it('pulsa o nó comprado e os que viraram compráveis, e mais nenhum', () => {
+    const inicio = rich(200);
+    const root = mount(inicio, 'solar');
+
+    // Comprar a raiz de Energia destrava os dois nós do meio.
+    renderTree(root, treeView(unlockSkill(inicio, 'solar')), 'solar');
+
+    expect(nodeButton(root, 'solar').classList.contains(GANHO)).toBe(true); // comprado
+    expect(nodeButton(root, 'wind').classList.contains(GANHO)).toBe(true); // virou comprável
+    expect(nodeButton(root, 'storage').classList.contains(GANHO)).toBe(true);
+    // O transporte não foi tocado: continua disponível, sem pulsar.
+    expect(nodeButton(root, 'transit').classList.contains(GANHO)).toBe(false);
+  });
+});

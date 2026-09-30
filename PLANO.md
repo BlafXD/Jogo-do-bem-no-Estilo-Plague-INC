@@ -233,7 +233,7 @@ balanceamento. O `P8-02` (balanceamento do playtest) passa a ser **depois** dest
 versão antiga e a nova seria medir duas vezes.
 
 - [x] `REF-01` **Fase 1** — Vida no HUD: o indicador pulsa quando muda de valor — **P** — *2026-09-30; só apresentação, `hudView` continua puro; fora com `prefers-reduced-motion`. Suíte 973 → 975*
-- [ ] `REF-02` **Fase 1** — Vida na compra e na árvore: nó comprado acende, custo voa para o PAC — **M**
+- [~] `REF-02` **Fase 1** — Vida na compra e na árvore: nó comprado acende, custo voa para o PAC — **M** — *2026-09-30: feita a 1ª metade — o nó comprado pulsa e os que ficam compráveis acenam (reação em cadeia); só apresentação, fora com `prefers-reduced-motion`. **Falta** o "custo voando até o contador de PAC" (cruza árvore↔HUD). Suíte 975 → 977*
 - [ ] `REF-03` **Fase 1** — Vida no mapa e nos cartões: transição de faixa de calor, entrada/saída dos eventos e avisos — **M**
 - [ ] `REF-04` **Fase 2** — Campo `character` no `GameState` (contrato §3) + `SAVE_VERSION` 3 — **M**
 - [ ] `REF-05` **Fase 3** — Aplicar os buffs no engine, derivados (desconto de ramo, reforço de corte, peso de evento) — **G**
