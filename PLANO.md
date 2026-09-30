@@ -215,6 +215,35 @@ mudar depois deles, os quatro precisam ser refeitos.
 
 ---
 
+## REF — Reforma "pacote único" (pedido do chat em 2026-09-30)
+
+Pedido do chat: *mais dinâmica ("tudo parece uma tabela de Excel"), selecionar personagem com
+buffs de ramo, apoio que não anda em bloco e mais habilidades para comprar.* Decidido no chat:
+**um pacote só, rebalanceado de uma vez**, com **Ricardo → Indústria e um 5º personagem para
+Transporte**. O plano completo está em `~/.claude/plans/iridescent-noodling-hamming.md`.
+
+**Sai do Gelo:** os itens *"subir a árvore de 20 para 40 nós"* e *"personagens jogáveis com bônus
+de ramo"* saíram do Gelo aqui — o M3 (build da feira, `P8-05`) já está `[x]`, então a trava do
+congelamento não vale mais. **Aprovado no chat:** editar `docs/GDD.md` (§3 novo campo `character`,
+§2.4 volta a 40 nós, subseção de personagens jogáveis), editar `docs/PERSONAGENS.md §4` (a equipe
+vira selecionável) e subir o `SAVE_VERSION` de 2 → 3.
+
+**Ordem:** a Fase 1 (vida) não toca em número nenhum e entrega sozinha; só a REF-09 mexe no
+balanceamento. O `P8-02` (balanceamento do playtest) passa a ser **depois** desta reforma — medir a
+versão antiga e a nova seria medir duas vezes.
+
+- [x] `REF-01` **Fase 1** — Vida no HUD: o indicador pulsa quando muda de valor — **P** — *2026-09-30; só apresentação, `hudView` continua puro; fora com `prefers-reduced-motion`. Suíte 973 → 975*
+- [ ] `REF-02` **Fase 1** — Vida na compra e na árvore: nó comprado acende, custo voa para o PAC — **M**
+- [ ] `REF-03` **Fase 1** — Vida no mapa e nos cartões: transição de faixa de calor, entrada/saída dos eventos e avisos — **M**
+- [ ] `REF-04` **Fase 2** — Campo `character` no `GameState` (contrato §3) + `SAVE_VERSION` 3 — **M**
+- [ ] `REF-05` **Fase 3** — Aplicar os buffs no engine, derivados (desconto de ramo, reforço de corte, peso de evento) — **G**
+- [ ] `REF-06` **Fase 4** — Apoio por região: `supportDecay` por região, nós de `support` com alvo regional — **M**
+- [ ] `REF-07` **Fase 5** — Árvore 20 → 40 nós (+ fatos com fonte) + 5º personagem + remapeamento do Ricardo — **G**
+- [ ] `REF-08` **Fase 6** — Tela de seleção de personagem antes da partida — **M**
+- [ ] `REF-09` **Fase 6** — Rebalanceamento: `balance.json`, harness de planilha e `docs/BALANCEAMENTO.md`, com medalha alcançável por personagem — **G**
+
+---
+
 ## Gelo (só se sobrar tempo)
 
 Não puxar nada daqui antes do **M3**.

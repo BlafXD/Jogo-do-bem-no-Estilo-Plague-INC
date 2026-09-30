@@ -89,3 +89,32 @@ describe('a régua de medalhas', () => {
     expect(root.querySelector('[data-hud="temperature"]')?.textContent).toContain('3,00');
   });
 });
+
+/**
+ * O pulso de vida (Fase 1 da reforma de 2026-09-30): um indicador que muda de
+ * valor ganha a classe da animação; um que não muda, não. O primeiro render não
+ * pulsa nada — a caixa estava vazia, e não há "antes" para comparar.
+ */
+describe('o pulso quando o valor muda', () => {
+  const valor = (root: ParentNode, field: string): HTMLElement | null =>
+    root.querySelector<HTMLElement>(`.hud__value[data-hud="${field}"]`);
+
+  it('não pulsa no primeiro render', () => {
+    const root = montar();
+    renderHud(root, hudView(createInitialState(2025)));
+
+    expect(valor(root, 'actionPoints')?.classList.contains('hud__value--bumped')).toBe(false);
+  });
+
+  it('pulsa só o indicador que mudou', () => {
+    const root = montar();
+    const inicial = createInitialState(2025);
+
+    renderHud(root, hudView(inicial));
+    renderHud(root, hudView({ ...inicial, actionPoints: inicial.actionPoints + 10 }));
+
+    expect(valor(root, 'actionPoints')?.classList.contains('hud__value--bumped')).toBe(true);
+    // O ano não mudou: fica quieto.
+    expect(valor(root, 'year')?.classList.contains('hud__value--bumped')).toBe(false);
+  });
+});

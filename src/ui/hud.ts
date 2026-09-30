@@ -110,6 +110,9 @@ export function mountHud(root: Element): void {
       const value = document.createElement('span');
       value.className = 'hud__value';
       value.dataset.hud = field;
+      // O pulso do renderHud se remove sozinho ao terminar: sem isso a classe
+      // ficaria grudada e a próxima mudança não teria como reiniciar a animação.
+      value.addEventListener('animationend', () => value.classList.remove(BUMP_CLASS));
 
       item.append(label, value);
       if (field === 'temperature') item.append(rulerElement());
@@ -147,17 +150,47 @@ function rulerElement(): HTMLSpanElement {
   return ruler;
 }
 
+/** A classe do pulso: o CSS anima, o mountHud a remove no fim. */
+const BUMP_CLASS = 'hud__value--bumped';
+
+/**
+ * Faz um valor pulsar quando muda.
+ *
+ * Remover a classe e forçar um reflow antes de pô-la de volta é o que reinicia a
+ * animação: dois ticks seguidos mudando o mesmo indicador, sem isso, só animariam
+ * o primeiro. O `offsetWidth` é lido de propósito — é o custo mínimo que obriga o
+ * navegador a aplicar a remoção antes da nova classe.
+ */
+function bump(target: Element): void {
+  const el = target as HTMLElement;
+  el.classList.remove(BUMP_CLASS);
+  void el.offsetWidth;
+  el.classList.add(BUMP_CLASS);
+}
+
 /**
  * Escreve os valores nas caixas montadas pelo mountHud.
  *
  * `mark` é onde a temperatura cai na régua, de 0 a 1 (o `rulerMark` do
  * stripes.ts). Vem à parte, e não dentro da view, porque a view são os textos
  * que o jogador lê; a posição do marcador é desenho.
+ *
+ * **O pulso só dispara quando um valor já escrito muda.** No primeiro render a
+ * caixa está vazia, e acender tudo de uma vez na carga seria a tela inteira
+ * piscando. Comparar o texto basta: as strings só diferem quando o número
+ * arredondado muda, então o pulso segue o ritmo do indicador — o PAC batendo a
+ * cada mês, a temperatura só quando a casa vira —, e não o dos 60 quadros.
  */
 export function renderHud(root: ParentNode, view: HudView, mark = 0): void {
   for (const field of HUD_FIELDS) {
     const target = root.querySelector(`[data-hud="${field}"]`);
-    if (target !== null) target.textContent = view[field];
+    if (target === null) continue;
+
+    const next = view[field];
+    const previous = target.textContent;
+    if (previous !== null && previous !== '' && previous !== next) bump(target);
+
+    target.textContent = next;
   }
 
   const ruler = root.querySelector<HTMLElement>('[data-hud="mark"]');

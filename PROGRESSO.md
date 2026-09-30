@@ -28,7 +28,28 @@ Regras curtas:
 
 ---
 
-## 2026-09-22 — Os sons do Kenney: seis efeitos, três deles em momentos que eram calados
+## 2026-09-30 — Começa a reforma: o HUD ganha vida (Fase 1), e o épico REF entra no PLANO
+
+- **Parte / tarefa:** `REF-01` ✔ (primeira fatia da Fase 1). Também: `P1-05` marcado como concluído
+  (APS 1, entregue em 2026-09-23 — checkbox estava desatualizado).
+- **Do chat, no mesmo dia:** o autor aprovou os playtests (`P8-01`) e pediu uma reforma grande —
+  mais dinâmica, seleção de personagem com buffs, apoio que não anda em bloco e mais habilidades.
+  Decidido: **um pacote só, rebalanceado de uma vez**, Ricardo → Indústria + um 5º personagem para
+  Transporte. Plano em `~/.claude/plans/iridescent-noodling-hamming.md`; backlog novo em `PLANO.md`
+  (seção REF), com os itens de 40 nós e personagens jogáveis saindo do Gelo.
+- **O que mudou (REF-01):**
+  - `src/ui/hud.ts` — o `renderHud` compara o texto anterior com o novo e, quando o valor muda, dá
+    um pulso. O `hudView` **continua puro** (nenhum teste de node tocado). O `mountHud` registra o
+    `animationend` que tira a classe sozinho.
+  - `src/ui/hud.css` — a animação `hud-bump` (escala + realce curto), dentro de
+    `@media (prefers-reduced-motion: no-preference)`: some inteira com movimento reduzido (§5/P8-04).
+  - `tests/hud.dom.test.ts` — dois testes novos: não pulsa no primeiro render; pulsa só o indicador
+    que mudou. Suíte **973 → 975**.
+- **Como verificar:** `npm run typecheck && npm run test && npm run build` (tudo limpo aqui). Na
+  tela, com o tempo correndo: o PAC pulsa a cada mês ao subir, e temperatura/emissões só quando a
+  casa vira. Ligando "reduzir movimento" no SO, tudo fica estático.
+- **Pendente:** evidência em `docs/evidencias/` fica melhor como GIF (o pulso não aparece em print
+  estático) — posso gravar. Próxima fatia: `REF-02` (vida na compra e na árvore).
 
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do

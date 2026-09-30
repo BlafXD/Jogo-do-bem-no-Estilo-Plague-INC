@@ -120,6 +120,31 @@
   background: var(--cor-listra-6, #b23a2e);
 }
 
+/* Vida no HUD: quando um indicador muda de valor, ele dá um pulso curto. O
+   jogador vê QUE algo mudou sem o número tremer — a largura é fixa pelo
+   tabular-nums, e a escala não empurra os vizinhos (o valor é item do grid da
+   caixa, então o transform pega e fica contido na célula). É reforço de
+   movimento, não recado: o valor novo já está escrito. Sai inteiro com
+   movimento reduzido (§5 / P8-04), onde a classe não casa com regra nenhuma. */
+@media (prefers-reduced-motion: no-preference) {
+  .hud__value--bumped {
+    animation: hud-bump 0.45s ease-out;
+  }
+}
+
+@keyframes hud-bump {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.13);
+    color: var(--cor-destaque, #7fd1a8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* O marcador: um traço claro, com um aro da cor da barra para se destacar sobre
    qualquer uma das quatro faixas. */
 .hud__ruler b {
