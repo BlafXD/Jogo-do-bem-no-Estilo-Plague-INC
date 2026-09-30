@@ -16,7 +16,7 @@
 
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
-import { canUnlock, unlockSkill } from './engine/skills';
+import { canUnlock, skillById, unlockSkill } from './engine/skills';
 import { createInitialState, skills, type RegionId, type SkillId } from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
 import {
@@ -29,9 +29,11 @@ import {
   renderControls,
   type TimeCommand,
 } from './ui/controls';
+import { ui } from './data/i18n';
 import { createSound, playSfx, toggleMute } from './ui/audio';
 import { passiveFor } from './ui/comparison';
 import { containView, mountContain, renderContain } from './ui/contain';
+import { flyCost } from './ui/fly';
 import {
   criticalCardView,
   focusResume,
@@ -117,6 +119,7 @@ import { focusClose, mountTreePanel, renderTreePanel, treePanelView } from './ui
 import './ui/theme.css';
 import './ui/characters.css';
 import './ui/contain.css';
+import './ui/fly.css';
 import './ui/critical-card.css';
 import './ui/controls.css';
 import './ui/event-cards.css';
@@ -853,6 +856,15 @@ function handleUnlock(id: SkillId): void {
   state = next;
   playSfx(sound, 'unlock');
   renderGame();
+  // O custo "voa" do botão de comprar até o saldo do painel (REF-02): o jogador
+  // vê o PAC saindo do bolso. Puro enfeite, depois do render — o número certo já
+  // está escrito. O saldo do painel é o alvo porque o HUD fica atrás do fundo
+  // escurecido enquanto a árvore está aberta.
+  flyCost(
+    detalheNo.querySelector('[data-detail="buy"]'),
+    painelArvore.querySelector('[data-tree-panel="points"]'),
+    `−${ui.tree.cost(String(skillById(id)?.cost ?? ''))}`,
+  );
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
   // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá
   // vontade de fechar a aba.

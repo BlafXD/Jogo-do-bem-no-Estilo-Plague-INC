@@ -70,6 +70,25 @@ Regras curtas:
 - **Pendente:** a 2ª metade da `REF-02` — o custo "voando" do nó até o contador de PAC (cruza a
   fronteira árvore↔HUD, mais delicado).
 
+## 2026-09-30 (fim do dia) — O custo voa até o PAC, e a REF-02 fecha
+
+- **Parte / tarefa:** `REF-02` ✔ (2ª metade).
+- **O que mudou:**
+  - `src/ui/fly.ts` (novo) — `flyCost(from, to, text)`: solta um rótulo que viaja do centro de um
+    elemento ao de outro e some (transitionend + rede de segurança por timeout). Sai calado sem os
+    dois elementos, com movimento reduzido, ou quando o layout não tem medida (jsdom).
+  - `src/ui/fly.css` (novo) — `.fly-cost`, z-index 25 (entre o painel, 20, e o cartão crítico, 30),
+    `pointer-events: none`, transição de transform + opacity.
+  - `src/main.ts` — no `handleUnlock`, depois de comprar, o custo (`−40 PAC`, do `ui.tree.cost`) voa
+    do botão `[data-detail="buy"]` até o saldo `[data-tree-panel="points"]`. O alvo é o saldo do
+    painel porque o HUD fica atrás do fundo escurecido. Imports novos: `skillById`, `ui`, `flyCost`,
+    `fly.css`.
+  - `tests/fly.dom.test.ts` (novo) — três testes: guardas (sem elemento, sem medida) e a montagem
+    (posição no centro da origem + texto). Suíte **977 → 980**.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+  Na tela, com o painel da árvore aberto, comprar um nó: o "−40 PAC" voa do botão até o saldo.
+- **Pendente:** nada na `REF-02`. Próximo: `REF-03` (vida no mapa e nos cartões de evento).
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.
