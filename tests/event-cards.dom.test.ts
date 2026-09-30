@@ -266,3 +266,29 @@ describe('o aviso da Inércia no boletim (VIS-11)', () => {
     expect(cartao?.querySelector('.events__by')).toBeNull();
   });
 });
+
+/**
+ * A entrada dos cartões (REF-03, 2026-09-30): só o cartão que acabou de cair no
+ * boletim ganha o `data-enter` que a animação usa. Os que já estavam em cena são
+ * reconstruídos sem ele, e aparecem parados no lugar.
+ */
+describe('a entrada dos cartões novos', () => {
+  const moderadoEl = (root: ParentNode): HTMLElement | null =>
+    root.querySelector<HTMLElement>('.events__card[data-severity="moderate"]');
+
+  it('marca o cartão novo, e não os que já estavam', () => {
+    const root = mount();
+
+    // Primeiro render: o moderado é novo no boletim.
+    show(root, eventCardsView(withCards(24, card(moderado.id))));
+    expect(moderadoEl(root)?.dataset.enter).toBe('');
+
+    // Chega um crítico; o moderado continua em cena, com a mesma chave.
+    show(root, eventCardsView(withCards(24, card(moderado.id), card(critico.id))));
+
+    expect(
+      root.querySelector<HTMLElement>('.events__card[data-severity="critical"]')?.dataset.enter,
+    ).toBe('');
+    expect(moderadoEl(root)?.dataset.enter).toBeUndefined();
+  });
+});

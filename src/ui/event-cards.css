@@ -187,3 +187,24 @@
 .events__by {
   color: var(--cor-valor, #f2f7f4);
 }
+
+/* Vida no boletim (REF-03): o cartão que acabou de cair desliza para dentro.
+   Vale para o evento e para o aviso da Inércia, que moram na mesma lista. Só o
+   `data-enter` anima — os cartões que já estavam em cena são reconstruídos sem
+   ele e aparecem parados. Fora com movimento reduzido (§5 / P8-04). */
+@media (prefers-reduced-motion: no-preference) {
+  .events__card[data-enter] {
+    animation: events-card-in 0.4s ease-out;
+  }
+}
+
+@keyframes events-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

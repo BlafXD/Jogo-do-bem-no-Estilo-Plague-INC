@@ -102,6 +102,9 @@
 .map__heat {
   filter: sepia(1) saturate(1.35) hue-rotate(-14deg) brightness(0.92);
   opacity: calc(var(--calor, 0) * 0.9);
+  /* O `--calor` anda um degrau a cada mês; sem isto a secura pularia de opacidade
+     a cada render. A transição faz a terra secar de leve, não em saltos. */
+  transition: opacity 0.8s ease;
 }
 
 /* Da metade do caminho em diante, o mapa ganha um tom de brasa. */
@@ -113,6 +116,7 @@
   );
   mix-blend-mode: multiply;
   opacity: clamp(0, (var(--calor, 0) - 0.55) * 2, 0.8);
+  transition: opacity 0.8s ease;
 }
 
 .map__stage:not([data-masks='ready']) .map__heat,
@@ -350,6 +354,45 @@
   color: var(--cor-fundo, #0f1c17);
 }
 
+/* Vida no alerta (REF-03): o chip entra com um pulinho, e o de evento ganha um
+   brilho lento no mesmo compasso do território que pulsa embaixo (map-pulse,
+   1,8 s). É reforço — quem diz o que há está no ícone e na palavra escrita (§5).
+   Tudo gated em no-preference: com movimento reduzido, o chip só aparece. */
+@media (prefers-reduced-motion: no-preference) {
+  .map__alert[data-alert] {
+    animation: map-alert-in 0.4s ease-out;
+  }
+
+  .map__alert[data-alert='event'] {
+    animation:
+      map-alert-in 0.4s ease-out,
+      map-alert-glow 1.8s ease-in-out 0.4s infinite;
+  }
+}
+
+@keyframes map-alert-in {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes map-alert-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1.5px var(--cor-alerta, #f2a65a);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1.5px var(--cor-alerta, #f2a65a),
+      0 0 8px 1px color-mix(in srgb, var(--cor-alerta, #f2a65a) 60%, transparent);
+  }
+}
+
 /* A legenda do aquecimento (P7-04), no canto de baixo do desenho desde o
    VIS-04. O canto esquerdo é mar aberto — o da direita cobriria a Nova
    Zelândia. O fundo é opaco pela mesma razão das etiquetas: sobre a imagem, só
@@ -371,7 +414,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .map__light,
-  .map__halo {
+  .map__halo,
+  .map__heat,
+  .map__haze {
     transition: none;
   }
 

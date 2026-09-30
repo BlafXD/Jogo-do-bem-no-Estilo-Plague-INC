@@ -207,11 +207,15 @@ function paragraph(className: string, text: string): HTMLParagraphElement {
   return element;
 }
 
-function cardElement(card: EventCardView): HTMLLIElement {
+function cardElement(card: EventCardView, entering: boolean): HTMLLIElement {
   const item = document.createElement('li');
   item.className = 'events__card';
   item.dataset.severity = card.severity;
   item.dataset.key = card.key;
+  // Só o cartão que acabou de entrar anima (REF-03). A lista é reconstruída
+  // inteira quando muda, mas os que já estavam em cena voltam sem `data-enter` —
+  // reaparecem no lugar, sem piscar, e só o novo desliza para dentro.
+  if (entering) item.dataset.enter = '';
 
   const head = document.createElement('p');
   head.className = 'events__head';
@@ -315,5 +319,7 @@ export function renderEventCards(root: Element, view: EventCardsView): void {
   const same = shown.length === wanted.length && shown.every((key, i) => key === wanted[i]);
   if (same) return;
 
-  list.replaceChildren(...view.cards.map(cardElement));
+  // As chaves que ainda não estavam no boletim: só elas entram animando.
+  const fresh = new Set(wanted.filter((key) => !shown.includes(key)));
+  list.replaceChildren(...view.cards.map((card) => cardElement(card, fresh.has(card.key))));
 }

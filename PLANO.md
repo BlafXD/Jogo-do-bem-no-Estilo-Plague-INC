@@ -234,7 +234,7 @@ versão antiga e a nova seria medir duas vezes.
 
 - [x] `REF-01` **Fase 1** — Vida no HUD: o indicador pulsa quando muda de valor — **P** — *2026-09-30; só apresentação, `hudView` continua puro; fora com `prefers-reduced-motion`. Suíte 973 → 975*
 - [x] `REF-02` **Fase 1** — Vida na compra e na árvore: nó comprado acende, custo voa para o PAC — **M** — *2026-09-30, em duas fatias. 1ª: o nó comprado pulsa e os que ficam compráveis acenam (reação em cadeia). 2ª: o `src/ui/fly.ts` faz o custo voar do botão de comprar até o saldo do painel. Só apresentação, fora com `prefers-reduced-motion`. Suíte 975 → 980*
-- [ ] `REF-03` **Fase 1** — Vida no mapa e nos cartões: transição de faixa de calor, entrada/saída dos eventos e avisos — **M**
+- [x] `REF-03` **Fase 1** — Vida no mapa e nos cartões: transição de faixa de calor, entrada/saída dos eventos e avisos — **M** — *2026-09-30, em duas fatias, CSS puro. Mapa: a secura (`--calor`) e a bruma passam a transicionar; o chip de alerta entra com um pulinho e o de evento ganha brilho no compasso do território. Boletim: o cartão novo (evento ou aviso da Inércia) desliza para dentro — só o `data-enter`, os antigos ficam parados. **Saída dos cartões deixada de fora de propósito** (exigiria segurar o nó removido; baixo valor). Suíte 980 → 981. **Fase 1 (vida) completa.***
 - [ ] `REF-04` **Fase 2** — Campo `character` no `GameState` (contrato §3) + `SAVE_VERSION` 3 — **M**
 - [ ] `REF-05` **Fase 3** — Aplicar os buffs no engine, derivados (desconto de ramo, reforço de corte, peso de evento) — **G**
 - [ ] `REF-06` **Fase 4** — Apoio por região: `supportDecay` por região, nós de `support` com alvo regional — **M**

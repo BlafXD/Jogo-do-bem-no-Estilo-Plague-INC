@@ -89,6 +89,25 @@ Regras curtas:
   Na tela, com o painel da árvore aberto, comprar um nó: o "−40 PAC" voa do botão até o saldo.
 - **Pendente:** nada na `REF-02`. Próximo: `REF-03` (vida no mapa e nos cartões de evento).
 
+## 2026-09-30 (fim do dia) — Vida no mapa e no boletim: a Fase 1 fecha (REF-03)
+
+- **Parte / tarefa:** `REF-03` ✔ — e com ela a **Fase 1 (vida visual)** inteira (`REF-01`, `02`, `03`).
+- **O que mudou (tudo CSS, menos o `data-enter` do boletim):**
+  - `src/ui/map.css` — a secura (`.map__heat`) e a bruma (`.map__haze`) ganham `transition: opacity`
+    (o `--calor` anda um degrau por mês; agora seca de leve). O chip `.map__alert` entra com
+    `map-alert-in`, e o de evento pulsa `map-alert-glow` no compasso do território (1,8 s). O bloco
+    de movimento reduzido desliga as transições novas; as animações são gated em `no-preference`.
+  - `src/ui/event-cards.ts` — `renderEventCards` marca com `data-enter` só as chaves que ainda não
+    estavam no boletim; `cardElement(card, entering)`. Cobre evento **e** aviso da Inércia (mesma lista).
+  - `src/ui/event-cards.css` — `events-card-in` (desliza para dentro) em `.events__card[data-enter]`,
+    gated em `no-preference`.
+  - `tests/event-cards.dom.test.ts` — um teste: marca o cartão novo, não os que já estavam. Suíte
+    **980 → 981**.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (limpos).
+  Na tela: o mundo esquenta sem saltos, o alerta pisca ao surgir, e um evento novo desliza no boletim.
+- **Pendente:** a **saída** dos cartões ficou de fora de propósito (segurar o nó removido; baixo
+  valor). Próximo: `REF-04` — o campo `character` no `GameState` (contrato §3) e o `SAVE_VERSION` 3.
+
 - **Parte / tarefa:** `P7-09` ✔.
 - **Do chat, no mesmo dia:** o autor do projeto trouxe o zip do pacote _Interface Sounds_, do
   Kenney, e deu permissão para apagar os três WAV de teste e o `scripts/gerar-audio.mjs`.
