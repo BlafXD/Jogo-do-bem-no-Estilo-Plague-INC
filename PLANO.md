@@ -95,7 +95,7 @@ Objetivo: **provar que a ideia é divertida antes de escrever código.**
 - [ ] `P1-02` Protótipo de papel *print and play*: 12 cartas de habilidade, 8 cartas de evento, ficha de indicadores — **M**
 - [ ] `P1-03` Playtest do protótipo com 2 pessoas quaisquer (colega, família) — **M** — aceite: `docs/playtests/01-papel.md` com 3 problemas encontrados
 - [x] `P1-04` Escolher o nome do jogo — **P** — **Ponto de Virada**
-- [ ] `P1-05` (APS 1) Levantamento sobre *Plague Inc*: propagação, DNA, árvore de upgrades, curva de dificuldade — **M**
+- [x] `P1-05` (APS 1) Levantamento sobre *Plague Inc*: propagação, DNA, árvore de upgrades, curva de dificuldade — **M** — *relatório técnico entregue em 2026-09-23 (`Downloads/Desenvolvimento de Jogos e Simuladores - APS 1 - Caique e Lucas.docx`); cobre o GDD §7 — propagação, DNA→PAC, árvore de evolução, curva de dificuldade, cura→Inércia — e a inversão de cada elemento numa tabela comparativa, com 4 telas de `docs/evidencias/`*
 
 ---
 
