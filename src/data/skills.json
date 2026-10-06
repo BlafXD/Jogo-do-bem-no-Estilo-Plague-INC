@@ -64,6 +64,70 @@
     ]
   },
   {
+    "id": "offshore-wind",
+    "branch": "energy",
+    "name": "Eólica no mar",
+    "description": "Corta 0,5% ao ano das emissões globais.",
+    "fact": "A eólica no mar chegou a 83 GW instalados no mundo no fim de 2024, com 8 GW somados só naquele ano.",
+    "cost": 150,
+    "requires": ["smart-grid"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.5
+      }
+    ]
+  },
+  {
+    "id": "hydro",
+    "branch": "energy",
+    "name": "Hidrelétricas",
+    "description": "Corta 0,4% ao ano das emissões globais.",
+    "fact": "A hidrelétrica ainda é a maior fonte isolada de eletricidade renovável do mundo: cerca de 14% de toda a geração, à frente da eólica e da solar.",
+    "cost": 220,
+    "requires": ["offshore-wind"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.4
+      }
+    ]
+  },
+  {
+    "id": "green-hydrogen",
+    "branch": "energy",
+    "name": "Hidrogênio verde",
+    "description": "Corta 0,45% ao ano das emissões globais.",
+    "fact": "O mundo produziu quase 100 milhões de toneladas de hidrogênio em 2024, e menos de 1% delas veio de processos de baixa emissão.",
+    "cost": 220,
+    "requires": ["offshore-wind"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.45
+      }
+    ]
+  },
+  {
+    "id": "coal-phaseout",
+    "branch": "energy",
+    "name": "Fim do carvão na eletricidade",
+    "description": "Corta 1% ao ano das emissões globais.",
+    "fact": "O carvão gerou 35% da eletricidade do mundo em 2024 — a menor fatia desde 1974, e ainda assim a maior de todas as fontes.",
+    "cost": 350,
+    "requires": ["hydro", "green-hydrogen"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 1
+      }
+    ]
+  },
+  {
     "id": "transit",
     "branch": "transport",
     "name": "Transporte público de massa",
@@ -134,6 +198,75 @@
         "kind": "emissionCut",
         "target": "global",
         "value": 0.35
+      }
+    ]
+  },
+  {
+    "id": "rail-freight",
+    "branch": "transport",
+    "name": "Carga nos trilhos",
+    "description": "Corta 0,3% ao ano das emissões globais.",
+    "fact": "O trem leva 7% da carga e 8% dos passageiros do mundo gastando 2% de toda a energia do transporte.",
+    "cost": 150,
+    "requires": ["efficient-buildings"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      }
+    ]
+  },
+  {
+    "id": "clean-shipping",
+    "branch": "transport",
+    "name": "Navegação limpa",
+    "description": "Corta 0,3% ao ano das emissões globais.",
+    "fact": "A navegação internacional respondeu por 2,9% das emissões humanas de gases de efeito estufa, e a Organização Marítima Internacional se comprometeu a zerá-las por volta de 2050.",
+    "cost": 220,
+    "requires": ["rail-freight"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      }
+    ]
+  },
+  {
+    "id": "aviation-fuel",
+    "branch": "transport",
+    "name": "Combustível sustentável de aviação",
+    "description": "Corta 0,25% ao ano das emissões globais.",
+    "fact": "Em 2024, o combustível sustentável de aviação foi 0,3% de todo o querosene de avião queimado no mundo.",
+    "cost": 220,
+    "requires": ["rail-freight"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.25
+      }
+    ]
+  },
+  {
+    "id": "compact-cities",
+    "branch": "transport",
+    "name": "Cidades compactas",
+    "description": "Corta 0,4% ao ano das emissões globais e ganha 6 pontos de apoio.",
+    "fact": "As cidades ocupam cerca de 2% da terra do planeta e respondem por 70% das emissões de CO₂.",
+    "cost": 350,
+    "requires": ["clean-shipping", "aviation-fuel"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.4
+      },
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 6
       }
     ]
   },
@@ -222,6 +355,85 @@
     ]
   },
   {
+    "id": "peatlands",
+    "branch": "nature",
+    "name": "Recuperação de turfeiras",
+    "description": "Corta 0,35% ao ano das emissões globais e ganha 6 pontos de resiliência.",
+    "fact": "As turfeiras cobrem cerca de 3% da terra do planeta e guardam o dobro do carbono de todas as florestas do mundo somadas.",
+    "cost": 150,
+    "requires": ["ocean-protection"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.35
+      },
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "id": "agroforestry",
+    "branch": "nature",
+    "name": "Agrofloresta",
+    "description": "Corta 0,3% ao ano das emissões globais e ganha 3 pontos de apoio.",
+    "fact": "Em 43% das terras agrícolas do mundo já existe ao menos 10% de cobertura de árvores, e são elas que guardam mais de três quartos do carbono dessas terras.",
+    "cost": 220,
+    "requires": ["peatlands"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      },
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": "food-waste",
+    "branch": "nature",
+    "name": "Fim do desperdício de alimentos",
+    "description": "Corta 0,35% ao ano das emissões globais.",
+    "fact": "Perder e desperdiçar comida gera de 8% a 10% das emissões humanas de gases de efeito estufa — quase cinco vezes o que a aviação inteira emite.",
+    "cost": 220,
+    "requires": ["peatlands"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.35
+      }
+    ]
+  },
+  {
+    "id": "protected-areas",
+    "branch": "nature",
+    "name": "Áreas protegidas",
+    "description": "Corta 0,3% ao ano das emissões globais e ganha 10 pontos de resiliência.",
+    "fact": "O mundo protege 17,6% da terra e 8,4% do mar; a meta acordada por quase todos os países é chegar a 30% dos dois até 2030.",
+    "cost": 350,
+    "requires": ["agroforestry", "food-waste"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.3
+      },
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 10
+      }
+    ]
+  },
+  {
     "id": "industrial-efficiency",
     "branch": "industry",
     "name": "Eficiência industrial",
@@ -282,6 +494,70 @@
         "kind": "emissionCut",
         "target": "global",
         "value": 0.3
+      }
+    ]
+  },
+  {
+    "id": "methane-leaks",
+    "branch": "industry",
+    "name": "Fim dos vazamentos de metano",
+    "description": "Corta 0,6% ao ano das emissões globais.",
+    "fact": "A produção de combustível fóssil solta quase 120 milhões de toneladas de metano por ano, e 70% disso daria para evitar com tecnologia que já existe.",
+    "cost": 150,
+    "requires": ["low-carbon-cement"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.6
+      }
+    ]
+  },
+  {
+    "id": "refrigerants",
+    "branch": "industry",
+    "name": "Gases de refrigeração",
+    "description": "Corta 0,4% ao ano das emissões globais.",
+    "fact": "Trocar os gases de geladeiras e de ar-condicionado, como manda a Emenda de Kigali, deve evitar até 0,4 °C de aquecimento a mais até 2100.",
+    "cost": 220,
+    "requires": ["methane-leaks"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.4
+      }
+    ]
+  },
+  {
+    "id": "green-ammonia",
+    "branch": "industry",
+    "name": "Amônia verde",
+    "description": "Corta 0,35% ao ano das emissões globais.",
+    "fact": "Cada tonelada de amônia para fertilizante emite 2,4 toneladas de CO₂ — quase o dobro do aço e quatro vezes o cimento.",
+    "cost": 220,
+    "requires": ["methane-leaks"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.35
+      }
+    ]
+  },
+  {
+    "id": "carbon-capture",
+    "branch": "industry",
+    "name": "Captura e armazenamento de carbono",
+    "description": "Corta 0,5% ao ano das emissões globais.",
+    "fact": "Todas as usinas de captura de carbono em operação no mundo retiram 51 milhões de toneladas de CO₂ por ano — pouco mais de um milésimo do que o mundo emite.",
+    "cost": 350,
+    "requires": ["refrigerants", "green-ammonia"],
+    "effects": [
+      {
+        "kind": "emissionCut",
+        "target": "global",
+        "value": 0.5
       }
     ]
   },
@@ -358,6 +634,79 @@
         "kind": "support",
         "target": "global",
         "value": 5
+      }
+    ]
+  },
+  {
+    "id": "carbon-price",
+    "branch": "society",
+    "name": "Preço do carbono",
+    "description": "Ganha mais 4 PAC por ano e derruba 10 pontos da Inércia.",
+    "fact": "Os instrumentos de preço de carbono já cobrem 28% das emissões mundiais e arrecadaram mais de 100 bilhões de dólares em 2024.",
+    "cost": 150,
+    "requires": ["coastal-defence"],
+    "effects": [
+      {
+        "kind": "pointsPerYear",
+        "value": 4
+      },
+      {
+        "kind": "inertiaCut",
+        "value": 10
+      }
+    ]
+  },
+  {
+    "id": "subsidy-reform",
+    "branch": "society",
+    "name": "Fim dos subsídios fósseis",
+    "description": "Derruba 20 pontos da Inércia e ganha mais 3 PAC por ano.",
+    "fact": "Em 2023 os governos gastaram 620 bilhões de dólares para baratear combustível fóssil ao consumidor, e em 2022 esse gasto passou de 1,2 trilhão.",
+    "cost": 220,
+    "requires": ["carbon-price"],
+    "effects": [
+      {
+        "kind": "inertiaCut",
+        "value": 20
+      },
+      {
+        "kind": "pointsPerYear",
+        "value": 3
+      }
+    ]
+  },
+  {
+    "id": "climate-finance",
+    "branch": "society",
+    "name": "Financiamento climático",
+    "description": "Ganha mais 5 PAC por ano.",
+    "fact": "Na COP29 os países acordaram levar o financiamento climático aos países em desenvolvimento a pelo menos 300 bilhões de dólares por ano até 2035, dentro de uma meta maior de 1,3 trilhão vindo de todas as fontes.",
+    "cost": 220,
+    "requires": ["carbon-price"],
+    "effects": [
+      {
+        "kind": "pointsPerYear",
+        "value": 5
+      }
+    ]
+  },
+  {
+    "id": "just-transition",
+    "branch": "society",
+    "name": "Transição justa",
+    "description": "Ganha 10 pontos de apoio e derruba 15 pontos da Inércia.",
+    "fact": "A energia renovável empregava 16,6 milhões de pessoas no mundo em 2024, e o emprego do setor cresce há mais de uma década.",
+    "cost": 350,
+    "requires": ["subsidy-reform", "climate-finance"],
+    "effects": [
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 10
+      },
+      {
+        "kind": "inertiaCut",
+        "value": 15
       }
     ]
   }

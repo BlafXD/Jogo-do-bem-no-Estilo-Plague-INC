@@ -1,23 +1,42 @@
-// As três telas do jogo (P5-06): título, partida e fim.
+// As quatro telas do jogo: título, escolha do especialista, partida e fim.
 //
 // Até aqui o jogo não tinha telas: a página abria já jogando, com o relógio
 // correndo desde o primeiro quadro. Isso serviu enquanto o que se testava era a
 // simulação, e deixa de servir num estande — quem chega precisa de um começo,
 // e quem termina precisa de um fim que não seja "a árvore ficou cinza".
 //
-// **O roteador é uma função pura de duas perguntas**: o jogador já saiu do
-// título? a partida acabou? Não há máquina de estados, nem histórico, nem rota
-// na URL. Três telas não justificam nada disso, e o `vite.config.ts` registra
-// que o jogo é página única sem rotas — mudar isso quebraria o `base: './'` que
-// o GitHub Pages e o build offline da feira dependem.
+// **A quarta tela entrou no REF-08** (eram três no P5-06), entre o título e a
+// partida. Ela existe porque o `GameState` tem um `character` desde o REF-04, e
+// o `createInitialState` o **recebe** em vez de adotá-lo depois: alguém precisa
+// ter escolhido antes de a partida existir.
+//
+// **O roteador continua uma função pura de perguntas em ordem**: onde o jogador
+// está antes da partida? ele já saiu de lá? a partida acabou? Não há máquina de
+// estados, nem histórico, nem rota na URL. Quatro telas ainda não justificam
+// nada disso, e o `vite.config.ts` registra que o jogo é página única sem rotas
+// — mudar isso quebraria o `base: './'` de que o GitHub Pages e o build offline
+// da feira dependem.
+//
+// **Por que `entry` é uma união, e não um terceiro booleano.** Título e escolha
+// são dois lugares do *mesmo* momento — antes da partida —, e não dois fatos
+// independentes como `started` e `reviewing`. Um `choosing: boolean` ao lado do
+// `started` deixaria `{ choosing: true, started: true }` existir no tipo sem
+// significar nada. O §4 da FORMA-DE-TRABALHO pede união discriminada em vez de
+// flag booleana exatamente para isso.
 //
 // **O que cada tela mostra, e por quê:**
 //
-// | | título | partida | fim |
-// |---|---|---|---|
-// | tela de título | visível | — | — |
-// | topo (HUD, tempo, partida) | — | visível | **visível** |
-// | tabuleiro (mapa, árvore, eventos) | — | visível | — |
+// | | título | escolha | partida | fim |
+// |---|---|---|---|---|
+// | tela de título | visível | — | — | — |
+// | tela de escolha | — | visível | — | — |
+// | topo (HUD, tempo, partida) | — | — | visível | **visível** |
+// | tabuleiro (mapa, árvore, eventos) | — | — | visível | — |
+//
+// **A escolha esconde o HUD e as duas barras, como o título faz.** Os
+// indicadores de uma partida que ainda não começou seriam todos o valor de
+// 2025, e o controle de tempo ofereceria pausa e velocidade para um relógio
+// parado — controles mentindo sobre o estado do jogo.
 //
 // O HUD **continua na tela no fim**, e essa linha da tabela é a mais pensada
 // daqui. O `outcome.css` do P6-08 registrou, com todas as letras, por que o
@@ -36,29 +55,58 @@
 // A regra de ouro do §3 vale aqui como em toda a UI: este arquivo não sabe nada
 // do engine além de um booleano de "acabou", que quem calcula é o outcome.ts.
 
-export const SCREENS = ['title', 'game', 'end'] as const;
+export const SCREENS = ['title', 'select', 'game', 'end'] as const;
 
 export type Screen = (typeof SCREENS)[number];
 
+/**
+ * Onde o jogador está **antes** da partida: na apresentação do jogo, ou
+ * escolhendo o especialista que vai dirigir.
+ *
+ * Sai de `Screen` com `Extract`, e não escrito à mão, porque o `currentScreen`
+ * devolve o `entry` direto: as duas listas têm que concordar, e aqui o `tsc`
+ * cobra isso em vez de uma revisão humana.
+ */
+export type Entry = Extract<Screen, 'title' | 'select'>;
+
 export type ScreenState = {
-  /** O jogador saiu do título — por "Continuar" ou por "Nova partida". */
+  /** Em que ponto da entrada o jogador está, enquanto não começou (REF-08). */
+  readonly entry: Entry;
+  /** O jogador saiu da entrada — por "Continuar" ou escolhendo um especialista. */
   readonly started: boolean;
   /** Acabou, e o jogador pediu para rever o mundo em vez do resultado. */
   readonly reviewing: boolean;
 };
 
 export function createScreens(): ScreenState {
-  return { started: false, reviewing: false };
+  return { entry: 'title', started: false, reviewing: false };
 }
 
 /**
- * Sair do título.
+ * Ir do título para a escolha do especialista (REF-08).
+ *
+ * É o caminho de toda partida **nova** — inclusive a do Modo Feira, por decisão
+ * do chat em 2026-10-06: a escolha é a primeira coisa que o visitante do
+ * estande faz, e vale o punhado de segundos que custa.
+ *
+ * "Continuar" não passa por aqui: a partida guardada já tem o personagem dela
+ * dentro do save (`SAVE_VERSION` 3), e perguntar de novo seria oferecer a troca
+ * de um especialista no meio da partida — o que mudaria o balanceamento já
+ * corrido.
+ */
+export function chooseCharacter(): ScreenState {
+  return { entry: 'select', started: false, reviewing: false };
+}
+
+/**
+ * Sair da entrada para a partida.
  *
  * Zera o `reviewing` em vez de preservá-lo: uma partida nova não herda o que o
- * jogador estava olhando na anterior.
+ * jogador estava olhando na anterior. E devolve o `entry` ao título, que é onde
+ * o jogador vai estar se voltar — a escolha não fica armada esperando.
  */
 export function startGame(): ScreenState {
-  return { started: true, reviewing: false };
+  return { entry: 'title', started: true, reviewing: false };
 }
 
 export function reviewWorld(screens: ScreenState): ScreenState {
@@ -86,12 +134,14 @@ export function backToTitle(): ScreenState {
  * `finished` chega de fora porque quem responde isso é o `isFinished` do
  * engine, e este arquivo não importa engine (§3).
  *
- * A ordem das perguntas é a regra: o título vem antes de tudo. Um save de
+ * A ordem das perguntas é a regra: a **entrada** vem antes de tudo. Um save de
  * partida encerrada abre no título, e não direto na tela de fim — quem senta
  * na frente do computador da feira precisa ver o jogo se apresentar primeiro.
+ * E quem está escolhendo o especialista também não vê a tela de fim da partida
+ * anterior aparecer por baixo da escolha.
  */
 export function currentScreen(screens: ScreenState, finished: boolean): Screen {
-  if (!screens.started) return 'title';
+  if (!screens.started) return screens.entry;
   if (finished && !screens.reviewing) return 'end';
   return 'game';
 }
@@ -115,6 +165,14 @@ export function currentScreen(screens: ScreenState, finished: boolean): Screen {
 export type ScreenLayout = {
   /** A tela de título inteira. */
   readonly title: HTMLElement;
+  /**
+   * A tela de escolha do especialista (REF-08).
+   *
+   * Vizinha do título no `index.html`, e fora do invólucro da partida pela
+   * mesma razão que ele: as duas são telas de entrada, e o invólucro existe
+   * para as três faixas da partida.
+   */
+  readonly select: HTMLElement;
   /** A barra de cima: o HUD e a barra da partida. */
   readonly chrome: HTMLElement;
   /**
@@ -144,8 +202,9 @@ export type ScreenLayout = {
    *
    * Ele nunca some — só recebe o nome da tela no ar, em `data-screen`. É por
    * esse nome que o layout.css decide montar a tela cheia: na partida e no fim,
-   * sim; no título, não, porque ali as três faixas estão escondidas e um
-   * invólucro da altura da janela seria uma página vazia embaixo do título.
+   * sim; no título e na escolha, não, porque ali as três faixas estão
+   * escondidas e um invólucro da altura da janela seria uma página vazia
+   * embaixo da tela de entrada.
    */
   readonly frame: HTMLElement;
 };
@@ -159,9 +218,15 @@ export type ScreenLayout = {
  * e aqui um deles apaga a partida salva.
  */
 export function renderScreens(layout: ScreenLayout, screen: Screen): void {
+  // As duas telas de entrada escondem a mesma coisa, e a pergunta é feita uma
+  // vez: um `screen === 'title' || screen === 'select'` repetido em duas linhas
+  // é o jeito de alguém editar uma e esquecer a outra.
+  const entering = screen === 'title' || screen === 'select';
+
   layout.title.hidden = screen !== 'title';
-  layout.chrome.hidden = screen === 'title';
-  layout.bar.hidden = screen === 'title';
+  layout.select.hidden = screen !== 'select';
+  layout.chrome.hidden = entering;
+  layout.bar.hidden = entering;
   layout.board.hidden = screen !== 'game';
   layout.skip.hidden = screen !== 'game';
   layout.frame.dataset.screen = screen;

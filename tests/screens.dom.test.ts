@@ -14,6 +14,7 @@ import { SCREENS, renderScreens, type Screen, type ScreenLayout } from '../src/u
 
 function montar(): ScreenLayout & { readonly botao: HTMLButtonElement } {
   const title = document.createElement('section');
+  const select = document.createElement('section');
   const frame = document.createElement('div');
   const chrome = document.createElement('header');
   const board = document.createElement('div');
@@ -27,10 +28,10 @@ function montar(): ScreenLayout & { readonly botao: HTMLButtonElement } {
   title.append(botao);
 
   // A mesma forma do index.html desde o VIS-04: as três faixas da partida dentro
-  // do invólucro, e o título fora dele.
+  // do invólucro, e as duas telas de entrada fora dele.
   frame.append(chrome, board, bar);
-  document.body.replaceChildren(skip, title, frame);
-  return { title, chrome, bar, board, skip, frame, botao };
+  document.body.replaceChildren(skip, title, select, frame);
+  return { title, select, chrome, bar, board, skip, frame, botao };
 }
 
 /**
@@ -55,6 +56,7 @@ function visiveis(layout: ScreenLayout, screen: Screen): readonly string[] {
   return (
     [
       ['title', layout.title],
+      ['select', layout.select],
       ['chrome', layout.chrome],
       ['bar', layout.bar],
       ['board', layout.board],
@@ -68,6 +70,15 @@ function visiveis(layout: ScreenLayout, screen: Screen): readonly string[] {
 describe('cada tela mostra o que precisa', () => {
   it('no título, só a tela de título', () => {
     expect(visiveis(montar(), 'title')).toEqual(['title']);
+  });
+
+  /**
+   * A escolha do especialista (REF-08) esconde o mesmo que o título: o HUD de
+   * uma partida que ainda não começou seria todo o valor de 2025, e a barra de
+   * tempo ofereceria pausa e velocidade para um relógio parado.
+   */
+  it('na escolha, só a tela de escolha', () => {
+    expect(visiveis(montar(), 'select')).toEqual(['select']);
   });
 
   /**
@@ -116,6 +127,21 @@ describe('cada tela mostra o que precisa', () => {
       if (abertos.includes('title')) expect(abertos).toEqual(['title']);
     }
   });
+
+  /**
+   * As duas telas de entrada são exclusivas entre si e com tudo o mais. É a
+   * conferência que pega o erro mais barato de cometer no `renderScreens`: uma
+   * das duas com `screen === 'title'` em vez de `screen !== 'title'`.
+   */
+  it('nunca deixa as duas telas de entrada juntas', () => {
+    const layout = montar();
+
+    for (const screen of SCREENS) {
+      const abertos = visiveis(layout, screen);
+      expect(abertos.includes('title') && abertos.includes('select'), screen).toBe(false);
+      if (abertos.includes('select')) expect(abertos).toEqual(['select']);
+    }
+  });
 });
 
 describe('o roteador', () => {
@@ -125,7 +151,9 @@ describe('o roteador', () => {
     // Passa por todas e volta ao começo: o estado final tem que ser igual ao
     // primeiro, ou alguma tela estaria acendendo algo que ninguém apaga.
     const primeiro = visiveis(layout, 'title');
-    for (const screen of ['game', 'end', 'game', 'end'] as const) visiveis(layout, screen);
+    for (const screen of ['select', 'game', 'end', 'game', 'select', 'end'] as const) {
+      visiveis(layout, screen);
+    }
 
     expect(visiveis(layout, 'title')).toEqual(primeiro);
   });
@@ -152,7 +180,7 @@ describe('o roteador', () => {
     renderScreens(layout, 'title');
     expect(foraDaTela(layout.botao)).toBe(false);
 
-    for (const screen of ['game', 'end'] as const) {
+    for (const screen of ['select', 'game', 'end'] as const) {
       renderScreens(layout, screen);
       expect(foraDaTela(layout.botao), screen).toBe(true);
     }

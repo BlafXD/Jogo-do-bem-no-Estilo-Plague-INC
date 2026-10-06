@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   SCREENS,
   backToTitle,
+  chooseCharacter,
   createScreens,
   currentScreen,
   reviewWorld,
@@ -11,14 +12,15 @@ import {
 } from '../src/ui/screens';
 
 /**
- * O roteador das três telas (P5-06). Roda em node — ele é uma função de duas
- * perguntas e não precisa de DOM para ser cobrado.
+ * O roteador das quatro telas (P5-06; a quarta é do REF-08). Roda em node — ele
+ * é uma função de perguntas em ordem e não precisa de DOM para ser cobrado.
  *
  * O que **não** está aqui está no tests/screens.dom.test.ts: quem some da tela e
  * quem sai da ordem de tabulação.
  */
 
 const NO_TITULO = createScreens();
+const ESCOLHENDO = chooseCharacter();
 const JOGANDO = startGame();
 const REVENDO = reviewWorld(startGame());
 
@@ -48,13 +50,47 @@ describe('a tela que está no ar', () => {
     expect(currentScreen(REVENDO, true)).toBe('game');
   });
 
-  it('só existem três telas, e o roteador não inventa uma quarta', () => {
-    const todas = [NO_TITULO, JOGANDO, REVENDO].flatMap((s) => [
+  it('só existem quatro telas, e o roteador não inventa uma quinta', () => {
+    const todas = [NO_TITULO, ESCOLHENDO, JOGANDO, REVENDO].flatMap((s) => [
       currentScreen(s, false),
       currentScreen(s, true),
     ]);
 
     for (const tela of todas) expect(SCREENS).toContain(tela);
+  });
+});
+
+describe('a escolha do especialista (REF-08)', () => {
+  it('é a tela no ar depois de "Nova partida"', () => {
+    expect(currentScreen(ESCOLHENDO, false)).toBe('select');
+  });
+
+  /**
+   * A mesma regra do título: uma partida encerrada no save não aparece por
+   * baixo da escolha. É o que o `currentScreen` garante perguntando pela
+   * entrada antes de perguntar pelo fim.
+   */
+  it('não deixa a tela de fim aparecer por baixo dela', () => {
+    expect(currentScreen(ESCOLHENDO, true)).toBe('select');
+  });
+
+  /**
+   * Começar sai da escolha, e não a deixa armada esperando: um `entry` que
+   * sobrevivesse faria o "Voltar ao título" do fim da partida cair na tela de
+   * escolha em vez do título.
+   */
+  it('não sobrevive ao começo da partida', () => {
+    expect(currentScreen(startGame(), false)).toBe('game');
+    expect(startGame().entry).toBe('title');
+  });
+
+  it('o Esc e o "Voltar" devolvem ao título', () => {
+    expect(currentScreen(backToTitle(), false)).toBe('title');
+  });
+
+  /** Escolher não começa a partida: é uma tela de entrada, não um atalho. */
+  it('não vale como partida começada', () => {
+    expect(ESCOLHENDO.started).toBe(false);
   });
 });
 

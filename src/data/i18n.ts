@@ -237,10 +237,13 @@ export const ui = {
 
     // A equipe da agência (2026-09-06, decidido no chat).
     //
-    // **Eles são identidade, não mecânica.** Nenhum dá bônus, nenhum entra no
-    // `GameState` e nenhum é escolhido pelo jogador — o `docs/PERSONAGENS.md`
-    // registra a decisão e traduz as fichas para o vocabulário do engine, caso
-    // um dia a versão com bônus saia do Gelo.
+    // **Eles deixaram de ser só identidade no REF-08.** Até aqui esta nota dizia
+    // "nenhum dá bônus, nenhum entra no `GameState` e nenhum é escolhido pelo
+    // jogador" — as três coisas mudaram, na ordem: o campo `character` entrou no
+    // contrato (REF-04), os bônus de ramo entraram no engine (REF-05) e a tela de
+    // escolha é o REF-08, cujo texto está no `select`, abaixo. O que **não**
+    // mudou é esta tela: aqui eles continuam sendo a equipe se apresentando, e
+    // não uma grade de escolha.
     //
     // **Por que os quatro, e não um.** O `docs/GDD.md §1` diz que o jogador é o
     // Gerente, *coordenador* de uma agência. Um rosto só ali significaria "este
@@ -266,6 +269,55 @@ export const ui = {
     cancel: 'Cancelar',
     cancelHint: 'Mantém a partida salva como está.',
     warning: 'A partida salva será apagada. Não dá para desfazer.',
+  },
+
+  // A escolha do especialista (REF-08), entre o título e a partida.
+  //
+  // **As frases de bônus são moldes, não texto pronto**, e é de propósito: os
+  // números entram formatados do `character-buffs.json`. Escrever "custam 10%
+  // menos" aqui seria pôr balanceamento em arquivo de texto — a regra 8 proíbe
+  // nos dois sentidos, e o `REF-09` vai afinar justamente esses valores.
+  //
+  // **Nenhuma frase tem gênero.** A equipe tem duas mulheres e dois homens, e os
+  // rótulos descrevem o cartão ou a ação ("Escolha atual", "Escolher Ana Luiza")
+  // em vez da pessoa, o que dispensa quatro variantes de concordância e o erro
+  // que nasce quando um quinto integrante entra.
+  select: {
+    label: 'Escolha do especialista',
+    heading: 'Quem vai dirigir a agência?',
+    lead: 'Você continua sendo o Gerente. O especialista escolhido só dá vantagem no ramo dele — a árvore inteira segue aberta, e nenhuma partida rende PAC para comprar tudo.',
+
+    /** O ramo do bônus, ao lado do ícone dele. */
+    branchLabel: (branch: string) => `Especialidade: ${branch}`,
+
+    bonus: {
+      cost: (percent: string, branch: string) => `Nós de ${branch} custam ${percent} menos.`,
+      emission: (percent: string, branch: string) => `Cortes de ${branch} rendem ${percent} mais.`,
+      resilience: (points: string) => `As 8 regiões começam com ${points} de resiliência a mais.`,
+      points: (points: string) => `Mais ${points} PAC por ano, do primeiro mês ao último.`,
+    },
+
+    /** A marca do cartão escolhido — em texto, e não só na borda (§5). */
+    current: 'Escolha atual',
+    chooseHint: (name: string) => `Escolhe ${name} para dirigir esta partida.`,
+    chosenHint: (name: string) => `Clique de novo para desfazer a escolha de ${name}.`,
+
+    start: 'Começar a partida',
+    /** O Modo Feira passa pela escolha também (decidido no chat em 2026-10-06). */
+    startFair: 'Começar a demonstração',
+    startHint: 'Começa em 2025 com o especialista escolhido.',
+
+    /**
+     * A linha embaixo do botão. Existe nos dois estados, e não só no bloqueado:
+     * é a mesma regra do detalhe da árvore, que escreve "Faltam 12 PAC" em vez
+     * de apagar o botão sem dizer por quê.
+     */
+    statusEmpty: 'Escolha um especialista para começar.',
+    statusChosen: (name: string, branch: string) =>
+      `${name} dirige esta partida. A vantagem é no ramo ${branch}.`,
+
+    back: 'Voltar',
+    backHint: 'Volta ao título sem começar. Atalho: Esc.',
   },
 
   // O mapa das 8 regiões (P5-01; ilustrado desde o VIS-03), com a lista do

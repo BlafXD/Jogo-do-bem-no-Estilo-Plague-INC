@@ -88,15 +88,40 @@ describe('mountTree', () => {
    * sozinho embaixo. Quem desce cada um para a sua linha é a grade do CSS, com
    * os nós na ordem da profundidade — por isso a ordem da lista também conta.
    */
-  it('põe cada nó no lugar dele no losango, na ordem da profundidade', () => {
+  /**
+   * **Dois losangos empilhados desde o REF-07**, e não mais um. O segundo
+   * começa onde o primeiro termina: o `offshore-wind` pede o `smart-grid`, que é
+   * o fundo do de cima. O `placesOf` não sabe disso — ele só lê profundidade e
+   * conta quantos nós há em cada fileira —, e é por isso que o desenho saiu de
+   * graça quando a árvore dobrou.
+   */
+  it('põe cada nó no lugar dele nos dois losangos, na ordem da profundidade', () => {
     const root = mount(rich(0));
     const ramo = root.querySelector('[data-branch="energy"]');
     const itens = [...(ramo?.querySelectorAll<HTMLElement>('li') ?? [])];
 
     expect(itens.map((li) => li.querySelector<HTMLElement>('[data-skill]')?.dataset.skill)).toEqual(
-      ['solar', 'wind', 'storage', 'smart-grid'],
+      [
+        'solar',
+        'wind',
+        'storage',
+        'smart-grid',
+        'offshore-wind',
+        'hydro',
+        'green-hydrogen',
+        'coal-phaseout',
+      ],
     );
-    expect(itens.map((li) => li.dataset.place)).toEqual(['alone', 'left', 'right', 'alone']);
+    expect(itens.map((li) => li.dataset.place)).toEqual([
+      'alone',
+      'left',
+      'right',
+      'alone',
+      'alone',
+      'left',
+      'right',
+      'alone',
+    ]);
   });
 
   it('cada losango tem uma camada de ligações, escondida do leitor de tela', () => {
@@ -150,6 +175,35 @@ describe('renderTree', () => {
 
     expect(wind.dataset.status).toBe('locked');
     expect(textOf(wind, 'label')).toBe('Bloqueado');
+  });
+
+  /**
+   * **O bug que o REF-08 descobriu.** O custo do cartão era escrito só no
+   * `mountTree`, e até a tela de escolha existir isso nunca pesou: o
+   * `character` era `null` em toda partida de verdade, então o preço não mudava
+   * depois da montagem. Com a escolha do especialista **depois** do mount, o
+   * desconto de ramo do REF-05 entrava no detalhe e na compra e não entrava no
+   * cartão — dois números discordando na tela, que é exatamente o que o
+   * `costFor` existe para impedir.
+   */
+  it('reescreve o custo quando o personagem muda o desconto (REF-05/REF-08)', () => {
+    const semNinguem = rich(40);
+    const root = mount(semNinguem);
+    const solar = nodeButton(root, 'solar');
+
+    // Montada no baseline: `solar` custa os 40 do skills.json.
+    expect(textOf(solar, 'cost')).toBe(ui.tree.cost('40'));
+
+    // A Ana Luiza desconta 10% do ramo Energia: 40 → 36.
+    renderTree(root, treeView({ ...semNinguem, character: 'ana-luiza' }), 'solar');
+    expect(textOf(solar, 'cost')).toBe(ui.tree.cost('36'));
+
+    // E o nó de outro ramo não se mexe.
+    expect(textOf(nodeButton(root, 'transit'), 'cost')).toBe(ui.tree.cost('40'));
+
+    // Voltar ao baseline devolve o preço cheio: o render não guarda estado.
+    renderTree(root, treeView(semNinguem), 'solar');
+    expect(textOf(solar, 'cost')).toBe(ui.tree.cost('40'));
   });
 
   it('marca só o nó escolhido com aria-pressed', () => {
@@ -227,11 +281,18 @@ function comCaixas(root: HTMLElement): void {
   const ramo = root.querySelector('[data-branch="energy"] .tree__diamond');
   if (ramo === null) throw new Error('o losango da Energia não foi montado.');
 
-  caixa(ramo, 100, 100, 200, 300);
+  // Seis fileiras desde o REF-07: os dois losangos empilhados. As medidas do
+  // primeiro não mudaram, de propósito — é o que mantém o caminho pinado abaixo
+  // valendo e prova que o segundo losango não mexeu no desenho do primeiro.
+  caixa(ramo, 100, 100, 200, 640);
   caixa(nodeButton(root, 'solar'), 150, 100, 100, 60);
   caixa(nodeButton(root, 'wind'), 100, 200, 95, 60);
   caixa(nodeButton(root, 'storage'), 205, 200, 95, 60);
   caixa(nodeButton(root, 'smart-grid'), 150, 320, 100, 60);
+  caixa(nodeButton(root, 'offshore-wind'), 150, 440, 100, 60);
+  caixa(nodeButton(root, 'hydro'), 100, 560, 95, 60);
+  caixa(nodeButton(root, 'green-hydrogen'), 205, 560, 95, 60);
+  caixa(nodeButton(root, 'coal-phaseout'), 150, 680, 100, 60);
 }
 
 function caminhos(root: ParentNode): SVGPathElement[] {
@@ -245,8 +306,11 @@ describe('drawTreeLinks', () => {
 
     drawTreeLinks(root);
 
-    // Quatro ligações: solar → eólica, solar → bateria, e as duas até a rede.
-    expect(caminhos(root)).toHaveLength(4);
+    // Nove ligações: as quatro do losango de cima (solar → eólica, solar →
+    // bateria, e as duas até a rede) mais as cinco do de baixo, que o REF-07
+    // acrescentou — rede → eólica no mar, ela até hidrelétrica e hidrogênio, e
+    // os dois até o fim do carvão.
+    expect(caminhos(root)).toHaveLength(9);
     // Do fundo da solar (x 100, y 60) ao topo da eólica (x 47,5, y 100).
     expect(caminhos(root)[0]?.getAttribute('d')).toBe('M100 60V80H47.5V100');
   });

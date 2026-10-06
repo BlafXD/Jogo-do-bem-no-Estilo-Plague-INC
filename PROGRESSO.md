@@ -28,6 +28,155 @@ Regras curtas:
 
 ---
 
+## 2026-10-06 — A escolha do especialista: os personagens viram jogada (REF-08)
+
+- **Parte / tarefa:** `REF-08` ✔. Abre a Fase 6 da reforma `REF`.
+- **Do chat, antes de começar:** o autor pediu uma leva grande para rodar durante a noite, o que
+  conflita com o `FORMA-DE-TRABALHO.md §1.2` e `§5` (uma tarefa por vez, parar e entregar). Acordado:
+  **a leva sai em fatias revisáveis**, cada uma com entrada própria aqui, checkbox próprio e commit
+  sugerido próprio — o agente segue sem commitar nada (`§4.1`). Três decisões tomadas no mesmo
+  momento: a escolha é **obrigatória nos dois modos** (Feira inclusive), a **Marina fica fora da
+  seleção** até a arte dela chegar (nada de placeholder), e a leva vai até fechar o épico `REF`.
+- **O que mudou:**
+  - `src/ui/character-select.ts` e `.css` (novos) — a tela. `selectView` é puro; `mountSelect` monta
+    os cartões **uma vez** e `renderSelect` só escreve o que muda, para o foco sobreviver a escolher
+    pelo teclado. As fichas são creme com fio de latão (`docs/DIRECAO-DE-ARTE.md §7`): retrato,
+    nome, cargo, ramo com ícone **e** rótulo, e o bônus em lista.
+  - `src/ui/screens.ts` — a quarta tela. `SCREENS` ganhou `'select'`; o `ScreenState` ganhou
+    `entry: 'title' | 'select'` — **união, e não um terceiro booleano**, porque título e escolha são
+    dois lugares do mesmo momento e `{ choosing: true, started: true }` não significaria nada (§4).
+    Novo `chooseCharacter()`. O `renderScreens` esconde HUD e as duas barras nas duas telas de
+    entrada.
+  - `src/main.ts` — o `handleStart(newGame: boolean)` virou `handleContinue()` mais o caminho novo
+    (`handleGoToSelect` → `handleChoose` → `handleStartChosen` → `handleReset`/`handleFair`). O
+    `handleReset` passou a **exigir** o personagem: um parâmetro com valor padrão deixaria a função
+    ser passada direto como `addEventListener` e o personagem da partida viraria o `MouseEvent` do
+    clique, sem o `tsc` reclamar. `Esc` na escolha volta ao título.
+  - `index.html` — `<section id="tela-selecao">`, vizinha do título e fora do invólucro da partida.
+  - `src/data/i18n.ts` — o bloco `select`. As frases de bônus são **moldes**: o "10%" entra
+    formatado do `character-buffs.json`, então o `REF-09` muda os números e a tela acompanha
+    sozinha. Nenhuma frase tem gênero, para não haver quatro variantes de concordância a acertar.
+  - `src/ui/layout.css` — a regra de espaçamento do título passou a valer para a escolha.
+  - `docs/PERSONAGENS.md` — o `§4` reescrito (autorizado no plano da reforma) e uma nota no topo
+    dizendo que o registro de 2026-09-06 caducou, com a tabela de o que caiu em qual tarefa.
+  - Testes: `tests/character-select.dom.test.ts` (novo, 25) e os dois de `screens`. Suíte
+    **995 → 1028**.
+- **A regra que vale a pena guardar: quem é selecionável é derivado, não listado.** É
+  `CHARACTER_IDS` (jogável, no engine) ∩ `PERSON_IDS` (tem retrato, na UI), com `Extract` cobrando
+  os dois lados no `tsc`. Hoje dá quatro. Quando a arte da Marina entrar no `PERSON_IDS`, ela
+  aparece na tela **sem uma linha de código nova** — e o teste que fixa os quatro de hoje falha, que
+  é como a mudança aparece no diff em vez de em silêncio.
+- **Dois bugs achados contra o navegador, e nenhum dos dois apareceria em teste de hoje:**
+  1. **O custo no cartão da árvore mentia.** O `nodeElement` escrevia o custo só na montagem, e o
+     `renderTree` nunca o reescrevia. Até existir tela de escolha isso nunca pesou — `character` era
+     `null` em toda partida de verdade, e o preço não mudava depois do mount. Com o especialista
+     escolhido **depois**, o desconto de ramo do `REF-05` entrava no detalhe e na compra e **não**
+     entrava no cartão: o `solar` aparecia a 40 PAC para a Ana Luiza e saía por 36. É exatamente a
+     discordância que o comentário do `costFor` diz existir para impedir. Conserto: `data-tree="cost"`
+     no `<span>` e uma linha no `renderTree`, com teste que trava os dois sentidos.
+  2. **A barra de espaço nas telas de entrada guardava uma pausa.** Ela chegava ao `handleCommand`
+     com a barra de controle escondida, e a partida começava congelada sem nada na tela explicando
+     por quê. Já valia para o título desde o `P5-06`; a escolha, com quatro botões em foco, tornou
+     o acidente fácil. Os atalhos de tempo agora saem fora nas duas telas de entrada.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (os
+  quatro limpos aqui, mais o `build:feira`). Na tela: "Começar" leva à escolha; clicar num cartão
+  acende a ficha e libera o botão; `Esc` volta ao título; começar com a Ana Luiza e abrir a árvore
+  mostra o `solar` a **36 PAC**, não 40.
+- **Evidência:** `docs/evidencias/2026-10-06-ref-08-escolha-1600.jpg`,
+  `-escolha-marcada.jpg` e `-escolha-tela-estreita.jpg` (Edge headless, 1600 × 900 e 430 × 860).
+- **Atenção:** a **Marina Costa continua jogável e não selecionável** — o mapa 1:1 dos cinco ramos
+  existe no engine e não na tela. Isso só fecha com a arte. Próximo: `REF-07` 2ª metade (os 20 nós)
+  junto com o `REF-09` (rebalanceamento), que o plano manda fazer na mesma passagem.
+
+## 2026-10-06 (mais tarde) — A árvore dobra para 40 nós e o jogo é rebalanceado inteiro (REF-07 + REF-09)
+
+- **Parte / tarefa:** `REF-07` ✔ (2ª metade) e `REF-09` ✔. **As duas numa fatia só**, porque o plano
+  da reforma mandava: não dá para entregar os 20 nós verdes sem tocar em balanceamento — o teste
+  `missing < 45%` da planilha estoura no instante em que o `TREE_COST` sobe. Com isso **o épico REF
+  fecha**, e o `P8-02` destrava.
+- **O que mudou:**
+  - `src/data/skills.json` — **20 nós novos**, estendendo cada ramo com um **segundo losango**
+    (raiz → dois do meio → fecho) que começa onde o primeiro termina. Custos 150/220/220/350, e
+    **cada ramo passou a custar exatamente 1260 PAC** — escolher entre ramos nunca é sobre preço.
+  - `docs/CIENCIA.md` — 19 fontes novas e os 20 fatos, cada um com a observação do que ele mede e
+    do que ele não mede. Pesquisados nesta sessão: IEA (hidrogênio, carvão, hidrelétrica, metano,
+    amônia, ferrovia, subsídios), GWEC, IMO, IATA, UNEP (turfeiras, desperdício, áreas protegidas,
+    cidades), IRENA/OIT, Banco Mundial, OCDE, Global CCS Institute e um artigo revisado por pares.
+  - `src/data/balance.json` — `basePointsPerYear` 10 → **46**, `containCost` 30 → **140**,
+    `containDiscountPerNode` 0,2 → **0,1**.
+  - `src/data/events.json` — `impact.points` escalado pelo mesmo fator da renda (0/1/2/3 →
+    0/5/9/14).
+  - `tests/ciencia.test.ts` (novo) — amarra os 40 fatos do `skills.json` e os 10 dos eventos às
+    linhas do `docs/CIENCIA.md`, e cobra que a fonte citada exista.
+  - `docs/GDD.md` §2.4 (os 40 nós, a forma dos dois losangos, a nota do corte solo removida), §2.7
+    (a vitória por zero líquido) e §4 (as três constantes). Autorizado no plano da reforma.
+  - `docs/BALANCEAMENTO.md` — a seção da passagem, com as tabelas de varredura.
+  - Re-pinados: `skills`, `tree`, `tree.dom`, `hud`, `inercia` e `outcome`. Suíte **1028 → 1034**.
+- **Dois fatos foram corrigidos na conferência, e os dois importam:**
+  1. O da hidrelétrica ia dizer que ela é maior que eólica e solar. A fonte da IEA diz 14% contra
+     8% + 7% — **somadas, as duas já a passaram.** Virou "maior fonte **isolada**".
+  2. O dos gases de refrigeração ia usar "até 0,5 °C", de uma mensagem do Secretário-Geral da ONU.
+     O `CIENCIA.md` já registrava **0,4 °C** para a Emenda de Kigali, da NOAA. Duas linhas do mesmo
+     documento com números diferentes sobre o mesmo tratado é o tipo de incoerência que ninguém
+     revisa duas vezes — ficou o número que o projeto já tinha.
+- **Como o 46 foi escolhido, e por que não 48 ou 50:** a varredura mediu 30, 40, 44, 46, 48 e 50. O
+  alvo de "falta ~35%" do `P3-04` pediria 50. **O teto é 46, e quem o define não é a economia de
+  PAC — é a lição do `P7-03`:** a partir de 48, quem pula o ramo Sociedade **sobrevive** a 2100, e o
+  dilema do §2.6 deixa de ser dilema. Em 46, ele é dissolvido em 2097, como tem que ser.
+- **Três achados que mudam o que o jogo é:**
+  - **Jogar bem virou prata.** Era bronze desde o `P7-03`. A escala do §2.7 deixou de ter um degrau
+    que ninguém alcançava, e "acordar em 2060" agora termina em bronze — **medalhas diferentes para
+    jogadas diferentes**, o que a escala antiga não entregava.
+  - **A vitória por zero líquido saiu do papel.** O `tests/outcome.test.ts` carregava um teste que
+    pedia, por escrito, para falhar no dia em que isso acontecesse. Falhou. A árvore inteira leva as
+    emissões a 0,005 Gt/ano. O que segura a vitória agora é o bolso, não a física: a melhor
+    estratégia medida termina em 0,77 Gt/ano, contra o limiar de 0,5.
+  - **Os cinco personagens chegam à prata**, separados por 0,044 °C — menos de um quinto da faixa.
+    Era o aceite explícito da `REF-09`: medalha alcançável por personagem, e nenhum trivializando a
+    partida.
+- **O preço, registrado e não consertado:** a janela de perdão encolheu. Largar o controle em 2060
+  já não mata (matava até depois de 2065). A Inércia não enfraqueceu — nenhuma constante dela
+  mudou; o jogador é que chega a 2060 com muito mais apoio comprado. **Subir o
+  `inertiaDisinformationBite` para 0,8 foi medido e descartado:** dissolve até a melhor jogada, a
+  mesma parede que o `docs/INERCIA.md` encontrou com 1,0. É do `P8-02`, e a alavanca provável é a
+  escala de medalhas, não a Inércia.
+- **Como verificar:** `npm run lint && npm run typecheck && npm run test && npm run build` (os
+  quatro limpos). Na tela, a 1920×1080: abrir a árvore mostra os 40 nós, cinco ramos de dois
+  losangos cada, **sem rolagem**. Com a Ana Luiza, o `solar` custa 36 PAC.
+- **Evidência:** `docs/evidencias/2026-10-06-ref-07-arvore-40-nos-1920.jpg` e `-1536.jpg`.
+- **Atenção:** o `docs/planilha/` regenerou inteiro — é o sinal esperado, e o diff dele é grande.
+  **Revisar junto.** Em 1536 × 864 a árvore passou a rolar dentro do painel; em 1920 não. Próximo:
+  `P8-02` (balanceamento a partir do playtest), que agora mede a versão nova.
+
+## 2026-10-06 (fim da leva) — A Parte 2 ganha o documento dela: `docs/NARRATIVA.md`
+
+- **Parte / tarefa:** `P2-01` a `P2-05` ✔, todos na versão mínima do modo solo. **Nenhuma linha de
+  código** — só um `.md` novo e os checkboxes.
+- **O que mudou:** `docs/NARRATIVA.md` (novo), que é o arquivo que o contrato do `[D-Historia]` já
+  prometia ao cargo, e `PLANO.md`.
+- **O achado que mudou o tamanho da tarefa:** **dois dos cinco já estavam feitos e ninguém tinha
+  marcado.** Os 10 microtextos de evento saíram no `P7-01` e os textos dos 4 finais no `P6-08`; o
+  que faltava não era escrevê-los, era **registrar por que cada um é como é**, para quem reescrever
+  não quebrar sem perceber. Isso virou a maior parte dos §4 e §5.
+- **O que de fato não existia**, e agora existe: a meia página sobre o Gerente, a Agência e a
+  Inércia (§1), as cinco regras de tom com exemplos bons e ruins (§2) e a identidade das 8 regiões
+  (§3).
+- **Três decisões que vale registrar:**
+  - **A Agência fica sem nome, bandeira ou logotipo.** O §12 proíbe marca real, e inventar uma
+    fictícia convidaria a pergunta "qual país manda nisso?" — que o jogo não quer responder.
+  - **A Inércia não tem fala, e não deve ter.** No instante em que fala, vira personagem, e dá para
+    odiá-la em vez de reconhecê-la. O `docs/GDD.md §2.6` já dizia "não é vilão de bigode"; esta é a
+    regra de texto que sai disso.
+  - **As 8 regiões saem do `regions.json`**, sem adjetivo que não tenha número atrás.
+- **Um erro meu, pego na conferência:** eu tinha escrito que a África tem a menor emissão por pessoa
+  do mapa. Tem a **segunda** — a Ásia Meridional emite 1,777 t por pessoa contra 1,830 da África.
+  Corrigido antes de entregar, e a linha da África passou a comparar com a América do Norte
+  (um oitavo), que é o contraste que ela de fato tem.
+- **Como verificar:** `npm run check` (limpo). O documento se confere lendo: todo número dele sai de
+  `src/data/regions.json`, `events.json` ou `i18n.ts`.
+- **Pendente:** o `§6` do documento lista o que falta para quem assumir o cargo, em ordem de valor —
+  vozes regionais dentro da partida, variantes de texto por evento, a ficha da Marina Costa.
+
 ## 2026-09-30 — Começa a reforma: o HUD ganha vida (Fase 1), e o épico REF entra no PLANO
 
 - **Parte / tarefa:** `REF-01` ✔ (primeira fatia da Fase 1). Também: `P1-05` marcado como concluído

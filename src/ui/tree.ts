@@ -149,7 +149,9 @@ function detailFor(state: GameState, skill: Skill, status: NodeStatus): string {
   }
 
   if (status === 'unaffordable') {
-    return ui.tree.missingPoints(whole.format(Math.ceil(costFor(state, skill) - state.actionPoints)));
+    return ui.tree.missingPoints(
+      whole.format(Math.ceil(costFor(state, skill) - state.actionPoints)),
+    );
   }
 
   return '';
@@ -323,9 +325,19 @@ function nodeElement(node: SkillNodeView, place: string, onChoose: (id: SkillId)
   label.dataset.tree = 'label';
   status.append(icon, ' ', label);
 
+  // O custo é marcado como os outros pedaços porque ele **muda depois do
+  // mount**: o desconto de ramo do personagem (REF-05) entra quando o jogador
+  // escolhe o especialista, o que só acontece na tela do REF-08 — depois de a
+  // árvore já estar montada. Sem a marca, o `renderTree` não teria como
+  // reescrevê-lo, e o cartão ficaria com o preço cheio enquanto o detalhe e a
+  // compra usariam o com desconto. É exatamente a discordância que o `costFor`
+  // existe para não deixar acontecer.
+  const cost = span('tree__cost', node.cost);
+  cost.dataset.tree = 'cost';
+
   // Os espaços entre os pedaços são para o nome acessível, como no botão da
   // barra: sem eles, o leitor de tela leria "Energia solar em escala40 PAC".
-  button.append(span('tree__name', node.name), ' ', span('tree__cost', node.cost), ' ', status);
+  button.append(span('tree__name', node.name), ' ', cost, ' ', status);
   button.addEventListener('click', () => onChoose(node.id));
   // O pulso de conquista se remove sozinho ao terminar, como no HUD: sem isso a
   // classe ficaria grudada e a próxima mudança não reiniciaria a animação.
@@ -472,6 +484,7 @@ export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): 
       // qual nó está no detalhe. O estado de compra vai escrito no rótulo.
       button.setAttribute('aria-pressed', String(node.id === chosen));
 
+      write(button.querySelector('[data-tree="cost"]'), node.cost);
       write(button.querySelector('[data-tree="icon"]'), node.statusIcon);
       write(button.querySelector('[data-tree="label"]'), node.statusLabel);
     }

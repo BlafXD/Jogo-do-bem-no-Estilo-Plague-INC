@@ -418,6 +418,104 @@ enfraquecer a Inércia; é a escala de medalhas, e ela precisa de playtest (`P8-
 | 2026-08-23 | `inertiaDisinformationBite` | (spec 1,0) → 0,5 | Com os eventos do `P7-01` em cena, 1,0 dissolve a agência em toda estratégia | Não testado com jogador. Medido em 5 seeds: melhor jogada viva, quem pula Sociedade morre |
 | 2026-08-23 | `bronzeTemperature` | 2,5 → 2,55 | Sem isso nenhuma estratégia alcança medalha; a melhor jogada termina em 2,5197 °C | Não testado com jogador. Devolve o Bronze — e alarga a faixa demais, ver acima |
 
+### A árvore de 40 nós e a passagem única do `REF-09` (2026-10-06)
+
+**A maior mudança de balanceamento desde que o jogo existe**, e a primeira que mexeu na árvore
+inteira de uma vez. Veio junto do `REF-07`, que realizou os ~40 nós que o `docs/GDD.md §2.4` sempre
+previu e que o corte do modo solo adiava.
+
+#### Os números, antes e depois
+
+| | antes (20 nós) | depois (40 nós) |
+|---|---|---|
+| Nós | 20, 4 por ramo | **40, 8 por ramo** |
+| Custo total da árvore | 1600 PAC | **6300 PAC** (1260 por ramo, igual em todos) |
+| Corte somado da árvore | 5,5% ao ano | **12,25% ao ano** |
+| `basePointsPerYear` | 10 | **46** |
+| Arrecadação de 75 anos, jogando bem | ~1045 PAC | **~3806 PAC** |
+| Falta para comprar tudo | 31% | **39,6%** |
+| Nós comprados, jogando bem | 13 de 20 | **22 de 40** |
+| Melhor jogada medida | 2,5196 °C, bronze | **1,9715 °C, prata** |
+| Emissões em 2100, jogando bem | 15,4 Gt/ano | **1,4 Gt/ano** |
+
+| Data | Constante | De → Para | Por quê | Resultado |
+|---|---|---|---|---|
+| 2026-10-06 | custos dos 20 nós novos | — → **150 / 220 / 220 / 350 PAC** | Segundo losango de cada ramo. Mais caros que o primeiro (40/70/70/140) porque o `§2.4` pede que os níveis 3–4 sejam "caros e transformadores". **Cada ramo custa exatamente 1260 PAC**, para escolher entre ramos nunca ser sobre preço | não testado |
+| 2026-10-06 | `basePointsPerYear` | 10 → **46** | Com a árvore em 6300 PAC e a renda antiga, faltavam **83,4%** para comprá-la: a árvore viraria enfeite e o alvo de "~35%" do `P3-04` ficaria fora de alcance. 46 põe a falta em 39,6%, dentro da faixa de 25–45% que o `tests/planilha.test.ts` cobra | não testado |
+| 2026-10-06 | `containCost` | 30 → **140** | Acompanha a renda. O que define a dificuldade de conter não é o número, é **quantos anos de arrecadação ele custa**: 3 anos antes, 3 anos depois | não testado |
+| 2026-10-06 | `containDiscountPerNode` | 0,2 → **0,1** | O ramo Sociedade dobrou para 8 nós, e com 0,2 a conta passava a dar negativo: **a contenção ficava de graça a partir do sexto nó**. O `src/engine/inertia.ts` tinha previsto isso por escrito desde o `P7-03`. Com 0,1, oito nós dão 70% de desconto — o mesmo teto que quatro nós davam com 0,2 | não testado |
+| 2026-10-06 | `impact.points` dos 10 eventos | 0/1/2/3 → **0/5/9/14** | Escalados pelo mesmo fator 4,6 da renda. Sem isso, a mordida de PAC dos eventos — que o `P7-01` mediu valendo **um nó inteiro** — teria caído para um quinto do peso desenhado, em silêncio | não testado |
+
+#### Por que 46, e não 50
+
+A varredura mediu 30, 40, 44, 46, 48 e 50. **O teto é 46, e quem o define não é a economia de PAC,
+é a lição do `P7-03`:** a estratégia `melhor` — cortar na melhor ordem e ignorar o ramo Sociedade —
+precisa **perder**. É ela que carrega o dilema do `§2.6`.
+
+| `basePointsPerYear` | falta | `melhor` (pula Sociedade) | melhor jogada |
+|---|---|---|---|
+| 30 | 58,8% — fora da faixa | dissolvida em 2095 ✔ | 2,0968 °C, bronze |
+| 40 | 46,8% — fora da faixa | dissolvida em 2096 ✔ | 2,0059 °C, bronze |
+| 44 | 42,0% ✔ | dissolvida em 2096 ✔ | 1,9769 °C, prata |
+| **46** | **39,6% ✔** | **dissolvida em 2097 ✔** | **1,9715 °C, prata** |
+| 48 | 37,2% ✔ | **sobrevive** ✘ | 1,9531 °C, prata |
+| 50 | 34,8% ✔ | **sobrevive** ✘ | 1,9428 °C, prata |
+
+Em 48 a falta fica mais perto do alvo de "~35%" do `P3-04`, e é por isso que o número **não** foi
+escolhido: com ela, quem ignora o ramo Sociedade passa a chegar vivo a 2100, e o `§2.6` deixa de
+ser um dilema para virar uma preferência.
+
+#### Cada personagem tem caminho para medalha
+
+Era o aceite explícito do `REF-09`. Jogando bem — Sociedade primeiro, corte na melhor ordem,
+contenção acima de 70 —, **os cinco chegam à prata**, e nenhum deles trivializa a partida:
+
+| Personagem | Ramo | Temperatura final | Medalha |
+|---|---|---|---|
+| (nenhum, baseline) | — | 1,9715 °C | prata |
+| Ana Luiza | Energia | 1,9305 °C | prata |
+| Carlos Mendes | Natureza | 1,9743 °C | prata |
+| Ricardo Souza | Indústria | 1,9448 °C | prata |
+| Juliana Almeida | Sociedade | 1,9482 °C | prata |
+| Marina Costa | Transporte | 1,9579 °C | prata |
+
+A distância entre o melhor e o pior personagem é de **0,044 °C** — menos de um quinto da faixa da
+prata. O buff muda a partida sem decidi-la, que é o que o `REF-05` tinha anotado como provisório.
+
+#### A vitória do `§2.7` saiu do papel
+
+O achado do `P6-08` dizia que a vitória por zero líquido era **inalcançável**, e o
+`tests/outcome.test.ts` carregava um teste que pedia, por escrito, para falhar no dia em que
+deixasse de ser. **Falhou.** Com 12,25% ao ano de corte, comprar a árvore inteira leva as emissões
+a **0,005 Gt/ano** — abaixo do limiar de 0,5 — e o desfecho é `netZero`.
+
+O que segura a vitória agora é **o bolso, não a física**: a melhor estratégia medida termina em
+**0,77 Gt/ano**, perto do limiar e ainda acima dele. O teste foi reescrito para travar as duas
+metades: o teto existe, e ninguém chegou lá.
+
+#### O preço, registrado: a janela de perdão encolheu
+
+**Este é o custo da passagem, e ele não foi consertado.** O `P3-05` tinha medido que, com a Inércia
+em cena, largar o controle continuava fatal até depois de **2065** — contra os 2055 que o
+`docs/CURVA-DE-DIFICULDADE.md` mediu sem ela. Com 40 nós e 46 PAC/ano, **largar em 2060 já não
+mata**:
+
+| Largar o controle em | Desfecho | Temperatura final |
+|---|---|---|
+| 2050 | dissolvida por apoio | 2,0139 °C |
+| 2055 | dissolvida por apoio | 1,9943 °C |
+| 2060 | **sobrevive** | 1,9802 °C |
+| 2080 | sobrevive | 1,9717 °C |
+
+A Inércia não enfraqueceu — nenhuma constante dela mudou. O que mudou é o jogador chegar a 2060
+com muito mais apoio comprado, e o colchão absorver a desinformação. **Subir o
+`inertiaDisinformationBite` para 0,8 foi medido e descartado:** com ele a melhor jogada também é
+dissolvida, que é exatamente a parede que o `docs/INERCIA.md` encontrou quando propôs 1,0.
+
+É o mesmo problema que o `P7-03` já tinha registrado como "a medalha decide cedo", agora dez anos
+mais cedo. **É do `P8-02`**, e a alavanca provável não é a Inércia: é a escala de medalhas do
+`§2.7`, que precisa de playtest antes de mexer.
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz

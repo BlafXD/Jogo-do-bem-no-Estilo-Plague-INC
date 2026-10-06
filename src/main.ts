@@ -17,7 +17,13 @@
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
 import { canUnlock, unlockSkill } from './engine/skills';
-import { createInitialState, skills, type RegionId, type SkillId } from './engine/state';
+import {
+  createInitialState,
+  skills,
+  type CharacterId,
+  type RegionId,
+  type SkillId,
+} from './engine/state';
 import { advanceRealTime, createClock } from './engine/tick';
 import {
   activatesFocusedButton,
@@ -31,6 +37,13 @@ import {
 } from './ui/controls';
 import { ui } from './data/i18n';
 import { createSound, playSfx, toggleMute } from './ui/audio';
+import {
+  focusFirstCard,
+  mountSelect,
+  renderSelect,
+  selectView,
+  type SelectableId,
+} from './ui/character-select';
 import { passiveFor } from './ui/comparison';
 import { containView, mountContain, renderContain } from './ui/contain';
 import { flyCost } from './ui/fly';
@@ -53,6 +66,7 @@ import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
 import {
+  chooseCharacter,
   createScreens,
   currentScreen,
   renderScreens,
@@ -117,6 +131,7 @@ import { focusClose, mountTreePanel, renderTreePanel, treePanelView } from './ui
 // igual. Está no topo porque é o arquivo que manda nos outros, e quem abrir esta
 // lista deve ver isso antes de ver as folhas dos módulos (P5-02).
 import './ui/theme.css';
+import './ui/character-select.css';
 import './ui/characters.css';
 import './ui/contain.css';
 import './ui/fly.css';
@@ -176,6 +191,8 @@ const regiao = required('#regiao');
 const contencao = required('#contencao');
 const tree = required<HTMLElement>('#arvore');
 const telaTitulo = required<HTMLElement>('#tela-titulo');
+// A tela de escolha do especialista (REF-08).
+const telaSelecao = required<HTMLElement>('#tela-selecao');
 const topo = required<HTMLElement>('.topo');
 const topoTitulo = required<HTMLElement>('.topo__titulo');
 const tabuleiro = required<HTMLElement>('#tabuleiro');
@@ -312,6 +329,7 @@ let criticalOpener: HTMLElement | null = null;
 
 const layout: ScreenLayout = {
   title: telaTitulo,
+  select: telaSelecao,
   chrome: topo,
   bar: base,
   board: tabuleiro,
@@ -376,6 +394,29 @@ let savedYear = restored === null ? null : restored.year;
  * disto no GameState mudaria o contrato do §3 por uma decisão de quem assiste.
  */
 let fairMode = false;
+
+/**
+ * O especialista marcado na tela de escolha (REF-08), ou nenhum.
+ *
+ * **É estado da tela, e não da partida** — a partida tem o seu em
+ * `state.character`, posto pelo `createInitialState` e guardado no save. Este
+ * aqui é só o cartão que está aceso enquanto o jogador decide, e some no
+ * instante em que a partida começa. Pela mesma razão ele não entra no save: um
+ * `localStorage` com "a pessoa estava olhando o Carlos" não tem consequência
+ * mecânica nenhuma, e é a mesma regra que a região escolhida e a velocidade já
+ * seguem.
+ */
+let chosenCharacter: CharacterId | null = null;
+
+/**
+ * A escolha em curso vai abrir o Modo Feira, e não uma partida normal.
+ *
+ * Existe porque a tela de escolha passou a ser obrigatória nos dois modos
+ * (decidido no chat em 2026-10-06), e o `handleFair` deixou de ser o que
+ * responde ao clique do título: ele virou o que acontece **depois** da escolha.
+ * Entre um e outro, alguém precisa lembrar de onde o jogador veio.
+ */
+let pendingFair = false;
 
 /**
  * Salva a partida, exceto no Modo Feira.
@@ -510,24 +551,21 @@ function handleCloseRegion(): void {
 }
 
 /**
- * Sair do título para a partida (P5-06).
+ * Retomar a partida guardada (P5-06).
  *
- * `newGame` diz se é para descartar a partida guardada. O `handleReset` já
- * sabe apagar o save e zerar o relógio; aqui só se escolhe qual dos dois
- * caminhos.
+ * É o único caminho que vai do título **direto** à partida: o save já traz o
+ * especialista dele dentro (`SAVE_VERSION` 3), então não há o que escolher.
+ *
+ * Era `handleStart(newGame: boolean)` até o REF-08. O booleano saiu junto com o
+ * caminho que ele escolhia: "Nova partida" não leva mais à partida, leva à tela
+ * de escolha, e o §4 pede união discriminada em vez de flag justamente para
+ * parâmetros que decidem entre dois caminhos distintos.
  */
-function handleStart(newGame: boolean): void {
+function handleContinue(): void {
   screens = startGame();
   title = cancelNewGame(title);
-  // Quem clica "Continuar de 2043" já sabe jogar; quem começa do zero, não.
-  tutorial = createTutorial(newGame ? 'new' : 'continue');
-
-  if (newGame) {
-    // O `handleReset` redesenha por conta própria, e já com o `screens`
-    // trocado — por isso ele vem depois da troca de tela, e não antes.
-    handleReset();
-    return;
-  }
+  // Quem clica "Continuar de 2043" já sabe jogar.
+  tutorial = createTutorial('continue');
 
   // Não há resto de tempo para descartar ao sair do título: o `previousFrame`
   // continuou andando a cada quadro, e o que o `advanceRealTime` recebeu o
@@ -536,7 +574,72 @@ function handleStart(newGame: boolean): void {
 }
 
 /**
- * Entrar no Modo Feira (P7-07).
+ * Ir do título para a escolha do especialista (REF-08).
+ *
+ * `fair` lembra de onde o jogador veio, porque a escolha ficou **obrigatória
+ * nos dois modos** (decidido no chat em 2026-10-06) e o destino do botão
+ * "Começar" da escolha depende disso.
+ *
+ * **A marca começa sempre vazia**, mesmo que a pessoa anterior tenha escolhido
+ * alguém. Herdar a escolha de quem estava no computador antes é exatamente o
+ * que o Modo Feira promete não fazer, e num estande é a diferença entre uma
+ * escolha e um acidente.
+ */
+function handleGoToSelect(fair: boolean): void {
+  screens = chooseCharacter();
+  title = cancelNewGame(title);
+  pendingFair = fair;
+  chosenCharacter = null;
+
+  renderGame();
+  // O foco vai para o primeiro cartão: quem navega por teclado chega na lista
+  // em vez de ter que atravessar a página até ela.
+  focusFirstCard(telaSelecao);
+}
+
+/** Marcar — ou desmarcar, clicando de novo — um especialista na escolha. */
+function handleChoose(id: SelectableId): void {
+  chosenCharacter = chosenCharacter === id ? null : id;
+  playSfx(sound, 'unlock');
+  renderGame();
+}
+
+/**
+ * Começar a partida com quem está marcado na escolha (REF-08).
+ *
+ * Sem marca, recusa com som e **sem redesenhar** — a frase embaixo do botão já
+ * está na tela dizendo o que falta, e o botão é `aria-disabled`, não `disabled`,
+ * justamente para o clique chegar aqui e poder ser respondido. É o mesmo
+ * contrato da compra recusada na árvore.
+ */
+function handleStartChosen(): void {
+  if (chosenCharacter === null) {
+    playSfx(sound, 'refuse');
+    return;
+  }
+
+  if (pendingFair) {
+    handleFair(chosenCharacter);
+    return;
+  }
+
+  screens = startGame();
+  tutorial = createTutorial('new');
+  // O `handleReset` redesenha por conta própria, e já com o `screens` trocado —
+  // por isso ele vem depois da troca de tela, e não antes.
+  handleReset(chosenCharacter);
+}
+
+/** Desistir da escolha e voltar ao título, pelo botão ou pelo Esc (§5). */
+function handleCancelSelect(): void {
+  screens = backToTitle();
+  pendingFair = false;
+  chosenCharacter = null;
+  renderGame();
+}
+
+/**
+ * Entrar no Modo Feira (P7-07), com o especialista escolhido.
  *
  * Três coisas, e nenhuma delas é regra de jogo: partida nova, velocidade 4x, e
  * o `fairMode` que desliga a escrita no `localStorage`. O docs/GDD.md §4
@@ -547,12 +650,12 @@ function handleStart(newGame: boolean): void {
  * anterior apertou Espaço é uma tela morta num estande, e ninguém vai descobrir
  * por quê.
  */
-function handleFair(): void {
+function handleFair(character: CharacterId): void {
   fairMode = true;
   screens = startGame();
   title = cancelNewGame(title);
 
-  state = createInitialState(SEED);
+  state = createInitialState(SEED, character);
   clock = createClock();
   session = createSession(null, true);
   shownTick = state.tick;
@@ -626,6 +729,11 @@ function renderGame(): void {
 
   renderScreens(layout, screen);
   renderTitle(telaTitulo, titleView(savedYear, title, sound.muted));
+  // A escolha do especialista (REF-08). Redesenhada fora da tela dela também, e
+  // de propósito: escrever atributo em cinco cartões escondidos custa nada, e a
+  // alternativa — um `if` aqui — abriria a chance de a tela entrar no ar com a
+  // marca da escolha anterior ainda acesa por um quadro.
+  renderSelect(telaSelecao, selectView(chosenCharacter, pendingFair));
 
   renderHud(hud, hudView(state), rulerMark(state.temperature));
   renderStripes(listras, stripesView(state));
@@ -793,8 +901,15 @@ function renderSessionBar(): void {
  *
  * A velocidade e a pausa **não** zeram — o controls.ts registra que elas são de
  * quem assiste, não da simulação.
+ *
+ * **`character` é o especialista da partida nova** (REF-08), e é obrigatório de
+ * propósito: um valor padrão deixaria esta função ser passada direto como
+ * `addEventListener`, e o primeiro argumento viraria o `MouseEvent` do clique.
+ * O `tsc` não pegaria — uma função de parâmetro opcional é atribuível a
+ * `() => void` — e o personagem da partida seria um evento de mouse. Com o
+ * parâmetro obrigatório, cada chamador escreve de quem a partida nova é.
  */
-function handleReset(): void {
+function handleReset(character: CharacterId | null): void {
   // No Modo Feira não há o que apagar — e apagar seria pior do que inútil:
   // "Jogar de novo" numa demo destruiria a partida de verdade do dono da
   // máquina, que é exatamente o que o modo promete não fazer.
@@ -803,7 +918,7 @@ function handleReset(): void {
     savedYear = null;
   }
 
-  state = createInitialState(SEED);
+  state = createInitialState(SEED, character);
   clock = createClock();
   session = fairMode ? createSession(null, true) : afterReset();
   // Uma partida nova é uma partida nova: no Modo Feira o painel volta, e fora
@@ -922,17 +1037,25 @@ mountContain(contencao, handleContain);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
 // minutos de jogo em curso; aqui não há mais partida para destruir.
-mountOutcome(resultado, handleReset, handleReview);
-mountTitle(telaTitulo, {
-  onContinue: () => {
-    handleStart(false);
+//
+// **Com o mesmo especialista** (REF-08): "de novo" repete a partida, e passar
+// pela tela de escolha de novo desfaria uma decisão que o jogador não pediu para
+// rever. Quem quiser trocar volta ao título e começa outra.
+mountOutcome(
+  resultado,
+  () => {
+    handleReset(state.character);
   },
+  handleReview,
+);
+mountTitle(telaTitulo, {
+  onContinue: handleContinue,
   onNew: () => {
-    // Sem save não há o que apagar, e "Começar" entra direto. Com save, o
-    // primeiro clique só abre a pergunta — a regra dos dois cliques do
+    // Sem save não há o que apagar, e "Começar" vai direto à escolha. Com save,
+    // o primeiro clique só abre a pergunta — a regra dos dois cliques do
     // session.ts, que existe porque apagar a partida não tem desfazer.
     if (savedYear === null) {
-      handleStart(true);
+      handleGoToSelect(false);
       return;
     }
 
@@ -940,14 +1063,23 @@ mountTitle(telaTitulo, {
     renderGame();
   },
   onConfirmNew: () => {
-    handleStart(true);
+    handleGoToSelect(false);
   },
   onCancelNew: () => {
     title = cancelNewGame(title);
     renderGame();
   },
-  onFair: handleFair,
+  // O Modo Feira passa pela escolha também, desde o REF-08 — decidido no chat em
+  // 2026-10-06. O save só é descartado depois dela, no `handleFair`.
+  onFair: () => {
+    handleGoToSelect(true);
+  },
   onToggleSound: handleToggleSound,
+});
+mountSelect(telaSelecao, {
+  onChoose: handleChoose,
+  onStart: handleStartChosen,
+  onBack: handleCancelSelect,
 });
 // As listras do título: a partida sem nenhuma compra da seed de uma partida
 // nova (VIS-08). Ela não muda, então é escrita uma vez só.
@@ -1022,6 +1154,16 @@ document.addEventListener('keydown', (event) => {
   // desiste. O §5 do GDD diz que Esc sempre fecha, e a confirmação de reinício
   // é a primeira coisa da tela que precisa fechar.
   if (event.key === 'Escape') {
+    // A escolha do especialista (REF-08) vem antes de tudo, e é a mais simples
+    // de justificar: ela é uma tela, não um painel — quando ela está no ar,
+    // nenhuma das coisas abaixo existe. Esc ali volta ao título, que é o único
+    // "fechar" que a tela tem (§5).
+    if (currentScreen(screens, isFinished(state)) === 'select') {
+      event.preventDefault();
+      handleCancelSelect();
+      return;
+    }
+
     // O painel da árvore vem antes de tudo (VIS-05): ele cobre a página
     // inteira, e o que estiver por baixo dele — a confirmação de reinício
     // inclusive — está fora da vista e fora do alcance do teclado. Fechar algo
@@ -1104,6 +1246,16 @@ document.addEventListener('keydown', (event) => {
 
   const command = commandForKey(event.key);
   if (command === null) return;
+
+  // **Os atalhos de tempo não valem nas telas de entrada** (REF-08). A barra de
+  // controle está escondida ali, e uma tecla que mexe num relógio invisível
+  // produz o bug mais difícil de relatar que havia neste arquivo: a barra de
+  // espaço na tela de título — e agora na de escolha — guardava uma pausa, e a
+  // partida começava congelada sem nada na tela explicando por quê. A tecla
+  // ficou muito mais fácil de apertar por acidente quando a escolha virou uma
+  // parada obrigatória com quatro botões em foco.
+  const screen = currentScreen(screens, isFinished(state));
+  if (screen === 'title' || screen === 'select') return;
 
   // A barra de espaço rola a página por padrão.
   event.preventDefault();

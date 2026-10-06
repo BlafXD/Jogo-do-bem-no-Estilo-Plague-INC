@@ -10,6 +10,13 @@
 > **De onde vem:** conceito e arte do autor do projeto, 2026-09-06. A origem precisa de uma linha
 > em `docs/CREDITOS.md` antes de a imagem entrar no repositório — ver §5.
 
+> **O parágrafo acima é o registro de 2026-09-06, e ele caducou — de propósito, e por etapas.** A
+> reforma `REF` tirou os personagens do Gelo: hoje eles **dão bônus**, **aparecem no `GameState`**
+> e **são escolhidos pelo jogador** numa tela própria. O que mudou, quando, e com qual aprovação
+> está na tabela do `§4`. O parágrafo fica onde está em vez de ser reescrito porque a decisão de
+> 2026-09-06 é o que explica por que este arquivo existe e por que a troca saiu barata: a tradução
+> das fichas para o vocabulário do engine, no `§2`, foi escrita antes de haver código para ela.
+
 ---
 
 ## 1. Quem são
@@ -121,14 +128,49 @@ saídas consideradas — criar dois personagens (seis no total) ou abandonar o 1
 | Onde | Estado |
 |---|---|
 | **Tela de título** | ✔ **no ar** — os quatro, sob o rótulo "A equipe da agência" |
+| **Tela de escolha** (`REF-08`) | ✔ **no ar desde 2026-10-06** — os quatro em fichas, com o ramo e o bônus de cada um |
 | **Cartaz da feira** (`P8-06`) | previsto — é o uso mais forte: quatro rostos vendem um estande melhor que um mapa |
 | **Slides** (`P8-07`) | previsto |
 | **Dentro da partida** | ✔ **no ar desde o `VIS-07`** (2026-09-17, com permissão no chat) — no tutorial, nos eventos e na tela de fim |
 
-**Dentro da partida, eles são a equipe falando, e não personagens jogáveis.** Até 2026-09-17 esta
-linha dizia "não"; o protótipo aprovado no `VIS-01` os pôs na partida, e a mudança foi autorizada
-no chat quando o `VIS-07` começou. As regras do topo deste arquivo continuam valendo inteiras:
-**nenhum bônus, nada no `GameState`, nenhuma linha de balanceamento.** Onde eles aparecem:
+### Eles passaram a ser jogáveis — o que mudou, e quando
+
+Esta seção dizia, até 2026-09-30, **"nenhum bônus, nada no `GameState`, nenhuma linha de
+balanceamento"**. As três coisas mudaram na reforma `REF`, cada uma com aprovação própria, e o
+registro de quando importa mais que o texto novo:
+
+| Quando | O que caiu |
+|---|---|
+| `REF-04`, 2026-09-30 | o campo `character` entrou no `GameState` (`GDD §3`) e o `SAVE_VERSION` subiu para 3 |
+| `REF-05`, 2026-09-30 | os bônus de ramo entraram no engine, lidos do `src/data/character-buffs.json` |
+| `REF-07`, 2026-09-30 | a Marina Costa fechou o mapa 1:1 dos cinco ramos (`§3`) |
+| `REF-08`, 2026-10-06 | a tela de escolha: eles deixaram de ser só a equipe e passaram a ser **a escolha** |
+
+**A escolha é obrigatória, e vale nos dois modos** — inclusive no Modo Feira (decidido no chat em
+2026-10-06). Ela fica entre o título e a partida, e "Continuar" não passa por ela: a partida
+guardada já traz o especialista dela dentro do save, e perguntar de novo seria oferecer a troca de
+um especialista no meio de uma partida já corrida.
+
+**Quem aparece na escolha é derivado, não listado:** quem é jogável (`CHARACTER_IDS`, no
+`state.ts`) **e** tem retrato (`PERSON_IDS`, no `characters.ts`). Hoje são quatro. A **Marina Costa
+fica de fora até a arte dela chegar** — decisão do chat em 2026-10-06, contra a alternativa de um
+placeholder. Quando o `[D-Design]` entregar as poses e ela entrar no `PERSON_IDS`, ela aparece na
+tela **sem uma linha de código nova**.
+
+**O cargo e o ramo são coisas diferentes na ficha, e a tela mostra as duas.** O Ricardo continua
+"Gestor de recursos hídricos" — a profissão é da ficha, e ficha é do `[D-Historia]` — enquanto a
+**especialidade** dele no jogo é Indústria, pelo remapeamento do `§3`. Separar os dois campos é o
+que permitiu o remap sem inventar uma profissão nova para ninguém.
+
+**O bônus escrito na tela sai dos números, não de uma frase.** "Nós de Energia custam 10% menos" é o
+`costDiscount` do `character-buffs.json` formatado na hora; quando o `REF-09` afinar os valores, a
+tela passa a dizer os novos sozinha.
+
+### Dentro da partida, eles continuam sendo a equipe falando
+
+Isto não mudou com o `REF-08`, e é a distinção que mantém a ficção de pé: o jogador continua sendo
+**o Gerente**, e o especialista escolhido é quem ele põe à frente — não quem ele encarna. Onde eles
+aparecem durante a partida:
 
 - **Tutorial:** cada um dos quatro passos é dito por uma pessoa, com o retrato ao lado do texto.
 - **Eventos:** o especialista do assunto dá a notícia. No boletim, ele aparece num avatar redondo,
@@ -139,9 +181,9 @@ no chat quando o `VIS-07` começou. As regras do topo deste arquivo continuam va
 tutorial e o fato real do evento. Quem aparece onde está no `src/data/characters.json`, e o texto
 de nome e cargo, no `src/data/i18n.ts`.
 
-**Sobre a tela de título:** se entrarem, entram como **a equipe**, não como escolha. O jogador é o
-Gerente; estes são os quatro especialistas que ele dirige. Pôr um rosto só implicaria que aquele
-é o Gerente, e aí os outros três sobrariam.
+**Sobre a tela de título:** ali eles continuam entrando como **a equipe**, e não como escolha — a
+escolha tem tela própria desde o `REF-08`. O argumento original segue valendo para o título: pôr um
+rosto só na abertura implicaria "este é você", e aí os outros três sobrariam.
 
 ---
 

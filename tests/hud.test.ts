@@ -117,7 +117,9 @@ describe('hudView', () => {
     expect(after.year).toBe('2026');
     expect(after.temperature).not.toBe(before.temperature);
     expect(after.emissions).not.toBe(before.emissions);
-    expect(after.actionPoints).toBe('10');
+    // Um ano rende exatamente a entrada de base. Era 10 até o REF-09, quando o
+    // `basePointsPerYear` subiu para 46 por causa da árvore de 40 nós.
+    expect(after.actionPoints).toBe(String(balance.basePointsPerYear));
   });
 
   it('a compra de uma habilidade aparece no PAC e no apoio', () => {

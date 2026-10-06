@@ -253,7 +253,7 @@ describe('a partida inteira', () => {
     .sort((a, b) => b.cut / b.cost - a.cut / a.cost)
     .map((skill) => skill.id);
 
-  it('ACEITE: jogando bem, a partida chega viva a 2100 e ganha bronze', () => {
+  it('ACEITE: jogando bem, a partida chega viva a 2100 e ganha prata', () => {
     // **A ordem mudou três vezes desde que este teste nasceu, e as três
     // mudanças foram medidas, não achadas.** O P6-08 usava "renda primeiro,
     // depois corte por eficiência"; o P3-04 mediu que os dois nós de renda
@@ -265,10 +265,15 @@ describe('a partida inteira', () => {
     // Sociedade voltou para a frente da fila porque é o primeiro nó dele que
     // destrava a contenção — ele deixou de ser um bônus de PAC que não se paga
     // e virou a licença para lutar (docs/GDD.md §2.6).
+    //
+    // **Quarta mudança, no REF-09: a mesma jogada passou de bronze a prata.** A
+    // ordem não mudou de novo — mudou a árvore, que foi de 20 para 40 nós, e a
+    // renda, que subiu de 10 para 46 PAC/ano para acompanhar. É a primeira vez
+    // que jogar bem alcança o segundo degrau da escala do §2.7.
     const state = playthrough(['climate-education', 'treaties', ...cuts], 70);
 
     expect(state.tick).toBe(TOTAL_TICKS);
-    expect(outcomeOf(state)).toEqual({ kind: 'finished', ending: 'horizon', medal: 'bronze' });
+    expect(outcomeOf(state)).toEqual({ kind: 'finished', ending: 'horizon', medal: 'silver' });
   });
 
   it('ACEITE do P7-03: só cortar termina mais frio e ainda assim perde', () => {
@@ -281,21 +286,45 @@ describe('a partida inteira', () => {
 
     expect(soCortes.temperature).toBeLessThan(bemJogada.temperature);
     expect(outcomeOf(soCortes)).toEqual({ kind: 'defeat', cause: 'support' });
-    expect(medalFor(soCortes.temperature)).toBe('bronze');
+    // Era bronze até o REF-09; com a árvore de 40 nós a temperatura que ele
+    // joga fora virou prata. O dilema ficou **mais** caro, não menos: quem pula
+    // Sociedade é dissolvido abrindo mão de uma medalha melhor do que antes.
+    expect(medalFor(soCortes.temperature)).toBe('silver');
   });
 
-  it('a vitória por emissões ≈ 0 é inalcançável com o balanceamento de hoje', () => {
-    // **Este teste documenta um problema, não uma qualidade.** A árvore inteira
-    // soma 5,5% ao ano de corte e custa 1600 PAC, enquanto 75 anos rendem no
-    // máximo ~1125 — ninguém compra tudo, e nem comprar tudo bastaria. Se um
-    // ajuste de balanceamento (P3-04, P8-02) tornar o zero líquido alcançável,
-    // **é este teste que deve falhar** e ser reescrito. Ele existe para que
-    // esse dia seja notado.
-    let state = start();
-    for (const skill of skills) state = unlockSkill({ ...state, actionPoints: 9999 }, skill.id);
-    for (let i = 0; i < TOTAL_TICKS; i++) state = advanceTick(state);
+  /**
+   * **Este teste foi reescrito no REF-09, e o dia que ele esperava chegou.**
+   *
+   * Até 2026-10-06 ele dizia "a vitória por emissões ≈ 0 é inalcançável", e o
+   * comentário pedia, com todas as letras: "se um ajuste de balanceamento tornar
+   * o zero líquido alcançável, é este teste que deve falhar e ser reescrito.
+   * Ele existe para que esse dia seja notado". A árvore de 40 nós do `REF-07`
+   * notou: com os 12,25% ao ano de corte que ela soma, comprar tudo leva as
+   * emissões a 0,005 Gt/ano e o desfecho é `netZero`.
+   *
+   * O que o teste trava agora são as **duas** metades da verdade nova, porque
+   * uma sem a outra engana:
+   *
+   * 1. O teto deixou de ser estrutural — a vitória do `§2.7` existe de fato.
+   * 2. Nenhuma estratégia medida a alcança: a melhor termina em ~0,8 Gt/ano,
+   *    acima do limiar de 0,5. Comprar tudo custa 6300 PAC e 75 anos rendem
+   *    perto de 3800 (`docs/BALANCEAMENTO.md`).
+   *
+   * Ou seja: a vitória por zero líquido saiu de "impossível por construção" para
+   * "no horizonte, e ninguém chegou lá ainda". Se um dia a 2ª asserção falhar, é
+   * porque alguém chegou — e aí é notícia boa, não regressão.
+   */
+  it('a vitória por zero líquido existe, mas nenhuma estratégia medida a alcança', () => {
+    let tudo = start();
+    for (const skill of skills) tudo = unlockSkill({ ...tudo, actionPoints: 999999 }, skill.id);
+    for (let i = 0; i < TOTAL_TICKS; i++) tudo = advanceTick(tudo);
 
-    expect(globalEmissions(state)).toBeGreaterThan(balance.netZeroEmissions);
-    expect(outcomeOf(state)).toMatchObject({ ending: 'horizon' });
+    expect(globalEmissions(tudo)).toBeLessThan(balance.netZeroEmissions);
+    expect(outcomeOf(tudo)).toMatchObject({ ending: 'netZero' });
+
+    const bemJogada = playthrough(['climate-education', 'treaties', ...cuts], 70);
+
+    expect(globalEmissions(bemJogada)).toBeGreaterThan(balance.netZeroEmissions);
+    expect(outcomeOf(bemJogada)).toMatchObject({ ending: 'horizon' });
   });
 });

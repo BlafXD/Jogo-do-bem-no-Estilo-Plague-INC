@@ -205,7 +205,8 @@ cenário de "rivalidade regional", sem política climática nova. A constante mo
 
 Cada nó da árvore carrega um `fact` de uma frase (`docs/GDD.md §2.4`), e é ele que faz o jogo
 ensinar alguma coisa em vez de só entreter. Preenchido em `P6-05`, com os 20 nós de
-`src/data/skills.json`.
+`src/data/skills.json`, e **dobrado no `REF-07` (2026-10-06), quando a árvore foi aos 40 nós** do
+`§2.4` — os 20 novos estão na segunda tabela, com as fontes consultadas naquela data.
 
 **Estas fontes são setoriais, não primárias.** A tabela do topo deste arquivo é a que sustenta o
 *modelo* — IPCC, Global Carbon Budget, OWID. As de baixo sustentam as *frases* que o jogador lê,
@@ -268,6 +269,63 @@ efeito mecânico de um nó (quanto ele corta de emissão, quanto custa em PAC) �
 mora em `docs/BALANCEAMENTO.md`. Misturar as duas coisas seria dar aparência de ciência a uma
 escolha de jogo — o corte de 0,5% ao ano da solar não sai de lugar nenhum do IRENA, é número de
 desenho. O fato é verdade sobre o mundo; o efeito é verdade sobre o jogo.
+
+### Os 20 nós do `REF-07` (segundo losango de cada ramo)
+
+**Consultadas em 2026-10-06.** Os quatro nós profundos de cada ramo, que o `docs/GDD.md §2.4`
+sempre previu e o corte do modo solo adiava. Mesma regra da tabela de cima: fonte setorial para a
+frase, nada de número de simulação.
+
+| Chave | Publicação | Link |
+|---|---|---|
+| **[GWEC25]** | GWEC, _Global Offshore Wind Report 2025_ | <https://gwec.net/news/offshore-wind-installed-capacity-reaches-83-gw-as-new-report-finds-2024-a-record-year-for-construction-and-auctions> |
+| **[IEA-HYDRO]** | IEA, comentário _Hydropower is still "the forgotten giant of electricity"_ (2025) | <https://www.iea.org/commentaries/hydropower-is-still-the-forgotten-giant-of-electricity-and-that-needs-to-change> |
+| **[IEA-H2-25]** | IEA, _Global Hydrogen Review 2025_ | <https://www.iea.org/reports/global-hydrogen-review-2025/demand> |
+| **[IEA-GER25]** | IEA, _Global Energy Review 2025_ — capítulo do carvão | <https://www.iea.org/reports/global-energy-review-2025/coal> |
+| **[IEA-RAIL]** | IEA, _The Future of Rail_ (2019), com a União Internacional das Ferrovias | <https://www.iea.org/news/railways-could-provide-much-greater-benefits-for-energy-and-the-environment-according-to-iea-report> |
+| **[IMO-GHG4]** | IMO, _Fourth IMO Greenhouse Gas Study 2020_ — resumo executivo | <https://wwwcdn.imo.org/localresources/en/OurWork/Environment/Documents/Fourth%20IMO%20GHG%20Study%202020%20Executive-Summary.pdf> |
+| **[IATA-SAF]** | IATA, nota à imprensa sobre a produção de combustível sustentável de aviação (dez. 2024) | <https://www.iata.org/en/pressroom/2024-releases/2024-12-10-03/> |
+| **[UNEP-CITY]** | UNEP, _Cities and climate change_ — página temática | <https://www.unep.org/explore-topics/resource-efficiency/what-we-do/cities/cities-and-climate-change> |
+| **[UNEP-PEAT]** | UNEP, _Peatlands store twice as much carbon as all the world's forests_ | <https://www.unep.org/news-and-stories/story/peatlands-store-twice-much-carbon-all-worlds-forests> |
+| **[ZOMER16]** | Zomer et al., _Global Tree Cover and Biomass Carbon on Agricultural Land_, Scientific Reports 6, 29987 (2016) | <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4951720/> |
+| **[FWI24]** | UNEP e WRAP, _Food Waste Index Report 2024_ | <https://www.unep.org/resources/publication/food-waste-index-report-2024> |
+| **[PP24]** | UNEP-WCMC e IUCN, _Protected Planet Report 2024_, via nota do UNEP | <https://www.unep.org/news-and-stories/press-release/world-must-act-faster-protect-30-planet-2030> |
+| **[IEA-CH4-25]** | IEA, _Global Methane Tracker 2025_ | <https://www.iea.org/reports/global-methane-tracker-2025> |
+| **[IEA-NH3]** | IEA, _Ammonia Technology Roadmap_ (2021) — resumo executivo | <https://www.iea.org/reports/ammonia-technology-roadmap/executive-summary> |
+| **[GCCSI24]** | Global CCS Institute, _Global Status of CCS 2024_ | <https://globalccsinstitute.com/wp-content/uploads/2024/10/2024-GSR_20241015.pdf> |
+| **[WB-CP25]** | Banco Mundial, _State and Trends of Carbon Pricing 2025_ | <https://www.worldbank.org/en/news/press-release/2025/06/10/global-carbon-pricing-mobilizes-over-100-billion-for-public-budgets> |
+| **[IEA-SUB]** | IEA, _Fossil fuel subsidies_ — página temática | <https://www.iea.org/topics/fossil-fuel-subsidies> |
+| **[NCQG24]** | OCDE, sobre a Nova Meta Coletiva Quantificada de financiamento climático acordada na COP29 | <https://www.oecd.org/en/topics/sub-issues/the-new-collective-quantified-goal-on-climate-finance0.html> |
+| **[IRENA-JOBS]** | IRENA e OIT, série _Renewable Energy and Jobs_ — número da edição de 2025, publicada em jan. 2026 | <https://www.irena.org/benefits/Job-Creation> |
+
+A chave **[NOAA-MP]** não se repete: ela já está na tabela de cima, e é de lá que sai o número do
+`refrigerants` — **o mesmo 0,4 °C que a observação do `treaties` já registrava**. Uma varredura
+encontrou "até 0,5 °C" numa mensagem do Secretário-Geral da ONU, e o número foi **descartado em
+favor do que este arquivo já tinha**: duas linhas do mesmo documento dizendo números diferentes
+sobre a Emenda de Kigali seria o tipo de incoerência que ninguém revisa duas vezes.
+
+| Nó | Fato como o jogador lê | Fonte | Observação |
+|---|---|---|---|
+| `offshore-wind` | A eólica no mar chegou a 83 GW instalados no mundo no fim de 2024, com 8 GW somados só naquele ano. | **[GWEC25]** | Capacidade acumulada. As adições de 2024 ficaram 26% abaixo das de 2023; a China lidera há sete anos seguidos |
+| `hydro` | A hidrelétrica ainda é a maior fonte isolada de eletricidade renovável do mundo: cerca de 14% de toda a geração, à frente da eólica e da solar. | **[IEA-HYDRO]** | Cerca de 4.500 TWh. Eólica fica perto de 8% e solar perto de 7% — **somadas elas já passam a hidrelétrica**, e é por isso que a frase diz "fonte isolada" |
+| `green-hydrogen` | O mundo produziu quase 100 milhões de toneladas de hidrogênio em 2024, e menos de 1% delas veio de processos de baixa emissão. | **[IEA-H2-25]** | A produção de baixa emissão cresceu 10% em 2024 e deve passar de 1 Mt em 2025 — o problema é a escala, não a direção |
+| `coal-phaseout` | O carvão gerou 35% da eletricidade do mundo em 2024 — a menor fatia desde 1974, e ainda assim a maior de todas as fontes. | **[IEA-GER25]** | 1974 é o ano de fundação da IEA, que é até onde a série vai. Em valor absoluto a geração a carvão **subiu** cerca de 1%, a um recorde de 10.700 TWh: a fatia cai porque o bolo cresce |
+| `rail-freight` | O trem leva 7% da carga e 8% dos passageiros do mundo gastando 2% de toda a energia do transporte. | **[IEA-RAIL]** | O relatório é de 2019 e continua sendo o levantamento de referência do setor. O contraste entre os 7–8% e os 2% é a eficiência do modal, não uma projeção |
+| `clean-shipping` | A navegação internacional respondeu por 2,9% das emissões humanas de gases de efeito estufa, e a Organização Marítima Internacional se comprometeu a zerá-las por volta de 2050. | **[IMO-GHG4]** | 2,89% em 2018, contra 2,76% em 2012. A frase evita datar o compromisso de propósito: a estratégia da IMO foi revista mais de uma vez desde 2023 |
+| `aviation-fuel` | Em 2024, o combustível sustentável de aviação foi 0,3% de todo o querosene de avião queimado no mundo. | **[IATA-SAF]** | 1 milhão de toneladas, o dobro de 2023 — e ainda assim abaixo da própria previsão da IATA, de 1,5 Mt |
+| `compact-cities` | As cidades ocupam cerca de 2% da terra do planeta e respondem por 70% das emissões de CO₂. | **[UNEP-CITY]** | Os 70% são a estimativa que o IPCC AR6 (2022) e o UN-Habitat repetem. Transporte e prédios são as duas maiores parcelas — que é exatamente o ramo deste nó |
+| `peatlands` | As turfeiras cobrem cerca de 3% da terra do planeta e guardam o dobro do carbono de todas as florestas do mundo somadas. | **[UNEP-PEAT]** | Perto de um terço do carbono de solo do mundo. Só 17% delas estão dentro de área protegida |
+| `agroforestry` | Em 43% das terras agrícolas do mundo já existe ao menos 10% de cobertura de árvores, e são elas que guardam mais de três quartos do carbono dessas terras. | **[ZOMER16]** | Dado de 2010, com sensoriamento remoto global. O IPCC põe a agrofloresta entre os três maiores caminhos de mitigação do uso da terra |
+| `food-waste` | Perder e desperdiçar comida gera de 8% a 10% das emissões humanas de gases de efeito estufa — quase cinco vezes o que a aviação inteira emite. | **[FWI24]** | 1,05 bilhão de toneladas desperdiçadas em 2022, 19% do que chega ao consumidor. As casas respondem por 60% disso |
+| `protected-areas` | O mundo protege 17,6% da terra e 8,4% do mar; a meta acordada por quase todos os países é chegar a 30% dos dois até 2030. | **[PP24]** | A meta 30x30 é do Marco Global de Biodiversidade de Kunming-Montreal. Chegar lá exige quase dobrar a área protegida em terra e mais que triplicar no mar |
+| `methane-leaks` | A produção de combustível fóssil solta quase 120 milhões de toneladas de metano por ano, e 70% disso daria para evitar com tecnologia que já existe. | **[IEA-CH4-25]** | Boa parte do conserto **se paga**: o gás capturado é vendável. Em 2024 isso teria posto 100 bilhões de m³ no mercado, o equivalente a tudo o que a Noruega exporta |
+| `refrigerants` | Trocar os gases de geladeiras e de ar-condicionado, como manda a Emenda de Kigali, deve evitar até 0,4 °C de aquecimento a mais até 2100. | **[NOAA-MP]** | Mesmo número da observação do `treaties`, de propósito — ver a nota acima da tabela. É aquecimento **evitado em relação a seguir com HFCs**, não resfriamento |
+| `green-ammonia` | Cada tonelada de amônia para fertilizante emite 2,4 toneladas de CO₂ — quase o dobro do aço e quatro vezes o cimento. | **[IEA-NH3]** | Emissão direta por tonelada produzida. A amônia é o produto que mais emite de todo o setor químico (450 MtCO₂/ano), e 99% dela ainda vem de carvão ou de gás |
+| `carbon-capture` | Todas as usinas de captura de carbono em operação no mundo retiram 51 milhões de toneladas de CO₂ por ano — pouco mais de um milésimo do que o mundo emite. | **[GCCSI24]** | 51 Mt contra os 40,753 Gt do `startEmissions`: 0,125%. O que está em construção dobraria a conta, e a fila inteira de projetos chega a 416 Mt/ano |
+| `carbon-price` | Os instrumentos de preço de carbono já cobrem 28% das emissões mundiais e arrecadaram mais de 100 bilhões de dólares em 2024. | **[WB-CP25]** | Eram 12% de cobertura uma década antes. São 80 instrumentos em operação, e mais da metade da arrecadação é carimbada para meio ambiente e infraestrutura |
+| `subsidy-reform` | Em 2023 os governos gastaram 620 bilhões de dólares para baratear combustível fóssil ao consumidor, e em 2022 esse gasto passou de 1,2 trilhão. | **[IEA-SUB]** | Subsídio ao **consumo**, não à produção. O pico de 2022 veio da disparada de preço após a invasão da Ucrânia; eletricidade, petróleo e gás pesam cerca de um terço cada |
+| `climate-finance` | Na COP29 os países acordaram levar o financiamento climático aos países em desenvolvimento a pelo menos 300 bilhões de dólares por ano até 2035, dentro de uma meta maior de 1,3 trilhão vindo de todas as fontes. | **[NCQG24]** | Os 300 bilhões triplicam a meta anterior, de 100 bilhões. Os dois números são da mesma decisão: o menor é o que os países desenvolvidos lideram, o maior é de todas as fontes |
+| `just-transition` | A energia renovável empregava 16,6 milhões de pessoas no mundo em 2024, e o emprego do setor cresce há mais de uma década. | **[IRENA-JOBS]** | Edição de 2025 da série, com a OIT. Foi o **crescimento mais lento** já medido (2,3%) apesar de um recorde de instalações — automação e gargalos de rede são as razões apontadas |
 
 ## Fatos das 3 ações do mundo real
 

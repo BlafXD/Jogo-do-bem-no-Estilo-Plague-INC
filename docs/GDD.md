@@ -93,15 +93,24 @@ tempo avança
 
 | Ramo | Exemplos de nós |
 |---|---|
-| **Energia** | solar, eólica, hidrelétrica, armazenamento em bateria, rede inteligente |
-| **Transporte e Cidades** | eletrificação de frotas, transporte público, ciclovias, prédios eficientes |
-| **Natureza** | reflorestamento, manguezais, agricultura regenerativa, proteção oceânica |
-| **Indústria** | eficiência industrial, economia circular, cimento e aço verdes |
-| **Sociedade** | educação climática, acordos internacionais, alerta precoce, defesa costeira |
+| **Energia** | solar, eólica, hidrelétrica, armazenamento em bateria, rede inteligente, eólica no mar, hidrogênio verde, fim do carvão |
+| **Transporte e Cidades** | eletrificação de frotas, transporte público, ciclovias, prédios eficientes, carga nos trilhos, navegação limpa, combustível de aviação, cidades compactas |
+| **Natureza** | reflorestamento, manguezais, agricultura regenerativa, proteção oceânica, turfeiras, agrofloresta, desperdício de alimentos, áreas protegidas |
+| **Indústria** | eficiência industrial, economia circular, cimento e aço verdes, vazamentos de metano, gases de refrigeração, amônia verde, captura de carbono |
+| **Sociedade** | educação climática, acordos internacionais, alerta precoce, defesa costeira, preço do carbono, fim dos subsídios fósseis, financiamento climático, transição justa |
 
 Todo nó tem: custo em PAC, pré-requisitos, **efeito mecânico** e **um fato real de uma frase com fonte** (é isso que transforma o jogo em conscientização sem virar palestra).
 
-> O corte de escopo do modo solo (20 nós em vez de 40) está registrado em `PLANO.md`, na tabela da Estratégia Solo.
+**A forma de cada ramo são dois losangos empilhados:** uma raiz barata, dois nós do meio, um nó de
+fecho — e o fecho destrava a raiz do losango de baixo, que repete a forma com os nós caros e
+transformadores. Cada ramo custa o mesmo total, para que escolher entre eles seja sobre o que o
+jogador quer, nunca sobre preço.
+
+> **Os 40 nós entraram no `REF-07`, em 2026-10-06.** Até ali valia o corte de escopo do modo solo —
+> 20 nós, 4 por ramo —, registrado em `PLANO.md`, na tabela da Estratégia Solo. O corte caiu junto
+> com o rebalanceamento do `REF-09`, que subiu a entrada de PAC para a árvore nova caber numa
+> partida; a conta está em `docs/BALANCEAMENTO.md`, e os 20 fatos novos, com fonte, em
+> `docs/CIENCIA.md`.
 
 ### 2.5 Eventos
 
@@ -159,14 +168,20 @@ A partida acaba de três jeitos, e **a ordem em que as perguntas são feitas faz
 > publicar uma escala de medalhas decorativa. **O preço está registrado junto:** a faixa ficou
 > larga o bastante para caber também quem desiste depois de ~2070, e fechar isso é do `P8-02`.
 
-> **Por que chegar a 2100 vale medalha** — decisão de 2026-08-19, no `P6-08`. O zero líquido é
-> hoje **inalcançável**: a árvore inteira soma 5,5% ao ano de corte contra 0,93% de crescimento da
-> linha de base, e o jogo ótimo medido com o engine real termina em **13 Gt/ano**, vinte e seis
-> vezes o limiar. Sem esta regra o jogo não teria vitória nenhuma. A escala por temperatura também
-> é a que a mecânica já ensina sozinha: o TCRE faz da temperatura uma **catraca de mão única** — o
-> CO₂ acumulado só cresce, e nenhuma compra faz a temperatura descer — o que transforma **quando**
-> o jogador agiu na decisão que decide a partida. Os números e as alavancas de conserto estão em
-> `docs/BALANCEAMENTO.md`.
+> **Por que chegar a 2100 vale medalha** — decisão de 2026-08-19, no `P6-08`. Naquele dia o zero
+> líquido era **inalcançável**: a árvore inteira somava 5,5% ao ano de corte contra 0,93% de
+> crescimento da linha de base, e o jogo ótimo medido com o engine real terminava em **13 Gt/ano**,
+> vinte e seis vezes o limiar. Sem esta regra o jogo não teria vitória nenhuma. A escala por
+> temperatura também é a que a mecânica já ensina sozinha: o TCRE faz da temperatura uma **catraca
+> de mão única** — o CO₂ acumulado só cresce, e nenhuma compra faz a temperatura descer — o que
+> transforma **quando** o jogador agiu na decisão que decide a partida.
+>
+> **A regra fica, e a razão dela mudou no `REF-09` (2026-10-06).** Com a árvore de 40 nós, que soma
+> 12,25% ao ano, o zero líquido **deixou de ser impossível por construção**: comprar tudo leva as
+> emissões a 0,005 Gt/ano. O que segura a vitória agora é o bolso, não a física — ninguém arrecada
+> os 6300 PAC que a árvore custa, e a melhor estratégia medida termina em **0,8 Gt/ano**, perto do
+> limiar de 0,5 e ainda acima dele. Ou seja: a vitória do item 2 saiu de "decorativa" para "no
+> horizonte, e ninguém chegou lá ainda". Os números estão em `docs/BALANCEAMENTO.md`.
 
 **O desfecho é recalculado, nunca gravado.** Ele sai de temperatura, apoio, emissões e tick a cada
 consulta, e não existe campo de "venceu" no `GameState` (`§3`). É o que impede um save adulterado
@@ -274,7 +289,7 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "startEmissions": 40.753,        // GtCO₂/ano global
   "tcre": 0.00045,                 // °C por GtCO₂ acumulado
   "baselineGrowthPerYear": 0.0093, // crescimento anual das emissões sem ação
-  "basePointsPerYear": 10,
+  "basePointsPerYear": 46,         // 10 até o REF-09, com a árvore de 20 nós
   "supportDecayPerYear": 1.5,      // base/média do decaimento; cada região tem o seu em regions.json (REF-06)
   "supportFloor": 25,              // piso de apatia: o decaimento para aqui
   "inertiaGrowthPerYear": 0.5,     // crescimento de base da Inércia
@@ -283,8 +298,8 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "inertiaSubsidyBite": 0.002,     // agravo de emissão por turno de subsídio
   "inertiaDisinformationBite": 0.5,// apoio derrubado por turno de desinformação
   "inertiaActionEveryTicks": 6,    // de quantos em quantos meses ela age
-  "containCost": 30,               // PAC de uma contenção, com só o nó raiz
-  "containDiscountPerNode": 0.2,   // desconto por nó de Sociedade além do primeiro
+  "containCost": 140,              // PAC de uma contenção, com só o nó raiz
+  "containDiscountPerNode": 0.1,   // desconto por nó de Sociedade além do primeiro
   "containRelief": 25,             // pontos de Inércia que a contenção derruba
   "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
   "criticalEventSupport": 2.5,     // impacto de apoio que torna o evento crítico
@@ -323,7 +338,16 @@ Inércia satura em 100 antes de 2075 contra um jogador que não fez nada, e o an
 sozinho — o espelho do §2.6 viraria enfeite. E o `inertiaDisinformationBite` ficou em **0,5**, não
 no 1,0 que o `docs/INERCIA.md` propôs: aquele número foi verificado num mundo **sem eventos**, e com
 os eventos do §2.5 em cena ele dissolve a agência em toda estratégia. A varredura em cinco seeds
-está em `docs/BALANCEAMENTO.md`.
+está em `docs/BALANCEAMENTO.md`. **O `REF-09` tentou 0,8 e encontrou a mesma parede** — com a
+árvore de 40 nós, ele dissolve até a melhor jogada —, então 0,5 fica.
+
+**O custo da contenção acompanha a renda, e o desconto encolheu (`REF-09`).** O `containCost` subiu
+de 30 para **140** pelo mesmo motivo que o `basePointsPerYear` subiu de 10 para 46: o que define a
+dificuldade de conter não é o número, é **quantos anos de arrecadação ele custa** — três, antes e
+depois. E o `containDiscountPerNode` caiu de 0,2 para **0,1** porque o ramo Sociedade dobrou de
+tamanho: com 8 nós e o desconto antigo, a conta ficava negativa e **a contenção virava de graça** a
+partir do sexto nó. O `src/engine/inertia.ts` já previa isso por escrito, e previa também o
+conserto. Com 0,1, oito nós dão 70% de desconto — o mesmo teto que quatro nós davam antes.
 
 **Evento crítico (`criticalEventSupport`).** Um evento cujo `impact.support` alcança este valor
 **pausa o relógio sozinho** e mostra o cartão com o fato real (`P7-02`). O eixo é o apoio, e não a

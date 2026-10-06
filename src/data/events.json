@@ -22,7 +22,7 @@
     "impact": {
       "support": 1.5,
       "economy": 4,
-      "points": 1
+      "points": 5
     },
     "mitigatedByResilience": true,
     "fact": "Em regiões que já secam, a seca agrícola extrema fica pelo menos duas vezes mais provável a 1,5 °C de aquecimento."
@@ -36,7 +36,7 @@
     "impact": {
       "support": 1.5,
       "economy": 3,
-      "points": 1
+      "points": 5
     },
     "mitigatedByResilience": true,
     "fact": "A cada grau de aquecimento a atmosfera segura cerca de 7% mais vapor de água — e é essa água que volta como chuva concentrada."
@@ -64,7 +64,7 @@
     "impact": {
       "support": 2,
       "economy": 6,
-      "points": 2
+      "points": 9
     },
     "mitigatedByResilience": true,
     "fact": "A proporção de ciclones tropicais das categorias 3 a 5 aumentou nas últimas quatro décadas."
@@ -78,7 +78,7 @@
     "impact": {
       "support": 1.5,
       "economy": 4,
-      "points": 1
+      "points": 5
     },
     "mitigatedByResilience": true,
     "fact": "Os incêndios extremos devem aumentar até 14% até 2030 e 50% até o fim do século."
@@ -92,7 +92,7 @@
     "impact": {
       "support": 2,
       "economy": 2,
-      "points": 2
+      "points": 9
     },
     "mitigatedByResilience": true,
     "fact": "Em 2024 foram 14,1 milhões de casos de dengue no mundo, doze vezes mais que dez anos antes."
@@ -106,7 +106,7 @@
     "impact": {
       "support": 1.5,
       "economy": 3,
-      "points": 1
+      "points": 5
     },
     "mitigatedByResilience": true,
     "fact": "Na Alta Ásia, os deslizamentos disparados por chuva extrema devem ficar 10% mais frequentes até o fim do século."
@@ -120,7 +120,7 @@
     "impact": {
       "support": 2.5,
       "economy": 6,
-      "points": 3
+      "points": 14
     },
     "mitigatedByResilience": true,
     "fact": "A inundação costeira que acontecia uma vez por século deve passar a acontecer ao menos uma vez por ano em mais da metade dos marégrafos até 2100."
@@ -134,7 +134,7 @@
     "impact": {
       "support": 3,
       "economy": 7,
-      "points": 3
+      "points": 14
     },
     "mitigatedByResilience": true,
     "fact": "Em 2024, oito países tiveram ao menos um milhão de pessoas a mais em insegurança alimentar aguda do que no ano anterior."

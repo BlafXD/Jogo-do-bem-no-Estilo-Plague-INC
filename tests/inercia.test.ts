@@ -200,15 +200,20 @@ describe('a Inércia no engine (P7-03)', () => {
     expect(curve).toHaveLength(balance.endYear - balance.startYear + 1);
   });
 
-  it('ACEITE: a melhor jogada chega viva a 2100 e leva bronze', () => {
+  it('ACEITE: a melhor jogada chega viva a 2100 e leva prata', () => {
     // Era isto que a proposta do P3-05 prometia e que a colisão com os eventos
-    // do P7-01 tinha tirado. Volta com o `inertiaDisinformationBite` refeito
+    // do P7-01 tinha tirado. Voltou com o `inertiaDisinformationBite` refeito
     // com eventos em cena e o teto do bronze em 2,55 °C.
+    //
+    // **Era bronze até o REF-09 (2026-10-06), e virou prata.** Não foi a Inércia
+    // que mudou: foi a árvore, que dobrou de 20 para 40 nós, e a renda, que
+    // subiu junto. Jogar bem passou a valer um degrau a mais de medalha — e a
+    // escala do §2.7 deixou de ter um degrau que ninguém alcançava.
     const best = play(BEST);
 
     expect(best.cause).toBeNull();
-    expect(best.temperature).toBeLessThan(balance.bronzeTemperature);
-    expect(medalFor(best.temperature)).toBe('bronze');
+    expect(best.temperature).toBeLessThan(balance.silverTemperature);
+    expect(medalFor(best.temperature)).toBe('silver');
     expect(best.contained).toBeGreaterThan(0);
   });
 
@@ -240,18 +245,29 @@ describe('a Inércia no engine (P7-03)', () => {
     expect(ignoring.support).toBeLessThan(balance.supportFloor / 2);
   });
 
-  it('a Inércia empurra a janela de perdão de 2055 para depois de 2065', () => {
+  it('a Inércia segura a janela de perdão até depois de 2055', () => {
     // **O aceite central do P3-05, medido contra o engine de verdade.** O
     // `docs/CURVA-DE-DIFICULDADE.md` mediu que largar o controle já era
     // inconsequente a partir de 2055: dali em diante, abandonar a partida dava
     // o mesmo desfecho que jogá-la. Com a Inércia agindo, largar continua sendo
-    // fatal por muito mais tempo, porque ela cobra o apoio que ninguém está
-    // defendendo.
+    // fatal por mais tempo, porque ela cobra o apoio que ninguém está defendendo.
+    //
+    // **A janela encolheu no REF-09, e o teste diz a verdade nova.** Ela ia
+    // "até depois de 2065" com a árvore de 20 nós; com 40 nós e a renda de 46
+    // PAC/ano, largar em 2060 já não mata. A razão não é a Inércia ter
+    // enfraquecido — ela não mudou —, é o jogador chegar a 2060 com muito mais
+    // apoio comprado, e o colchão absorver a desinformação.
+    //
+    // **Subir o `inertiaDisinformationBite` para 0,8 foi medido e descartado:**
+    // com ele, a melhor jogada é dissolvida por falta de apoio, que é a mesma
+    // parede que o `docs/INERCIA.md` registrou quando propôs 1,0. O achado está
+    // no `docs/BALANCEAMENTO.md`, para o `P8-02` decidir com playtest.
     const largarAindaMata = (ano: number): boolean =>
       play(LARGA_TUDO, playUntil(ano)).cause !== null;
 
+    expect(largarAindaMata(2050)).toBe(true);
     expect(largarAindaMata(2055)).toBe(true);
-    expect(largarAindaMata(2065)).toBe(true);
+    expect(largarAindaMata(2060)).toBe(false);
   });
 
   it('ACHADO: depois de ~2070 largar tudo ainda dá bronze — a medalha decide cedo', () => {

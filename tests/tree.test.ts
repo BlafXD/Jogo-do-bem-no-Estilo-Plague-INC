@@ -32,14 +32,16 @@ function withPoints(actionPoints: number): GameState {
 }
 
 describe('treeView', () => {
-  it('entrega os 5 ramos na ordem do GDD, com 4 nós cada', () => {
+  it('entrega os 5 ramos na ordem do GDD, com 8 nós cada', () => {
+    // Eram 4 por ramo até o REF-07 (2026-10-06), quando o segundo losango de
+    // cada ramo entrou e a árvore chegou aos 40 nós do docs/GDD.md §2.4.
     const view = treeView(withPoints(0));
 
     expect(view.map((branch) => branch.branch)).toEqual([...SKILL_BRANCHES]);
     expect(view.flatMap((branch) => branch.nodes)).toHaveLength(skills.length);
 
     for (const branch of view) {
-      expect(branch.nodes).toHaveLength(4);
+      expect(branch.nodes).toHaveLength(8);
       expect(branch.name.trim().length).toBeGreaterThan(0);
     }
   });

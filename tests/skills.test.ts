@@ -35,14 +35,15 @@ function validSkill(id: string): RawSkill {
 }
 
 describe('a árvore de src/data/skills.json', () => {
-  it('tem 20 nós, 4 em cada um dos 5 ramos', () => {
-    // O corte do modo solo está na tabela da Estratégia Solo do PLANO.md. Subir
-    // para 40 é decisão de escopo — se este teste falhar, é para atualizá-lo de
+  it('tem 40 nós, 8 em cada um dos 5 ramos', () => {
+    // **Eram 20 até o REF-07 (2026-10-06)**, o corte do modo solo que a tabela
+    // da Estratégia Solo do PLANO.md registrava. Os 40 são o número que o
+    // docs/GDD.md §2.4 sempre pediu. Se este teste falhar, é para atualizá-lo de
     // propósito, junto do PLANO.md.
-    expect(skills).toHaveLength(20);
+    expect(skills).toHaveLength(40);
 
     for (const branch of SKILL_BRANCHES) {
-      expect(skills.filter((skill) => skill.branch === branch)).toHaveLength(4);
+      expect(skills.filter((skill) => skill.branch === branch)).toHaveLength(8);
     }
   });
 
@@ -61,18 +62,35 @@ describe('a árvore de src/data/skills.json', () => {
     }
   });
 
-  it('trava o custo total em 1600 PAC e o corte total em 5,5% ao ano', () => {
+  it('trava o custo total em 6300 PAC e o corte total em 12,25% ao ano', () => {
     // Estes dois números são o balanceamento inteiro da árvore. Sem travá-los,
     // mexer no custo de um nó muda a dificuldade da partida e nenhum outro
     // teste percebe. Mudança aqui vira linha em docs/BALANCEAMENTO.md.
+    //
+    // **Eram 1600 PAC e 5,5% ao ano até o REF-07/REF-09 (2026-10-06)**, com 20
+    // nós. Os 20 do segundo losango somaram 4700 PAC e 6,75% ao ano, e o
+    // `basePointsPerYear` subiu de 10 para 46 para acompanhar — a conta inteira
+    // está no docs/BALANCEAMENTO.md.
     const cost = skills.reduce((total, skill) => total + skill.cost, 0);
     const cut = skills
       .flatMap((skill) => skill.effects)
       .filter((effect) => effect.kind === 'emissionCut')
       .reduce((total, effect) => total + effect.value, 0);
 
-    expect(cost).toBe(1600);
-    expect(cut).toBeCloseTo(5.5, 10);
+    expect(cost).toBe(6300);
+    expect(cut).toBeCloseTo(12.25, 10);
+  });
+
+  it('cada ramo custa o mesmo: 1260 PAC, nos dois losangos somados', () => {
+    // A simetria é decisão de desenho do REF-07: nenhum ramo é "o barato", e a
+    // escolha entre eles é sobre o que o jogador quer, não sobre preço.
+    for (const branch of SKILL_BRANCHES) {
+      const cost = skills
+        .filter((skill) => skill.branch === branch)
+        .reduce((total, skill) => total + skill.cost, 0);
+
+      expect(cost, branch).toBe(1260);
+    }
   });
 
   it('todo nó tem nome, descrição e fato preenchidos', () => {
@@ -295,14 +313,14 @@ describe('os efeitos contínuos', () => {
     expect(emissionCutFor(gameWith(0, ['solar', 'wind']), 'na')).toBeCloseTo(0.0095, 10);
   });
 
-  it('a árvore inteira corta 5,5% ao ano, em todas as 8 regiões', () => {
+  it('a árvore inteira corta 12,25% ao ano, em todas as 8 regiões', () => {
     const tudo = gameWith(
       0,
       skills.map((skill) => skill.id),
     );
 
     for (const id of REGION_IDS) {
-      expect(emissionCutFor(tudo, id)).toBeCloseTo(0.055, 10);
+      expect(emissionCutFor(tudo, id)).toBeCloseTo(0.1225, 10);
     }
   });
 
@@ -388,17 +406,20 @@ describe('a árvore ligada à simulação', () => {
     expect(end.year).toBe(balance.endYear);
   });
 
-  it('o orçamento do P3-04: sobra para 15 dos 20 nós, 56% do custo', () => {
+  it('o orçamento do P3-04: sobra para 32 dos 40 nós, 62% do custo', () => {
     // O número que docs/BALANCEAMENTO.md registra. Se mexer no custo de um nó,
     // no `basePointsPerYear` ou no `impact.points` de um evento, é aqui que a
     // mudança aparece — e vira linha lá.
     //
     // Eram 16 nós e 65% até o P7-01. Os eventos cobram PAC — é o `impact.points`
-    // do §2.5 — e isso tirou um nó inteiro do alcance.
+    // do §2.5 — e isso tirou um nó inteiro do alcance, deixando 15 e 56%.
+    // **Com a árvore de 40 nós do REF-07** e a renda do REF-09 são 32 nós e 62%
+    // do custo: oito ficam de fora, e são sempre os mais caros do fundo.
     const end = playGreedy();
+    const cost = skills.reduce((total, skill) => total + skill.cost, 0);
 
-    expect(end.unlockedSkills).toHaveLength(15);
-    expect(Math.round((spentOn(end) / 1600) * 100)).toBe(56);
+    expect(end.unlockedSkills).toHaveLength(32);
+    expect(Math.round((spentOn(end) / cost) * 100)).toBe(62);
   });
 
   it('comprar cedo vale mais que comprar tarde', () => {
@@ -497,12 +518,17 @@ describe('costFor — o desconto de ramo do personagem', () => {
     const comDesconto = costFor(createInitialState(1, 'ana-luiza'), solar);
 
     // Com o valor exato do desconto, a Ana Luiza compra; o baseline, não.
-    expect(canUnlock({ ...createInitialState(1, 'ana-luiza'), actionPoints: comDesconto }, 'solar').ok).toBe(
-      true,
+    expect(
+      canUnlock({ ...createInitialState(1, 'ana-luiza'), actionPoints: comDesconto }, 'solar').ok,
+    ).toBe(true);
+    expect(canUnlock({ ...createInitialState(1), actionPoints: comDesconto }, 'solar').ok).toBe(
+      false,
     );
-    expect(canUnlock({ ...createInitialState(1), actionPoints: comDesconto }, 'solar').ok).toBe(false);
 
-    const depois = unlockSkill({ ...createInitialState(1, 'ana-luiza'), actionPoints: 40 }, 'solar');
+    const depois = unlockSkill(
+      { ...createInitialState(1, 'ana-luiza'), actionPoints: 40 },
+      'solar',
+    );
     expect(depois.actionPoints).toBe(40 - comDesconto);
   });
 });
@@ -541,9 +567,7 @@ describe('os buffs contínuos do personagem', () => {
     const carlos = createInitialState(1, 'carlos-mendes');
 
     for (const id of REGION_IDS) {
-      expect(carlos.regions[id].resilience).toBe(
-        Math.min(100, base.regions[id].resilience + 8),
-      );
+      expect(carlos.regions[id].resilience).toBe(Math.min(100, base.regions[id].resilience + 8));
     }
   });
 });

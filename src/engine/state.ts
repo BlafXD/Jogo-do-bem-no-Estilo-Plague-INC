@@ -137,7 +137,9 @@ function readBuffNumber(
 ): number {
   if (value === undefined) return 0;
   if (!Number.isFinite(value) || value < min || value > max) {
-    throw new Error(`character-buffs.json: "${id}" tem ${field} = ${value}, fora de ${min} a ${max}.`);
+    throw new Error(
+      `character-buffs.json: "${id}" tem ${field} = ${value}, fora de ${min} a ${max}.`,
+    );
   }
   return value;
 }
@@ -700,10 +702,7 @@ function withStartResilience(
  * **no começo** — a resiliência inicial — é aplicado aqui; os buffs contínuos
  * (desconto, reforço de corte, PAC/ano) moram no `skills.ts`, lidos a cada uso.
  */
-export function createInitialState(
-  seed: number,
-  character: CharacterId | null = null,
-): GameState {
+export function createInitialState(seed: number, character: CharacterId | null = null): GameState {
   const buff = character === null ? undefined : characterBuffs[character];
   const regions = withStartResilience(parseRegions(regionsData), buff?.startResilience ?? 0);
 

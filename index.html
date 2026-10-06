@@ -19,10 +19,10 @@
          espalhá-los por outro arquivo. São três ocorrências, todas neste
          arquivo, e o P1-04 troca as três de uma vez.
 
-         As três telas do P5-06 são feitas destes blocos: #tela-titulo, o .topo,
-         a .base e o #tabuleiro. Quem liga e desliga cada um é o
-         src/ui/screens.ts, pelo atributo hidden — o porquê de cada tela mostrar
-         o que mostra está escrito lá. -->
+         As quatro telas são feitas destes blocos: #tela-titulo, #tela-selecao
+         (REF-08), o .topo, a .base e o #tabuleiro. Quem liga e desliga cada um é
+         o src/ui/screens.ts, pelo atributo hidden — o porquê de cada tela
+         mostrar o que mostra está escrito lá. -->
     <!-- O link de pulo do P8-04. Primeiro elemento do corpo porque precisa ser a
          primeira parada de tabulação da página — é essa posição que faz dele um
          atalho e não mais um item da fila. Fica invisível até receber o foco
@@ -40,6 +40,13 @@
         <span class="title__name-bottom">Virada</span>
       </h1>
     </section>
+
+    <!-- A escolha do especialista (REF-08), entre o título e a partida. Vazia
+         aqui: o conteúdo inteiro é montado pelo src/ui/character-select.ts, que
+         deriva quem aparece de quem é jogável e tem retrato. Fica fora do
+         #tela-partida, como o título, porque aquele invólucro existe para as
+         três faixas da partida. -->
+    <section id="tela-selecao" class="select" hidden></section>
 
     <!-- A partida em três faixas (VIS-04): a barra de cima, o meio e a barra de
          baixo. Em tela larga elas enchem a janela; em tela estreita viram uma
