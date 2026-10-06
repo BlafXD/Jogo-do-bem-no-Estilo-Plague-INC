@@ -60,10 +60,36 @@
    sua linha: quem tem coluna marcada desce quando a coluna já passou.
 
    **O losango precisa de 16rem de ramo.** Com menos, os dois nós do meio ficam
-   com uns 60 px de texto, e "Armazenamento" se parte no meio da palavra — o
-   que acontece com os cinco ramos lado a lado em qualquer tela abaixo de uns
-   1900 px. Aí os quatro nós ficam empilhados, e as ligações descem retas pela
-   espinha — por trás dos cartões, que são opacos. */
+   com uns 60 px de texto, e "Acordos internacionais" se parte no meio da
+   palavra. Aí os nós ficam empilhados, e as ligações descem retas pela espinha
+   — por trás dos cartões, que são opacos.
+
+   **Medido em 2026-10-06, com a árvore de 40 nós do REF-07** (antes eram 20, e
+   o empilhamento custava quatro cartões por ramo; agora custa oito):
+
+   | tela | ramo | losango | a árvore rola? |
+   |---|---|---|---|
+   | 1366 × 768 | 185 px | não | sim, 925 px em 657 |
+   | 1440 × 900 | 196 px | não | sim, 925 px em 789 |
+   | 1536 × 864 | 211 px | não | sim, 906 px em 753 |
+   | 1680 × 1050 | 240 px | não | não, 939 px em 939 |
+   | 1920 × 1080 | 288 px | **sim** | não, 969 px em 969 |
+
+   **Cinco losangos de 16rem mais o painel lateral pedem ~1750 px, e é por isso
+   que só o 1920 tem losango.** Três saídas foram medidas e **nenhuma domina** —
+   todas trocam o losango por mais rolagem, que é o defeito que se queria curar:
+
+   - *ramos quebrando em duas linhas* (`auto-fit`): devolve o losango em todas as
+     telas e leva a rolagem de 925 para **1534 px**; passa a rolar até em 1680.
+   - *painel lateral mais fino*: quase não muda — o ramo vai de 185 para 196 px.
+   - *painel lateral embaixo da árvore*: devolve o losango de 1440 para cima e
+     baixa o conteúdo para ~800 px, mas a área visível cai para 432 px em 1366,
+     e a razão rolada piora de 1,4× para 2,0×.
+
+   **Então fica como está**, e a escolha entre as três é do autor — é decisão de
+   desenho, não de código. O cartão empilhado também foi medido compacto (custo e
+   estado na mesma linha): economiza 26 px no ramo inteiro, porque a altura vem
+   do nome quebrando em linhas, e não das linhas de baixo. */
 .tree__diamond {
   position: relative;
 }

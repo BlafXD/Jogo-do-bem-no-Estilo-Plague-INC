@@ -140,7 +140,17 @@
       "wildfire": "carlos-mendes",
       "landslide": "carlos-mendes",
       "vector-disease": "juliana-almeida",
-      "crop-failure": "juliana-almeida"
+      "crop-failure": "juliana-almeida",
+      "cooling-blackout": "ana-luiza",
+      "marine-heatwave": "carlos-mendes",
+      "ocean-acidification": "carlos-mendes",
+      "fishery-shift": "carlos-mendes",
+      "glacier-loss": "ricardo-souza",
+      "permafrost-thaw": "ricardo-souza",
+      "dust-storm": "ricardo-souza",
+      "heat-labour": "juliana-almeida",
+      "climate-displacement": "juliana-almeida",
+      "insurance-gap": "juliana-almeida"
     }
   }
 }

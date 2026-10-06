@@ -295,7 +295,7 @@
     "id": "mangroves",
     "branch": "nature",
     "name": "Restauração de manguezais",
-    "description": "Corta 0,15% ao ano das emissões globais e ganha 10 pontos de resiliência.",
+    "description": "Corta 0,15% ao ano das emissões globais e ganha 14 pontos de resiliência nas 5 regiões tropicais.",
     "fact": "O solo de um manguezal guarda em média cinco vezes mais carbono por hectare que o de florestas temperadas, boreais ou tropicais.",
     "cost": 70,
     "requires": ["reforestation"],
@@ -307,8 +307,28 @@
       },
       {
         "kind": "resilience",
-        "target": "global",
-        "value": 10
+        "target": "la",
+        "value": 14
+      },
+      {
+        "kind": "resilience",
+        "target": "af",
+        "value": 14
+      },
+      {
+        "kind": "resilience",
+        "target": "ea",
+        "value": 14
+      },
+      {
+        "kind": "resilience",
+        "target": "sa",
+        "value": 14
+      },
+      {
+        "kind": "resilience",
+        "target": "oc",
+        "value": 14
       }
     ]
   },

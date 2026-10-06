@@ -273,12 +273,18 @@ quase não aparece; num cartaz grande, aparece.
 **Quem dá cada notícia** (proposta 2, §10). A tabela vive num arquivo de dados, editável pelo
 `[D-Historia]` sem tocar em `.ts`:
 
-| Especialista | Eventos |
-|---|---|
-| Ana Luiza | onda de calor, ciclone tropical |
-| Ricardo | seca, enchente, ressaca e maré de tempestade |
-| Carlos | branqueamento de corais, incêndio florestal, deslizamento |
-| Juliana | surto transmitido por mosquito, colapso de safra |
+| Especialista | O assunto dele | Eventos |
+|---|---|---|
+| Ana Luiza | energia e rede | onda de calor, ciclone tropical, **apagão no pico do calor** |
+| Ricardo | água, solo e infraestrutura | seca, enchente, ressaca e maré de tempestade, **degelo das geleiras**, **degelo do permafrost**, **tempestade de areia** |
+| Carlos | ecossistemas e oceano | branqueamento de corais, incêndio florestal, deslizamento, **onda de calor marinha**, **acidificação do oceano**, **pesca em fuga** |
+| Juliana | sociedade e economia | surto transmitido por mosquito, colapso de safra, **calor no trabalho**, **deslocamento climático**, **o seguro se retira** |
+
+> **Os dez em negrito entraram em 2026-10-06**, quando os eventos subiram de 10 para 20 (item do
+> Gelo do `PLANO.md`). A coluna do meio é nova e existe para a próxima atribuição não ser por
+> gosto: **o especialista sai do assunto do evento**, e é por isso que o Ricardo, gestor de
+> recursos hídricos, ficou com as geleiras e o permafrost, e a Juliana, auditora, com o seguro. A
+> conta ficou 3 / 6 / 6 / 5, e a desigualdade é consequência do tema, não descuido.
 
 **No evento crítico, cada especialista usa a pose de alerta** (decisão de 2026-09-17): Ana Luiza
 `aponta`, Carlos `analisa`, Ricardo `atencao` e Juliana `mapa`.

@@ -264,6 +264,30 @@ arquivo, e é de lá que sai o fato do `ocean-protection`.
 | `early-warning` | Vinte e quatro horas de aviso antes de um desastre reduzem o dano em 30%. | **[WMO-EW]** | Número da Global Commission on Adaptation. A mortalidade por desastre é pelo menos seis vezes menor onde o sistema de alerta funciona |
 | `coastal-defence` | Entre 750 milhões e 1,1 bilhão de pessoas vivem a menos de 10 metros acima do nível do mar. | **[REIMANN21]** | Faixa para 2015. A largura vem de qual base de elevação e de população se usa — o artigo compara várias |
 
+### A exceção: o alvo regional do `mangroves` (2026-10-06)
+
+**Um nó passou a escolher regiões, e por isso a escolha precisa de fonte.** O `mangroves` dava 10
+pontos de resiliência ao mundo inteiro; desde 2026-10-06 ele dá **14 às cinco regiões tropicais** —
+`la`, `af`, `ea`, `sa` e `oc` — e nada às outras três. É o primeiro efeito com alvo regional do
+jogo, e realiza a promessa do `docs/GDD.md §2.3` de que regiões diferentes pedem estratégias
+diferentes.
+
+| Valor | Onde aparece | Fonte | Observação |
+|---|---|---|---|
+| as 5 regiões tropicais | `skills.json → mangroves → effects` | **[GMA-MAP]** | **Cinco países concentram 48% dos manguezais do mundo** — Indonésia (19%), Brasil (9%), Nigéria (7%), México (6%) e Austrália —, e a Índia é o terceiro maior em área. No recorte do jogo, esses seis caem em `ea`, `la`, `af` e `oc`, mais `sa` pela Índia |
+
+**A simplificação está assumida, e é esta:** `na` e `me` **têm** manguezal — a Flórida e as costas do
+mar Vermelho e do Golfo —, mas em área pequena perto das cinco regiões acima; a Europa não tem
+nenhum. O jogo deixa as três de fora do alvo. É a mesma licença que o evento `landslide` já toma, e
+está anotada aqui pelo mesmo motivo: **um alvo regional é uma afirmação sobre o mundo**, e
+afirmação sobre o mundo tem fonte neste arquivo ou não entra.
+
+**O corte de emissão do mesmo nó continua global**, e isso não é descuido: o carbono que o
+manguezal guarda sai da atmosfera do planeta inteiro, não da atmosfera da região dele. O
+`tests/skills.test.ts` trava as duas metades.
+
+---
+
 **O que estes fatos deliberadamente não fazem:** nenhum deles alimenta número da simulação. O
 efeito mecânico de um nó (quanto ele corta de emissão, quanto custa em PAC) é **balanceamento**, e
 mora em `docs/BALANCEAMENTO.md`. Misturar as duas coisas seria dar aparência de ciência a uma
@@ -297,6 +321,7 @@ frase, nada de número de simulação.
 | **[IEA-SUB]** | IEA, _Fossil fuel subsidies_ — página temática | <https://www.iea.org/topics/fossil-fuel-subsidies> |
 | **[NCQG24]** | OCDE, sobre a Nova Meta Coletiva Quantificada de financiamento climático acordada na COP29 | <https://www.oecd.org/en/topics/sub-issues/the-new-collective-quantified-goal-on-climate-finance0.html> |
 | **[IRENA-JOBS]** | IRENA e OIT, série _Renewable Energy and Jobs_ — número da edição de 2025, publicada em jan. 2026 | <https://www.irena.org/benefits/Job-Creation> |
+| **[GMA-MAP]** | Global Mangrove Alliance / FAO, distribuição dos manguezais por país | <https://www.mangrovealliance.org/news/30-years-of-global-forest-data> |
 
 A chave **[NOAA-MP]** não se repete: ela já está na tabela de cima, e é de lá que sai o número do
 `refrigerants` — **o mesmo 0,4 °C que a observação do `treaties` já registrava**. Uma varredura
@@ -380,7 +405,43 @@ simulação, mas quebra a honestidade do jogo — que é pior, porque é o texto
 | **[WMO-SGC24]** | WMO, _State of the Global Climate 2024_ | <https://wmo.int/publication-series/state-of-global-climate-2024> |
 
 A chave **[AR6]** não se repete aqui: ela é fonte primária no topo deste arquivo, e é de lá que
-saem cinco dos dez fatos.
+saem cinco dos dez primeiros fatos.
+
+### Os 10 eventos novos (2026-10-06)
+
+**Os eventos subiram de 10 para 20**, item do Gelo do `PLANO.md`. **A frequência não mudou:** o
+`drawEvent` usa a *soma* dos pesos como eventos por ano, então os dez pesos antigos foram divididos
+por dois e os novos ocuparam a metade que sobrou — 2,370 antes, 2,355 depois. Dobrou a variedade, e
+não a pressão.
+
+**Nenhum dos dez é geológico**, e isso foi critério de escolha, não acaso: é a mesma régua que tirou
+o tsunami no `P3-06`. Cada um é consequência medida do aquecimento.
+
+**Consultadas em 2026-10-06.**
+
+| Chave | Publicação | Link |
+|---|---|---|
+| **[ILO19]** | OIT, _Working on a warmer planet: the impact of heat stress on labour productivity_ (2019) | <https://www.ilo.org/publications/working-warmer-planet-impact-heat-stress-labour-productivity-and-decent> |
+| **[WGMS25]** | WMO / World Glacier Monitoring Service, Dia Mundial das Geleiras (2025) | <https://www.unognewsroom.org/story/en/2566/world-day-for-glaciers> |
+| **[UNCCD-SDS]** | UNCCD e WMO, sobre tempestades de areia e poeira | <https://www.unccd.int/news-stories/press-releases/sand-and-dust-storm-frequency-increasing-many-world-regions-un-warns> |
+| **[IEA-COOL]** | IEA, _The Future of Cooling_ (2018) | <https://www.iea.org/reports/the-future-of-cooling> |
+| **[HJORT22]** | Hjort et al., _Impacts of permafrost degradation on infrastructure_, Nature Reviews Earth & Environment 3, 24–38 (2022) | <https://www.nature.com/articles/s43017-021-00247-8> |
+| **[IDMC25]** | IDMC, _Global Report on Internal Displacement 2025_ | <https://www.internal-displacement.org/global-report/grid2025/> |
+| **[SWISSRE25]** | Swiss Re Institute, _sigma_ sobre catástrofes naturais de 2024 | <https://www.swissre.com/institute/research/sigma-research/sigma-2025-01-natural-catastrophes-trend.html> |
+| **[FAO-FISH]** | FAO, _Impacts of climate change on fisheries and aquaculture_ — potencial de captura por região | <https://www.fao.org/3/i9705en/i9705en.pdf> |
+
+| Evento | Fato no jogo | Fonte | Observação |
+|---|---|---|---|
+| `marine-heatwave` | As ondas de calor marinhas dobraram de frequência desde 1982, e ficaram mais longas e mais intensas. | **[AR6]** | Classificado como *very likely*. É evento **distinto** do branqueamento de corais, que é a consequência: um é o calor do mar, o outro o que ele faz ao recife. Como ele, não é mitigado por resiliência — defesa costeira não esfria o oceano |
+| `glacier-loss` | Dois bilhões de pessoas dependem do degelo das geleiras e da neve das montanhas para ter água. | **[WGMS25]** | Desde 1975 as geleiras perderam cerca de 9.000 Gt de gelo, e seis dos sete piores anos da série aconteceram nos últimos sete. **O evento mira seis regiões**, deixando de fora África e Oceania: as geleiras de lá existem, mas abastecem pouca gente perto dos Andes, dos Alpes, do Cáucaso, da Ásia Central e do Himalaia |
+| `heat-labour` | A 1,5 °C de aquecimento, o calor deve custar 2,2% das horas de trabalho do mundo em 2030 — o equivalente a 80 milhões de empregos de tempo integral. | **[ILO19]** | Estimativa **conservadora**: supõe trabalho à sombra. Ao sol, a perda vai a 3,8%. **Os alvos do evento saem da própria fonte**, que aponta Ásia Meridional, África Ocidental, Sudeste Asiático e África Central como as mais atingidas, e diz que América do Norte e Europa não são afetadas de forma significativa |
+| `dust-storm` | Dois bilhões de toneladas de areia e poeira entram na atmosfera por ano, e as tempestades que elas formam já atingem 330 milhões de pessoas em mais de 150 países. | **[UNCCD-SDS]** | Mais de 80% se originam nos desertos do norte da África e do Oriente Médio, o que define os alvos. A UNCCD atribui ao menos um quarto das tempestades a atividade humana — mineração e pastagem excessivas —, e não só ao clima: a frase evita dizer que o aquecimento as causa, e diz o tamanho delas |
+| `cooling-blackout` | A energia gasta com ar-condicionado deve triplicar até 2050, e em países como a Índia o resfriamento pode responder por quase metade do pico de eletricidade. | **[IEA-COOL]** | 45% do pico na Índia em 2050, contra 10% hoje. Os alvos são os cinco países que o relatório nomeia — EUA, Oriente Médio, Indonésia, Índia e Brasil —, traduzidos para as regiões do jogo |
+| `permafrost-thaw` | O degelo do permafrost pode danificar de 30% a 50% da infraestrutura do Ártico até 2050: 120 mil prédios, 40 mil km de estradas e 9,5 mil km de dutos. | **[HJORT22]** | Mira só `na` e `eu` — o Ártico habitado é Alasca, Canadá e Rússia, e a Rússia está na Europa neste recorte (ver a tabela das 8 macrorregiões) |
+| `ocean-acidification` | O oceano está acidificando mais rápido do que em qualquer momento dos últimos 26 mil anos. | **[AR6]** | O CO₂ dissolvido é o motor, e por isso o evento vale para qualquer região e **não** é mitigado por resiliência: nenhuma obra local muda a química do mar |
+| `fishery-shift` | No cinturão tropical o potencial de pesca pode cair 40% até meados do século, e ali não há peixe novo para substituir o que migra para os polos. | **[FAO-FISH]** | A assimetria é o ponto: as zonas temperadas recebem o que o trópico perde. Cerca de 1,3 bilhão de pessoas vivem em costas tropicais, muitas delas dependentes da pesca |
+| `climate-displacement` | Em 2024 os desastres deslocaram 45,8 milhões de pessoas dentro dos próprios países — o maior número já medido, e 99,5% deles ligados ao clima. | **[IDMC25]** | Maior número desde o início da série, em 2008, e mais que o dobro da média da década. Ciclones responderam por 54% dos deslocamentos e enchentes por 42% |
+| `insurance-gap` | Em 2024 os desastres causaram 318 bilhões de dólares de prejuízo, e 57% disso não tinha seguro nenhum. | **[SWISSRE25]** | Perda segurada de 137 bilhões; o rombo sem seguro é de 181 bilhões. É o único evento do jogo cujo dano é **econômico por construção** — ele não quebra nada, ele tira a rede que paga o conserto |
 
 | Evento | Fato no jogo | Fonte | Observação |
 |---|---|---|---|

@@ -245,18 +245,20 @@ describe('a Inércia no engine (P7-03)', () => {
     expect(ignoring.support).toBeLessThan(balance.supportFloor / 2);
   });
 
-  it('a Inércia segura a janela de perdão até depois de 2055', () => {
+  it('a Inércia segura a janela de perdão até depois de 2060', () => {
     // **O aceite central do P3-05, medido contra o engine de verdade.** O
     // `docs/CURVA-DE-DIFICULDADE.md` mediu que largar o controle já era
     // inconsequente a partir de 2055: dali em diante, abandonar a partida dava
     // o mesmo desfecho que jogá-la. Com a Inércia agindo, largar continua sendo
     // fatal por mais tempo, porque ela cobra o apoio que ninguém está defendendo.
     //
-    // **A janela encolheu no REF-09, e o teste diz a verdade nova.** Ela ia
-    // "até depois de 2065" com a árvore de 20 nós; com 40 nós e a renda de 46
-    // PAC/ano, largar em 2060 já não mata. A razão não é a Inércia ter
-    // enfraquecido — ela não mudou —, é o jogador chegar a 2060 com muito mais
-    // apoio comprado, e o colchão absorver a desinformação.
+    // **A janela andou duas vezes, e o teste conta as duas.** Ela ia "até depois
+    // de 2065" com a árvore de 20 nós. O `REF-09` a encolheu para 2060 — não por
+    // a Inércia ter enfraquecido, mas porque o jogador passou a chegar lá com
+    // muito mais apoio comprado, e o colchão absorvia a desinformação. Os 20
+    // eventos de 2026-10-06 devolveram metade do caminho: **largar em 2060 volta
+    // a matar, e 2065 não.** Nenhuma constante da Inércia foi tocada nas duas
+    // vezes — quem mexeu na janela foi o resto do jogo.
     //
     // **Subir o `inertiaDisinformationBite` para 0,8 foi medido e descartado:**
     // com ele, a melhor jogada é dissolvida por falta de apoio, que é a mesma
@@ -267,7 +269,8 @@ describe('a Inércia no engine (P7-03)', () => {
 
     expect(largarAindaMata(2050)).toBe(true);
     expect(largarAindaMata(2055)).toBe(true);
-    expect(largarAindaMata(2060)).toBe(false);
+    expect(largarAindaMata(2060)).toBe(true);
+    expect(largarAindaMata(2065)).toBe(false);
   });
 
   it('ACHADO: depois de ~2070 largar tudo ainda dá bronze — a medalha decide cedo', () => {

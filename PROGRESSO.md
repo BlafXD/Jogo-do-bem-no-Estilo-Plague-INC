@@ -148,7 +148,7 @@ Regras curtas:
   **Revisar junto.** Em 1536 × 864 a árvore passou a rolar dentro do painel; em 1920 não. Próximo:
   `P8-02` (balanceamento a partir do playtest), que agora mede a versão nova.
 
-## 2026-10-06 (fim da leva) — A Parte 2 ganha o documento dela: `docs/NARRATIVA.md`
+## 2026-10-06 (tarde) — A Parte 2 ganha o documento dela: `docs/NARRATIVA.md`
 
 - **Parte / tarefa:** `P2-01` a `P2-05` ✔, todos na versão mínima do modo solo. **Nenhuma linha de
   código** — só um `.md` novo e os checkboxes.
@@ -176,6 +176,58 @@ Regras curtas:
   `src/data/regions.json`, `events.json` ou `i18n.ts`.
 - **Pendente:** o `§6` do documento lista o que falta para quem assumir o cargo, em ordem de valor —
   vozes regionais dentro da partida, variantes de texto por evento, a ficha da Marina Costa.
+
+## 2026-10-06 (noite) — Vinte eventos, o primeiro alvo regional, e uma medida que disse "não"
+
+- **Parte / tarefa:** dois itens do Gelo feitos, e um investigado e **não** feito. Com o `P8-01` e o
+  `P8-02` fechados pelo autor no chat, o Gelo deixou de ser a lista do que não cabe e virou a lista
+  de onde o trabalho sai. Suíte **1034 → 1038**.
+- **1. A árvore em tela de notebook — medida, e deixada como está.** Era o item que eu tinha
+  apontado como o que mais me incomodava. Medido no Edge headless em cinco resoluções: **o losango
+  só cabe a partir de 1920 px**, e abaixo disso os oito nós de cada ramo empilham. Testei três
+  saídas e **nenhuma domina**:
+  - ramos quebrando em duas linhas: devolve o losango em todas as telas e leva a rolagem de **925
+    para 1534 px** — passa a rolar até em 1680, onde hoje não rola;
+  - painel lateral mais fino: quase não muda (o ramo vai de 185 para 196 px);
+  - painel lateral embaixo da árvore: devolve o losango de 1440 para cima, mas a área visível cai
+    para 432 px e a razão rolada piora de 1,4× para 2,0×.
+  - O cartão compacto também foi medido: economiza **26 px** no ramo inteiro, porque a altura vem do
+    nome quebrando em linhas, não das linhas de baixo.
+  **Conclusão: toda opção troca o losango por mais rolagem, que era o defeito a curar.** As medidas
+  e as três opções ficaram no cabeçalho do `src/ui/tree.css`, que de quebra estava **desatualizado
+  pela minha própria mudança de ontem** — ele ainda falava em quatro nós empilhados, e são oito.
+- **2. Os eventos foram de 10 para 20.** `src/data/events.json`, `src/data/characters.json`,
+  `docs/CIENCIA.md` (8 fontes novas), `docs/GDD.md §2.5`, `docs/DIRECAO-DE-ARTE.md §7`.
+  - **O achado que decidiu o desenho:** o `drawEvent` usa a **soma dos pesos** como eventos por ano.
+    Dobrar a lista sem mexer nos pesos dobraria a pressão sobre o jogador — e o pedido era mais
+    variedade, não mais dano. Os dez pesos antigos foram divididos por dois e os novos ocuparam a
+    metade que sobrou: **2,370 eventos por ano antes, 2,355 depois.**
+  - Os dez: onda de calor marinha, degelo das geleiras, calor no trabalho, tempestade de areia,
+    apagão no pico do calor, degelo do permafrost, acidificação do oceano, pesca em fuga,
+    deslocamento climático e o recuo do seguro. **Nenhum é geológico** — a régua do tsunami.
+  - **O conjunto crítico continua sendo dois.** Nenhum dos novos alcança o `criticalEventSupport`:
+    mais eventos não podem virar mais interrupções do relógio.
+  - **Um ganho que eu não fui buscar:** comprar o ramo Sociedade e **nunca conter** passou a ser
+    dissolvido em 2099. O `§2.6` diz que o ramo é "a licença para lutar", e até aqui a licença
+    sozinha salvava; agora ela só autoriza a luta.
+  - **E a janela de perdão recuperou metade do que a `REF-09` tinha perdido:** largar o controle em
+    2060 volta a matar (2065 ainda não). Sem tocar em nenhuma constante da Inércia.
+- **3. O primeiro efeito com alvo regional.** O `mangroves` passou de 10 de resiliência no mundo
+  para **14 nas cinco regiões tropicais**.
+  - **Era código morto:** o `Effect` do `§3` sempre aceitou `target: RegionId`, o engine sempre teve
+    os dois galhos — e **os 47 efeitos eram todos `global`**. Pior: o caminho era *intestável*, porque
+    as duas funções buscam a habilidade no mapa dos dados reais, e um nó sintético não existe lá.
+    Agora há um nó regional de verdade e três testes em cima dele.
+  - **A escolha das regiões tem fonte**, no `docs/CIENCIA.md`: cinco países concentram 48% dos
+    manguezais do mundo, e eles caem em `ea`, `la`, `af`, `oc` e `sa` pela Índia. **A simplificação
+    está assumida por escrito** — Flórida e mar Vermelho têm manguezal e ficam fora do alvo.
+  - **O corte de emissão do mesmo nó continua global, e é física:** o carbono que o manguezal guarda
+    sai da atmosfera do planeta, não da atmosfera da região dele.
+- **Como verificar:** `npm run check` (limpo; 1038 testes). O `tests/ciencia.test.ts` de ontem fez o
+  trabalho dele: pegou os 10 fatos novos sem fonte na primeira execução.
+- **Atenção:** o `docs/planilha/` regenerou de novo. **A árvore em tela de notebook continua uma
+  decisão em aberto, e é sua** — eu medi e não escolhi, porque escolher ali é desenho, não código.
+  Os outros 46 efeitos seguem globais pelo mesmo motivo.
 
 ## 2026-09-30 — Começa a reforma: o HUD ganha vida (Fase 1), e o épico REF entra no PLANO
 

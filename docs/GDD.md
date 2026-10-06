@@ -118,6 +118,22 @@ Sorteados por tick, com peso crescente conforme a temperatura. Cada um tem um li
 
 Tipos: onda de calor, seca, enchente, tempestade/ciclone, incêndio florestal, deslizamento/desabamento, **ressaca e maré de tempestade** sobre um mar mais alto, colapso de safra.
 
+**São 20 desde 2026-10-06** (eram 10). Os dez que entraram atravessam a escala de aquecimento, dos
+que já acontecem aos que esperam o fim do século: onda de calor marinha, degelo das geleiras, calor
+no trabalho, tempestade de areia, apagão no pico do calor, degelo do permafrost, acidificação do
+oceano, pesca em fuga, deslocamento climático e o recuo do seguro.
+
+> **A frequência não mudou, e isso é desenho.** O sorteio usa a **soma dos pesos** como eventos por
+> ano, então dobrar a lista sem mexer nos pesos dobraria a pressão sobre o jogador. Os dez pesos
+> antigos foram divididos por dois e os novos ocuparam a metade que sobrou: 2,370 eventos por ano
+> antes, 2,355 depois. **O que dobrou foi a variedade** — numa partida de 75 anos, dez textos se
+> repetem muito, e é isso que o `docs/NARRATIVA.md §6` apontava como o ganho narrativo mais barato.
+>
+> **Nenhum dos dez é geológico**, e isso foi critério, não acaso: é a mesma régua que tirou o
+> tsunami. E o conjunto crítico continua sendo dois — a ressaca e o colapso de safra —, porque
+> nenhum dos novos alcança o `criticalEventSupport`: mais eventos não podem virar mais
+> interrupções do relógio.
+
 > **Nota de honestidade científica — decidido no `P3-06`, em 2026-08-20: o tsunami saiu.** Ele estava no conceito original, mas tsunami é geológico: o aquecimento não causa nenhum. Manter o nome exigiria colar uma ressalva no evento, e a ressalva gastaria a frase educativa explicando o que ele **não** é. Em vez disso o evento virou **ressaca e maré de tempestade sobre um mar mais alto** — mesma imagem, a costa engolida pela água, e inteiramente climático. Não sobra licença a assumir. O motivo completo está em `docs/CIENCIA.md`. **Não venda desinformação como educação.**
 
 Cada evento carrega uma frase educativa curta ligada a um fenômeno real.

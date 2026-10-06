@@ -138,10 +138,44 @@ describe('quem dá cada notícia', () => {
     const porPessoa = (person: string): string[] =>
       EVENT_IDS.filter((id) => eventCast(id)?.person === person).sort();
 
-    expect(porPessoa('ana-luiza')).toEqual(['cyclone', 'heatwave']);
-    expect(porPessoa('ricardo-souza')).toEqual(['drought', 'flood', 'storm-surge']);
-    expect(porPessoa('carlos-mendes')).toEqual(['coral-bleaching', 'landslide', 'wildfire']);
-    expect(porPessoa('juliana-almeida')).toEqual(['crop-failure', 'vector-disease']);
+    expect(porPessoa('ana-luiza')).toEqual(['cooling-blackout', 'cyclone', 'heatwave']);
+    expect(porPessoa('ricardo-souza')).toEqual([
+      'drought',
+      'dust-storm',
+      'flood',
+      'glacier-loss',
+      'permafrost-thaw',
+      'storm-surge',
+    ]);
+    expect(porPessoa('carlos-mendes')).toEqual([
+      'coral-bleaching',
+      'fishery-shift',
+      'landslide',
+      'marine-heatwave',
+      'ocean-acidification',
+      'wildfire',
+    ]);
+    expect(porPessoa('juliana-almeida')).toEqual([
+      'climate-displacement',
+      'crop-failure',
+      'heat-labour',
+      'insurance-gap',
+      'vector-disease',
+    ]);
+  });
+
+  /**
+   * A regra que a tabela acima segue, cobrada à parte dela: **todo evento tem
+   * dono, e a desigualdade é do tema**. Sem isto, acrescentar um evento e
+   * esquecer o especialista só apareceria como um `parseCast` estourando na
+   * carga da página — e aí o jogo inteiro não abre.
+   */
+  it('os 20 eventos estão repartidos entre os quatro, sem sobrar ninguém', () => {
+    const donos = EVENT_IDS.map((id) => eventCast(id)?.person);
+
+    expect(donos).toHaveLength(20);
+    expect(donos.every((quem) => quem !== undefined)).toBe(true);
+    expect(new Set(donos).size).toBe(PERSON_IDS.length);
   });
 
   /** Decidido no chat em 2026-09-17: a pose de alerta de cada um. */

@@ -48,8 +48,9 @@ function run(ticks: number, seed = 2025): GameState {
 }
 
 describe('parseEvents', () => {
-  it('aceita o events.json do repositório, com os 10 eventos', () => {
-    expect(climateEvents).toHaveLength(10);
+  it('aceita o events.json do repositório, com os 20 eventos', () => {
+    // Eram 10 até 2026-10-06, quando o item do Gelo subiu a lista para 20.
+    expect(climateEvents).toHaveLength(20);
   });
 
   it('recusa id repetido, vazio, e campo de texto em branco', () => {

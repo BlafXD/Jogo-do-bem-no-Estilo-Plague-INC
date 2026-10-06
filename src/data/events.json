@@ -3,7 +3,7 @@
     "id": "heatwave",
     "name": "Onda de calor",
     "tempThreshold": 1.3,
-    "baseWeight": 0.4,
+    "baseWeight": 0.2,
     "targets": "any",
     "impact": {
       "support": 1,
@@ -14,10 +14,52 @@
     "fact": "O calor extremo que acontecia uma vez a cada dez anos fica cerca de quatro vezes mais frequente a 2 °C de aquecimento."
   },
   {
+    "id": "marine-heatwave",
+    "name": "Onda de calor marinha",
+    "tempThreshold": 1.4,
+    "baseWeight": 0.17,
+    "targets": "any",
+    "impact": {
+      "support": 1,
+      "economy": 3,
+      "points": 5
+    },
+    "mitigatedByResilience": false,
+    "fact": "As ondas de calor marinhas dobraram de frequência desde 1982, e ficaram mais longas e mais intensas."
+  },
+  {
+    "id": "glacier-loss",
+    "name": "Degelo das geleiras",
+    "tempThreshold": 1.4,
+    "baseWeight": 0.15,
+    "targets": ["na", "la", "eu", "me", "ea", "sa"],
+    "impact": {
+      "support": 1.5,
+      "economy": 3,
+      "points": 5
+    },
+    "mitigatedByResilience": true,
+    "fact": "Dois bilhões de pessoas dependem do degelo das geleiras e da neve das montanhas para ter água."
+  },
+  {
+    "id": "heat-labour",
+    "name": "Calor no trabalho",
+    "tempThreshold": 1.5,
+    "baseWeight": 0.16,
+    "targets": ["la", "af", "me", "ea", "sa"],
+    "impact": {
+      "support": 1,
+      "economy": 4,
+      "points": 5
+    },
+    "mitigatedByResilience": true,
+    "fact": "A 1,5 °C de aquecimento, o calor deve custar 2,2% das horas de trabalho do mundo em 2030 — o equivalente a 80 milhões de empregos de tempo integral."
+  },
+  {
     "id": "drought",
     "name": "Seca",
     "tempThreshold": 1.5,
-    "baseWeight": 0.3,
+    "baseWeight": 0.15,
     "targets": ["na", "la", "af", "me", "oc"],
     "impact": {
       "support": 1.5,
@@ -31,7 +73,7 @@
     "id": "flood",
     "name": "Enchente",
     "tempThreshold": 1.5,
-    "baseWeight": 0.3,
+    "baseWeight": 0.15,
     "targets": "any",
     "impact": {
       "support": 1.5,
@@ -45,7 +87,7 @@
     "id": "coral-bleaching",
     "name": "Branqueamento de corais",
     "tempThreshold": 1.5,
-    "baseWeight": 0.2,
+    "baseWeight": 0.1,
     "targets": ["la", "ea", "sa", "oc"],
     "impact": {
       "support": 1,
@@ -56,10 +98,24 @@
     "fact": "Entre 2023 e 2025 o calor do mar branqueou 84% dos recifes do mundo, em 83 países."
   },
   {
+    "id": "dust-storm",
+    "name": "Tempestade de areia e poeira",
+    "tempThreshold": 1.6,
+    "baseWeight": 0.13,
+    "targets": ["af", "me", "ea", "sa"],
+    "impact": {
+      "support": 1.5,
+      "economy": 3,
+      "points": 5
+    },
+    "mitigatedByResilience": true,
+    "fact": "Dois bilhões de toneladas de areia e poeira entram na atmosfera por ano, e as tempestades que elas formam já atingem 330 milhões de pessoas em mais de 150 países."
+  },
+  {
     "id": "cyclone",
     "name": "Ciclone tropical",
     "tempThreshold": 1.7,
-    "baseWeight": 0.25,
+    "baseWeight": 0.125,
     "targets": ["na", "la", "ea", "sa", "oc"],
     "impact": {
       "support": 2,
@@ -70,10 +126,24 @@
     "fact": "A proporção de ciclones tropicais das categorias 3 a 5 aumentou nas últimas quatro décadas."
   },
   {
+    "id": "cooling-blackout",
+    "name": "Apagão no pico do calor",
+    "tempThreshold": 1.7,
+    "baseWeight": 0.12,
+    "targets": ["na", "la", "me", "ea", "sa"],
+    "impact": {
+      "support": 2,
+      "economy": 4,
+      "points": 9
+    },
+    "mitigatedByResilience": true,
+    "fact": "A energia gasta com ar-condicionado deve triplicar até 2050, e em países como a Índia o resfriamento pode responder por quase metade do pico de eletricidade."
+  },
+  {
     "id": "wildfire",
     "name": "Incêndio florestal",
     "tempThreshold": 1.8,
-    "baseWeight": 0.25,
+    "baseWeight": 0.125,
     "targets": ["na", "la", "eu", "af", "oc"],
     "impact": {
       "support": 1.5,
@@ -87,7 +157,7 @@
     "id": "vector-disease",
     "name": "Surto transmitido por mosquito",
     "tempThreshold": 1.8,
-    "baseWeight": 0.2,
+    "baseWeight": 0.1,
     "targets": ["la", "af", "ea", "sa"],
     "impact": {
       "support": 2,
@@ -98,10 +168,24 @@
     "fact": "Em 2024 foram 14,1 milhões de casos de dengue no mundo, doze vezes mais que dez anos antes."
   },
   {
+    "id": "permafrost-thaw",
+    "name": "Degelo do permafrost",
+    "tempThreshold": 1.8,
+    "baseWeight": 0.1,
+    "targets": ["na", "eu"],
+    "impact": {
+      "support": 1.5,
+      "economy": 5,
+      "points": 9
+    },
+    "mitigatedByResilience": true,
+    "fact": "O degelo do permafrost pode danificar de 30% a 50% da infraestrutura do Ártico até 2050: 120 mil prédios, 40 mil km de estradas e 9,5 mil km de dutos."
+  },
+  {
     "id": "landslide",
     "name": "Deslizamento",
     "tempThreshold": 1.9,
-    "baseWeight": 0.2,
+    "baseWeight": 0.1,
     "targets": ["la", "eu", "ea", "sa"],
     "impact": {
       "support": 1.5,
@@ -112,10 +196,38 @@
     "fact": "Na Alta Ásia, os deslizamentos disparados por chuva extrema devem ficar 10% mais frequentes até o fim do século."
   },
   {
+    "id": "ocean-acidification",
+    "name": "Acidificação do oceano",
+    "tempThreshold": 1.9,
+    "baseWeight": 0.1,
+    "targets": "any",
+    "mitigatedByResilience": false,
+    "impact": {
+      "support": 1.5,
+      "economy": 3,
+      "points": 5
+    },
+    "fact": "O oceano está acidificando mais rápido do que em qualquer momento dos últimos 26 mil anos."
+  },
+  {
+    "id": "fishery-shift",
+    "name": "Pesca em fuga",
+    "tempThreshold": 2,
+    "baseWeight": 0.09,
+    "targets": ["la", "af", "ea", "sa", "oc"],
+    "impact": {
+      "support": 2,
+      "economy": 5,
+      "points": 9
+    },
+    "mitigatedByResilience": true,
+    "fact": "No cinturão tropical o potencial de pesca pode cair 40% até meados do século, e ali não há peixe novo para substituir o que migra para os polos."
+  },
+  {
     "id": "storm-surge",
     "name": "Ressaca e maré de tempestade",
     "tempThreshold": 2,
-    "baseWeight": 0.15,
+    "baseWeight": 0.075,
     "targets": "any",
     "impact": {
       "support": 2.5,
@@ -126,10 +238,24 @@
     "fact": "A inundação costeira que acontecia uma vez por século deve passar a acontecer ao menos uma vez por ano em mais da metade dos marégrafos até 2100."
   },
   {
+    "id": "climate-displacement",
+    "name": "Deslocamento climático",
+    "tempThreshold": 2.2,
+    "baseWeight": 0.08,
+    "targets": "any",
+    "impact": {
+      "support": 2.4,
+      "economy": 5,
+      "points": 14
+    },
+    "mitigatedByResilience": true,
+    "fact": "Em 2024 os desastres deslocaram 45,8 milhões de pessoas dentro dos próprios países — o maior número já medido, e 99,5% deles ligados ao clima."
+  },
+  {
     "id": "crop-failure",
     "name": "Colapso de safra",
     "tempThreshold": 2.2,
-    "baseWeight": 0.12,
+    "baseWeight": 0.06,
     "targets": "any",
     "impact": {
       "support": 3,
@@ -138,5 +264,19 @@
     },
     "mitigatedByResilience": true,
     "fact": "Em 2024, oito países tiveram ao menos um milhão de pessoas a mais em insegurança alimentar aguda do que no ano anterior."
+  },
+  {
+    "id": "insurance-gap",
+    "name": "O seguro se retira",
+    "tempThreshold": 2.4,
+    "baseWeight": 0.07,
+    "targets": "any",
+    "impact": {
+      "support": 2,
+      "economy": 7,
+      "points": 14
+    },
+    "mitigatedByResilience": true,
+    "fact": "Em 2024 os desastres causaram 318 bilhões de dólares de prejuízo, e 57% disso não tinha seguro nenhum."
   }
 ]

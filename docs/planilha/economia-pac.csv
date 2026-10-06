@@ -1,6 +1,6 @@
 estrategia;descricao;pac_arrecadado_75_anos;custo_total_da_arvore;pac_gasto;nos_comprados;nos_totais;pac_faltando;falta_percentual
 nada;Não faz nada;3450,0;6300;0,0;0;40;2850,0;45,2
-melhor;Corta cedo, na melhor ordem, e ignora Sociedade;3450,0;6300;3200,0;26;40;2850,0;45,2
-sociedade-cedo;Investe em Sociedade antes de cortar;3806,2;6300;3530,0;29;40;2493,8;39,6
-tarde;Acorda em 2060;3649,7;6300;3090,0;27;40;2650,3;42,1
-contencao;Compra Sociedade, corta e contém a Inércia;3806,2;6300;3502,0;22;40;2493,8;39,6
+melhor;Corta cedo, na melhor ordem, e ignora Sociedade;3450,0;6300;2980,0;25;40;2850,0;45,2
+sociedade-cedo;Investe em Sociedade antes de cortar;3805,4;6300;3310,0;28;40;2494,6;39,6
+tarde;Acorda em 2060;3649,7;6300;2870,0;26;40;2650,3;42,1
+contencao;Compra Sociedade, corta e contém a Inércia;3805,4;6300;3352,0;21;40;2494,6;39,6

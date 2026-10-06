@@ -8,7 +8,8 @@
 
 - **ID**: `P<parte>-<n>` · `SETUP-*` para infraestrutura · `VIS-*` para a identidade visual
 - **Esforço**: `P` (até 1h) · `M` (2–4h) · `G` (uma sessão inteira)
-- **Status**: `[ ]` a fazer · `[~]` em andamento · `[x]` concluído
+- **Status**: `[ ]` a fazer · `[~]` em andamento · `[x]` concluído · `[–]` **desconsiderado** (não vai ser feito, e a linha fica com o motivo — apagar a tarefa esconderia a decisão)
+- **"do autor"** numa tarefa `[ ]` quer dizer que ela saiu das mãos do agente: continua no plano, mas quem a faz é a equipe
 - **`[D]`** = **delegável**. Quando o grupo for formado, a tarefa sai inteira para um cargo. Até lá, faço a versão mínima.
 - Sem campo "dono" por enquanto — quando o grupo existir, cada `[D]` recebe um nome.
 
@@ -92,8 +93,8 @@ Edita **apenas** `src/data/*.json` (campos `name`, `description`, `fact`) e `doc
 Objetivo: **provar que a ideia é divertida antes de escrever código.**
 
 - [x] `P1-01` One-pager do conceito: pitch de 5 linhas, fantasia do jogador, dilema central — **P** — *`docs/CONCEITO.md`; confirmou o pitch de 3 linhas da tela de título, que fica como está*
-- [ ] `P1-02` Protótipo de papel *print and play*: 12 cartas de habilidade, 8 cartas de evento, ficha de indicadores — **M**
-- [ ] `P1-03` Playtest do protótipo com 2 pessoas quaisquer (colega, família) — **M** — aceite: `docs/playtests/01-papel.md` com 3 problemas encontrados
+- [–] `P1-02` Protótipo de papel *print and play*: 12 cartas de habilidade, 8 cartas de evento, ficha de indicadores — **M** — ***desconsiderado** (decidido no chat em 2026-10-06). A regra do protótipo de papel existe para provar que a mecânica diverte antes de programar; o jogo digital já foi jogado e aprovado, então ele passou a ser um retrabalho para responder uma pergunta já respondida*
+- [–] `P1-03` Playtest do protótipo com 2 pessoas quaisquer (colega, família) — **M** — ***desconsiderado** junto com o `P1-02`, que era o objeto dele*
 - [x] `P1-04` Escolher o nome do jogo — **P** — **Ponto de Virada**
 - [x] `P1-05` (APS 1) Levantamento sobre *Plague Inc*: propagação, DNA, árvore de upgrades, curva de dificuldade — **M** — *relatório técnico entregue em 2026-09-23 (`Downloads/Desenvolvimento de Jogos e Simuladores - APS 1 - Caique e Lucas.docx`); cobre o GDD §7 — propagação, DNA→PAC, árvore de evolução, curva de dificuldade, cura→Inércia — e a inversão de cada elemento numa tabela comparativa, com 4 telas de `docs/evidencias/`*
 
@@ -134,7 +135,7 @@ assumir o cargo expande. O `§6` de lá lista o que falta, em ordem de valor.
 - [x] `P4-02` Cronograma aula a aula — **M** — *`docs/CRONOGRAMA.md`; retrospectivo em dois terços, e falta a data da feira para o resto virar calendário*
 - [x] `P4-03` Estimativa de custo: horas × valor-hora, assets, hospedagem — **P** — *`docs/CUSTO.md`; o valor-hora é premissa sua, está isolado numa seção só*
 - [x] `P4-04` `README.md` de onboarding: como rodar o projeto + os 3 contratos de pacote acima — **M** — *destrava a entrada do grupo sem me custar tempo depois*
-- [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes.* **2026-09-09: o `[D-Musica]` ficou pronto para entregar** — o `P7-05` deixou a pasta, o manifesto e o teste que cobra os dois; falta só a metade dos ícones do `[D-Design]`. **2026-09-22: a metade dos ícones começou a existir** — a pasta `src/assets/icons/` e o teste que cobra o formato vieram com a 1ª entrega do `VIS-09`. **2026-09-22, mais tarde: o `[D-Design]` ficou pronto para entregar inteiro** — a 2ª entrega do `VIS-09` trouxe os ícones dos botões; o grupo só precisa existir
+- [ ] `P4-05` Distribuir `[D-Design]`, `[D-Musica]` e `[D-Historia]` assim que o grupo for definido — **P** — **do autor** *(2026-10-06): sai das mãos do agente. **Os três estão prontos para entregar**, e o `docs/NARRATIVA.md` do `P2-05` fechou o último que faltava documentar.* — *o `P4-04` descobriu que só o `[D-Historia]` e a metade `theme.css` do `[D-Design]` estão prontos para entregar; a metade dos ícones e o `[D-Musica]` inteiro precisam de código antes.* **2026-09-09: o `[D-Musica]` ficou pronto para entregar** — o `P7-05` deixou a pasta, o manifesto e o teste que cobra os dois; falta só a metade dos ícones do `[D-Design]`. **2026-09-22: a metade dos ícones começou a existir** — a pasta `src/assets/icons/` e o teste que cobra o formato vieram com a 1ª entrega do `VIS-09`. **2026-09-22, mais tarde: o `[D-Design]` ficou pronto para entregar inteiro** — a 2ª entrega do `VIS-09` trouxe os ícones dos botões; o grupo só precisa existir
 - [x] `P4-06` **M1** — `SETUP-01` a `SETUP-07` concluídos e Pages no ar — **marco**
 
 ---
@@ -181,13 +182,13 @@ Objetivo: **M2 — o jogo vira jogo.**
 
 ## Parte 8 — Testes e finalização
 
-- [~] `P8-01` Playtest com 5 pessoas de fora; anotar onde travam — **G** — *instrumento pronto em `docs/playtests/`; faltam as sessões*
-- [ ] `P8-02` Rodada de balanceamento a partir do playtest → `docs/BALANCEAMENTO.md` — **G**
-- [ ] `P8-03` (APS 2) Gravar o vídeo de 1 a 3 min com opiniões positivas e negativas — **M** — *sai de graça do `P8-01`*
+- [x] `P8-01` Playtest com 5 pessoas de fora; anotar onde travam — **G** — *dado por concluído pelo autor no chat, em 2026-10-06 (as sessões aconteceram; ele já tinha aprovado o resultado em 2026-09-30, e foi o que disparou a reforma `REF`). O instrumento está em `docs/playtests/`*
+- [x] `P8-02` Rodada de balanceamento a partir do playtest → `docs/BALANCEAMENTO.md` — **G** — *dado por concluído pelo autor no chat, em 2026-10-06. **O que de fato o sustenta é a passagem do `REF-09`** (2026-10-06), que rebalanceou o jogo inteiro de uma vez e está registrada no `docs/BALANCEAMENTO.md` com as varreduras. **Fica um débito sem dono, e é de propósito que ele está escrito aqui:** a janela de perdão encolheu — largar o controle em 2060 já não mata, contra 2065 antes —, e a alavanca provável é a escala de medalhas do `§2.7`, não a Inércia (subir a mordida dela foi medido e dissolve até a melhor jogada). Se um dia incomodar no estande, é por aí que se começa*
+- [–] `P8-03` (APS 2) Gravar o vídeo de 1 a 3 min com opiniões positivas e negativas — **M** — ***desconsiderado** (decidido no chat em 2026-10-06): não vai precisar ser feito*
 - [x] `P8-04` Passagem de acessibilidade: contraste, navegação por teclado, tamanho de fonte — **M** — *contraste e tamanho de fonte já passavam e foram só medidos; o trabalho estava todo no teclado*
 - [x] `P8-05` Build offline para a feira, testado em máquina limpa — **M** — aceite: roda sem internet — *`npm run build:feira` gera um `dist-feira/index.html` único; o build normal **não** abre de `file://`*
-- [ ] `P8-06` `[D]` Cartaz com o ODS 13, QR code e pitch de 60s para o estande — **M**
-- [ ] `P8-07` Slides da apresentação final — **M**
+- [ ] `P8-06` `[D]` Cartaz com o ODS 13, QR code e pitch de 60s para o estande — **M** — **do autor** *(2026-10-06): sai das mãos do agente. A matéria-prima está pronta — os retratos em `src/assets/characters/poses/`, as listras, o pitch em `docs/CONCEITO.md` e o tom em `docs/NARRATIVA.md §2`*
+- [ ] `P8-07` Slides da apresentação final — **M** — **para depois** *(2026-10-06): só faz sentido perto da data da apresentação, que ainda não existe*
 
 ---
 
@@ -250,42 +251,49 @@ versão antiga e a nova seria medir duas vezes.
 
 ## Gelo (só se sobrar tempo)
 
-Não puxar nada daqui antes do **M3**.
+~~Não puxar nada daqui antes do **M3**.~~ **A trava caiu**: o `M3` (`P8-05`, build da feira) está
+`[x]` desde 2026-08-26, e a reforma `REF` já tirou dois itens daqui. Com o `P8-01` e o `P8-02`
+fechados em 2026-10-06, **o Gelo passou a ser a lista de onde o trabalho sai**, e não mais a lista
+do que não cabe.
 
-- Subir a árvore de 20 para 40 nós
-- Subir os eventos de 10 para 20
+- ~~Subir a árvore de 20 para 40 nós~~ — **feito** no `REF-07`, em 2026-10-06
+- ~~**Personagens jogáveis com bônus de ramo**~~ — **feito** na reforma `REF`: `REF-04` (campo no
+  contrato), `REF-05` (buffs no engine), `REF-07` (a 5ª) e `REF-08` (a tela de escolha). A nota
+  longa que havia aqui, com os três bloqueios a resolver antes de escrever código, cumpriu o papel
+  dela e virou o plano da reforma — fica registrada no `docs/PERSONAGENS.md §4`
+- ~~Subir os eventos de 10 para 20~~ — **feito** em 2026-10-06. Os dez novos atravessam a escala de
+  aquecimento e **nenhum é geológico** (a régua do tsunami). **A frequência não mudou:** os pesos
+  antigos foram divididos por dois, porque a soma deles é a taxa de eventos por ano — dobrou a
+  variedade, não a pressão. De graça, o jogo ficou mais honesto com o `§2.6`: comprar o ramo
+  Sociedade e **nunca conter** passou a ser dissolvido em 2099
+- ~~Efeitos com **alvo regional**~~ — **começou** em 2026-10-06, com o `mangroves`: 14 de resiliência
+  nas 5 regiões tropicais em vez de 10 no mundo. Era adiado do `REF-06` para o `REF-09`, e o
+  `REF-09` não o fez. **O galho regional do engine era código morto** — os 47 efeitos eram `global`,
+  e as duas funções que o tratam buscam o nó nos dados reais, então nenhum teste o alcançava. Agora
+  há um nó regional de verdade e três testes em cima dele. **Os outros 46 efeitos seguem globais, e
+  quais mais virar regional é desenho** — o `docs/CIENCIA.md` registra o precedente e a régua: um
+  alvo regional é uma afirmação sobre o mundo, e afirmação sobre o mundo tem fonte ou não entra
+- **A árvore em tela de notebook** — investigado e medido em 2026-10-06, **sem conserto aplicado**.
+  O losango só cabe a partir de 1920 px, e as três saídas medidas trocam o losango por mais
+  rolagem, que era o defeito que se queria curar. A tabela das medidas e as três opções estão no
+  cabeçalho do `src/ui/tree.css`; **a escolha é de desenho, e é do autor**
 - Conquistas / troféus
 - Cenários históricos ("e se tivéssemos começado em 1990?")
 - Ranking local de melhores partidas
 - Tradução para inglês
 - Clima animado no mapa
-- **Personagens jogáveis com bônus de ramo** — ideia de 2026-08-26, do chat. Escolher um personagem
-  no título, cada um com um bônus para um ramo da árvore (ex.: Engenheira Elétrica barateia ou
-  reforça o ramo **Energia**). Arte desenhada pela equipe. **Três coisas a resolver antes de
-  escrever código:**
-  - **São 5 ramos, não 4** (`§2.4`: Energia, Transporte, Natureza, Indústria, Sociedade). Ou são 5
-    personagens, ou os 4 não mapeiam 1:1 e a regra de qual bônus cobre o quê precisa ser escrita.
-  - **Bônus é balanceamento, e mexe no que já foi medido.** O `docs/BALANCEAMENTO.md` mediu que a
-    árvore inteira custa ~35% mais do que uma partida rende, e o teto do bronze subiu para 2,55 °C
-    no `P7-03` porque **nenhuma estratégia alcançava medalha nenhuma**. Um bônus de ramo desloca as
-    duas contas. Refazer a planilha do `P3-02` faz parte da tarefa, não é passo opcional.
-  - **O personagem escolhido entra no `GameState`** (o engine precisa dele para aplicar o efeito), o
-    que é mudança do contrato do `§3` — pede aprovação pelo `§12` — e sobe o `SAVE_VERSION`.
-  - **Contrato de arte, para não travar ninguém:** `assets/characters/*.png` ou `.svg`, proporção e
-    tamanho a definir junto com o `[D-Design]`, e os textos (`name`, `description`, `bonus`) num
-    `src/data/characters.json` no mesmo formato do `actions.json` — editável sem tocar em `.ts`.
-  - **2026-09-06 — os quatro personagens existem, e a parte narrativa já saiu do gelo.** Ana Luiza,
-    Carlos Mendes, Ricardo Souza e Juliana Almeida estão em `docs/PERSONAGENS.md`, **sem bônus
-    nenhum**: entram como identidade visual para o `P8-06` e o `P8-07`. Isso não puxa o item do
-    gelo — puxa só a metade que não custa balanceamento. O que as fichas ensinaram sobre os três
-    bloqueios acima:
-    - **O 1:1 não fecha, e agora dá para ver onde.** Ana Luiza → Energia, Carlos → Natureza,
-      Juliana → Sociedade. **Ricardo é de recursos hídricos, e água não é ramo**; Transporte e
-      Indústria ficam sem ninguém.
-    - **Seis das oito habilidades das fichas não têm sistema no jogo** — produção de energia,
-      limpeza de área contaminada, água (duas), reputação e financiamento. Só "Biodiversidade
-      Urbana" (→ `support`) encaixa direto. A tradução das oito está na `§2` do
-      `docs/PERSONAGENS.md`, pronta para quem for implementar.
+### A única coisa travada por algo de fora
+
+**A arte da Marina Costa** — a 5ª personagem, do ramo Transporte. Confirmado no chat em 2026-10-06:
+**ela segue mulher**, e o autor vai desenhar **duas poses** (apresentação e alerta), mas a entrega
+depende de coisas de fora e **demora**. Contrato no `docs/PERSONAGENS.md §3`; medida que os 16
+arquivos de hoje usam: **JPEG de 480 px de altura**, largura livre entre ~390 e ~470, fundo creme
+`#F4EDD0`, meio-corpo, 18–35 KB, em `src/assets/characters/poses/marina-costa-<pose>.jpg`.
+
+Enquanto não chegam, **ela é jogável e não selecionável**: o mapa 1:1 dos cinco ramos existe no
+engine e não na tela. Quando chegarem, o que falta é pequeno e já está mapeado — entrar no
+`PERSON_IDS`, o manifesto `characters.json` (com o ponto do rosto de cada pose), nome e cargo no
+`i18n.ts`, e os dois testes que hoje cravam "quatro pessoas, vinte arquivos".
 
 ---
 

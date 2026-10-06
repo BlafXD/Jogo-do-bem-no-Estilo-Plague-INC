@@ -516,6 +516,46 @@ dissolvida, que é exatamente a parede que o `docs/INERCIA.md` encontrou quando 
 mais cedo. **É do `P8-02`**, e a alavanca provável não é a Inércia: é a escala de medalhas do
 `§2.7`, que precisa de playtest antes de mexer.
 
+### Os 20 eventos e o primeiro alvo regional (2026-10-06, mais tarde)
+
+Dois itens do Gelo, feitos depois de o `P8-01` e o `P8-02` fecharem. **Nenhuma constante do
+`balance.json` mudou** — a passagem inteira foi em `skills.json` e `events.json`.
+
+| Data | Constante | De → Para | Por quê | Resultado |
+|---|---|---|---|---|
+| 2026-10-06 | `baseWeight` dos 10 eventos antigos | **dividido por 2** | O `drawEvent` usa a **soma** dos pesos como eventos por ano. Dobrar a lista sem mexer neles dobraria a pressão sobre o jogador, e o pedido do Gelo era mais **variedade**, não mais dano. Antes 2,370/ano, depois 2,355 | não testado |
+| 2026-10-06 | 10 eventos novos | — → **pesos de 0,07 a 0,17** | Ocupam a metade que a divisão liberou. Mais pesados em cima (limiar baixo), mais leves embaixo, como a rampa que o `P7-01` desenhou | não testado |
+| 2026-10-06 | `mangroves` → `resilience` | 10 global → **14 em 5 regiões** | Primeiro efeito com alvo regional do jogo. Realiza o `§2.3` e **destrava um galho do engine que era código morto**: os dois `target === 'global' || target === regionId` nunca rodavam, e nenhum teste os alcançava | não testado |
+
+#### O que os 20 eventos mudaram sem ninguém pedir
+
+| | antes (10 eventos) | depois (20) |
+|---|---|---|
+| Eventos por ano | 2,370 | **2,355** |
+| Eventos críticos (pausam o relógio) | 2 | **2** |
+| `melhor` (pula Sociedade) | dissolvida em 2097 | **dissolvida em 2092** |
+| `sociedade-cedo` (compra Sociedade, nunca contém) | **sobrevive** | **dissolvida em 2099** |
+| `contencao` | sobrevive, prata | sobrevive, prata |
+| Melhor jogada | 1,9715 °C | 1,9822 °C |
+
+**A linha do meio é a mais importante, e foi um ganho de graça.** Comprar o ramo Sociedade e nunca
+conter deixou de bastar: agora essa partida também é dissolvida, um ano antes do fim. O `§2.6` diz
+que o ramo é "a licença para lutar", e até aqui a licença sozinha salvava — **agora ela só autoriza
+a luta.** Nenhuma constante da Inércia foi tocada; o que mudou é que mais tipos de evento espalham
+o dano por mais regiões, e o apoio não tem onde se recompor.
+
+#### E a janela de perdão recuperou metade do que o `REF-09` tinha perdido
+
+| Largar o controle em | antes dos 20 eventos | depois |
+|---|---|---|
+| 2055 | dissolvida | dissolvida |
+| 2060 | **sobrevive** | **dissolvida** |
+| 2065 | sobrevive | sobrevive |
+
+Era o débito que a passagem do `REF-09` deixou escrito acima, e metade dele fechou **sem tocar na
+Inércia**. O que sobra — largar em 2065 e ainda levar prata — continua de pé e continua sendo do
+`P8-02`.
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz

@@ -77,12 +77,26 @@ describe('advanceTick', () => {
     expect(after.temperature).toBeGreaterThan(balance.startTemperature);
   });
 
-  it('acumula um ano de PAC a cada doze ticks', () => {
+  /**
+   * **O primeiro ano é a taxa limpa; o terceiro já mostra a mordida dos
+   * eventos.** Até 2026-10-06 os três anos batiam exatos, e não por desenho: a
+   * seed simplesmente não tinha sorteado nenhum evento com `impact.points` nos
+   * 36 primeiros meses. Com os 20 eventos, sorteou — e as duas asserções
+   * passaram a medir coisas diferentes, que é o que elas devem medir.
+   *
+   * Se o número de baixo mudar de novo, **confira se foi balanceamento antes de
+   * re-pinar**: ele é a única asserção do arquivo que enxerga o `impact.points`
+   * do `§2.5` chegando ao bolso do jogador.
+   */
+  it('acumula um ano de PAC a cada doze ticks, menos o que os eventos cobram', () => {
+    // Doze meses, nenhum evento com custo de PAC ainda: a entrada de base, limpa.
     expect(run(balance.ticksPerYear).actionPoints).toBeCloseTo(balance.basePointsPerYear, 6);
-    expect(run(balance.ticksPerYear * 3).actionPoints).toBeCloseTo(
-      balance.basePointsPerYear * 3,
-      6,
-    );
+
+    // Três anos: 138 de entrada menos 7,5 que os eventos levaram.
+    const tresAnos = run(balance.ticksPerYear * 3).actionPoints;
+
+    expect(tresAnos).toBeCloseTo(130.5, 6);
+    expect(tresAnos).toBeLessThan(balance.basePointsPerYear * 3);
   });
 
   it('sorteia eventos, então a posição do gerador anda', () => {
@@ -245,9 +259,11 @@ describe('o fim da partida', () => {
     const semAntagonista = 3.3548;
 
     expect(end.temperature).toBeGreaterThan(semAntagonista);
-    // Re-pinado no REF-06: o apoio por região mexeu de leve no amortecimento da
-    // Inércia (era 3,3663 com o decaimento uniforme).
-    expect(end.temperature).toBeCloseTo(3.3655, 4);
+    // Re-pinado duas vezes, e as duas por mudança real: no REF-06 o apoio por
+    // região mexeu no amortecimento da Inércia (3,3663 → 3,3655), e em
+    // 2026-10-06 os 20 eventos trocaram quais regiões apanham e quando
+    // (3,3655 → 3,3657). A frequência de evento não mudou — a lista mudou.
+    expect(end.temperature).toBeCloseTo(3.3657, 4);
     expect(end.temperature).toBeGreaterThan(balance.loseTemperature);
   });
 

@@ -17,6 +17,7 @@ import {
   SKILL_BRANCHES,
   type GameState,
   type RawSkill,
+  type RegionId,
 } from '../src/engine/state';
 import { advanceTick, TOTAL_TICKS } from '../src/engine/tick';
 
@@ -299,6 +300,61 @@ describe('unlockSkill', () => {
   });
 });
 
+/**
+ * **O alvo regional, que até 2026-10-06 era código morto.**
+ *
+ * O `Effect` do `docs/GDD.md §3` sempre aceitou `target: RegionId | 'global'`, e
+ * o engine sempre teve os dois galhos — no `applyImmediateEffects` e no
+ * `emissionCutFor`. Só que **os 47 efeitos do `skills.json` eram todos
+ * `global`**, então o galho regional nunca rodava e nenhum teste o alcançava: as
+ * duas funções buscam a habilidade no mapa dos dados reais, e um nó sintético
+ * não existe ali.
+ *
+ * O `mangroves` é o primeiro nó regional de verdade, e é ele que destrava esta
+ * suíte. A escolha das cinco regiões é sourceada no `docs/CIENCIA.md`.
+ */
+describe('efeito com alvo regional (REF-06, feito em 2026-10-06)', () => {
+  const TROPICAIS: readonly RegionId[] = ['la', 'af', 'ea', 'sa', 'oc'];
+  const FRIAS: readonly RegionId[] = ['na', 'eu', 'me'];
+
+  it('o manguezal levanta a resiliência só onde há manguezal', () => {
+    // O manguezal pede o reflorestamento; a lista entra pronta para a compra sair.
+    const antes = gameWith(70, ['reforestation']);
+    const depois = unlockSkill(antes, 'mangroves');
+
+    for (const id of TROPICAIS) {
+      expect(depois.regions[id].resilience, id).toBe(antes.regions[id].resilience + 14);
+    }
+    for (const id of FRIAS) {
+      expect(depois.regions[id].resilience, id).toBe(antes.regions[id].resilience);
+    }
+  });
+
+  /**
+   * A outra metade do mesmo nó continua global, e **é física, não desenho**: o
+   * carbono que o manguezal guarda sai da atmosfera do planeta inteiro, não da
+   * atmosfera da região dele.
+   */
+  it('o corte de emissão do mesmo nó continua valendo nas 8 regiões', () => {
+    const comprado = gameWith(0, ['reforestation', 'mangroves']);
+
+    for (const id of REGION_IDS) {
+      expect(emissionCutFor(comprado, id), id).toBeCloseTo(0.0045, 10);
+    }
+  });
+
+  /** O alvo não vaza para o apoio: o nó mexe em resiliência e só nela. */
+  it('não encosta no apoio de região nenhuma', () => {
+    // O manguezal pede o reflorestamento; a lista entra pronta para a compra sair.
+    const antes = gameWith(70, ['reforestation']);
+    const depois = unlockSkill(antes, 'mangroves');
+
+    for (const id of REGION_IDS) {
+      expect(depois.regions[id].support, id).toBe(antes.regions[id].support);
+    }
+  });
+});
+
 describe('os efeitos contínuos', () => {
   it('sem habilidade nenhuma, o corte é zero e o PAC é o do balance.json', () => {
     const zerado = gameWith(0);
@@ -406,20 +462,20 @@ describe('a árvore ligada à simulação', () => {
     expect(end.year).toBe(balance.endYear);
   });
 
-  it('o orçamento do P3-04: sobra para 32 dos 40 nós, 62% do custo', () => {
+  it('o orçamento do P3-04: sobra para 31 dos 40 nós, 58% do custo', () => {
     // O número que docs/BALANCEAMENTO.md registra. Se mexer no custo de um nó,
     // no `basePointsPerYear` ou no `impact.points` de um evento, é aqui que a
     // mudança aparece — e vira linha lá.
     //
     // Eram 16 nós e 65% até o P7-01. Os eventos cobram PAC — é o `impact.points`
     // do §2.5 — e isso tirou um nó inteiro do alcance, deixando 15 e 56%.
-    // **Com a árvore de 40 nós do REF-07** e a renda do REF-09 são 32 nós e 62%
+    // **Com a árvore de 40 nós do REF-07** e a renda do REF-09 são 31 nós e 58%
     // do custo: oito ficam de fora, e são sempre os mais caros do fundo.
     const end = playGreedy();
     const cost = skills.reduce((total, skill) => total + skill.cost, 0);
 
-    expect(end.unlockedSkills).toHaveLength(32);
-    expect(Math.round((spentOn(end) / cost) * 100)).toBe(62);
+    expect(end.unlockedSkills).toHaveLength(31);
+    expect(Math.round((spentOn(end) / cost) * 100)).toBe(58);
   });
 
   it('comprar cedo vale mais que comprar tarde', () => {
