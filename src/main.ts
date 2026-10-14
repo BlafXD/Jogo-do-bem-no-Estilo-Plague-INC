@@ -14,6 +14,7 @@
 // esquecer de atualizar o `previousFrame` enquanto parado, que faria o primeiro
 // quadro depois da pausa entregar o intervalo inteiro de uma vez.
 
+import { achievementsEarned } from './engine/achievements';
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
 import { canUnlock, unlockSkill } from './engine/skills';
@@ -63,6 +64,7 @@ import { hudView, mountHud, renderHud } from './ui/hud';
 import { prependBrandMark } from './ui/icons';
 import { crossedLevel, updateNotices, type InertiaNotice } from './ui/inertia-notices';
 import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
+import { mergeAchievements } from './ui/achievements';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
 import {
@@ -86,7 +88,15 @@ import {
 } from './ui/session';
 import { canRefocus, setInert } from './ui/modal';
 import { mountSkipLink } from './ui/skip-link';
-import { clearGame, loadGame, loadMuted, saveGame, saveMuted } from './ui/storage';
+import {
+  clearGame,
+  loadAchievements,
+  loadGame,
+  loadMuted,
+  saveAchievements,
+  saveGame,
+  saveMuted,
+} from './ui/storage';
 import { mountStripes, renderStripes, rulerMark, stripesView } from './ui/stripes';
 import {
   armNewGame,
@@ -396,6 +406,54 @@ let savedYear = restored === null ? null : restored.year;
 let fairMode = false;
 
 /**
+ * Os ids de conquista já ganhos antes desta partida (CONQ-02).
+ *
+ * Lido uma vez, na carga, e mantido em memória a partir daí: a tela de fim é
+ * redesenhada a cada quadro enquanto está no ar, e ler o `localStorage` ali
+ * seria um acesso a disco por quadro para responder sempre a mesma coisa.
+ *
+ * **Vale no Modo Feira também**, e essa é a diferença para o save. O `persist`
+ * acima não escreve na demo porque a partida do dono da máquina não pode ser
+ * sobrescrita; a prateleira é do computador do estande, e é justamente ali que
+ * ela tem graça — dez pessoas jogando cinco minutos cada vão preenchendo a
+ * mesma estante.
+ */
+let unlockedAchievements: readonly string[] = loadAchievements();
+
+/**
+ * A prateleira **como ela estava quando esta partida começou**.
+ *
+ * São duas listas, e a segunda não é redundância: sem ela o "Nova" não
+ * existiria. O cartão de fim é redesenhado a cada quadro, e o primeiro desses
+ * quadros já grava o que a partida rendeu — a partir do segundo, o que acabou
+ * de ser ganho estaria dentro do `unlockedAchievements` e apareceria como
+ * "Conquistada" de sempre. O destaque da partida que acabou de terminar sai da
+ * diferença entre as duas, e esta aqui só se move quando uma partida nova
+ * começa.
+ */
+let achievementsAtStart: readonly string[] = unlockedAchievements;
+
+/**
+ * Guarda o que esta partida rendeu, se é que rendeu algo novo.
+ *
+ * Chamada do `renderGame`, que roda a cada quadro — por isso o `merge` devolve
+ * `null` quando nada mudou e esta função sai sem tocar no armazenamento. Só o
+ * primeiro quadro depois do fim escreve; os seguintes não fazem nada, porque a
+ * lista em memória já foi atualizada.
+ *
+ * **Grava mesmo numa partida perdida.** Uma agência dissolvida em 2092 ainda
+ * virou a curva em 2027, e o §2.8 diz que a conquista é uma leitura da partida,
+ * não um prêmio por vencer.
+ */
+function recordAchievements(): void {
+  const merged = mergeAchievements(achievementsEarned(state), unlockedAchievements);
+  if (merged === null) return;
+
+  unlockedAchievements = merged;
+  saveAchievements(merged);
+}
+
+/**
  * O especialista marcado na tela de escolha (REF-08), ou nenhum.
  *
  * **É estado da tela, e não da partida** — a partida tem o seu em
@@ -656,6 +714,9 @@ function handleFair(character: CharacterId): void {
   title = cancelNewGame(title);
 
   state = createInitialState(SEED, character);
+  // A linha de base do "Nova" (CONQ-02): a partida que começa agora mede o que
+  // rendeu contra a prateleira como ela está neste instante.
+  achievementsAtStart = unlockedAchievements;
   clock = createClock();
   session = createSession(null, true);
   shownTick = state.tick;
@@ -727,6 +788,12 @@ function renderGame(): void {
   const finished = isFinished(state);
   const screen = currentScreen(screens, finished);
 
+  // Antes de desenhar: o cartão de fim precisa da prateleira já com o que esta
+  // partida acabou de render, senão o jogador veria "Ainda não" ao lado de uma
+  // conquista que ele ganhou neste instante. Não escreve nada quando não há
+  // novidade, e por isso pode ficar no caminho de todo quadro.
+  if (finished) recordAchievements();
+
   renderScreens(layout, screen);
   renderTitle(telaTitulo, titleView(savedYear, title, sound.muted));
   // A escolha do especialista (REF-08). Redesenhada fora da tela dela também, e
@@ -746,7 +813,11 @@ function renderGame(): void {
   // No título o cartão de resultado não entra, nem quando o save é de uma
   // partida encerrada: quem senta na frente do computador da feira vê o jogo
   // se apresentar, e não o fim da partida de outra pessoa.
-  renderOutcome(resultado, screen === 'title' ? null : outcomeView(state), screens.reviewing);
+  renderOutcome(
+    resultado,
+    screen === 'title' ? null : outcomeView(state, undefined, achievementsAtStart),
+    screens.reviewing,
+  );
   renderEvents();
 
   // O tutorial depois das seções em que ele pousa: o balão é prependido no
@@ -919,6 +990,9 @@ function handleReset(character: CharacterId | null): void {
   }
 
   state = createInitialState(SEED, character);
+  // A linha de base do "Nova" (CONQ-02): a partida que começa agora mede o que
+  // rendeu contra a prateleira como ela está neste instante.
+  achievementsAtStart = unlockedAchievements;
   clock = createClock();
   session = fairMode ? createSession(null, true) : afterReset();
   // Uma partida nova é uma partida nova: no Modo Feira o painel volta, e fora

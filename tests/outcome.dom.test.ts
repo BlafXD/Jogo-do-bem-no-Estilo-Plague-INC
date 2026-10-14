@@ -247,6 +247,9 @@ describe('o cartão na tela', () => {
       'compare',
       'chart',
       'outcome__lookback',
+      // A prateleira do CONQ-02 entra aqui: o que ficou para trás, o que foi
+      // conquistado, e só então o mundo real.
+      'outcome__achievements',
       'outcome__realworld',
       'outcome__actions',
     ]);
@@ -259,14 +262,14 @@ describe('o cartão na tela', () => {
     expect(curva?.getAttribute('d')?.length ?? 0).toBeGreaterThan(0);
   });
 
-  it('as duas seções novas têm cabeçalho de verdade, não parágrafo com cara de título', () => {
+  it('as três seções têm cabeçalho de verdade, não parágrafo com cara de título', () => {
     // É o que faz um leitor de tela oferecer as seções na navegação por
     // cabeçalhos, em vez de obrigar a atravessar o cartão inteiro de cima a
     // baixo. Mesma regra do tree.ts.
     const root = show(mount(), ended(2.4));
     const titulos = [...root.querySelectorAll('.outcome__section-title')];
 
-    expect(titulos).toHaveLength(2);
+    expect(titulos).toHaveLength(3);
     for (const titulo of titulos) expect(titulo.tagName).toBe('H2');
   });
 
@@ -336,7 +339,10 @@ describe('o cartão na tela', () => {
     for (let i = 0; i < 5; i++) show(root, ended(2.4));
 
     expect(root.querySelectorAll('.outcome__action')).toHaveLength(3);
-    expect(root.querySelectorAll('.outcome__section-title')).toHaveLength(2);
+    expect(root.querySelectorAll('.outcome__section-title')).toHaveLength(3);
+    // A prateleira é reconstruída, não empilhada: seis itens depois de cinco
+    // renders, e não trinta.
+    expect(root.querySelectorAll('.shelf__item')).toHaveLength(6);
   });
 
   it('o texto do cartão é anunciado por leitor de tela, o botão não', () => {

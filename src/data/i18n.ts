@@ -753,6 +753,32 @@ export const ui = {
    * o personagem "diz" é o texto que o jogo já tem — o passo do tutorial, o fato
    * do evento. Voz própria é trabalho do `[D-Historia]`.
    */
+  /**
+   * A prateleira de conquistas (CONQ-02), do `docs/GDD.md §2.8`.
+   *
+   * **O nome e a condição de cada conquista não estão aqui** — moram no
+   * `src/data/achievements.json`, como o nome e a descrição de um nó da árvore
+   * moram no `skills.json`. Aqui fica só a moldura: o título da seção, a
+   * contagem e os três rótulos de estado.
+   *
+   * Os três rótulos existem porque o §5 do GDD proíbe comunicar estado só por
+   * cor. Um troféu apagado e um troféu aceso não podem ser a única diferença
+   * entre "ainda não" e "conquistada" numa tela vista de três metros.
+   */
+  achievements: {
+    label: 'Conquistas',
+    /** O título do bloco na tela de fim: a notícia é desta partida. */
+    heading: 'Conquistas desta partida',
+    tally: (earned: number, total: number) => `${earned} de ${total}`,
+    /** Ganha agora, nesta partida. É a única novidade da tela de fim. */
+    fresh: 'Nova',
+    earned: 'Conquistada',
+    /** Nem "bloqueada" nem "perdida": ela continua ao alcance da próxima partida. */
+    locked: 'Ainda não',
+    /** Quando a partida não rendeu nenhuma conquista nova. */
+    none: 'Esta partida não desbloqueou nenhuma conquista nova.',
+  },
+
   cast: {
     people: { ...team, ...antagonist },
     /** A linha de quem fala, em cima da fala. */

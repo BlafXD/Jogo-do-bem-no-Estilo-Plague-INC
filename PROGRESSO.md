@@ -28,6 +28,69 @@ Regras curtas:
 
 ---
 
+## 2026-10-14 (mais tarde) — As conquistas aparecem: a prateleira na tela de fim (CONQ-02, 1ª entrega)
+
+- **Parte / tarefa:** `CONQ-02`, 1ª de duas entregas. Suíte **1066 → 1087**.
+- **Do chat, antes de começar:** a `CONQ-02` do plano mexia em ~14 arquivos — persistência, duas
+  telas, ícone, i18n e `main.ts` —, o que é grande demais para o `§1.2`. Acordado: **duas entregas**,
+  esta (persistência + tela de fim) e a do painel do título. E uma decisão de desenho tomada no
+  chat: **a prateleira é um painel que abre do título**, e não um quarto bloco na tela, para não
+  mexer no layout aprovado no `VIS-08`.
+- **O que mudou:**
+  - `src/ui/achievements.ts` (novo) — o `shelfView` puro, o `mergeAchievements` e a peça de lista
+    (`mountShelf`/`renderShelf`) que a tela de fim usa agora e o painel vai reaproveitar.
+  - `src/ui/storage.ts` — `ACHIEVEMENTS_KEY`, `loadAchievements` e `saveAchievements`. **A leitura é
+    desconfiada**: texto que não é JSON, JSON que não é lista, item que não é texto — tudo vira
+    prateleira vazia, e nada lança. O conteúdo é editável à mão pelo jogador.
+  - `src/ui/outcome.ts` e `.css` — o bloco no cartão, com a contagem no próprio `<h2>`. O
+    `outcomeView` ganhou um terceiro parâmetro com os ids já guardados; omitido é prateleira vazia,
+    e é por isso que os testes anteriores a esta tarefa continuaram medindo o mesmo cartão.
+  - `src/assets/icons/trophy.svg` (novo) e `src/ui/icons.ts` — dentro do contrato do `[D-Design]`:
+    24×24, traço de 2 px na raiz, `currentColor`, sem texto. O `tests/icons.test.ts` passou sem
+    ajuste nenhum.
+  - `src/data/i18n.ts` — só a moldura: título, contagem e os três rótulos de estado. **O nome e a
+    condição de cada conquista continuam no `achievements.json`**, como o nome de um nó da árvore
+    está no `skills.json`.
+  - `src/main.ts` — a ligação, mais a correção abaixo.
+- **A prateleira vale no Modo Feira, e o save não.** É a diferença que decidiu a chave própria: o
+  `persist` não escreve na demo porque a partida do dono da máquina não pode ser sobrescrita, mas a
+  estante é **do computador do estande** — dez pessoas jogando cinco minutos cada vão preenchendo a
+  mesma. Guardá-la dentro do save a perderia ali e também no "Jogar de novo", que apaga o save.
+- **Um bug meu, achado antes de entregar.** Eu gravava a conquista antes de desenhar o cartão — e aí
+  a recém-ganha já estava na lista guardada, então ela apareceria como "Conquistada" e **o "Nova"
+  nunca existiria**. Por isso há **duas** listas no `main.ts`: a guardada, que anda no primeiro
+  quadro depois do fim, e a `achievementsAtStart`, que só se move quando uma partida nova começa. O
+  destaque sai da diferença entre as duas.
+- **O que ficou escrito no código, e não só feito:** as conquistas aparecem **todas as seis, sempre**,
+  as que faltam com nome e condição legíveis. Não é descuido com "spoiler" — é o motivo da tarefa:
+  ninguém persegue o que não sabe que existe, e o `§2.8` diz que a prateleira serve para mostrar que
+  há mais de um jeito de jogar bem.
+- **Como verificar:**
+
+  ```bash
+  npm run check     # limpo; 1087 testes
+  npm run dev       # jogue até o fim, ou continue um save encerrado
+  ```
+
+  **Conferido no Edge headless, no jogo de verdade**, plantando dois saves pelo formato do próprio
+  jogo e clicando em "Continuar":
+  1. **Partida de 2100, prata, com `turning-point` já na estante:** o cartão mostrou "Conquistas
+     desta partida · 6 de 6", a plantada como **Conquistada** e as outras cinco como **Nova**.
+  2. **Partida dissolvida em 2095 (só corta, pula Sociedade), estante vazia:** "2 de 6", duas
+     **Novas** e quatro **Ainda não**, com o troféu apagado e a barra apagada — e o rótulo escrito
+     em todas, que é o que o `§5` exige.
+- **Pendente:**
+  - **O painel do título é a 2ª entrega.** Hoje, quem nunca termina uma partida não descobre que as
+    conquistas existem.
+  - As duas evidências estão em **`.png`**, e não `.jpg` como as outras 77 — o conversor que eu
+    tentaria usar não existe no projeto, e as imagens ficaram em 22 e 23 KB, abaixo da média da
+    pasta (94 KB). Se incomodar, é só reconverter.
+  - `achievements.ts` não é mais código morto no bundle: a tela de fim o importa.
+- **Evidência:** `docs/evidencias/2026-10-14-conq-02-prateleira-tudo-conquistado.png` e
+  `docs/evidencias/2026-10-14-conq-02-prateleira-com-pendentes.png`
+
+---
+
 ## 2026-10-14 — Conquistas: a medição reprovou quatro das oito (CONQ-01)
 
 - **Parte / tarefa:** `CONQ-01` ✔. Abre o épico `CONQ`, puxado do Gelo. Suíte **1038 → 1066**.

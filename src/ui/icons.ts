@@ -50,6 +50,8 @@ export const ICON_NAMES = [
   'close',
   'leave',
   'globe',
+  // A prateleira de conquistas (CONQ-02).
+  'trophy',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

@@ -26,6 +26,7 @@
 // logo abaixo dele poderiam apontar anos diferentes.
 
 import { ui } from '../data/i18n';
+import { achievementsEarned } from '../engine/achievements';
 import { MEDALS, MEDAL_CEILING, outcomeOf, type Medal, type Outcome } from '../engine/outcome';
 import {
   crossings,
@@ -35,6 +36,7 @@ import {
   type RealWorldAction,
 } from '../engine/review';
 import { balance, skills, SKILL_BRANCHES, type GameState } from '../engine/state';
+import { mountShelf, renderShelf, shelfView, type ShelfView } from './achievements';
 import { momentCast, mountPortrait, renderPortrait, type Appearance } from './characters';
 import {
   comparisonView,
@@ -99,6 +101,16 @@ export type OutcomeView = {
   readonly comparison: ComparisonView;
   /** O "o que ficou para trás" do §2.7, uma frase por linha. */
   readonly lookBack: readonly string[];
+  /**
+   * A prateleira de conquistas (CONQ-02), com o que **esta** partida rendeu
+   * marcado como novo.
+   *
+   * Entra na view como tudo mais, e não é lida do `localStorage` lá dentro: o
+   * `outcomeView` é puro, e um acesso a armazenamento aqui o tornaria uma
+   * função que responde diferente conforme o navegador. Quem traz os ids
+   * guardados é o `main.ts`.
+   */
+  readonly achievements: ShelfView;
   /** As 3 ações do mundo real, já escolhidas pelo que esta partida deixou de lado. */
   readonly realWorld: readonly RealWorldAction[];
   /**
@@ -216,7 +228,16 @@ function lookBackFor(state: GameState): readonly string[] {
  * deliberadamente a mesma pergunta que o engine responde — a tela não tem uma
  * ideia própria de "acabou".
  */
-export function outcomeView(state: GameState, passive?: GameState): OutcomeView | null {
+export function outcomeView(
+  state: GameState,
+  passive?: GameState,
+  /**
+   * Os ids já conquistados antes desta partida (CONQ-02). Omitido é
+   * prateleira vazia, e aí tudo que a partida rendeu aparece como novo — é o
+   * que os testes anteriores a esta tarefa continuam medindo.
+   */
+  storedAchievements: readonly string[] = [],
+): OutcomeView | null {
   const outcome = outcomeOf(state);
   if (outcome.kind === 'playing') return null;
 
@@ -231,6 +252,7 @@ export function outcomeView(state: GameState, passive?: GameState): OutcomeView 
 
   return {
     ...resultFor(outcome),
+    achievements: shelfView(achievementsEarned(state), storedAchievements),
     cast: momentCast(dissolved ? 'defeat-support' : 'outcome'),
     // A Juliana ganha a legenda do que faz aqui; a Inércia fica com o que ela é.
     castRole: dissolved ? null : ui.cast.outcome,
@@ -256,7 +278,17 @@ export function outcomeView(state: GameState, passive?: GameState): OutcomeView 
 // ------------------------------------------------------------------ DOM ---
 
 type Slot =
-  'card' | 'icon' | 'title' | 'lead' | 'verdict' | 'stats' | 'review' | 'lookback' | 'realworld';
+  | 'card'
+  | 'icon'
+  | 'title'
+  | 'lead'
+  | 'verdict'
+  | 'stats'
+  | 'review'
+  | 'lookback'
+  | 'realworld'
+  | 'achievements'
+  | 'achievements-tally';
 
 function slot(root: ParentNode, name: Slot): HTMLElement | null {
   return root.querySelector<HTMLElement>(`[data-outcome="${name}"]`);
@@ -356,6 +388,37 @@ function realWorldSection(): HTMLElement {
 
   // Entre o <h2> e a <ul> — o contexto vem antes da lista que ele explica.
   block.querySelector('h2')?.after(intro);
+  return block;
+}
+
+/**
+ * A prateleira de conquistas no cartão (CONQ-02).
+ *
+ * Não usa o `section()` acima porque a lista vem pronta do achievements.ts — é
+ * a mesma peça que o painel do título vai montar, e duplicá-la aqui faria as
+ * duas telas divergirem no dia em que um item ganhasse uma linha.
+ *
+ * A contagem fica no próprio `<h2>`, e não numa linha abaixo: "Conquistas
+ * desta partida · 3 de 6" é uma informação só, e separá-la em duas obrigaria
+ * quem usa leitor de tela a atravessar o cabeçalho para descobrir o placar.
+ */
+function achievementsSection(): HTMLElement {
+  const block = document.createElement('section');
+  block.className = 'outcome__achievements';
+
+  const heading = document.createElement('h2');
+  heading.className = 'outcome__section-title';
+  heading.textContent = ui.achievements.heading;
+
+  const tally = document.createElement('span');
+  tally.className = 'outcome__achievements-tally';
+  tally.dataset.outcome = 'achievements-tally';
+  heading.append(' · ', tally);
+
+  const list = mountShelf('outcome__shelf');
+  list.dataset.outcome = 'achievements';
+
+  block.append(heading, list);
   return block;
 }
 
@@ -465,6 +528,12 @@ export function mountOutcome(root: Element, onPlayAgain: () => void, onReview?: 
     mountComparison(),
     mountTimelineChart(),
     section('lookback', ui.outcome.lookBack.label),
+    // A prateleira entra **entre** o que ficou para trás e o mundo real, e o
+    // lugar é escolhido: o "ficou para trás" diz o que a partida perdeu, a
+    // prateleira diz o que ela ganhou, e só depois dos dois a tela sai do jogo.
+    // Pô-la no fim faria a última palavra ser sobre troféu, e o §2.7 quer que
+    // seja sobre o mundo.
+    achievementsSection(),
     realWorldSection(),
     actions,
   );
@@ -512,6 +581,12 @@ export function renderOutcome(root: Element, view: OutcomeView | null, reviewing
       }),
     );
   }
+
+  const shelf = slot(root, 'achievements');
+  if (shelf !== null) renderShelf(shelf, view.achievements);
+
+  const tally = slot(root, 'achievements-tally');
+  if (tally !== null) tally.textContent = view.achievements.tally;
 
   const realWorld = slot(root, 'realworld');
   if (realWorld !== null) {

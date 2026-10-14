@@ -252,6 +252,88 @@
   font-size: var(--tamanho-base, 1rem);
 }
 
+/* ------------------------------------- a prateleira de conquistas (CONQ-02) --- */
+
+/* A contagem no próprio <h2>, um degrau abaixo do título: "Conquistas desta
+   partida · 3 de 6". Tabular porque o número muda e a linha não pode dançar. */
+.outcome__achievements-tally {
+  color: var(--cor-rotulo, #a7c0b4);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* As seis em colunas quando há largura, empilhadas quando não há — o mesmo
+   `auto-fit` das três ações, e sem media query pela mesma razão. */
+.outcome__shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Barra à esquerda como nas ações do mundo real: separa os itens sem desenhar
+   seis molduras dentro de uma moldura que já existe. A barra acesa é o que o
+   olho pega de longe no estande; quem diz o estado é o rótulo escrito. */
+.shelf__item {
+  border-left: 3px solid var(--cor-borda, #4c8069);
+  padding-left: 0.75rem;
+}
+
+.shelf__item[data-earned='true'] {
+  border-left-color: var(--cor-destaque, #7fd1a8);
+}
+
+.shelf__name {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  font-weight: 600;
+  color: var(--cor-valor, #f2f7f4);
+}
+
+.shelf__item[data-earned='false'] .shelf__name {
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+/* O troféu apagado do que falta. **Opacidade, e não uma cor nova**: o §5 do GDD
+   proíbe comunicar estado só por cor, e quem carrega o recado é o rótulo
+   "Ainda não" ao lado — isto aqui é reforço. */
+.icon--shelf {
+  flex: none;
+  color: var(--cor-destaque, #7fd1a8);
+}
+
+.shelf__item[data-earned='false'] .icon--shelf {
+  opacity: 0.45;
+  color: inherit;
+}
+
+/* O rótulo de estado empurrado para a direita, longe do nome: lido de três
+   metros, nome e estado precisam não virar uma frase só. */
+.shelf__status {
+  margin-left: auto;
+  font-size: var(--texto-pequeno, 0.875rem);
+  font-weight: 400;
+  color: var(--cor-rotulo, #a7c0b4);
+  white-space: nowrap;
+}
+
+/* "Nova" é a única novidade da tela, e por isso é a única que ganha peso. */
+.shelf__item[data-fresh='true'] .shelf__status {
+  color: var(--cor-destaque, #7fd1a8);
+  font-weight: 600;
+}
+
+.shelf__how {
+  margin: 0.25rem 0 0;
+  max-width: 44ch;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-size: var(--tamanho-base, 1rem);
+}
+
 /* ------------------------------------------ a Juliana ao lado (VIS-07) --- */
 
 /* O resultado e a auditora lado a lado. Quando falta largura, ela desce para
@@ -420,5 +502,12 @@
   .outcome__card > .outcome__lookback,
   .outcome__card > .outcome__realworld {
     grid-column: 2;
+  }
+
+  /* A prateleira fica na coluna do gráfico, que é a larga: seis itens em duas
+     ou três colunas cabem ali, e na coluna estreita cada condição quebraria em
+     três linhas. */
+  .outcome__card > .outcome__achievements {
+    grid-column: 1;
   }
 }

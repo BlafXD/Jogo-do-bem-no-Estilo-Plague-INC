@@ -158,3 +158,74 @@ export function clearGame(): boolean {
     return false;
   }
 }
+
+/**
+ * A prateleira de conquistas (CONQ-02).
+ *
+ * **Chave própria, e não um campo do save** — a mesma decisão do mudo, e pelo
+ * mesmo motivo elevado ao quadrado: a prateleira é de quem joga, não da
+ * partida. Ela precisa **sobreviver ao fim da partida**, que é justamente
+ * quando o save é apagado, e precisa valer no Modo Feira, que não salva nada
+ * (P7-07). Guardá-la no save a perderia nos dois casos.
+ *
+ * O `docs/GDD.md §2.8` manda: o que atravessa partidas é só o conjunto de ids
+ * conquistados. Nada de data, nada de contagem, nada de qual partida rendeu o
+ * quê — isso viraria um segundo save, com um segundo formato para versionar.
+ */
+export const ACHIEVEMENTS_KEY = 'ponto-de-virada:conquistas';
+
+/**
+ * Os ids já conquistados, em qualquer partida.
+ *
+ * **Lê com desconfiança, e nunca lança.** O conteúdo é texto que o jogador pode
+ * ter editado à mão, e vem de versões futuras e passadas do jogo: qualquer
+ * coisa que não seja uma lista de textos vira prateleira vazia, e um id que a
+ * lista de conquistas não conhece mais é descartado em silêncio. A alternativa
+ * — confiar — entregaria um troféu com nome em branco na tela de fim.
+ *
+ * A filtragem fica com quem chama, que é quem conhece a lista: este módulo é a
+ * ponte com o `localStorage` e nada mais (a divisão do topo do arquivo).
+ */
+export function loadAchievements(): readonly string[] {
+  const store = storage();
+  if (store === null) return [];
+
+  let text: string | null;
+  try {
+    text = store.getItem(ACHIEVEMENTS_KEY);
+  } catch {
+    return [];
+  }
+
+  if (text === null) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return [];
+  }
+
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter((id): id is string => typeof id === 'string');
+}
+
+/**
+ * Guarda a prateleira. Devolve se conseguiu — o jogo segue de qualquer jeito.
+ *
+ * Escreve a lista inteira, e não só o que entrou: ela é pequena, e uma escrita
+ * que lê-modifica-grava em duas etapas é como duas abas abertas no estande se
+ * sobrescrevem. Quem junta o novo com o velho é o `main.ts`, que tem os dois na
+ * mão no mesmo instante.
+ */
+export function saveAchievements(ids: readonly string[]): boolean {
+  const store = storage();
+  if (store === null) return false;
+
+  try {
+    store.setItem(ACHIEVEMENTS_KEY, JSON.stringify([...ids]));
+    return true;
+  } catch {
+    return false;
+  }
+}
