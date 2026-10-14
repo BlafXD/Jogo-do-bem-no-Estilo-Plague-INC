@@ -33,6 +33,7 @@ function handlers(over: Partial<TitleHandlers> = {}): TitleHandlers {
     onCancelNew: vi.fn(),
     onFair: vi.fn(),
     onToggleSound: vi.fn(),
+    onAchievements: vi.fn(),
     ...over,
   };
 }
@@ -267,8 +268,9 @@ describe('o Modo Feira no título (P7-07)', () => {
     const rotulos = [...(fileira?.children ?? [])].map((b) => b.getAttribute('data-title'));
 
     // O som (VIS-08) vem depois dos três caminhos: ele é ajuste, e não jeito de
-    // jogar.
-    expect(rotulos).toEqual(['continue', 'new', 'fair', 'sound']);
+    // jogar. As conquistas (CONQ-02) entram entre os dois pela mesma régua: elas
+    // não começam partida nenhuma, mas são do jogo, e o som não é.
+    expect(rotulos).toEqual(['continue', 'new', 'fair', 'achievements', 'sound']);
   });
 
   it('a dica promete o que o modo cumpre: não salva e não apaga', () => {

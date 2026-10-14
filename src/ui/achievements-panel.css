@@ -1,0 +1,175 @@
+/* O painel de conquistas do título (CONQ-02, 2ª entrega).
+
+   Mesmo contrato das outras folhas: cor e medida saem de custom properties com
+   valor de reserva no próprio var(), para o theme.css assumir sem encostar
+   aqui. O contraste de cada cor está na tabela do theme.css.
+
+   **A casca é a do painel da árvore, de propósito** — fundo escurecido, janela
+   opaca no meio, cabeçalho com título, intro, contagem e o botão de fechar. Os
+   dois são a mesma coisa para quem usa o jogo: uma janela que abre por cima,
+   fecha com Esc e devolve o foco. Parecerem-se é o ponto.
+
+   O que muda é a forma: aqui não há duas colunas. A janela tem uma largura
+   máxima e cresce até ela, porque o conteúdo é uma lista de seis itens — espichá-la
+   até a borda da tela deixaria linhas de 200 caracteres num monitor de estande. */
+
+.achievements-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: start center;
+  padding: clamp(0.5rem, 1.5vw, 1rem);
+  overflow: auto;
+  /* O fundo escurecido. O texto nunca fica sobre ele: fica no painel, que é
+     opaco. */
+  background: color-mix(in srgb, var(--cor-fundo, #0f1c17) 80%, transparent);
+}
+
+.achievements-panel[hidden] {
+  display: none;
+}
+
+@supports (backdrop-filter: blur(3px)) {
+  .achievements-panel {
+    backdrop-filter: blur(3px);
+  }
+}
+
+.achievements-panel__dialog {
+  display: grid;
+  align-content: start;
+  width: 100%;
+  max-width: 62rem;
+  overflow: hidden;
+  border: 1px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-fundo, #0f1c17);
+  box-shadow: 0 1.5rem 3.5rem color-mix(in srgb, var(--cor-fundo, #0f1c17) 80%, transparent);
+}
+
+/* Sem animação de entrada com movimento reduzido (§9 da direção de arte). */
+@media (prefers-reduced-motion: no-preference) {
+  .achievements-panel__dialog {
+    animation: achievements-panel-entra 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes achievements-panel-entra {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------- o cabeçalho --- */
+
+.achievements-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);
+  background: var(--cor-superficie, #182c24);
+}
+
+.achievements-panel__title {
+  margin: 0;
+  color: var(--cor-valor, #f2f7f4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-stretch: 87.5%;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.achievements-panel__intro {
+  flex: 1 1 18rem;
+  max-width: 40rem;
+  margin: 0;
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+.achievements-panel__tally {
+  margin: 0 0 0 auto;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.achievements-panel__tally-label {
+  display: block;
+  color: var(--cor-rotulo, #a7c0b4);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.achievements-panel__count {
+  display: block;
+  color: var(--cor-destaque, #7fd1a8);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* O botão secundário da direção de arte: borda de fio, sem preenchimento. O
+   mesmo do painel da árvore — as duas janelas fecham do mesmo jeito. */
+.achievements-panel__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: var(--alvo-toque, 2.75rem);
+  padding: 0.4rem 1rem;
+  border: 2px solid var(--cor-borda, #4c8069);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: transparent;
+  color: var(--cor-valor, #f2f7f4);
+  font: inherit;
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.achievements-panel__close:hover {
+  background: var(--cor-fundo, #0f1c17);
+  border-color: var(--cor-destaque, #7fd1a8);
+}
+
+.achievements-panel__close:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------- a prateleira --- */
+
+.achievements-panel__body {
+  padding: 1.1rem;
+}
+
+/* Duas colunas quando há largura, uma quando não há — o mesmo `auto-fit` da
+   prateleira do cartão de fim, e sem media query pela mesma razão. O mínimo é
+   maior aqui porque a janela é larga: com 15rem caberiam três colunas e as
+   condições quebrariam em quatro linhas cada. */
+.achievements-panel__shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

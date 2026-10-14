@@ -43,6 +43,7 @@ function montarTitulo(): HTMLElement {
     onCancelNew: vi.fn(),
     onFair: vi.fn(),
     onToggleSound: vi.fn(),
+    onAchievements: vi.fn(),
   });
   return root;
 }

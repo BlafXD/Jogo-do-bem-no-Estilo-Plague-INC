@@ -249,7 +249,7 @@ versão antiga e a nova seria medir duas vezes.
 
 ---
 
-## CONQ — Conquistas (puxado do Gelo em 2026-10-14)
+## CONQ — Conquistas (puxado do Gelo em 2026-10-14) — **fechado**
 
 Escolhido no chat em 2026-10-14, com o backlog numerado drenado: o Gelo já era "a lista de onde o
 trabalho sai", e as conquistas foram o item escolhido por serem o que mais rende na feira — motivo
@@ -265,7 +265,7 @@ própria no `localStorage`. A especificação está no `docs/GDD.md §2.8`.
 
 - [x] `CONQ-01` Engine e dados: `achievements.json`, `achievements.ts`, as duas constantes e a varredura que prova que nenhuma é inalcançável — **M** — *2026-10-14. **São seis, e não as oito propostas:** a varredura reprovou o Ouro e o Zero líquido por inalcançáveis (a melhor partida medida para em 1,962 °C e 0,86 Gt/ano), "a casa toda" pelo mesmo motivo (o máximo são 7 nós de 8, e só com o desconto da Juliana) e "escudo erguido" por ser automática (toda partida que compra algo termina com 77,8 de resiliência média). O teste joga **cinco partidas de referência** e exige que cada conquista seja ganha por uma e recusada por outra — impossível reprova, automática também. **Um palpite meu caiu na medição:** conter cedo não domina conter tarde (nove milésimos de grau entre os extremos); quem sustenta o apoio é a profundidade no ramo Sociedade. Tudo em `docs/BALANCEAMENTO.md`. Suíte 1038 → 1066*
 - [x] `CONQ-02` **1ª entrega** — Persistência e tela de fim: a prateleira no cartão, com o que esta partida rendeu em destaque — **M** — *2026-10-14. Chave própria no `localStorage` (`ponto-de-virada:conquistas`), que **vale no Modo Feira também** — ao contrário do save, que a demo não escreve: a estante é do computador do estande, e é ali que ela tem graça. A leitura é desconfiada (texto editado à mão, lista de outra versão, item que não é texto) e nunca lança. O bloco entra **entre** "o que ficou para trás" e o mundo real, com a contagem no `<h2>`. Ícone de troféu novo, dentro do contrato do `[D-Design]`. **Um bug meu, achado antes de entregar:** gravar a conquista antes de desenhar fazia o "Nova" nunca aparecer, porque a recém-ganha já estaria na lista guardada — por isso há **duas** listas no `main.ts`, e a segunda só se move quando uma partida nova começa. Conferido no Edge headless, no jogo de verdade, nos dois estados. Suíte 1066 → 1087*
-- [ ] `CONQ-02` **2ª entrega** — O painel do título: botão "Conquistas 3/6" ao lado de Continuar/Começar, painel modal com `Esc` fechando, no modelo do `VIS-05` — **M** — *decidido no chat em 2026-10-14: painel, e não um quarto bloco na tela, para não mexer no layout aprovado no `VIS-08`. A peça de lista (`mountShelf`/`renderShelf`) já existe e é compartilhada com a tela de fim*
+- [x] `CONQ-02` **2ª entrega** — O painel do título: botão "Conquistas · 3 de 6" e janela modal com `Esc` — **M** — *2026-10-14. Decidido no chat: painel, e não um quarto bloco na tela, para não mexer no layout aprovado no `VIS-08`. A casca é a do painel da árvore de propósito — as duas janelas fecham do mesmo jeito. O botão entra **entre** o Modo Feira e o som: não começa partida nenhuma, mas é do jogo, e o som não é. A lista é a mesma peça do cartão de fim (`mountShelf`/`renderShelf`), então as duas telas não têm como divergir. **Uma consequência que apareceu só na tela:** com um save de partida encerrada, o título já mostra a contagem creditada — o jogo não espera o jogador abrir o cartão de fim para dar o que aquela partida rendeu. Está certo e ficou registrado. Suíte 1087 → 1100*
 
 ---
 
@@ -297,7 +297,7 @@ do que não cabe.
   O losango só cabe a partir de 1920 px, e as três saídas medidas trocam o losango por mais
   rolagem, que era o defeito que se queria curar. A tabela das medidas e as três opções estão no
   cabeçalho do `src/ui/tree.css`; **a escolha é de desenho, e é do autor**
-- ~~Conquistas / troféus~~ — **saiu do Gelo** em 2026-10-14 e virou o épico `CONQ`, acima. A `CONQ-01` (engine, dados e a varredura que reprovou 4 das 8 propostas) está `[x]`; falta a `CONQ-02`, que é a tela
+- ~~Conquistas / troféus~~ — **feito** em 2026-10-14, no épico `CONQ` acima: seis conquistas derivadas do estado final, a prateleira no cartão de fim e o painel do título
 - Cenários históricos ("e se tivéssemos começado em 1990?")
 - Ranking local de melhores partidas
 - Tradução para inglês

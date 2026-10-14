@@ -777,6 +777,23 @@ export const ui = {
     locked: 'Ainda não',
     /** Quando a partida não rendeu nenhuma conquista nova. */
     none: 'Esta partida não desbloqueou nenhuma conquista nova.',
+
+    // O painel do título (2ª entrega do CONQ-02).
+    //
+    // O rótulo do botão leva a contagem junto, e não num selo ao lado: "3 de 6"
+    // é o motivo de clicar, e um número solto fora do botão vira enfeite.
+    button: (tally: string) => `Conquistas · ${tally}`,
+    buttonHint: 'Mostra as seis conquistas e quais você já tem.',
+    /** O rótulo em cima da contagem grande, no canto do painel. */
+    tallyLabel: 'Você tem',
+    /**
+     * O que o painel explica em uma frase. Diz **o que elas não são** — nada de
+     * ponto, nada de regra —, porque a dúvida de quem abre pela primeira vez
+     * num estande é se aquilo muda o jogo.
+     */
+    intro: 'Elas não valem ponto nem mudam regra nenhuma. São jeitos diferentes de jogar bem.',
+    close: 'Fechar',
+    closeHint: 'Fecha as conquistas e volta ao título. Esc também fecha.',
   },
 
   cast: {

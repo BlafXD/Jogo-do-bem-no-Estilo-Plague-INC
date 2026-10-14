@@ -28,6 +28,63 @@ Regras curtas:
 
 ---
 
+## 2026-10-14 (noite) — O painel de conquistas no título fecha o épico CONQ (CONQ-02, 2ª entrega)
+
+- **Parte / tarefa:** `CONQ-02`, 2ª de duas entregas. **Fecha o épico `CONQ`.** Suíte **1087 → 1100**.
+- **O que mudou:**
+  - `src/ui/achievements-panel.ts` e `.css` (novos) — a janela. **A casca é a do painel da árvore
+    de propósito:** fundo escurecido, janela opaca no meio, cabeçalho com título, intro, contagem e
+    o botão de fechar. Para quem usa o jogo as duas são a mesma coisa — uma janela que abre por
+    cima, fecha com `Esc` e devolve o foco —, e parecerem-se é o ponto.
+  - `src/ui/title.ts` — o botão, com a contagem **dentro do rótulo** ("Conquistas · 3 de 6"). Um
+    número solto ao lado do botão vira enfeite; dentro dele, é o motivo de clicar. O rótulo vem
+    pronto de fora: esta tela não lê o `localStorage`, do mesmo jeito que não abre o save.
+  - `index.html` — o `#painel-conquistas`, **fora** do `#tela-partida`, porque quem o abre é o
+    `#tela-titulo`, que também está fora. Vazio, ao contrário do painel da árvore: lá dentro há três
+    seções que outros módulos montam, e aqui há uma lista só.
+  - `src/main.ts` — abrir, fechar, o `inert` no título e o lugar do `Esc` na fila.
+  - `src/data/i18n.ts` — só a moldura, como na 1ª entrega.
+- **Onde o botão entra, e por quê.** Depois dos três caminhos de jogar e **antes** do som: ele não
+  começa partida nenhuma, mas é do jogo, e o som é ajuste de aparelho. Com save são cinco botões, e
+  eles quebram em 3 + 2 — os três caminhos em cima, as duas coisas que não são jogar embaixo.
+  **O layout do `VIS-08` continua intacto:** a equipe à direita e as listras embaixo não se
+  mexeram, que era a razão de o chat ter escolhido painel em vez de um quarto bloco na tela.
+- **A fila do `Esc`.** O painel entra **antes** da confirmação de "Nova partida", pela mesma razão
+  que o painel da árvore entra: ele cobre a página inteira, e a pergunta fica por baixo, fora da
+  vista e fora do alcance do teclado. Hoje os dois nunca estão abertos juntos — o botão que abre o
+  painel some enquanto a pergunta está no ar —, e a ordem está escrita para o dia em que isso deixar
+  de ser verdade.
+- **Uma armadilha que eu quase criei.** O primeiro desenho mandava o `renderGame` chamar o
+  `closeAchievements` quando a tela mudasse — e aquilo chama o `renderGame` de volta, além de
+  devolver o foco a um botão que acabou de sair do ar. Agora a bandeira é baixada na mão, e quem
+  manda no foco é a tela nova.
+- **Uma consequência que só apareceu na tela, e que fica registrada:** com um save de partida
+  **encerrada**, o título já mostra a contagem creditada — o `recordAchievements` roda no primeiro
+  render, sem esperar o jogador abrir o cartão de fim. Está certo: a partida aconteceu, e quem
+  fechou o navegador antes de ver o resultado não perde o que ganhou. O "Nova" do cartão continua
+  funcionando, porque a linha de base é a `achievementsAtStart`, que não se moveu.
+- **Como verificar:**
+
+  ```bash
+  npm run check     # limpo; 1100 testes
+  npm run dev       # o botão está no título; Esc fecha o painel
+  ```
+
+  **Conferido no Edge headless, no jogo de verdade:**
+  1. **Sem save, três conquistas na estante:** o botão escreveu "Conquistas · 3 de 6", e o painel
+     abriu com as seis em duas colunas — três **Conquistada** e três **Ainda não** —, o foco no
+     botão de fechar e o título escurecido por trás.
+  2. **Com save de 2100:** cinco botões quebrando em 3 + 2, listras e equipe no lugar.
+- **Pendente:**
+  - **O `Esc` e o `inert` não têm teste automatizado.** Eles moram no `main.ts`, que nenhuma suíte
+    monta — é a mesma lacuna que o painel da árvore já tinha. O que está coberto é tudo que mora nos
+    módulos: abrir, fechar pelo botão, fechar pelo fundo, o foco e o modal.
+  - As quatro evidências do dia estão em `.png`, pela razão da entrada anterior.
+- **Evidência:** `docs/evidencias/2026-10-14-conq-02-painel-do-titulo.png` e
+  `docs/evidencias/2026-10-14-conq-02-botao-no-titulo.png`
+
+---
+
 ## 2026-10-14 (mais tarde) — As conquistas aparecem: a prateleira na tela de fim (CONQ-02, 1ª entrega)
 
 - **Parte / tarefa:** `CONQ-02`, 1ª de duas entregas. Suíte **1066 → 1087**.

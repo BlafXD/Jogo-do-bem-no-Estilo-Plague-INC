@@ -65,6 +65,13 @@ import { prependBrandMark } from './ui/icons';
 import { crossedLevel, updateNotices, type InertiaNotice } from './ui/inertia-notices';
 import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
 import { mergeAchievements } from './ui/achievements';
+import {
+  achievementsButtonView,
+  achievementsPanelView,
+  focusPanelClose,
+  mountAchievementsPanel,
+  renderAchievementsPanel,
+} from './ui/achievements-panel';
 import { mountOutcome, outcomeView, renderOutcome } from './ui/outcome';
 import { mountRegionPanel, regionPanelView, renderRegionPanel } from './ui/region-panel';
 import {
@@ -141,6 +148,7 @@ import { focusClose, mountTreePanel, renderTreePanel, treePanelView } from './ui
 // igual. Está no topo porque é o arquivo que manda nos outros, e quem abrir esta
 // lista deve ver isso antes de ver as folhas dos módulos (P5-02).
 import './ui/theme.css';
+import './ui/achievements-panel.css';
 import './ui/character-select.css';
 import './ui/characters.css';
 import './ui/contain.css';
@@ -220,6 +228,8 @@ const painelArvore = required<HTMLElement>('#painel-arvore');
 const detalheNo = required<HTMLElement>('#detalhe-no');
 // O cartão central do evento crítico (VIS-07).
 const criticoEl = required<HTMLElement>('#evento-critico');
+// O painel de conquistas do título (CONQ-02).
+const painelConquistas = required<HTMLElement>('#painel-conquistas');
 
 // Herdado do SETUP-02: a prova, no DevTools, de que o módulo executou.
 app.dataset.status = 'pronto';
@@ -321,6 +331,18 @@ let chosenSkill: SkillId = treeView(state)[0]?.nodes[0]?.id ?? '';
 
 /** Quem tinha o foco quando o painel abriu. É para lá que ele volta. */
 let treeOpener: HTMLElement | null = null;
+
+/**
+ * O painel de conquistas está aberto (CONQ-02), e quem tinha o foco.
+ *
+ * **Estado próprio, e não um campo do `TitleState`.** O `title.ts` guarda a
+ * pergunta dos dois cliques de "Nova partida", que é sobre uma decisão
+ * destrutiva; isto aqui é uma janela por cima da página inteira, como o painel
+ * da árvore. Juntar os dois faria o `titleView` decidir sobre um `inert` que
+ * ele não aplica.
+ */
+let achievementsOpen = false;
+let achievementsOpener: HTMLElement | null = null;
 
 /**
  * Os blocos que ficam atrás das duas janelas, e que elas desligam enquanto
@@ -526,7 +548,10 @@ function handleToggleSound(): void {
 
   renderControls(controls, control, sound.muted);
   // O botão de som também mora no título (VIS-08), e os dois dizem o mesmo.
-  renderTitle(telaTitulo, titleView(savedYear, title, sound.muted));
+  renderTitle(
+    telaTitulo,
+    titleView(savedYear, title, sound.muted, achievementsButtonView(unlockedAchievements).label),
+  );
 }
 
 /** Os cartões de evento e o aviso de auto-pausa. */
@@ -795,12 +820,39 @@ function renderGame(): void {
   if (finished) recordAchievements();
 
   renderScreens(layout, screen);
-  renderTitle(telaTitulo, titleView(savedYear, title, sound.muted));
+  renderTitle(
+    telaTitulo,
+    titleView(savedYear, title, sound.muted, achievementsButtonView(unlockedAchievements).label),
+  );
   // A escolha do especialista (REF-08). Redesenhada fora da tela dela também, e
   // de propósito: escrever atributo em cinco cartões escondidos custa nada, e a
   // alternativa — um `if` aqui — abriria a chance de a tela entrar no ar com a
   // marca da escolha anterior ainda acesa por um quadro.
   renderSelect(telaSelecao, selectView(chosenCharacter, pendingFair));
+
+  // O painel de conquistas (CONQ-02). A view já o esconde fora do título, mas
+  // o estado precisa acompanhar: deixá-lo `true` faria a janela ressuscitar
+  // sozinha quando o jogador voltasse ao título, sem ter pedido nada.
+  //
+  // **Baixa a bandeira na mão, sem chamar o `closeAchievements`.** Aquele
+  // chama o `renderGame` — daqui seria recursão — e devolve o foco para quem
+  // abriu, que numa troca de tela é justamente um botão que acabou de sair do
+  // ar. Quem manda no foco aqui é a tela nova.
+  if (achievementsOpen && screen !== 'title') {
+    achievementsOpen = false;
+    achievementsOpener = null;
+  }
+
+  const conquistas = achievementsPanelView(
+    unlockedAchievements,
+    achievementsOpen,
+    screen === 'title',
+  );
+  renderAchievementsPanel(painelConquistas, conquistas);
+  // A tela de título fica `inert` enquanto a janela está aberta, como o
+  // tabuleiro fica atrás do painel da árvore. As faixas da partida já estão
+  // `hidden` no título, e `hidden` basta para tirá-las da ordem de tabulação.
+  setInert([telaTitulo], conquistas.open);
 
   renderHud(hud, hudView(state), rulerMark(state.temperature));
   renderStripes(listras, stripesView(state));
@@ -946,6 +998,40 @@ function closeTree(): void {
 
   const back = canRefocus(treeOpener) ? treeOpener : atalhoArvore.querySelector('button');
   treeOpener = null;
+  back?.focus();
+}
+
+/**
+ * Abrir o painel de conquistas (CONQ-02) — pelo botão do título.
+ *
+ * Só abre no título, que é de onde o botão sai. A guarda não é zelo à toa: o
+ * `Esc` e o foco voltam para um botão que some quando a tela muda, e abrir o
+ * painel por cima da partida deixaria a janela sem como ser fechada pelo mouse
+ * naquilo que a abriu.
+ */
+function openAchievements(): void {
+  if (achievementsOpen || currentScreen(screens, isFinished(state)) !== 'title') return;
+
+  achievementsOpener =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  achievementsOpen = true;
+  renderGame();
+  // Nada aqui é clicável — a lista é texto —, então o foco pousa no fechar, que
+  // é a única ação da janela.
+  focusPanelClose(painelConquistas);
+}
+
+/** Fechar o painel — pelo botão, pelo fundo escurecido ou pelo `Esc`. */
+function closeAchievements(): void {
+  if (!achievementsOpen) return;
+
+  achievementsOpen = false;
+  renderGame();
+
+  const back = canRefocus(achievementsOpener)
+    ? achievementsOpener
+    : telaTitulo.querySelector<HTMLElement>('[data-title="achievements"]');
+  achievementsOpener = null;
   back?.focus();
 }
 
@@ -1149,7 +1235,9 @@ mountTitle(telaTitulo, {
     handleGoToSelect(true);
   },
   onToggleSound: handleToggleSound,
+  onAchievements: openAchievements,
 });
+mountAchievementsPanel(painelConquistas, closeAchievements);
 mountSelect(telaSelecao, {
   onChoose: handleChoose,
   onStart: handleStartChosen,
@@ -1253,6 +1341,21 @@ document.addEventListener('keydown', (event) => {
     if (treeOpen) {
       event.preventDefault();
       closeTree();
+      return;
+    }
+
+    // O painel de conquistas (CONQ-02) vem antes da confirmação de reinício
+    // pela mesma razão que o painel da árvore vem: ele cobre a página inteira,
+    // e a pergunta de "Apagar e recomeçar" fica por baixo dele, fora da vista e
+    // fora do alcance do teclado. Fechar o que está escondido e deixar a janela
+    // no ar seria o Esc não fazer nada visível.
+    //
+    // Os dois nunca estão abertos juntos, porque o botão que abre este some
+    // enquanto a pergunta está no ar (title.ts) — a ordem aqui é para o caso de
+    // isso deixar de ser verdade um dia, e não para um caso de hoje.
+    if (achievementsOpen) {
+      event.preventDefault();
+      closeAchievements();
       return;
     }
 

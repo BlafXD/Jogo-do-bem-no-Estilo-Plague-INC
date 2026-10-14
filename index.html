@@ -137,6 +137,15 @@
       <div id="evento-critico" class="critical" hidden></div>
     </div>
 
+    <!-- O painel de conquistas (CONQ-02), aberto pelo botão do título. Fica
+         FORA do #tela-partida porque quem o abre é o #tela-titulo, que também
+         está fora — o invólucro de cima existe para as três faixas da partida.
+
+         Vazio aqui, ao contrário do painel da árvore: lá dentro há três seções
+         que outros módulos montam, e aqui há uma lista só, montada inteira pelo
+         src/ui/achievements-panel.ts. -->
+    <div id="painel-conquistas" class="achievements-panel" hidden></div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

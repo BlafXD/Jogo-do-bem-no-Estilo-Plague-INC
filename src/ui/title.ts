@@ -66,6 +66,14 @@ export type TitleView = {
   readonly warning: string;
   /** O rótulo do botão de som: a ação, e não o estado ("Silenciar"). */
   readonly soundLabel: string;
+  /**
+   * O rótulo do botão de conquistas, com a contagem dentro (CONQ-02).
+   *
+   * Vem pronto de fora, do achievements-panel.ts: esta tela não lê o
+   * `localStorage` nem conhece a lista de conquistas, do mesmo jeito que ela
+   * não abre o save — recebe um texto e o escreve.
+   */
+  readonly achievementsLabel: string;
   readonly muted: boolean;
 };
 
@@ -76,7 +84,13 @@ export type TitleView = {
  * exatamente o que o `loadGame` do P6-07 devolve. Esta tela não abre o save nem
  * sabe o que tem dentro dele: um número e um nulo bastam.
  */
-export function titleView(savedYear: number | null, state: TitleState, muted = false): TitleView {
+export function titleView(
+  savedYear: number | null,
+  state: TitleState,
+  muted = false,
+  /** O rótulo do botão de conquistas. Vazio esconde o botão (CONQ-02). */
+  achievementsLabel = '',
+): TitleView {
   const canContinue = savedYear !== null;
 
   return {
@@ -92,6 +106,7 @@ export function titleView(savedYear: number | null, state: TitleState, muted = f
     // clique vai fazer.
     soundLabel: muted ? ui.sound.unmute : ui.sound.mute,
     muted,
+    achievementsLabel,
   };
 }
 
@@ -140,6 +155,8 @@ export type TitleHandlers = {
   readonly onFair: () => void;
   /** O botão de som (VIS-08): o mesmo mudo da barra da partida. */
   readonly onToggleSound: () => void;
+  /** Abre o painel de conquistas (CONQ-02). */
+  readonly onAchievements: () => void;
 };
 
 type Slot =
@@ -150,6 +167,7 @@ type Slot =
   | 'warning'
   | 'fair'
   | 'sound'
+  | 'achievements'
   | 'band-caption'
   | 'band-end';
 
@@ -235,12 +253,26 @@ export function mountTitle(root: Element, handlers: TitleHandlers): void {
   const fair = button('title__button', 'fair', ui.title.fair, ui.title.fairHint);
   fair.addEventListener('click', handlers.onFair);
 
+  // As conquistas (CONQ-02) ficam **depois** dos três caminhos de jogar e antes
+  // do som: elas não começam partida nenhuma, e pô-las antes do "Começar" faria
+  // a prateleira competir com o jogo em quem chega. O `aria-haspopup` avisa a
+  // quem usa leitor de tela que o clique abre uma janela, e não navega.
+  const achievements = button(
+    'title__button title__button--achievements',
+    'achievements',
+    '',
+    ui.achievements.buttonHint,
+  );
+  achievements.setAttribute('aria-haspopup', 'dialog');
+  achievements.addEventListener('click', handlers.onAchievements);
+  prependIcon(achievements, 'trophy', 'icon--button');
+
   // O som (VIS-08): quem silencia o computador do estande antes de alguém
   // começar não precisa entrar na partida para isso.
   const sound = button('title__button title__button--sound', 'sound', ui.sound.mute, ui.sound.hint);
   sound.addEventListener('click', handlers.onToggleSound);
 
-  actions.append(keep, fresh, fair, sound);
+  actions.append(keep, fresh, fair, achievements, sound);
 
   // A confirmação mora num bloco próprio que some inteiro: o rótulo do botão diz
   // o que vai acontecer ("Apagar e recomeçar"), e não "Sim" — quem clica rápido
@@ -363,6 +395,16 @@ export function renderTitle(root: ParentNode, view: TitleView): void {
   // ar: com a confirmação aberta, o único jeito de sair dela é responder.
   const fair = slot(root, 'fair');
   if (fair !== null) fair.hidden = view.armed;
+
+  // As conquistas somem pela mesma razão que o Modo Feira. E somem também
+  // quando o rótulo vem vazio: é o que acontece se alguém montar esta tela sem
+  // passar a contagem — melhor nenhum botão do que um botão escrito "Conquistas
+  // · " com o número faltando.
+  const achievements = slot(root, 'achievements');
+  if (achievements !== null) {
+    writeLabel(achievements, view.achievementsLabel);
+    achievements.hidden = view.armed || view.achievementsLabel === '';
+  }
 
   const box = slot(root, 'confirm-box');
   if (box !== null) box.hidden = !view.armed;
