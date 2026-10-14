@@ -353,6 +353,24 @@ export type Balance = {
   readonly silverTemperature: number;
   /** Teto de temperatura da medalha de bronze. */
   readonly bronzeTemperature: number;
+  /**
+   * Ano antes do qual a curva de emissões precisa virar para valer a conquista
+   * "Ponto de Virada" (docs/GDD.md §2.8).
+   *
+   * **Medido, não escolhido:** o ano em que a curva vira é exatamente o ano em
+   * que o jogador começa a comprar, e uma varredura de oito anos de partida
+   * está em docs/BALANCEAMENTO.md. 2040 é o meio da janela de perdão — separa
+   * quem agiu na primeira metade de quem acordou tarde, sem premiar os dois.
+   */
+  readonly turningPointYear: number;
+  /**
+   * Nível de Inércia abaixo do qual a partida terminou com o antagonista
+   * contido, para a conquista "A licença para lutar" (docs/GDD.md §2.8).
+   *
+   * Não é o mesmo eixo dos `inertiaNoticeLevels`, que são avisos de boletim:
+   * aqui a pergunta é sobre o estado em que a partida **parou**.
+   */
+  readonly calmInertia: number;
 };
 
 export const balance: Balance = balanceData;

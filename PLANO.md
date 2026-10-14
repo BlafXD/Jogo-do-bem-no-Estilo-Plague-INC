@@ -249,6 +249,25 @@ versão antiga e a nova seria medir duas vezes.
 
 ---
 
+## CONQ — Conquistas (puxado do Gelo em 2026-10-14)
+
+Escolhido no chat em 2026-10-14, com o backlog numerado drenado: o Gelo já era "a lista de onde o
+trabalho sai", e as conquistas foram o item escolhido por serem o que mais rende na feira — motivo
+para rejogar os ~5 minutos do Modo Feira e prova, para quem olha o estande, de que **há mais de um
+jeito de jogar bem**.
+
+**A regra que define o épico, aprovada no chat:** uma conquista só pode ser **derivada do
+`GameState` final**, como a medalha do `§2.7`. Nada é gravado no estado, o save não ganha campo e o
+`SAVE_VERSION` não sobe. O que atravessa partidas é só o conjunto de ids já conquistados, em chave
+própria no `localStorage`. A especificação está no `docs/GDD.md §2.8`.
+
+**Em duas fatias**, no modelo do `VIS-06`/`VIS-07`: o engine primeiro, sem nada na tela.
+
+- [x] `CONQ-01` Engine e dados: `achievements.json`, `achievements.ts`, as duas constantes e a varredura que prova que nenhuma é inalcançável — **M** — *2026-10-14. **São seis, e não as oito propostas:** a varredura reprovou o Ouro e o Zero líquido por inalcançáveis (a melhor partida medida para em 1,962 °C e 0,86 Gt/ano), "a casa toda" pelo mesmo motivo (o máximo são 7 nós de 8, e só com o desconto da Juliana) e "escudo erguido" por ser automática (toda partida que compra algo termina com 77,8 de resiliência média). O teste joga **cinco partidas de referência** e exige que cada conquista seja ganha por uma e recusada por outra — impossível reprova, automática também. **Um palpite meu caiu na medição:** conter cedo não domina conter tarde (nove milésimos de grau entre os extremos); quem sustenta o apoio é a profundidade no ramo Sociedade. Tudo em `docs/BALANCEAMENTO.md`. Suíte 1038 → 1066*
+- [ ] `CONQ-02` Tela e persistência: a prateleira no título, o destaque na tela de fim e a chave no `localStorage` — **M**
+
+---
+
 ## Gelo (só se sobrar tempo)
 
 ~~Não puxar nada daqui antes do **M3**.~~ **A trava caiu**: o `M3` (`P8-05`, build da feira) está
@@ -277,7 +296,7 @@ do que não cabe.
   O losango só cabe a partir de 1920 px, e as três saídas medidas trocam o losango por mais
   rolagem, que era o defeito que se queria curar. A tabela das medidas e as três opções estão no
   cabeçalho do `src/ui/tree.css`; **a escolha é de desenho, e é do autor**
-- Conquistas / troféus
+- ~~Conquistas / troféus~~ — **saiu do Gelo** em 2026-10-14 e virou o épico `CONQ`, acima. A `CONQ-01` (engine, dados e a varredura que reprovou 4 das 8 propostas) está `[x]`; falta a `CONQ-02`, que é a tela
 - Cenários históricos ("e se tivéssemos começado em 1990?")
 - Ranking local de melhores partidas
 - Tradução para inglês

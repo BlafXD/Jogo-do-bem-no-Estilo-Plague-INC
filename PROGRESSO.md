@@ -28,6 +28,67 @@ Regras curtas:
 
 ---
 
+## 2026-10-14 — Conquistas: a medição reprovou quatro das oito (CONQ-01)
+
+- **Parte / tarefa:** `CONQ-01` ✔. Abre o épico `CONQ`, puxado do Gelo. Suíte **1038 → 1066**.
+- **Do chat, antes de começar:** com o backlog numerado drenado — o que sobra é do autor ou espera
+  o grupo —, o Gelo virou a lista de onde o trabalho sai, e as conquistas foram o item escolhido.
+  Aprovado no chat: a regra de derivar tudo do estado final, as duas fatias, e editar o
+  `docs/GDD.md` e o `PLANO.md`.
+- **A regra que define o épico inteiro:** uma conquista só pode perguntar **o que o `GameState`
+  final sabe responder**. Nada gravado, nenhum contador novo, save sem campo novo, `SAVE_VERSION`
+  parado. É a mesma decisão do `outcome.ts` e rende as mesmas três coisas — save adulterado não
+  entrega troféu, não existe "consegui e o jogo não percebeu", e recarregar não muda o resultado.
+  **O preço está assumido por escrito:** "contive a Inércia cinco vezes" não é possível, porque o
+  número de contenções não existe no `§3`.
+- **O que mudou:**
+  - `src/data/achievements.json` (novo) — as seis conquistas: id, nome e a condição em uma frase.
+    O texto pode citar `{turningPointYear}` e `{calmInertia}`, e o engine troca o token pelo número
+    do `balance.json` — é a mesma regra do `MEDAL_CEILING`: a frase que explica e a regra que
+    concede não podem sair de dois lugares diferentes.
+  - `src/engine/achievements.ts` (novo) — o `parseAchievements` (que recusa id repetido, campo
+    vazio e **token desconhecido**), o `CONDITIONS` com as seis perguntas ao estado, e o
+    `achievementsEarned`, que devolve nada enquanto a partida corre.
+  - `src/data/balance.json` e o tipo `Balance` — `turningPointYear` (2040) e `calmInertia` (40).
+    **São as únicas chaves do arquivo que não mexem no jogo**, e isso está escrito no `§4`.
+  - `docs/GDD.md` — `§2.8` nova, com a tabela das seis e a regra do que pode ser conquista; `§4`
+    com as duas chaves no bloco e o parágrafo que explica por que elas moram lá.
+  - `docs/BALANCEAMENTO.md`, `PLANO.md` — a varredura e o épico.
+- **O achado que decidiu a entrega: quatro das oito propostas no chat não podiam existir.** A régua
+  foi a cicatriz do `P6-05`/`P7-03` — uma escala de medalhas publicada sem ninguém a alcançar.
+  - **Ouro** e **Zero líquido**: inalcançáveis. A melhor partida que a varredura achou para em
+    **1,962 °C** e **0,86 Gt/ano** (e essa, em 0,86, é uma partida *dissolvida*).
+  - **"A casa toda"** (os 8 nós de um ramo): o máximo medido é **7 de 8**, e só com o desconto da
+    Juliana no ramo dela.
+  - **"Escudo erguido"**: automática. Toda partida que compra qualquer coisa termina com 77,8 de
+    resiliência média, contra 50 de quem não faz nada.
+  - As quatro saíram, e o motivo ficou escrito nos dois documentos. **O Ouro e o Zero líquido
+    voltam sozinhos** no dia em que o balanceamento os puser ao alcance: a lista é um arquivo de
+    dados e a condição é uma função.
+- **A reprovação virou teste, e é o que mais vale aqui.** O `tests/achievements.test.ts` joga
+  **cinco partidas de referência** até onde a partida de fato para — derrota ou 2100 — e exige que
+  cada conquista seja ganha por pelo menos uma e **não** ganha por pelo menos outra. Impossível
+  reprova; automática também. Não reaproveita o `simulate` da planilha de propósito: aquele segue
+  até 2100 mesmo depois da derrota, e uma partida dissolvida em 2092 não acumula troféu até 2100.
+- **Um palpite meu que a medição desmentiu.** Eu tinha anotado que conter cedo dominava conter
+  tarde. **Não domina:** com a mesma lista de desejos, conter acima de 40 e acima de 70 terminam a
+  1,991 °C e 1,982 °C, com as mesmas 12 contenções — o que limita é o bolso, não a política. O que
+  separa as partidas é a **profundidade no ramo Sociedade**: trocar 2 nós pelos 8 do ramo leva a
+  menor região de 1,31 para 7,11 de apoio. O comentário errado foi corrigido antes de entregar.
+- **Como verificar:** `npm run check` (limpo; 1066 testes). Para ver as seis e quem as ganha:
+  `npx vitest run tests/achievements.test.ts`.
+- **Pendente:**
+  - **Nada aparece na tela ainda.** A `CONQ-02` é a prateleira no título, o destaque na tela de fim
+    e a chave do `localStorage`.
+  - **Um achado de balanceamento que não é das conquistas, e que é do `P8-02`:** com contenção a
+    partir de 40, **começar a jogar só em 2060 ainda rende bronze**. A escala continua larga demais
+    na ponta de baixo — agora com uma tabela de oito anos medindo o tamanho disso.
+  - As duas constantes novas estão com **resultado "não testado"** no `BALANCEAMENTO.md`, como toda
+    linha de lá: saíram de varredura, não de partida jogada por gente.
+- **Evidência:** —
+
+---
+
 ## 2026-10-06 — A escolha do especialista: os personagens viram jogada (REF-08)
 
 - **Parte / tarefa:** `REF-08` ✔. Abre a Fase 6 da reforma `REF`.

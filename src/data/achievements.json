@@ -1,0 +1,32 @@
+[
+  {
+    "id": "turning-point",
+    "name": "Ponto de Virada",
+    "description": "Faça a curva de emissões do mundo virar antes de {turningPointYear}."
+  },
+  {
+    "id": "five-fronts",
+    "name": "Cinco frentes",
+    "description": "Compre ao menos um nó em cada um dos cinco ramos da árvore."
+  },
+  {
+    "id": "license-to-fight",
+    "name": "A licença para lutar",
+    "description": "Abra a contenção e termine com a Inércia abaixo de {calmInertia}."
+  },
+  {
+    "id": "nobody-left-behind",
+    "name": "Ninguém ficou para trás",
+    "description": "Termine com as oito regiões ainda apoiando a agência."
+  },
+  {
+    "id": "paris-ceiling",
+    "name": "O teto de Paris",
+    "description": "Termine a partida abaixo do teto que o Acordo de Paris fixou."
+  },
+  {
+    "id": "agency-standing",
+    "name": "A agência de pé",
+    "description": "Chegue ao fim da partida sem a agência ser dissolvida."
+  }
+]

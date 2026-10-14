@@ -212,6 +212,55 @@ Tela final: a medalha, os números finais, as listras e o gráfico da linha do t
 
 ---
 
+### 2.8 Conquistas
+
+Uma prateleira de troféus que atravessa partidas. **Não valem ponto, não mudam regra nenhuma e não
+aparecem durante o jogo** — são uma leitura da partida feita quando ela acaba, ao lado da medalha.
+Existem por dois motivos práticos: dar motivo para rejogar os ~5 minutos do Modo Feira, e mostrar
+ao visitante do estande que **há mais de um jeito de jogar bem** — o que a medalha sozinha, que é
+só temperatura, não consegue dizer.
+
+**São seis, e cada uma aponta para uma lição diferente do `§2.1`:**
+
+| Conquista | Como se ganha | O que ela ensina |
+|---|---|---|
+| **Ponto de Virada** | a curva de emissões do mundo virou antes de `turningPointYear` | agir cedo — é a mais fácil da lista, de propósito |
+| **Cinco frentes** | ao menos um nó em cada um dos 5 ramos | nenhuma frente sozinha resolve |
+| **A licença para lutar** | abriu a contenção e terminou com a Inércia abaixo de `calmInertia` | o ramo Sociedade é o contra-ataque do `§2.6` |
+| **Ninguém ficou para trás** | as 8 regiões ainda apoiavam a agência no fim | o apoio é regional, não um número só (`§2.3`) |
+| **O teto de Paris** | parou abaixo de `silverTemperature` — prata ou ouro | a meta política que o `§2.7` herdou |
+| **A agência de pé** | a partida acabou sem a agência ser dissolvida | sobreviver já é um resultado |
+
+#### A regra que define o que pode ser uma conquista
+
+**Uma conquista só pode perguntar o que o `GameState` final sabe responder.** Nada é gravado, nada
+é contado durante a partida, e o save não ganhou campo nenhum — é a mesma decisão do desfecho, logo
+acima, e rende as mesmas três coisas: o `SAVE_VERSION` não sobe, um save adulterado não entrega um
+troféu que a partida dele não sustenta, e não existe o bug de "consegui e o jogo não percebeu".
+
+O preço está assumido: **"contive a Inércia cinco vezes" não é uma conquista possível**, porque o
+número de contenções não existe no `§3`. Quando uma ideia não couber na regra, a resposta é mudar
+a ideia, não criar o contador.
+
+O que **atravessa** partidas é só o conjunto de ids já conquistados, guardado no `localStorage` em
+chave própria — como a preferência de som, e pela mesma razão: é do aparelho, não da partida, e
+precisa sobreviver ao Modo Feira, que não salva nada.
+
+#### Nenhuma é inalcançável, e isso é medido
+
+O `P6-05` e o `P7-03` já publicaram uma escala de medalhas que ninguém alcançava, e esta é a parte
+do jogo onde esse erro é mais barato de cometer: **um troféu impossível se parece com um troféu
+difícil.** Por isso o `tests/achievements.test.ts` joga cinco partidas de referência e exige que
+cada conquista seja ganha por pelo menos uma e **não** ganha por pelo menos outra — impossível
+reprova, automática também.
+
+Foi essa régua que cortou quatro das oito conquistas propostas. **O Ouro e o Zero líquido ficaram
+de fora por serem inalcançáveis hoje** (a melhor partida medida para em 1,962 °C e 0,86 Gt/ano), e
+entram no dia em que o balanceamento os puser ao alcance — a lista é um arquivo de dados e a
+condição é uma função. A varredura inteira está em `docs/BALANCEAMENTO.md`.
+
+---
+
 ## 3. Contratos de dados
 
 ```ts
@@ -319,7 +368,9 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "containRelief": 25,             // pontos de Inércia que a contenção derruba
   "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
   "criticalEventSupport": 2.5,     // impacto de apoio que torna o evento crítico
-  "loseTemperature": 3.0
+  "loseTemperature": 3.0,
+  "turningPointYear": 2040,        // até quando a curva pode virar (conquista do §2.8)
+  "calmInertia": 40                // abaixo disto a partida terminou com a Inércia contida
 }
 ```
 
@@ -372,6 +423,13 @@ quando o apoio médio zera. Crítico quer dizer *ameaça encerrar a partida*, n�
 grandes". Com 2,5, os eventos que param o jogo são a ressaca e o colapso de safra — nenhum dos dois
 alcançável abaixo de 2 °C, então **a primeira metade da partida nunca é interrompida.** A contagem
 que escolheu o valor está em `docs/BALANCEAMENTO.md`.
+
+**As duas conquistas com número (`turningPointYear` e `calmInertia`).** São as únicas chaves daqui
+que **não** mexem no jogo: nada no engine as lê durante a partida, e mudá-las não altera uma
+vírgula de uma simulação. Moram aqui mesmo assim porque a regra 8 vale para todo número ajustável,
+e porque os dois foram escolhidos por varredura como qualquer outro — o ano da virada é, na
+prática, o ano em que o jogador começa a gastar, e o `calmInertia` fica entre os 24,5 da melhor
+partida contida e os 100 de quem nunca conteve. As tabelas estão em `docs/BALANCEAMENTO.md`.
 
 Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor antigo → novo → por quê → o que mudou no playtest.**
 

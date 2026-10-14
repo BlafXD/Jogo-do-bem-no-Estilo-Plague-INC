@@ -556,6 +556,90 @@ Era o débito que a passagem do `REF-09` deixou escrito acima, e metade dele fec
 Inércia**. O que sobra — largar em 2065 e ainda levar prata — continua de pé e continua sendo do
 `P8-02`.
 
+### As conquistas do `CONQ-01`: seis que sobraram de oito (2026-10-14)
+
+Duas constantes novas, e **nenhuma constante antiga tocada**. O que importa aqui não são as duas
+linhas da tabela: é a varredura que as escolheu, e que **reprovou quatro das oito conquistas
+propostas no chat**. A régua foi a cicatriz do `P6-05`/`P7-03` — uma escala de medalhas publicada
+sem ninguém a alcançar. Um troféu impossível se parece com um troféu difícil, e a prateleira é
+onde esse erro é mais barato de cometer.
+
+| Data | Constante | De → Para | Por quê | Resultado |
+|---|---|---|---|---|
+| 2026-10-14 | `turningPointYear` | — → **2040** | Ano antes do qual a curva precisa virar para a conquista "Ponto de Virada". O ano da virada **é** o ano em que o jogador começa a gastar (varredura abaixo), então a constante é literalmente "até quando dá para enrolar". 2040 fica no meio da janela: separa quem agiu na primeira metade de quem acordou tarde | não testado |
+| 2026-10-14 | `calmInertia` | — → **40** | Nível abaixo do qual a partida terminou com a Inércia contida. O melhor valor medido numa partida jogada até o fim é **24,5**, e as partidas sem contenção terminam em **100** — 40 cabe folgado entre os dois | não testado |
+
+#### A varredura que reprovou quatro conquistas
+
+Cinco planos jogados até onde a partida de fato para (derrota ou 2100), na seed de referência:
+
+| | desfecho | °C final | emissões | Inércia | menor apoio | nós |
+|---|---|---|---|---|---|---|
+| não faz nada | dissolvida em 2089 (temperatura) | 3,365 | 83,0 | 29,1 | 0 | 0 |
+| só corta | dissolvida em 2092 (apoio) | 1,950 | 0,91 | 100 | 0 | 25 |
+| compra Sociedade, nunca contém | dissolvida em 2099 (apoio) | 1,971 | 0,86 | 100 | 0 | 28 |
+| acorda em 2060 e contém | bronze | 2,547 | 4,09 | 39,4 | 8,46 | 23 |
+| corta, aprofunda Sociedade e contém | **prata** | 1,985 | 1,85 | 36,0 | **7,11** | 24 |
+
+E a melhor partida que a varredura achou, com os cinco personagens e quatro limiares de contenção:
+**1,962 °C** (Ana Luiza, ramo Sociedade antes de cortar, contendo acima de 50).
+
+**As quatro reprovadas, e por quê:**
+
+| Conquista proposta | Veredicto |
+|---|---|
+| **Ouro** (< 1,5 °C) | **Inalcançável.** A melhor partida medida para em 1,962 °C. Seria o `P7-03` de novo, agora em forma de troféu |
+| **Zero líquido** (≤ 0,5 Gt/ano) | **Inalcançável.** A melhor emissão final medida é 0,86 Gt/ano — e ela acontece numa partida **dissolvida**. O `§2.7` já registra que a vitória está "no horizonte, e ninguém chegou lá ainda"; o que não cabe é anunciá-la como troféu |
+| **A casa toda** (os 8 nós de um ramo) | **Inalcançável.** O máximo medido é 7 de 8, e só com o desconto da Juliana no ramo dela. Ninguém arrecada os 6300 PAC da árvore |
+| **Escudo erguido** (resiliência média alta) | **Automática.** Toda partida que compra qualquer coisa termina com 77,8 de resiliência média, contra 50 de quem não faz nada. Não separa ninguém de ninguém |
+
+**O ouro e o zero líquido ficam fora por balanceamento, não por desenho.** No dia em que a árvore
+ou a arrecadação os puserem ao alcance, as duas conquistas entram sem mexer em mais nada — a lista
+é um arquivo de dados e a condição é uma função.
+
+#### O ano da virada é o ano em que o jogador acorda
+
+Oito partidas idênticas, mudando só o ano em que o jogador começa a gastar (contendo acima de 40):
+
+| Começa em | Curva vira em | Desfecho | °C final |
+|---|---|---|---|
+| 2025 | 2027 | prata | 1,985 |
+| 2030 | 2030 | bronze | 2,010 |
+| 2035 | 2035 | bronze | 2,073 |
+| 2040 | 2040 | bronze | 2,147 |
+| 2045 | 2045 | bronze | 2,232 |
+| 2050 | 2050 | bronze | 2,340 |
+| 2055 | 2055 | bronze | 2,450 |
+| 2060 | 2060 | bronze | 2,547 |
+
+A coluna do meio não é coincidência: a emissão sobe sozinha pela linha de base, então o primeiro
+mês de compra **é** o pico. É o que faz do `turningPointYear` uma pergunta sobre demora, e é por
+isso que a conquista dele é a mais fácil da lista, de propósito.
+
+**E há um achado de balanceamento aqui que não é das conquistas:** com contenção a partir de 40,
+**começar em 2060 ainda rende bronze**. A escala de medalhas continua larga demais na ponta de
+baixo, que é exatamente o débito que o `P8-02` deixou escrito. A diferença é que agora há uma
+tabela medindo o tamanho dele.
+
+#### Um palpite meu que a medição desmentiu
+
+Eu tinha anotado que **conter cedo dominava conter tarde**. Não domina. Com a mesma lista de
+desejos, variando só o limiar:
+
+| Contém acima de | °C final | Inércia final | contenções | menor apoio |
+|---|---|---|---|---|
+| 40 | 1,991 | 48,3 | 12 | 1,31 |
+| 50 | 1,988 | 53,0 | 12 | 0 |
+| 60 | 1,985 | 58,6 | 12 | 0 |
+| 70 | 1,982 | 62,6 | 12 | 0 |
+| nunca | 1,971 | 100 | 0 | **dissolvida em 2099** |
+
+O limiar quase não muda nada — nove milésimos de grau entre os extremos, e sempre as mesmas 12
+contenções, porque o que limita é o bolso, não a política. **O que separa as partidas é a
+profundidade no ramo Sociedade:** trocar os 2 nós da lista histórica pelos 8 do ramo inteiro leva a
+menor região de 1,31 para 7,11 de apoio. O `§2.6` chama o ramo de "licença para lutar" — a
+varredura mostra que ele é também o que sustenta o apoio enquanto a luta dura.
+
 ### O que observar no primeiro playtest
 
 O `baselineGrowthPerYear` é o número mais provável de mudar. Hoje o jogador que não faz
