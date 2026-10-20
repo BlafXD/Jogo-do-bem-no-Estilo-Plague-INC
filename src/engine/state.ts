@@ -371,6 +371,13 @@ export type Balance = {
    * aqui a pergunta é sobre o estado em que a partida **parou**.
    */
   readonly calmInertia: number;
+  /**
+   * Quantas partidas o ranking local guarda, por lista (docs/GDD.md §2.9).
+   *
+   * A mesma categoria do `turningPointYear` e do `calmInertia`: não mexe no
+   * jogo, mora aqui porque a regra 8 vale para todo número ajustável.
+   */
+  readonly rankingSize: number;
 };
 
 export const balance: Balance = balanceData;

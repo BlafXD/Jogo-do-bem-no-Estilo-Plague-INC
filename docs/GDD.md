@@ -261,6 +261,31 @@ condição é uma função. A varredura inteira está em `docs/BALANCEAMENTO.md`
 
 ---
 
+### 2.9 Ranking local
+
+Uma lista das partidas de cada aparelho — por computador, não por jogador, porque não há conta nem
+servidor (§12). Dá motivo para rejogar e, no estande, mostra contra o que a visita seguinte está
+competindo.
+
+**Cada partida que termina entra na lista — vitória, sobrevivência sem medalha ou derrota.** A
+ordem é: primeiro quem terminou (medalha ou não), depois quem foi derrotado; dentro de cada grupo,
+a temperatura final decide — mais baixa primeiro, a mesma régua da medalha do §2.7. Guarda as
+`rankingSize` melhores (§4); o resto cai da lista.
+
+**O Modo Feira tem a lista dele, separada da partida normal.** Uma partida de ~5 minutos não
+compete com uma de 20–30: são rodadas diferentes, e misturar as duas tornaria qualquer uma das
+listas sem sentido.
+
+**O que entra em cada linha:** o resultado (medalha, "sem medalha" ou derrota), a temperatura
+final, o ano em que a partida parou e o personagem jogado. **Nada de data e nada de nome** — a
+mesma decisão do §2.8, pelo mesmo motivo: é uma lista do aparelho, não de uma pessoa.
+
+**Guardado em chave própria no `localStorage`, fora do save** — como as conquistas e a preferência
+de som: precisa sobreviver ao "Jogar de novo", que apaga o save, e valer no Modo Feira, que não
+salva nada.
+
+---
+
 ## 3. Contratos de dados
 
 ```ts
@@ -370,7 +395,8 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "criticalEventSupport": 2.5,     // impacto de apoio que torna o evento crítico
   "loseTemperature": 3.0,
   "turningPointYear": 2040,        // até quando a curva pode virar (conquista do §2.8)
-  "calmInertia": 40                // abaixo disto a partida terminou com a Inércia contida
+  "calmInertia": 40,               // abaixo disto a partida terminou com a Inércia contida
+  "rankingSize": 10                // quantas partidas o ranking local guarda, por lista (§2.9)
 }
 ```
 
@@ -424,12 +450,14 @@ grandes". Com 2,5, os eventos que param o jogo são a ressaca e o colapso de saf
 alcançável abaixo de 2 °C, então **a primeira metade da partida nunca é interrompida.** A contagem
 que escolheu o valor está em `docs/BALANCEAMENTO.md`.
 
-**As duas conquistas com número (`turningPointYear` e `calmInertia`).** São as únicas chaves daqui
-que **não** mexem no jogo: nada no engine as lê durante a partida, e mudá-las não altera uma
-vírgula de uma simulação. Moram aqui mesmo assim porque a regra 8 vale para todo número ajustável,
-e porque os dois foram escolhidos por varredura como qualquer outro — o ano da virada é, na
-prática, o ano em que o jogador começa a gastar, e o `calmInertia` fica entre os 24,5 da melhor
-partida contida e os 100 de quem nunca conteve. As tabelas estão em `docs/BALANCEAMENTO.md`.
+**As três chaves que não mexem no jogo (`turningPointYear`, `calmInertia` e `rankingSize`).** São
+as únicas chaves daqui que nada no engine lê durante a partida — mudá-las não altera uma vírgula de
+uma simulação. Moram aqui mesmo assim porque a regra 8 vale para todo número ajustável. As duas
+primeiras foram escolhidas por varredura, como qualquer outra: o ano da virada é, na prática, o ano
+em que o jogador começa a gastar, e o `calmInertia` fica entre os 24,5 da melhor partida contida e
+os 100 de quem nunca conteve. As tabelas estão em `docs/BALANCEAMENTO.md`. **O `rankingSize` é
+diferente: é curadoria, não medição** — 10 é o tamanho de uma lista que cabe num painel sem rolagem
+pesada (§2.9), e nenhuma partida de referência decide esse número.
 
 Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor antigo → novo → por quê → o que mudou no playtest.**
 

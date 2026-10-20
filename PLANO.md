@@ -269,6 +269,33 @@ própria no `localStorage`. A especificação está no `docs/GDD.md §2.8`.
 
 ---
 
+## RANK — Ranking local de melhores partidas (puxado do Gelo em 2026-10-19)
+
+Pedido do chat em 2026-10-19. A regra, aprovada no chat antes de começar: cada partida que termina
+entra na lista — vitória, sobrevivência sem medalha ou derrota —, ordenada primeiro por quem
+terminou (depois por quem foi derrotado) e, dentro de cada grupo, pela temperatura final, mais
+baixa primeiro — a régua da medalha do `§2.7`. Guarda as 10 melhores (`rankingSize`, no
+`balance.json`). **O Modo Feira tem a lista dele, separada da partida normal** — decidido no chat:
+uma partida de ~5 min não compete com uma de 20–30. Nada de data, nada de nome — a mesma decisão
+das conquistas, pelo mesmo motivo. Especificação em `docs/GDD.md §2.9`.
+
+Duas entregas, no molde do `CONQ`: o engine primeiro, sem nada na tela.
+
+- [x] `RANK-01` Engine e dados: `src/engine/ranking.ts` (`RankingEntry`, `rankingEntryFor`,
+      `compareEntries`, `mergeRanking`) + `rankingSize` no `balance.json` — **M** — *2026-10-19.
+      `rankingEntryFor` é a mesma guarda do `achievementsEarned`: `null` enquanto a partida corre.
+      O `compareEntries` ordena por grupo (quem terminou antes de quem foi derrotado) e depois por
+      temperatura; o empate devolve `0` de propósito, porque é o `Array.prototype.sort` **estável**
+      que decide o resto — a entrada nova entra no fim da lista antes de ordenar, então para
+      desbancar a última posição é preciso ser estritamente melhor, não só igual. O `rankingSize`
+      entrou no `balance.json` como a terceira chave que "não mexe no jogo" (ao lado do
+      `turningPointYear` e do `calmInertia`), com a ressalva de que ela é curadoria e não medição —
+      não existe partida de referência que escolha "10". Suíte 1100 → 1112*
+- [ ] `RANK-02` Persistência (`storage.ts`, chave própria, duas listas) + painel do título
+      reaproveitando a casca das conquistas — **M**
+
+---
+
 ## Gelo (só se sobrar tempo)
 
 ~~Não puxar nada daqui antes do **M3**.~~ **A trava caiu**: o `M3` (`P8-05`, build da feira) está
@@ -299,7 +326,7 @@ do que não cabe.
   cabeçalho do `src/ui/tree.css`; **a escolha é de desenho, e é do autor**
 - ~~Conquistas / troféus~~ — **feito** em 2026-10-14, no épico `CONQ` acima: seis conquistas derivadas do estado final, a prateleira no cartão de fim e o painel do título
 - Cenários históricos ("e se tivéssemos começado em 1990?")
-- Ranking local de melhores partidas
+- ~~Ranking local de melhores partidas~~ — **em andamento** desde 2026-10-19, no épico `RANK` acima: o engine fechou na `RANK-01`, falta a tela
 - Tradução para inglês
 - Clima animado no mapa
 ### A única coisa travada por algo de fora

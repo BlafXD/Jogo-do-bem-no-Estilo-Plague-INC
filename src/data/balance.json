@@ -28,5 +28,6 @@
   "silverTemperature": 2,
   "bronzeTemperature": 2.55,
   "turningPointYear": 2040,
-  "calmInertia": 40
+  "calmInertia": 40,
+  "rankingSize": 10
 }

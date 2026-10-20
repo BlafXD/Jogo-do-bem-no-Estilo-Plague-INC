@@ -28,6 +28,44 @@ Regras curtas:
 
 ---
 
+## 2026-10-19 — Ranking local: a entrada e o comparador, sem nada na tela (RANK-01)
+
+- **Parte / tarefa:** `RANK-01` ✔. Abre o épico `RANK`, puxado do Gelo a pedido do chat. Suíte
+  **1100 → 1112**.
+- **Do chat, antes de começar:** três decisões, no molde das conquistas. (1) **Toda partida que
+  termina entra na lista — vitória, sobrevivência sem medalha ou derrota —, todas competindo
+  junto**, ordenadas primeiro por quem terminou e depois por quem foi derrotado, e dentro de cada
+  grupo pela temperatura final (a régua da medalha do §2.7). (2) Guarda as **10** melhores. (3) **O
+  Modo Feira tem a lista dele, separada da partida normal** — uma partida de ~5 min não compete com
+  uma de 20–30.
+- **O que mudou:**
+  - `src/engine/ranking.ts` (novo) — `RankingEntry` (desfecho, temperatura, ano, personagem — **sem
+    data e sem nome**, a mesma decisão das conquistas e pelo mesmo motivo), `rankingEntryFor`
+    (`null` enquanto a partida corre, a mesma guarda do `achievementsEarned`), `compareEntries` e
+    `mergeRanking`.
+  - `src/data/balance.json` e `src/engine/state.ts` — `rankingSize: 10`, a terceira chave que "não
+    mexe no jogo" (ao lado do `turningPointYear` e do `calmInertia`).
+  - `docs/GDD.md` — `§2.9` nova, com a regra; `§4` com a chave no bloco e a ressalva de que ela é
+    **curadoria**, não medição — ao contrário das outras duas, nenhuma partida de referência
+    escolheu "10".
+  - `tests/ranking.test.ts` (novo) — 12 testes.
+- **O empate é a parte que merece registro.** `compareEntries` devolve `0` de propósito quando duas
+  entradas têm o mesmo grupo e a mesma temperatura, e quem resolve o resto é o
+  `Array.prototype.sort`, **estável** desde o ES2019. O `mergeRanking` aproveita isso: a entrada
+  nova entra **no fim** da lista, antes de ordenar — então, num empate com a última posição de uma
+  lista cheia, ela fica depois de quem já estava lá e cai do corte. Para desbancar alguém é preciso
+  ser estritamente melhor, não só igual. Testado em `tests/ranking.test.ts`.
+- **Como verificar:** `npm run check` (limpo; 1112 testes). Para ver só o módulo:
+  `npx vitest run tests/ranking.test.ts`.
+- **Pendente:**
+  - **Nada aparece na tela ainda.** A persistência (`storage.ts`, chave própria, duas listas — uma
+    por modo) e o painel do título são a `RANK-02`.
+  - O `mergeRanking` só diz como a lista fica depois de uma partida entrar; quem vai chamá-lo no fim
+    de uma partida de verdade e decidir se escreve no `localStorage` é a `RANK-02`.
+- **Evidência:** —
+
+---
+
 ## 2026-10-14 (noite) — O painel de conquistas no título fecha o épico CONQ (CONQ-02, 2ª entrega)
 
 - **Parte / tarefa:** `CONQ-02`, 2ª de duas entregas. **Fecha o épico `CONQ`.** Suíte **1087 → 1100**.
