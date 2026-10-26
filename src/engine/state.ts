@@ -64,6 +64,14 @@ export const TARGETED_EFFECTS = ['emissionCut', 'resilience', 'support'] as cons
 /** Kinds de Effect que valem para a partida inteira e não levam alvo. */
 export const UNTARGETED_EFFECTS = ['pointsPerYear', 'inertiaCut'] as const;
 
+/**
+ * Kinds de Effect que apontam para um evento do `events.json` (pedido no chat
+ * em 2026-10-26). Categoria à parte de `TARGETED_EFFECTS`: o alvo não é uma
+ * região, é um `ClimateEvent.id`, e a validação por trás é outra — `parseEffect`
+ * confere contra o catálogo de eventos, não contra `REGION_IDS`.
+ */
+export const EVENT_TARGETED_EFFECTS = ['eventChanceCut'] as const;
+
 // ------------------------------------------------------------- personagem ---
 
 /**
@@ -183,7 +191,14 @@ export type Effect =
   | { readonly kind: 'pointsPerYear'; readonly value: number }
   | { readonly kind: 'resilience'; readonly target: RegionId | 'global'; readonly value: number }
   | { readonly kind: 'support'; readonly target: RegionId | 'global'; readonly value: number }
-  | { readonly kind: 'inertiaCut'; readonly value: number };
+  | { readonly kind: 'inertiaCut'; readonly value: number }
+  /**
+   * Corta a chance de um evento específico ser sorteado (pedido no chat em
+   * 2026-10-26, docs/GDD.md §2.4). `target` é o `id` de um `ClimateEvent`, e
+   * `value` é porcentagem — igual ao `emissionCut`, 30 quer dizer "30% a
+   * menos". É o único Effect que mira um evento em vez de uma região.
+   */
+  | { readonly kind: 'eventChanceCut'; readonly target: string; readonly value: number };
 
 export type Skill = {
   readonly id: SkillId;
@@ -470,11 +485,20 @@ export type RawSkill = {
   readonly effects: readonly RawEffect[];
 };
 
+/**
+ * Os ids de `events.json`, lidos direto do arquivo cru — não de `climateEvents`
+ * (que só existe depois, mais abaixo neste módulo, e `parseSkills` roda antes).
+ * É só para validar o `target` de um `eventChanceCut`; quem valida o resto do
+ * arquivo de eventos é o `parseEvents`.
+ */
+const knownEventIds = new Set(eventsData.map((event) => event.id));
+
 function parseEffect(raw: RawEffect, skillId: string): Effect {
   const untargeted = (UNTARGETED_EFFECTS as readonly string[]).includes(raw.kind);
   const targeted = (TARGETED_EFFECTS as readonly string[]).includes(raw.kind);
+  const eventTargeted = (EVENT_TARGETED_EFFECTS as readonly string[]).includes(raw.kind);
 
-  if (!untargeted && !targeted) {
+  if (!untargeted && !targeted && !eventTargeted) {
     throw new Error(`skills.json: "${skillId}" tem efeito de tipo desconhecido "${raw.kind}".`);
   }
   if (!Number.isFinite(raw.value) || raw.value <= 0) {
@@ -485,7 +509,28 @@ function parseEffect(raw: RawEffect, skillId: string): Effect {
     if (raw.target !== undefined) {
       throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" não leva target.`);
     }
-    return { kind: raw.kind as 'pointsPerYear' | 'inertiaCut', value: raw.value };
+    // Um `return` por `kind`, e não um `as` que junte os dois literais: um
+    // Effect de `kind` dupla (`'pointsPerYear' | 'inertiaCut'`) deixa de bater
+    // com a união discriminada assim que ela cresce — foi o que aconteceu com
+    // o galho regional abaixo quando o `eventChanceCut` entrou.
+    if (raw.kind === 'pointsPerYear') return { kind: 'pointsPerYear', value: raw.value };
+    return { kind: 'inertiaCut', value: raw.value };
+  }
+
+  if (eventTargeted) {
+    const target = raw.target;
+    if (target === undefined) {
+      throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" precisa de target.`);
+    }
+    if (!knownEventIds.has(target)) {
+      throw new Error(`skills.json: "${skillId}" aponta para o evento desconhecido "${target}".`);
+    }
+    // Corte é porcentagem: acima de 100 não faz sentido (a chance não vai a
+    // menos de zero), e é o mesmo cuidado do `impact` negativo em events.json.
+    if (raw.value > 100) {
+      throw new Error(`skills.json: "${skillId}" tem ${raw.kind} de ${raw.value}%, acima de 100.`);
+    }
+    return { kind: 'eventChanceCut', target, value: raw.value };
   }
 
   const target = raw.target;
@@ -495,12 +540,14 @@ function parseEffect(raw: RawEffect, skillId: string): Effect {
   if (target !== 'global' && !(REGION_IDS as readonly string[]).includes(target)) {
     throw new Error(`skills.json: "${skillId}" aponta para o alvo desconhecido "${target}".`);
   }
+  const regionTarget = target as RegionId | 'global';
 
-  return {
-    kind: raw.kind as 'emissionCut' | 'resilience' | 'support',
-    target: target as RegionId | 'global',
-    value: raw.value,
-  };
+  // Mesma razão do galho `untargeted`: um `return` por literal.
+  if (raw.kind === 'emissionCut')
+    return { kind: 'emissionCut', target: regionTarget, value: raw.value };
+  if (raw.kind === 'resilience')
+    return { kind: 'resilience', target: regionTarget, value: raw.value };
+  return { kind: 'support', target: regionTarget, value: raw.value };
 }
 
 /**

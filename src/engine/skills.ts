@@ -235,6 +235,24 @@ export function purchasedCutPercent(state: GameState): number {
 }
 
 /**
+ * Quanto a chance de um evento específico cai por causa da árvore, como fração
+ * de 0 a 1 (pedido no chat em 2026-10-26, docs/GDD.md §2.4).
+ *
+ * Mesmo molde do `emissionCutFor`: o `value` do Effect já é porcentagem, e o
+ * teto de 1 é a mesma rede de segurança para o dia em que mais de um nó mirar
+ * o mesmo evento. Sem reforço de personagem — nenhum `CharacterBuff` fala deste
+ * efeito, e os quatro nós que o usam hoje (REF-07/REF-09, um por ramo) não têm
+ * ramo em comum com um personagem específico o bastante para justificar um.
+ */
+export function eventChanceCutFor(state: GameState, eventId: string): number {
+  let percent = 0;
+  for (const effect of unlockedEffects(state)) {
+    if (effect.kind === 'eventChanceCut' && effect.target === eventId) percent += effect.value;
+  }
+  return Math.min(1, percent / 100);
+}
+
+/**
  * PAC por ano: a entrada de base do balance.json, o que a árvore acrescenta e o
  * bônus do personagem (REF-05) — o "financiamento" da Juliana. No baseline o
  * bônus é 0.

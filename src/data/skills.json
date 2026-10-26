@@ -51,7 +51,7 @@
     "id": "smart-grid",
     "branch": "energy",
     "name": "Rede elétrica inteligente",
-    "description": "Corta 0,6% ao ano das emissões globais.",
+    "description": "Corta 0,6% ao ano das emissões globais e reduz em 30% a chance de apagão no pico do calor.",
     "fact": "Até 2040 o mundo precisa somar ou trocar 80 milhões de quilômetros de linhas — o tamanho da rede elétrica que existe hoje.",
     "cost": 140,
     "requires": ["wind", "storage"],
@@ -60,6 +60,11 @@
         "kind": "emissionCut",
         "target": "global",
         "value": 0.6
+      },
+      {
+        "kind": "eventChanceCut",
+        "target": "cooling-blackout",
+        "value": 30
       }
     ]
   },
@@ -189,7 +194,7 @@
     "id": "efficient-buildings",
     "branch": "transport",
     "name": "Prédios eficientes",
-    "description": "Corta 0,35% ao ano das emissões globais.",
+    "description": "Corta 0,35% ao ano das emissões globais e reduz em 30% a chance de onda de calor.",
     "fact": "Só a operação dos prédios responde por 26% das emissões mundiais de CO₂ ligadas à energia.",
     "cost": 140,
     "requires": ["ev-fleet", "active-travel"],
@@ -198,6 +203,11 @@
         "kind": "emissionCut",
         "target": "global",
         "value": 0.35
+      },
+      {
+        "kind": "eventChanceCut",
+        "target": "heatwave",
+        "value": 30
       }
     ]
   },
@@ -357,7 +367,7 @@
     "id": "ocean-protection",
     "branch": "nature",
     "name": "Proteção oceânica",
-    "description": "Corta 0,25% ao ano das emissões globais e ganha 8 pontos de resiliência.",
+    "description": "Corta 0,25% ao ano das emissões globais, ganha 8 pontos de resiliência e reduz em 30% a chance de branqueamento de corais.",
     "fact": "O oceano absorveu 29% de todo o CO₂ emitido por atividade humana na última década.",
     "cost": 140,
     "requires": ["mangroves", "regen-agriculture"],
@@ -371,6 +381,11 @@
         "kind": "resilience",
         "target": "global",
         "value": 8
+      },
+      {
+        "kind": "eventChanceCut",
+        "target": "coral-bleaching",
+        "value": 30
       }
     ]
   },
@@ -640,7 +655,7 @@
     "id": "coastal-defence",
     "branch": "society",
     "name": "Defesa costeira",
-    "description": "Ganha 15 pontos de resiliência e 5 de apoio.",
+    "description": "Ganha 15 pontos de resiliência, 5 de apoio e reduz em 30% a chance de ressaca e maré de tempestade.",
     "fact": "Entre 750 milhões e 1,1 bilhão de pessoas vivem a menos de 10 metros acima do nível do mar.",
     "cost": 140,
     "requires": ["treaties", "early-warning"],
@@ -654,6 +669,11 @@
         "kind": "support",
         "target": "global",
         "value": 5
+      },
+      {
+        "kind": "eventChanceCut",
+        "target": "storm-surge",
+        "value": 30
       }
     ]
   },

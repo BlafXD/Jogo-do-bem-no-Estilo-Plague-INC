@@ -147,6 +147,7 @@ describe('a vista', () => {
       ...Object.values(ui.tutorial.steps),
       ui.tutorial.fair.title,
       ...ui.tutorial.fair.lines,
+      ...Object.values(ui.tutorial.fair.indicators),
     ].join(' ');
 
     for (const palavra of proibidas) {

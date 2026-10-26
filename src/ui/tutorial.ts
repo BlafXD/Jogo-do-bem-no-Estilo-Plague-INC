@@ -30,6 +30,7 @@ import {
   type Appearance,
   type CastMoment,
 } from './characters';
+import { prependIcon } from './icons';
 
 // ------------------------------------------------------------------ núcleo ---
 
@@ -296,6 +297,13 @@ export function mountTutorialPanel(onStart: () => void): HTMLElement {
     return p;
   });
 
+  // O resumo dos indicadores (pedido no chat em 2026-10-26): uma lista à
+  // parte das duas frases, porque o `tests/tutorial.test.ts` trava o tamanho
+  // de `fair.lines` em 2 — misturar os dois ali quebraria essa trava à toa.
+  const indicators = document.createElement('ul');
+  indicators.className = 'tutorial-panel__indicators';
+  indicators.append(...FAIR_INDICATOR_FIELDS.map(fairIndicatorItem));
+
   const start = button(
     'tutorial__button tutorial__button--primary',
     'start',
@@ -308,8 +316,43 @@ export function mountTutorialPanel(onStart: () => void): HTMLElement {
   actions.className = 'tutorial__actions';
   actions.append(start);
 
-  panel.append(title, ...lines, actions);
+  panel.append(title, ...lines, indicators, actions);
   return panel;
+}
+
+/**
+ * Os indicadores do HUD que o painel da feira resume (pedido no chat em
+ * 2026-10-26). Não inclui `year`: as duas frases do `fair.lines` já cobrem o
+ * tempo correndo até 2100, e repetir seria a terceira frase que o P7-08 pediu
+ * para não escrever.
+ */
+const FAIR_INDICATOR_FIELDS = [
+  'temperature',
+  'emissions',
+  'actionPoints',
+  'support',
+  'inertia',
+] as const;
+
+/**
+ * Uma linha do resumo: o ícone do HUD (mesmo nome, mesmo contrato do VIS-09),
+ * o rótulo do indicador e a frase curta do i18n — não o `hint` completo do
+ * HUD, que é para ler parado em frente à tela, não de pé num estande.
+ */
+function fairIndicatorItem(field: (typeof FAIR_INDICATOR_FIELDS)[number]): HTMLLIElement {
+  const item = document.createElement('li');
+  item.className = 'tutorial-panel__indicator';
+  prependIcon(item, field, 'tutorial-panel__indicator-icon');
+
+  const label = document.createElement('strong');
+  label.className = 'tutorial-panel__indicator-label';
+  label.textContent = ui.hud[field].label;
+
+  const hint = document.createElement('span');
+  hint.textContent = ui.tutorial.fair.indicators[field];
+
+  item.append(label, ' ', hint);
+  return item;
 }
 
 /** Põe o painel no lugar, ou tira-o da página — mesma regra do balão. */

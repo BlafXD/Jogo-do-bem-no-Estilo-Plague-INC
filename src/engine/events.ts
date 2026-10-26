@@ -26,6 +26,7 @@ import {
   type RegionId,
 } from './state';
 import { nextRandom, type RngState } from './rng';
+import { eventChanceCutFor } from './skills';
 
 /**
  * Quantos ticks o cartão de um evento fica em cena.
@@ -108,19 +109,32 @@ function targetsOf(event: ClimateEvent): readonly RegionId[] {
  *
  * Exportada porque o teste precisa cobrar a fórmula do §2.5 diretamente, e
  * porque o cartão do P7-02 vai querer explicar por que aquele evento apareceu.
+ *
+ * `cut` é o `eventChanceCutFor` da árvore (0 a 1, pedido no chat em
+ * 2026-10-26) — opcional e com padrão 0 para não quebrar quem já chama esta
+ * função com dois argumentos. Ele reduz o peso **depois** da fórmula do §2.5:
+ * o mundo continua piorando com a temperatura, só que a partir de uma base
+ * menor para quem já comprou o nó que mira este evento.
  */
-export function weightFor(event: ClimateEvent, temperature: number): number {
+export function weightFor(event: ClimateEvent, temperature: number, cut = 0): number {
   if (temperature < event.tempThreshold) return 0;
   const above = temperature - event.tempThreshold;
-  return event.baseWeight * (1 + balance.eventWeightPerDegree * above);
+  const base = event.baseWeight * (1 + balance.eventWeightPerDegree * above);
+  return base * (1 - Math.min(1, Math.max(0, cut)));
 }
 
-/** Os eventos que a temperatura atual já destravou, com o peso de cada um. */
+/**
+ * Os eventos que a temperatura atual já destravou, com o peso de cada um.
+ *
+ * `cutFor` devolve o corte de chance (0 a 1) de um evento pelo `id` dele; o
+ * padrão "sem corte nenhum" mantém quem chama sem o segundo argumento válido.
+ */
 export function eligibleEvents(
   temperature: number,
+  cutFor: (eventId: string) => number = () => 0,
 ): readonly { readonly event: ClimateEvent; readonly weight: number }[] {
   return climateEvents
-    .map((event) => ({ event, weight: weightFor(event, temperature) }))
+    .map((event) => ({ event, weight: weightFor(event, temperature, cutFor(event.id)) }))
     .filter((entry) => entry.weight > 0);
 }
 
@@ -170,8 +184,9 @@ export type EventDraw = {
 export function drawEvent(
   temperature: number,
   rngState: RngState,
+  cutFor: (eventId: string) => number = () => 0,
 ): { readonly draw: EventDraw | null; readonly rngState: RngState } {
-  const eligible = eligibleEvents(temperature);
+  const eligible = eligibleEvents(temperature, cutFor);
   if (eligible.length === 0) return { draw: null, rngState };
 
   const perYear = eligible.reduce((sum, entry) => sum + entry.weight, 0);
@@ -271,7 +286,9 @@ function ageCards(state: GameState): GameState['activeEvents'] {
  */
 export function advanceEvents(state: GameState): GameState {
   const aged: GameState = { ...state, activeEvents: ageCards(state) };
-  const { draw, rngState } = drawEvent(aged.temperature, aged.rngState);
+  const { draw, rngState } = drawEvent(aged.temperature, aged.rngState, (eventId) =>
+    eventChanceCutFor(aged, eventId),
+  );
   const rolled: GameState = { ...aged, rngState };
 
   return draw === null ? rolled : applyEvent(rolled, draw);

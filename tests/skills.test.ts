@@ -3,6 +3,7 @@ import {
   canUnlock,
   costFor,
   emissionCutFor,
+  eventChanceCutFor,
   isUnlocked,
   pointsPerYear,
   skillById,
@@ -145,6 +146,40 @@ describe('parseSkills recusa arquivo malformado', () => {
   it('alvo que não é região nem global', () => {
     const bad = { ...validSkill('a'), effects: [{ kind: 'support', value: 1, target: 'marte' }] };
     expect(() => parseSkills([bad])).toThrow(/alvo desconhecido/);
+  });
+
+  // O 6º Effect, pedido no chat em 2026-10-26 (docs/GDD.md §2.4): corta a
+  // chance de um evento específico. Mesmo molde de validação do `target`
+  // regional, só que contra o catálogo de eventos em vez do REGION_IDS.
+  it('eventChanceCut sem target', () => {
+    const noTarget = { ...validSkill('a'), effects: [{ kind: 'eventChanceCut', value: 10 }] };
+    expect(() => parseSkills([noTarget])).toThrow(/precisa de target/);
+  });
+
+  it('eventChanceCut com evento desconhecido', () => {
+    const bad = {
+      ...validSkill('a'),
+      effects: [{ kind: 'eventChanceCut', value: 10, target: 'evento-que-nao-existe' }],
+    };
+    expect(() => parseSkills([bad])).toThrow(/evento desconhecido/);
+  });
+
+  it('eventChanceCut acima de 100%', () => {
+    const tooMuch = {
+      ...validSkill('a'),
+      effects: [{ kind: 'eventChanceCut', value: 150, target: 'heatwave' }],
+    };
+    expect(() => parseSkills([tooMuch])).toThrow(/acima de 100/);
+  });
+
+  it('eventChanceCut de verdade, contra um evento do catálogo', () => {
+    const good = {
+      ...validSkill('a'),
+      effects: [{ kind: 'eventChanceCut', value: 30, target: 'heatwave' }],
+    };
+    expect(parseSkills([good])[0]?.effects).toEqual([
+      { kind: 'eventChanceCut', target: 'heatwave', value: 30 },
+    ]);
   });
 
   it('custo zero, e nó sem efeito nenhum', () => {
@@ -393,6 +428,53 @@ describe('os efeitos contínuos', () => {
 
     expect(emissionCutFor(comLixo, 'na')).toBeCloseTo(0.005, 10);
     expect(pointsPerYear(comLixo)).toBe(balance.basePointsPerYear);
+  });
+});
+
+/**
+ * O corte de chance de evento (pedido no chat em 2026-10-26, docs/GDD.md
+ * §2.4): quatro nós de fecho do 1º losango, um por ramo — menos Indústria, que
+ * ficou de fora por não ter par honesto com nenhum dos 20 eventos. Cada um
+ * mira só o evento dele; nenhum alcança o dos outros três.
+ */
+describe('eventChanceCutFor', () => {
+  it('sem habilidade nenhuma, a chance não cai', () => {
+    expect(eventChanceCutFor(gameWith(0), 'cooling-blackout')).toBe(0);
+  });
+
+  it('a rede elétrica inteligente corta 30% da chance de apagão, e só dele', () => {
+    const depois = eventChanceCutFor(
+      gameWith(0, ['solar', 'wind', 'storage', 'smart-grid']),
+      'cooling-blackout',
+    );
+    expect(depois).toBeCloseTo(0.3, 10);
+
+    expect(
+      eventChanceCutFor(gameWith(0, ['solar', 'wind', 'storage', 'smart-grid']), 'heatwave'),
+    ).toBe(0);
+  });
+
+  it('cada um dos quatro nós mira só o evento dele', () => {
+    const pares: readonly [string, string][] = [
+      ['smart-grid', 'cooling-blackout'],
+      ['efficient-buildings', 'heatwave'],
+      ['ocean-protection', 'coral-bleaching'],
+      ['coastal-defence', 'storm-surge'],
+    ];
+
+    for (const [id, eventId] of pares) {
+      expect(eventChanceCutFor(gameWith(0, [id]), eventId), id).toBeCloseTo(0.3, 10);
+    }
+  });
+
+  it('a Indústria não ganhou efeito: nenhum nó dela corta chance de evento', () => {
+    const industria = skills.filter((skill) => skill.branch === 'industry');
+    for (const skill of industria) {
+      expect(
+        skill.effects.some((effect) => effect.kind === 'eventChanceCut'),
+        skill.id,
+      ).toBe(false);
+    }
   });
 });
 

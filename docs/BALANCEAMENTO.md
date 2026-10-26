@@ -657,3 +657,38 @@ Trocar essa constante muda a curva inteira da partida. O `tests/climate.test.ts`
 valores de referência (4410,6 GtCO₂ e 3,3548 °C em 2100), então qualquer mudança aqui vai
 fazer aquele teste falhar de propósito — **é sinal para atualizar o teste junto, não para
 apagá-lo.**
+
+### O corte de chance de evento: quatro nós, trinta por cento, um alvo cada (2026-10-26)
+
+Pedido do chat: a árvore ganhar "algo especial", não só mais um número escalando. Decidido no chat
+que o jogador delegou a escolha: **reduz a chance** (não o impacto) de um evento, nos **4 nós de
+fecho do 1º losango** que têm par honesto com algum dos 20 eventos — um por ramo, menos Indústria.
+
+**O valor é 30% por decisão de desenho, não de medição.** É o mesmo tipo de escolha que o
+`inertiaCut`/`pointsPerYear` de cada nó já era: forte o bastante para notar numa partida (o
+`tests/events.test.ts` mede a diferença de verdade, sorteando milhares de vezes a mesma sequência
+com e sem o corte), sem zerar o evento — ele continua podendo acontecer, e **nenhum outro número do
+balanceamento muda**: o custo dos 4 nós continua 140 PAC, o corte de emissão e o ganho de
+resiliência/apoio deles não mexeram, e os totais que o `tests/skills.test.ts` trava (6300 PAC,
+12,25% ao ano, 1260 PAC por ramo) continuam os mesmos — a soma só filtra `kind === 'emissionCut'`,
+e o `eventChanceCut` é um `kind` à parte.
+
+| Nó (ramo) | Evento cortado | Por quê |
+|---|---|---|
+| Rede elétrica inteligente (Energia) | Apagão no pico do calor | rede que gerencia demanda evita apagão — ligação direta |
+| Prédios eficientes (Transporte e Cidades) | Onda de calor | prédio isolado/eficiente reduz o quanto a onda vira crise urbana |
+| Proteção oceânica (Natureza) | Branqueamento de corais | área marinha protegida é a defesa direta contra o branqueamento |
+| Defesa costeira (Sociedade) | Ressaca e maré de tempestade | o mesmo evento que o `§2.6` já liga a este ramo |
+
+**Por que Indústria ficou de fora.** O nó da mesma posição — Cimento de baixo carbono — não tem par
+honesto com nenhum dos 20 eventos. As alternativas cogitadas (tempestade de areia, por "menos
+mineração"; seca, por "menos extração") são o tipo de vínculo fraco que o precedente do
+`docs/CIENCIA.md` sobre alvo regional já recusa — ali a régua é "afirmação sobre o mundo tem fonte
+ou não entra", e aqui a afirmação seria sobre mecânica, não geografia, mas o padrão é o mesmo. Em vez
+de forçar um elo ruim, o ramo ficou sem o efeito extra nesta rodada. Fica registrado para o dia em
+que um evento novo render um par honesto com Indústria.
+
+Nenhum personagem reforça este efeito — ao contrário do `emissionCut` (REF-05), que a Ana e o
+Ricardo reforçam em 15% no ramo deles. Os quatro nós não têm ramo em comum com um personagem
+específico o bastante para justificar um buff novo, e criar um sem motivo seria inventar
+balanceamento para o `character-buffs.json` não pedir.

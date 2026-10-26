@@ -28,6 +28,83 @@ Regras curtas:
 
 ---
 
+## 2026-10-26 — Pop-ups, resumo da feira e mais vida na árvore (épico FEEDBACK, completo)
+
+- **Parte / tarefa:** `FEEDBACK-01` a `FEEDBACK-06` ✔. Épico aberto e fechado na mesma sessão, pedido
+  no chat. Suíte **1112 → 1138**.
+- **Do chat, antes de começar:** o pedido era "o jogo muito seco", um pop-up parecido com o do
+  Plague Inc "para dar mais pontos", tutorial explicando cada indicador no Modo Feira, e mais
+  efeitos na árvore. Três rodadas de pergunta fecharam o escopo (pop-up: efeito ao comprar **e** PAC
+  flutuando; feira: resumo dos indicadores no painel; árvore: destaque de hover — **que já
+  existia** —, reação mais forte na compra **e** efeito de mecânica de verdade, não só mais um
+  número escalando). A última decisão — **qual evento cada nó corta, e por quanto** — foi delegada
+  ao agente: *"vou deixar com você, escolhe aí... só faça!"*
+- **O que mudou:**
+  - `src/data/i18n.ts` — `tutorial.fair.indicators` (5 frases curtas, uma por indicador do HUD menos
+    o ano) e a seção `toast` (rótulo do pop-up + a função que junta nome e efeito do nó).
+  - `src/ui/tutorial.ts`/`.css` — o painel do Modo Feira ganhou a lista de indicadores, com ícone,
+    rótulo e a frase nova. **Lista à parte de `fair.lines`**, de propósito: aquela tem o tamanho
+    travado em 2 pelo `tests/tutorial.test.ts`, e misturar os dois ali quebraria a trava à toa.
+  - `src/ui/toast.ts` e `.css` (novos) — o pop-up "estilo Plague Inc": ao comprar um nó, um aviso
+    sobe no canto com o nome e o efeito dele (a mesma `description` do detalhe, nada inventado) e
+    some sozinho em ~4,2 s. Chamado do `handleUnlock`, no `main.ts`.
+  - `src/ui/fly.ts`/`.css` — `floatGain`, o espelho do `flyCost` (REF-02) para o ganho: um "+X PAC"
+    sobe perto do indicador a cada mês em que o saldo de fato cresceu. Ligado no laço de quadro do
+    `main.ts`, comparando o PAC antes e depois do `advanceRealTime`.
+  - `src/ui/tree.ts`/`.css` — duas vidas novas. **A ligação do losango "acende"** quando o nó do
+    outro lado acabou de pulsar (comprado ou recém-comprável): o `drawTreeLinks` ganhou um terceiro
+    argumento com os ids que reagiram neste render, e marca `data-charge` para um lampejo de uma vez
+    só. **O ramo inteiro comemora** quando o 8º nó dele é comprado — `celebrateIfComplete`, guardado
+    em `section.dataset.complete` para não repetir depois.
+  - `src/engine/state.ts` — 6º `kind` de `Effect`: `eventChanceCut` (`target` é um id de
+    `ClimateEvent`, `value` é porcentagem). Validado contra o catálogo de eventos na carga, como o
+    `target` regional já era validado contra `REGION_IDS`.
+  - `src/engine/skills.ts` — `eventChanceCutFor`, no molde do `emissionCutFor`.
+  - `src/engine/events.ts` — `weightFor`/`eligibleEvents`/`drawEvent` ganharam um `cut`/`cutFor`
+    opcional (padrão zero, ninguém que já chamava com dois argumentos quebrou), e o
+    `advanceEvents` passa o `eventChanceCutFor` do estado de verdade.
+  - `src/data/skills.json` — quatro nós ganharam o efeito, com a `description` reescrita para
+    contar a mudança: **Rede elétrica inteligente** corta a chance de apagão no pico do calor,
+    **Prédios eficientes** a de onda de calor, **Proteção oceânica** a de branqueamento de corais,
+    **Defesa costeira** a de ressaca e maré de tempestade — 30% cada.
+  - `docs/GDD.md` — `§2.4` com a tabela dos quatro nós e o porquê da Indústria ficar de fora; `§3`
+    com o `Effect` novo.
+  - `docs/BALANCEAMENTO.md` — a decisão registrada: por que 30%, por que esses quatro eventos, e por
+    que a Indústria não ganhou par.
+  - `docs/planilha/*` — regenerados sozinhos pelo `npm test` (`tests/planilha.test.ts` reescreve a
+    cada rodada, por desenho). O `eventChanceCut` muda o sorteio de evento nas partidas de
+    referência, e é isso que move os números — nenhuma propriedade medida quebrou.
+- **Um erro meu, achado antes de escrever código.** Ao propor as opções no chat, descrevi "hover e
+  foco na árvore" como algo que faltava. **Já existia desde o VIS-05** (`.tree__node:hover` e
+  `:focus-visible`, em `tree.css`). A correção está registrada aqui e no `PLANO.md`, e a tarefa foi
+  riscada do escopo sem virar trabalho.
+- **Por que a Indústria ficou sem o efeito.** O nó de mesma posição no ramo, Cimento de baixo
+  carbono, não tem um evento com que fazer um vínculo honesto. As alternativas cogitadas (tempestade
+  de areia por "menos mineração"; seca por "menos extração") são o mesmo tipo de afirmação fraca
+  sobre o mundo que o precedente regional do `docs/CIENCIA.md` já recusa — só que sobre mecânica, e
+  não sobre geografia. A opção escolhida no chat: sem efeito, em vez de um vínculo ruim.
+- **Como verificar:**
+  ```bash
+  npm run check     # limpo; 1138 testes
+  npm run dev       # Modo Feira: o painel mostra os 5 indicadores; comprar um nó mostra o pop-up
+                     # e o custo/ganho voando; a árvore pisca ao comprar e a ligação acende
+  ```
+  **Conferido no Chrome, no jogo de verdade:** Modo Feira com a Ana Luiza, painel com os cinco
+  indicadores e ícones certos, compra de "Energia solar em escala" mostrando o pop-up no canto
+  (nome + efeito) e sumindo sozinho alguns segundos depois, sem artefato deixado para trás.
+- **Pendente:**
+  - A celebração de ramo completo e o "+X PAC" flutuando não foram conferidos no navegador de
+    verdade — comprar um ramo inteiro ou esperar o PAC entrar várias vezes é lento de fazer à mão.
+    Os dois têm teste automatizado (`tests/tree.dom.test.ts`, `tests/fly.dom.test.ts`) que cobre a
+    lógica; só a animação em si, que é do navegador, ficou sem o olho humano.
+  - Nenhum personagem reforça o `eventChanceCut` — os quatro nós não têm ramo em comum com um
+    personagem específico o bastante para justificar um buff novo no `character-buffs.json`.
+  - O painel do Modo Feira ficou mais alto com a lista de indicadores; em tela muito baixa (celular
+    deitado) pode pedir rolagem antes do "Começar". Não medido.
+- **Evidência:** —
+
+---
+
 ## 2026-10-19 — Ranking local: a entrada e o comparador, sem nada na tela (RANK-01)
 
 - **Parte / tarefa:** `RANK-01` ✔. Abre o épico `RANK`, puxado do Gelo a pedido do chat. Suíte

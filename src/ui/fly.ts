@@ -56,3 +56,43 @@ export function flyCost(from: Element | null, to: Element | null, text: string):
   // isto o rótulo ficaria pendurado para sempre.
   window.setTimeout(remove, 1200);
 }
+
+/**
+ * Solta um `text` subindo e sumindo a partir do centro de `anchor` (pedido no
+ * chat em 2026-10-26).
+ *
+ * É o espelho do `flyCost`: aqui não há destino, só o PAC que entrou subindo e
+ * desaparecendo perto do indicador — e as mesmas duas saídas caladas, pela
+ * mesma razão (§5 / P8-04).
+ */
+export function floatGain(anchor: Element | null, text: string): void {
+  if (anchor === null) return;
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+  const media = typeof window.matchMedia === 'function' ? window.matchMedia(REDUCED) : null;
+  if (media?.matches) return;
+
+  const box = anchor.getBoundingClientRect();
+  if (box.width === 0 && box.height === 0) return;
+
+  const x = box.left + box.width / 2;
+  const y = box.top;
+
+  const ghost = document.createElement('span');
+  ghost.className = 'fly-gain';
+  ghost.setAttribute('aria-hidden', 'true');
+  ghost.textContent = text;
+  ghost.style.left = `${x}px`;
+  ghost.style.top = `${y}px`;
+  document.body.append(ghost);
+
+  const remove = (): void => ghost.remove();
+
+  requestAnimationFrame(() => {
+    ghost.style.transform = 'translate(-50%, calc(-100% - 1.5rem))';
+    ghost.style.opacity = '0';
+  });
+
+  ghost.addEventListener('transitionend', remove);
+  window.setTimeout(remove, 1200);
+}

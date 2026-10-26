@@ -17,7 +17,7 @@
 import { achievementsEarned } from './engine/achievements';
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
-import { canUnlock, unlockSkill } from './engine/skills';
+import { canUnlock, skillById, unlockSkill } from './engine/skills';
 import {
   createInitialState,
   skills,
@@ -47,7 +47,8 @@ import {
 } from './ui/character-select';
 import { passiveFor } from './ui/comparison';
 import { containView, mountContain, renderContain } from './ui/contain';
-import { flyCost } from './ui/fly';
+import { floatGain, flyCost } from './ui/fly';
+import { showToast } from './ui/toast';
 import {
   criticalCardView,
   focusResume,
@@ -168,6 +169,7 @@ import './ui/skip-link.css';
 import './ui/stripes.css';
 import './ui/timeline-chart.css';
 import './ui/title.css';
+import './ui/toast.css';
 import './ui/tree.css';
 import './ui/tree-panel.css';
 import './ui/tutorial.css';
@@ -1143,6 +1145,13 @@ function handleUnlock(id: SkillId): void {
     painelArvore.querySelector('[data-tree-panel="points"]'),
     `−${ui.tree.cost(String(spent))}`,
   );
+  // O pop-up de efeito (pedido no chat em 2026-10-26, "estilo Plague Inc"): o
+  // que o nó acabou de mudar na partida, com o mesmo texto do detalhe — nada
+  // inventado para a ocasião. `skillById` nunca devolve `undefined` aqui: o
+  // `unlockSkill` já provou que `id` existe, é o motivo de `next !== state`.
+  const skill = skillById(id);
+  if (skill !== undefined)
+    showToast(ui.toast.unlocked, ui.toast.effect(skill.name, skill.description));
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
   // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá
   // vontade de fechar a aba.
@@ -1498,6 +1507,16 @@ function frame(now: number): void {
     checkAutoPause();
     renderGame();
     shownTick = state.tick;
+
+    // O PAC do mês "sobe" perto do indicador (pedido no chat em 2026-10-26,
+    // espelho do flyCost): só quando o saldo de fato cresceu no intervalo — um
+    // mês cujo evento custou mais do que a renda não tem o que comemorar, e
+    // ficaria estranho um "+0 PAC" ou um "+" com sinal de menos escondido.
+    const gained = Math.round(state.actionPoints - before.actionPoints);
+    if (gained > 0) {
+      floatGain(hud.querySelector('[data-hud="actionPoints"]'), `+${ui.tree.cost(String(gained))}`);
+    }
+
     // Salvar aqui, e não a cada quadro, sai de graça: é uma escrita por mês de
     // jogo — no máximo 1,3 por segundo a 4x — e limita a perda de um fechamento
     // de aba a um único mês. Salvar a cada quadro seriam 60 por segundo para

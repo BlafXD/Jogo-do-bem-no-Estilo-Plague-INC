@@ -2,7 +2,7 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { flyCost } from '../src/ui/fly';
+import { floatGain, flyCost } from '../src/ui/fly';
 
 /**
  * O rótulo que voa na compra (REF-02). O que dá para testar sem um navegador de
@@ -65,6 +65,38 @@ describe('flyCost', () => {
     expect(ghost?.style.left).toBe('30px');
     expect(ghost?.style.top).toBe('25px');
     // Não rouba clique, e não é lido pelo leitor de tela.
+    expect(ghost?.style.pointerEvents === 'auto').toBe(false);
+    expect(ghost?.getAttribute('aria-hidden')).toBe('true');
+  });
+});
+
+/** O espelho do flyCost para o PAC ganho (pedido no chat em 2026-10-26). */
+const fantasmaDeGanho = (): HTMLElement | null => document.querySelector<HTMLElement>('.fly-gain');
+
+describe('floatGain', () => {
+  it('não cria nada sem o elemento', () => {
+    floatGain(null, '+4 PAC');
+
+    expect(fantasmaDeGanho()).toBeNull();
+  });
+
+  it('não cria nada quando o layout ainda não tem medida (jsdom)', () => {
+    floatGain(document.createElement('span'), '+4 PAC');
+
+    expect(fantasmaDeGanho()).toBeNull();
+  });
+
+  it('solta o rótulo no topo do indicador, com o texto pedido', () => {
+    const indicador = elementoEm(rect(100, 50, 40, 20));
+
+    floatGain(indicador, '+4 PAC');
+
+    const ghost = fantasmaDeGanho();
+    expect(ghost).not.toBeNull();
+    expect(ghost?.textContent).toBe('+4 PAC');
+    // Centro horizontal do indicador: 100 + 40/2 = 120. Topo: 50.
+    expect(ghost?.style.left).toBe('120px');
+    expect(ghost?.style.top).toBe('50px');
     expect(ghost?.style.pointerEvents === 'auto').toBe(false);
     expect(ghost?.getAttribute('aria-hidden')).toBe('true');
   });

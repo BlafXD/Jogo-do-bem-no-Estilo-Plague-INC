@@ -296,6 +296,51 @@ Duas entregas, no molde do `CONQ`: o engine primeiro, sem nada na tela.
 
 ---
 
+## FEEDBACK — Pop-ups, resumo da feira e mais vida na árvore (pedido no chat em 2026-10-26)
+
+Pedido do chat: o jogo "muito seco", um pop-up parecido com o do Plague Inc "para dar mais pontos",
+um tutorial que explique cada indicador no Modo Feira, e mais efeitos na árvore de habilidades.
+Fechado em rodadas de pergunta no próprio chat (ver histórico), com uma decisão final delegada ao
+agente: **escolher os eventos de cada nó e o percentual do efeito único.** As seis tarefas saíram
+numa sessão só, cada uma pequena o bastante para ler sozinha. Suíte **1112 → 1138**.
+
+- [x] `FEEDBACK-01` Resumo dos indicadores no painel do Modo Feira — **P** — *`src/data/i18n.ts`
+      (`tutorial.fair.indicators`) e `src/ui/tutorial.ts`/`.css`. Uma linha por indicador do HUD
+      (temperatura, emissões, PAC, apoio, Inércia — sem o ano, que as duas frases já cobrem), com o
+      mesmo ícone do HUD. Lista à parte de `fair.lines`, de propósito: o `tests/tutorial.test.ts`
+      trava o tamanho dela em 2, e a regra "mais raso que os 4 passos" continua valendo só para as
+      duas frases.*
+- [x] `FEEDBACK-02` Pop-up de efeito ao comprar um nó, "estilo Plague Inc" — **M** — *`src/ui/toast.ts`
+      e `.css` (novos), chamado do `handleUnlock` no `main.ts`. Mostra o nome do nó e a mesma
+      `description` que já está no detalhe — nenhum texto novo inventado para a ocasião. Some
+      sozinho em ~4,2 s; o conteúdo aparece igual com `prefers-reduced-motion`, só a animação de
+      entrada/saída se desliga (§5).*
+- [x] `FEEDBACK-03` "+X PAC" subindo perto do indicador a cada mês que o saldo cresce — **P** —
+      *`floatGain`, em `src/ui/fly.ts`/`.css` — o espelho do `flyCost` que já existia para o gasto
+      (REF-02). Só aparece quando o saldo de fato cresceu no intervalo: um mês em que o evento
+      custou mais que a renda não soma "+0 PAC".*
+- [x] `FEEDBACK-04` Reação mais forte na compra: a ligação do losango "acende" até o nó que ficou
+      comprável — **M** — *`src/ui/tree.ts`/`.css`. O `drawTreeLinks` ganhou um terceiro argumento
+      (`reacted`, os nós que acabaram de pulsar no `renderTree`) e marca `data-charge` na ligação —
+      um lampejo de uma vez só, no mesmo instante em que o cartão do outro lado pulsa. **O destaque
+      de hover/foco que a 3ª pergunta do chat também pediu já existia** desde o VIS-05
+      (`.tree__node:hover`/`:focus-visible`) — nada a fazer ali; a descrição que propus no chat
+      estava errada.*
+- [x] `FEEDBACK-05` Celebração quando um ramo inteiro é comprado — **P** — *`celebrateIfComplete`, em
+      `src/ui/tree.ts`/`.css`. A seção do ramo ganha um halo que sobe e some uma vez só, guardado em
+      `section.dataset.complete` para não repetir a cada redesenho depois disso.*
+- [x] `FEEDBACK-06` Efeito mecânico novo — `eventChanceCut` — nos 4 nós de fecho do 1º losango com
+      par honesto a um evento — **G** — *6º `kind` de `Effect` (`src/engine/state.ts`), lido pelo
+      `eventChanceCutFor` (`skills.ts`) e aplicado no `weightFor`/`drawEvent`/`advanceEvents`
+      (`events.ts`). **Rede elétrica inteligente** corta a chance de apagão, **Prédios eficientes**
+      a de onda de calor, **Proteção oceânica** a de branqueamento de corais, **Defesa costeira** a
+      de ressaca — 30% cada, decisão delegada ao agente no chat. **A Indústria ficou de fora**: o nó
+      da mesma posição (Cimento de baixo carbono) não tem par honesto com nenhum dos 20 eventos, e a
+      régua que recusou o vínculo é a mesma do precedente regional do `docs/CIENCIA.md`. Medido e
+      registrado em `docs/BALANCEAMENTO.md`; `docs/GDD.md §2.4` e `§3` atualizados.*
+
+---
+
 ## Gelo (só se sobrar tempo)
 
 ~~Não puxar nada daqui antes do **M3**.~~ **A trava caiu**: o `M3` (`P8-05`, build da feira) está

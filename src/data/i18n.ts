@@ -836,7 +836,29 @@ export const ui = {
       ],
       start: 'Começar',
       startHint: 'Fecha este aviso e põe o tempo para correr.',
+
+      // O resumo dos indicadores do HUD (pedido no chat em 2026-10-26), por
+      // baixo das duas frases acima. Uma linha por indicador — menos "Ano",
+      // que as duas frases já cobrem —, mais curta que o `hint` do próprio
+      // indicador: aqui é para ler de pé, em segundos, não a dica completa do
+      // `title` de cada caixa do HUD.
+      indicators: {
+        temperature: 'Sobe com as emissões acumuladas. Passar de 3 °C encerra a partida.',
+        emissions: 'O que o mundo solta por ano. A meta é chegar a zero.',
+        actionPoints: 'O PAC compra os nós da árvore de habilidades.',
+        support: 'Apoio médio das 8 regiões. Se zerar, a agência é dissolvida.',
+        inertia: 'Cresce com os seus cortes; a árvore de Sociedade a contém.',
+      },
     },
+  },
+
+  // O pop-up de efeito ao comprar um nó — "estilo Plague Inc", pedido no chat
+  // em 2026-10-26 (src/ui/toast.ts). Mostra o que acabou de entrar na partida:
+  // o nome do nó e o mesmo efeito que já está escrito no detalhe (`description`
+  // do skills.json), sem inventar frase nova.
+  toast: {
+    unlocked: 'Novo efeito desbloqueado',
+    effect: (name: string, description: string) => `${name} — ${description}`,
   },
 
   hudLabel: 'Indicadores da partida',

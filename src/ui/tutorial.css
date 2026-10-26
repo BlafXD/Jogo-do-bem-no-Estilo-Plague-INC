@@ -149,3 +149,38 @@
 .tutorial-panel .tutorial__actions {
   margin-top: 1rem;
 }
+
+/* O resumo dos indicadores (pedido no chat em 2026-10-26): uma grade de duas
+   colunas quando o painel é largo o bastante, uma coluna só abaixo disso —
+   mesmo `auto-fit` do resto da UI, sem breakpoint fixo. */
+.tutorial-panel__indicators {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.5rem 1.25rem;
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--cor-destaque, #7fd1a8) 35%, transparent);
+  list-style: none;
+}
+
+.tutorial-panel__indicator {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  /* 16px é o piso do §5: lido de pé, numa feira, como o resto do painel. */
+  font-size: var(--tamanho-base, 1rem);
+  color: var(--cor-rotulo, #a7c0b4);
+}
+
+.tutorial-panel__indicator .icon {
+  align-self: center;
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--cor-destaque, #7fd1a8);
+}
+
+.tutorial-panel__indicator-label {
+  flex: none;
+  color: var(--cor-valor, #f2f7f4);
+}

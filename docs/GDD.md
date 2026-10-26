@@ -112,6 +112,22 @@ jogador quer, nunca sobre preço.
 > partida; a conta está em `docs/BALANCEAMENTO.md`, e os 20 fatos novos, com fonte, em
 > `docs/CIENCIA.md`.
 
+**Quatro nós têm um efeito único, além de cortar emissão ou somar apoio/resiliência** — pedido no
+chat em 2026-10-26. Cada um reduz em 30% a chance de um evento específico do `§2.5`, e nenhum outro
+nó mira o mesmo evento:
+
+| Nó (ramo) | Evento cortado |
+|---|---|
+| Rede elétrica inteligente (Energia) | Apagão no pico do calor |
+| Prédios eficientes (Transporte e Cidades) | Onda de calor |
+| Proteção oceânica (Natureza) | Branqueamento de corais |
+| Defesa costeira (Sociedade) | Ressaca e maré de tempestade |
+
+**A Indústria ficou de fora, de propósito.** O nó de mesma posição no ramo dela — Cimento de baixo
+carbono — não tem par honesto com nenhum dos 20 eventos; forçar um vínculo fraco seria o tipo de
+afirmação sobre o mundo que o `docs/CIENCIA.md` já recusa para alvo regional, só que aqui sobre
+mecânica em vez de geografia. O contrato do novo `Effect` está no `§3`.
+
 ### 2.5 Eventos
 
 Sorteados por tick, com peso crescente conforme a temperatura. Cada um tem um limiar: ressaca costeira e elevação do mar só entram acima de certo aquecimento — **o jogador precisa sentir que o mundo piora porque ele demorou.**
@@ -335,7 +351,8 @@ type Effect =
   | { kind: 'pointsPerYear'; value: number }
   | { kind: 'resilience'; target: RegionId | 'global'; value: number }
   | { kind: 'support'; target: RegionId | 'global'; value: number }
-  | { kind: 'inertiaCut'; value: number };
+  | { kind: 'inertiaCut'; value: number }
+  | { kind: 'eventChanceCut'; target: string; value: number };  // target = id de ClimateEvent; value = % de corte na chance (§2.4)
 
 type Skill = {
   id: SkillId;

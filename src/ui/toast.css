@@ -1,0 +1,72 @@
+/* O pop-up de efeito ao comprar um nó (toast.ts). Pedido no chat em
+   2026-10-26, no estilo do aviso de "unlocked!" do Plague Inc.
+
+   Fica em z-index 26: acima do painel da árvore (20) e do rótulo que voa do
+   fly.css (25) — a compra pode acontecer com o painel aberto, e o aviso
+   precisa ficar por cima dele. É `pointer-events: none` no recipiente, para
+   nunca roubar um clique.
+
+   O conteúdo é informação, não só enfeite — por isso ele aparece igual com
+   `prefers-reduced-motion`; só a entrada deslizando e a saída desaparecendo se
+   desligam (§5 / P8-04). */
+.toast-stack {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 26;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.toast {
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--cor-comprado, #7fd1a8);
+  border-radius: var(--raio, 0.5rem);
+  background: var(--cor-superficie, #1b2a1f);
+  box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 35%);
+}
+
+.toast__title {
+  margin: 0 0 0.25rem;
+  color: var(--cor-comprado, #7fd1a8);
+  font-family: var(--fonte-display, system-ui, sans-serif);
+  /* 16px é o piso do §5: o jogo é visto de pé e de longe, numa feira. */
+  font-size: var(--tamanho-base, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.toast__text {
+  margin: 0;
+  color: var(--cor-valor, #f2f7f4);
+  font-size: var(--tamanho-base, 1rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-enter 0.3s ease-out;
+  }
+
+  .toast--leaving {
+    animation: toast-leave 0.4s ease-in forwards;
+  }
+}
+
+@keyframes toast-enter {
+  from {
+    transform: translateX(1.5rem);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-leave {
+  to {
+    transform: translateX(1.5rem);
+    opacity: 0;
+  }
+}

@@ -120,6 +120,22 @@ describe('o peso cresce com a temperatura', () => {
     expect(weightFor(event, 3)).toBeCloseTo(esperado, 6);
   });
 
+  // O corte de chance (pedido no chat em 2026-10-26, docs/GDD.md §2.4): o
+  // `cut` reduz o peso **depois** da fórmula acima, e nunca abaixo de zero nem
+  // acima de 100%.
+  it('o corte de chance reduz o peso na mesma proporção', () => {
+    expect(weightFor(event, 2, 0.3)).toBeCloseTo(0.5 * 0.7, 6);
+    expect(weightFor(event, 3, 0.3)).toBeCloseTo(
+      0.5 * (1 + balance.eventWeightPerDegree * 1) * 0.7,
+      6,
+    );
+  });
+
+  it('o corte é travado entre 0 e 1 — não inverte o sinal nem some de propósito', () => {
+    expect(weightFor(event, 2, 2)).toBe(0);
+    expect(weightFor(event, 2, -1)).toBeCloseTo(0.5, 6);
+  });
+
   it('ACEITE: o mundo piora — mais eventos ficam possíveis, e mais frequentes', () => {
     const frio = eligibleEvents(balance.startTemperature);
     const quente = eligibleEvents(2.5);
@@ -166,6 +182,32 @@ describe('drawEvent', () => {
     }
 
     expect(semEvento).toBeGreaterThan(0);
+  });
+
+  // O corte de chance (pedido no chat em 2026-10-26) precisa valer no sorteio
+  // de verdade, não só na fórmula do peso — daí este teste, em vez de confiar
+  // só no `weightFor` acima.
+  it('ACEITE: um evento com corte sai sorteado menos vezes que sem corte', () => {
+    const start = createInitialState(42).rngState;
+    const SAMPLES = 4000;
+
+    const count = (cutFor: (eventId: string) => number): number => {
+      let state = start;
+      let hits = 0;
+      for (let i = 0; i < SAMPLES; i += 1) {
+        const step = drawEvent(2.5, state, cutFor);
+        if (step.draw?.event.id === 'heatwave') hits += 1;
+        state = step.rngState;
+      }
+      return hits;
+    };
+
+    const semCorte = count(() => 0);
+    const comCorte = count((id) => (id === 'heatwave' ? 0.3 : 0));
+
+    expect(comCorte).toBeLessThan(semCorte);
+    // A régua é 30% a menos; sobra folga para o ruído da amostra.
+    expect(comCorte / semCorte).toBeLessThan(0.85);
   });
 
   it('só mira as regiões que o evento lista', () => {
@@ -280,6 +322,38 @@ describe('advanceEvents', () => {
   it('não deixa cartão acumular sem fim ao longo da partida', () => {
     const end = run(TOTAL_TICKS);
     expect(end.activeEvents.length).toBeLessThan(10);
+  });
+
+  // A ponta a ponta do `eventChanceCutFor` (skills.ts) com o `advanceEvents`:
+  // não basta a fórmula cortar o peso, o `GameState` de verdade precisa chegar
+  // até ela. Mesmo método do teste acima no `drawEvent`, só que partindo de uma
+  // partida com `efficient-buildings` já comprado.
+  it('ACEITE: o nó com eventChanceCut reduz a onda de calor na partida de verdade', () => {
+    const quente: GameState = { ...createInitialState(42), temperature: 2.5 };
+    const comNo: GameState = { ...quente, unlockedSkills: ['efficient-buildings'] };
+    const SAMPLES = 4000;
+
+    const count = (state: GameState): number => {
+      let current = state;
+      let hits = 0;
+      for (let i = 0; i < SAMPLES; i += 1) {
+        current = advanceEvents(current);
+        if (
+          current.activeEvents.some(
+            (a) => a.eventId === 'heatwave' && a.ticksRemaining === CARD_TICKS,
+          )
+        ) {
+          hits += 1;
+        }
+      }
+      return hits;
+    };
+
+    const semNo = count(quente);
+    const comNoContado = count(comNo);
+
+    expect(comNoContado).toBeLessThan(semNo);
+    expect(comNoContado / semNo).toBeLessThan(0.85);
   });
 });
 

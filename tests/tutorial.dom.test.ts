@@ -194,6 +194,39 @@ describe('o painel do Modo Feira', () => {
 
     expect(onStart).toHaveBeenCalledOnce();
   });
+
+  // O resumo dos indicadores (pedido no chat em 2026-10-26): uma linha por
+  // indicador do HUD, menos o ano — que as duas frases já cobrem.
+  it('resume os cinco indicadores do HUD, com ícone e rótulo', () => {
+    const panel = mountTutorialPanel(() => {});
+    const itens = [...panel.querySelectorAll('.tutorial-panel__indicator')];
+
+    expect(itens).toHaveLength(5);
+    for (const campo of [
+      'temperature',
+      'emissions',
+      'actionPoints',
+      'support',
+      'inertia',
+    ] as const) {
+      const item = itens.find(
+        (el) =>
+          el.querySelector('.tutorial-panel__indicator-label')?.textContent === ui.hud[campo].label,
+      );
+      expect(item, campo).not.toBeUndefined();
+      expect(item?.querySelector('svg.icon'), campo).not.toBeNull();
+      expect(item?.textContent).toContain(ui.tutorial.fair.indicators[campo]);
+    }
+  });
+
+  it('não repete o ano: as duas frases já dizem que a partida vai até 2100', () => {
+    const panel = mountTutorialPanel(() => {});
+    const rotulos = [...panel.querySelectorAll('.tutorial-panel__indicator-label')].map(
+      (el) => el.textContent,
+    );
+
+    expect(rotulos).not.toContain(ui.hud.year.label);
+  });
 });
 
 describe('quem fala em cada passo (VIS-07)', () => {

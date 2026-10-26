@@ -392,6 +392,10 @@ export function mountTree(
     const section = document.createElement('section');
     section.className = 'tree__branch';
     section.dataset.branch = branch.branch;
+    // A celebração do ramo completo (pedido no chat em 2026-10-26) se remove
+    // sozinha ao terminar, como o pulso de cada nó: sem isso a classe ficaria
+    // grudada, embora isso não importe muito aqui — ela só entra uma vez.
+    section.addEventListener('animationend', () => section.classList.remove(COMPLETE_CLASS));
 
     // <h3> de verdade, e não um <div> com cara de título: é o que faz um leitor
     // de tela conseguir pular de ramo em ramo em vez de varrer os 20 nós. O
@@ -465,6 +469,11 @@ function gain(button: HTMLElement): void {
  */
 export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): void {
   let changed = false;
+  // Os nós que reagiram **agora** — comprados ou recém-compráveis — e não os
+  // que já estavam assim antes deste render. A ligação que "acende" e a
+  // celebração do ramo (abaixo) usam a mesma lista do pulso: se um nó não
+  // mereceu pulsar, a ligação dele também não merece piscar.
+  const reacted = new Set<string>();
 
   for (const branch of view) {
     for (const node of branch.nodes) {
@@ -477,6 +486,7 @@ export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): 
         changed = true;
         if (previous !== undefined && (node.status === 'unlocked' || node.status === 'available')) {
           gain(button);
+          reacted.add(node.id);
         }
       }
 
@@ -488,10 +498,37 @@ export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): 
       write(button.querySelector('[data-tree="icon"]'), node.statusIcon);
       write(button.querySelector('[data-tree="label"]'), node.statusLabel);
     }
+
+    // Só olha para a celebração do ramo quando algum nó dele reagiu agora —
+    // a mesma guarda que impede o pulso de disparar no primeiro render.
+    if (branch.nodes.some((node) => reacted.has(node.id))) celebrateIfComplete(root, branch);
   }
 
   // As ligações só mudam de cor quando um nó muda de estado.
-  if (changed) drawTreeLinks(root);
+  if (changed) drawTreeLinks(root, reacted);
+}
+
+/** A classe da celebração: o CSS anima, o mountTree a remove no fim. */
+const COMPLETE_CLASS = 'tree__branch--complete';
+
+/**
+ * Comemora quando o ramo inteiro acaba de ficar com os 8 nós comprados
+ * (pedido no chat em 2026-10-26).
+ *
+ * `section.dataset.complete` marca o ramo como já celebrado: sem a marca, um
+ * ramo pronto comemoraria de novo a cada mês depois disso, porque
+ * `every(unlocked)` continua verdadeiro para sempre.
+ */
+function celebrateIfComplete(root: HTMLElement, branch: BranchView): void {
+  const section = root.querySelector<HTMLElement>(`[data-branch="${branch.branch}"]`);
+  if (section === null || section.dataset.complete === 'true') return;
+
+  const complete =
+    branch.nodes.length > 0 && branch.nodes.every((node) => node.status === 'unlocked');
+  if (!complete) return;
+
+  section.dataset.complete = 'true';
+  section.classList.add(COMPLETE_CLASS);
 }
 
 /**
@@ -506,7 +543,7 @@ export function renderTree(root: HTMLElement, view: TreeView, chosen: SkillId): 
  * A ligação entre dois nós comprados fica acesa, com a cor de comprado. Ela é
  * reforço: quem diz que o nó foi comprado é o rótulo escrito no cartão (§5).
  */
-export function drawTreeLinks(root: ParentNode): void {
+export function drawTreeLinks(root: ParentNode, reacted: ReadonlySet<string> = new Set()): void {
   for (const diamond of root.querySelectorAll<HTMLElement>('.tree__diamond')) {
     const links = diamond.querySelector('.tree__links');
     const box = diamond.getBoundingClientRect();
@@ -520,7 +557,7 @@ export function drawTreeLinks(root: ParentNode): void {
         .filter((id) => id !== '')
         .flatMap((id) => {
           const parent = diamond.querySelector<HTMLElement>(`[data-skill="${id}"]`);
-          return parent === null ? [] : [linkPath(box, parent, child)];
+          return parent === null ? [] : [linkPath(box, parent, child, reacted)];
         }),
     );
 
@@ -528,7 +565,21 @@ export function drawTreeLinks(root: ParentNode): void {
   }
 }
 
-function linkPath(box: DOMRect, parent: HTMLElement, child: HTMLElement): SVGPathElement {
+/**
+ * Uma ligação do losango, entre o fundo do pai e o topo do filho.
+ *
+ * `reacted` são os nós que acabaram de pulsar neste render (pedido no chat em
+ * 2026-10-26) — o mesmo `renderTree` que chama o `gain()` do nó. Quando o pai
+ * já está comprado e o filho está nessa lista, a ligação ganha `data-charge`:
+ * um lampejo de uma vez só, a reação em cadeia "acendendo" até o próximo nó,
+ * em vez de só o cartão dele pulsar sozinho.
+ */
+function linkPath(
+  box: DOMRect,
+  parent: HTMLElement,
+  child: HTMLElement,
+  reacted: ReadonlySet<string>,
+): SVGPathElement {
   const from = parent.getBoundingClientRect();
   const to = child.getBoundingClientRect();
   const x1 = from.left + from.width / 2 - box.left;
@@ -539,8 +590,12 @@ function linkPath(box: DOMRect, parent: HTMLElement, child: HTMLElement): SVGPat
 
   const path = document.createElementNS(SVG, 'path');
   path.setAttribute('d', `M${x1} ${y1}V${middle}H${x2}V${y2}`);
-  const lit = parent.dataset.status === 'unlocked' && child.dataset.status === 'unlocked';
-  if (lit) path.setAttribute('data-lit', '');
+  const parentUnlocked = parent.dataset.status === 'unlocked';
+  if (parentUnlocked && child.dataset.status === 'unlocked') path.setAttribute('data-lit', '');
+  const childId = child.dataset.skill;
+  if (parentUnlocked && childId !== undefined && reacted.has(childId)) {
+    path.setAttribute('data-charge', '');
+  }
   return path;
 }
 

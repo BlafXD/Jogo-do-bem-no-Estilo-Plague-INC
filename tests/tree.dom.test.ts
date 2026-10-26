@@ -581,3 +581,84 @@ describe('o pulso de conquista', () => {
     expect(nodeButton(root, 'transit').classList.contains(GANHO)).toBe(false);
   });
 });
+
+/**
+ * A ligação "acendendo" até o próximo nó (pedido no chat em 2026-10-26): o
+ * mesmo instante em que o pulso de conquista dispara, a ligação até o nó que
+ * reagiu ganha `data-charge` — uma vez só, não a cada redesenho.
+ */
+describe('a ligação que acende', () => {
+  it('acende as duas ligações que saem da raiz recém-comprada', () => {
+    const inicio = rich(200);
+    const root = mount(inicio, 'solar');
+    comCaixas(root);
+
+    renderTree(root, treeView(unlockSkill(inicio, 'solar')), 'solar');
+
+    const acendendo = caminhos(root).filter((path) => path.hasAttribute('data-charge'));
+    expect(acendendo).toHaveLength(2);
+  });
+
+  it('cada redesenho recalcula do zero: só quem reagiu agora acende', () => {
+    const inicio = rich(200);
+    const root = mount(inicio, 'solar');
+    comCaixas(root);
+
+    const depoisSolar = unlockSkill(inicio, 'solar');
+    renderTree(root, treeView(depoisSolar), 'solar');
+    expect(caminhos(root).filter((path) => path.hasAttribute('data-charge'))).toHaveLength(2);
+
+    // Agora só o "wind" reage; o "storage" continua disponível, sem mudar.
+    const depoisWind = unlockSkill(depoisSolar, 'wind');
+    renderTree(root, treeView(depoisWind), 'wind');
+
+    expect(caminhos(root).filter((path) => path.hasAttribute('data-charge'))).toHaveLength(1);
+  });
+});
+
+/**
+ * A celebração do ramo completo (pedido no chat em 2026-10-26): a seção
+ * inteira comemora quando o 8º e último nó do ramo é comprado, e só então.
+ */
+describe('a celebração do ramo completo', () => {
+  const ENERGIA: readonly SkillId[] = [
+    'solar',
+    'wind',
+    'storage',
+    'smart-grid',
+    'offshore-wind',
+    'hydro',
+    'green-hydrogen',
+  ];
+
+  function comprarTudoMenosOUltimo(): GameState {
+    let state = rich(100000);
+    for (const id of ENERGIA) state = unlockSkill(state, id);
+    return state;
+  }
+
+  it('comemora quando o último nó do ramo é comprado', () => {
+    const quaseLa = comprarTudoMenosOUltimo();
+    const root = mount(quaseLa, 'coal-phaseout');
+    const secao = root.querySelector<HTMLElement>('[data-branch="energy"]');
+
+    expect(secao?.classList.contains('tree__branch--complete')).toBe(false);
+
+    renderTree(root, treeView(unlockSkill(quaseLa, 'coal-phaseout')), 'coal-phaseout');
+
+    expect(secao?.classList.contains('tree__branch--complete')).toBe(true);
+    expect(secao?.dataset.complete).toBe('true');
+  });
+
+  it('não comemora um ramo incompleto', () => {
+    const quaseLa = comprarTudoMenosOUltimo();
+    const root = mount(quaseLa, 'coal-phaseout');
+
+    // Redesenhar sem comprar o 8º nó não muda estado nenhum do ramo.
+    renderTree(root, treeView(quaseLa), 'coal-phaseout');
+
+    expect(
+      root.querySelector('[data-branch="energy"]')?.classList.contains('tree__branch--complete'),
+    ).toBe(false);
+  });
+});
