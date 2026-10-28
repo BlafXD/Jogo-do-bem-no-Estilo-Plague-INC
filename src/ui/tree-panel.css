@@ -190,10 +190,20 @@
     overflow: auto;
   }
 
-  /* O detalhe fica com a altura que sobra, e a contenção, embaixo dele. */
+  /* **Três filas, e não duas**: o detalhe, a contenção e as sinergias, que o
+     INTER-08 acrescentou sem que esta regra soubesse. Com duas, a terceira
+     seção caía numa fila implícita e a coluna transbordava o painel — medido no
+     Edge a 1366 × 768: as sinergias ficavam 164 px abaixo da borda, cortadas
+     pelo `overflow: hidden` do diálogo, e o botão "Comprar por 36 PAC" do
+     detalhe era pintado por cima do título da contenção.
+
+     O piso de 12rem no detalhe impede que ele seja espremido a zero, e a coluna
+     rola quando as três seções não cabem — nada fica inalcançável numa janela
+     baixa. */
   .tree-panel__side {
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(12rem, 1fr) auto auto;
     align-content: stretch;
+    overflow-y: auto;
     min-block-size: 0;
     border-top: 0;
     border-left: 1px solid color-mix(in srgb, var(--cor-borda, #4c8069) 45%, transparent);

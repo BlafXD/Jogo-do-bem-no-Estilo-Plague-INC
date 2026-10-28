@@ -16,7 +16,10 @@
 .quick-buy__label {
   margin: 0;
   color: var(--cor-rotulo, #b9bfa7);
-  font-size: var(--tamanho-pequeno, 0.875rem);
+  /* 1rem, como todo texto: o §5 do GDD fixa 16px como piso, e o
+     `--tamanho-pequeno` que estava aqui nunca existiu no theme.css — a reserva
+     de 0,875rem valia sempre, e o rótulo saía a 14px. */
+  font-size: var(--tamanho-base, 1rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -36,6 +39,10 @@
 .quick-buy__item {
   display: inline-flex;
   align-items: center;
+  /* Encolhe antes de empurrar: quando a barra aperta, quem cede é a prateleira
+     (layout.css), e o nome corta com reticências em vez de passar por cima das
+     listras. */
+  flex: 0 1 auto;
   gap: 0.4rem;
   min-height: var(--alvo-toque, 2.75rem);
   min-width: 0;
@@ -83,13 +90,19 @@
   font-weight: 600;
 }
 
-/* **Um nó só abaixo de 96rem (1536 px).** Medido no Edge a 1280 px — a tela do
-   notebook da feira —, os dois itens não cabiam entre as listras e o botão da
-   árvore: os nomes encolhiam até sumir e sobrava "36 PAC" com um ícone. Um item
-   cabe, e o selo do botão da árvore continua dizendo quantos nós estão ao
-   alcance. Esconder a prateleira inteira seria perder a tarefa justamente na
-   tela em que ela mais importa. */
-@media (max-width: 96rem) {
+/* **Um nó só abaixo de 108rem (1728 px).** O número é a soma da barra de baixo,
+   medida no Edge: 32rem de controles, 14rem de listras, 2 × 12,5rem de
+   prateleira com o gap, ~29rem do botão da árvore com o selo, mais 4,5rem de
+   gaps e 3rem de padding — 107,6rem. Abaixo disso o segundo item não cabe, e
+   antes desta medição ele não sumia: a 1600 px ele empurrava as listras para
+   baixo da prateleira, e a 1280 px os nomes encolhiam até sobrar "36 PAC" com
+   um ícone.
+
+   Um item cabe em qualquer tela que chegue à barra de baixo, e o selo do botão
+   da árvore continua dizendo quantos nós estão ao alcance. Esconder a
+   prateleira inteira seria perder a tarefa justamente na tela em que ela mais
+   importa. */
+@media (max-width: 107.99rem) {
   .quick-buy__item:nth-child(n + 2) {
     display: none;
   }

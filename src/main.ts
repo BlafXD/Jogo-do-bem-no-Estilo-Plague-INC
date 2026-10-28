@@ -625,9 +625,15 @@ function renderSelection(): void {
   renderMap(mapa, mapView(state, selectedRegion, feedRegions(eventFeed)));
   // As bolhas de PAC (INTER-04) pousam na camada que o mountMap deixou no palco.
   renderBubbles(bubbleHost(mapa), bubblesView(state), handleClaimBubble);
-  // A linha do conselho (INTER-07) cala com o painel do Modo Feira no ar: os
-  // dois pousam no mesmo canto do mapa, e o painel já diz o que fazer.
-  renderCoach(coachHost(mapa), coachView(state, showsPanel(tutorial)));
+  // A linha do conselho (INTER-07) cala com o painel do Modo Feira no ar e com
+  // o balão dos 4 passos: os três pousam no canto de baixo do mapa, e o
+  // tutorial tem a vez — ele ensina a operar, e o conselho só aponta o que se
+  // perde esperando. Medido no Edge a 1366 × 768, numa partida normal: o balão
+  // cobria 74% da linha, que ficava escrita embaixo dele sem ninguém poder ler.
+  renderCoach(
+    coachHost(mapa),
+    coachView(state, showsPanel(tutorial) || tutorialView(tutorial, tutorialCues()) !== null),
+  );
   renderRegionPanel(regiao, regionPanelView(state, selectedRegion));
 }
 
@@ -998,7 +1004,16 @@ function renderTreePanelAll(inGame: boolean, finished: boolean): void {
   // A prateleira de compra rápida (INTER-06) acompanha o botão: os dois leem a
   // mesma pergunta do engine ("o que cabe no caixa agora"), e separá-los em dois
   // lugares do render seria o jeito de eles discordarem.
-  renderQuickBuy(compraRapida, quickBuyView(state), handleUnlock);
+  //
+  // **Depois do fim ela sai da barra.** O `handleUnlock` já recusa a compra
+  // ali, mas a prateleira continuava na tela de fim convidando para um clique
+  // que não faz nada — visto no Edge, numa partida levada até 2100. A trava de
+  // verdade continua no `handleUnlock`; isto aqui é a tela parando de mentir.
+  renderQuickBuy(
+    compraRapida,
+    finished ? { items: [], ready: 0 } : quickBuyView(state),
+    handleUnlock,
+  );
   renderTreePanel(painelArvore, panel);
 
   // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só

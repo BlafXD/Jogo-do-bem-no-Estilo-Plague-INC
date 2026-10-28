@@ -46,6 +46,19 @@
   cursor: pointer;
 }
 
+/* **Ao lado da etiqueta**, quando a bolha não cabe acima (bubbles.ts). O
+   deslocamento horizontal já vem pronto no `left` do botão, porque ele depende
+   do comprimento do nome da região; o que muda aqui é só para onde o `--vez`
+   empurra a segunda bolha da mesma região.
+
+   **Ao lado, o `--vez` desce em vez de andar para o lado**: andando, a segunda
+   bolha encostaria na etiqueta vizinha — na Europa, a da América do Norte.
+   Descendo 2,9rem (a bolha tem 2,75), ela cai sobre o que estava vazio. */
+.bubble[data-place='right'],
+.bubble[data-place='left'] {
+  transform: translate(-50%, calc(-50% + var(--vez, 0) * 2.9rem));
+}
+
 .bubble:hover,
 .bubble:focus-visible {
   background: var(--cor-destaque-suave, rgb(226 205 149 / 12%));

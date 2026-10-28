@@ -39,7 +39,7 @@
 .synergy__intro {
   margin: 0;
   color: var(--cor-rotulo, #b9bfa7);
-  font-size: var(--tamanho-pequeno, 0.875rem);
+  font-size: var(--tamanho-base, 1rem);
   line-height: 1.4;
 }
 
@@ -82,7 +82,7 @@
 
 .synergy__status {
   color: var(--cor-rotulo, #b9bfa7);
-  font-size: var(--tamanho-pequeno, 0.875rem);
+  font-size: var(--tamanho-base, 1rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -97,13 +97,13 @@
 .synergy__requirement {
   margin: 0;
   color: var(--cor-destaque, #e2cd95);
-  font-size: var(--tamanho-pequeno, 0.875rem);
+  font-size: var(--tamanho-base, 1rem);
   font-variant-numeric: tabular-nums;
 }
 
 .synergy__description {
   margin: 0;
   color: var(--cor-rotulo, #b9bfa7);
-  font-size: var(--tamanho-pequeno, 0.875rem);
+  font-size: var(--tamanho-base, 1rem);
   line-height: 1.4;
 }

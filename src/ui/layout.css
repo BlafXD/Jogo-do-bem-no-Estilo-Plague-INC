@@ -279,10 +279,18 @@ body {
     .base {
       position: relative;
       /* Quatro colunas desde o INTER-06: controles, listras, prateleira de
-         compra e o botão da árvore. As listras cedem a largura — elas são a
-         assinatura visual da partida, e encolher não as apaga —, e a prateleira
-         pega o que precisar até caber três nós. */
-      grid-template-columns: fit-content(32rem) minmax(8rem, 1fr) auto auto;
+         compra e o botão da árvore.
+
+         **O piso das listras é o `min-width` delas, 14rem** (stripes.css), e
+         não os 8rem de antes: abaixo do próprio mínimo o elemento não encolhe,
+         ele transborda a coluna e escorrega por baixo da prateleira. Medido no
+         Edge a 1600 px com dois nós na prateleira — a barra pedia 1700 px, e o
+         que sobrava das listras ficava embaixo do botão de comprar.
+
+         **Quem cede agora é a prateleira**, com `minmax(0, auto)`: ela é a
+         recém-chegada da barra, o nome dela corta com reticências e o número
+         inteiro continua no selo do botão da árvore. */
+      grid-template-columns: fit-content(32rem) minmax(14rem, 1fr) minmax(0, auto) auto;
     }
 
     /* O balão do tutorial fica logo acima da barra, por cima do mundo, em vez
@@ -312,6 +320,11 @@ body {
       top: 50%;
       left: 50%;
       width: min(36rem, calc(100% - 2rem));
+      /* O palco recorta o que passa dele. A 1366 × 768 o painel pedia 10 px a
+         mais do que o palco tinha e perdia a moldura de cima e a de baixo —
+         agora ele para na altura do palco e rola por dentro. */
+      max-block-size: calc(100% - 1.5rem);
+      overflow-y: auto;
       margin: 0;
       transform: translate(-50%, -50%);
       background: var(--cor-fundo, #0f1c17);

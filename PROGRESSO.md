@@ -28,6 +28,104 @@ Regras curtas:
 
 ---
 
+## 2026-10-28 — Conferência de enquadramento no navegador: o que o épico INTER deixou torto
+
+- **Parte / tarefa:** nenhuma tarefa nova do `PLANO.md`. É a conferência pedida no chat logo depois
+  do épico `INTER` — "verifique o enquadramento de cada coisa no navegador, se está acessível e se
+  não tem coisas fora de blocos ou se sobrepondo". Dez defeitos achados, dez consertados; suíte
+  **1261 → 1269**, com três guardas novas que pegam o que escapou.
+- **Como verificar:** `npx vitest run --maxWorkers=2` e `npm run dev`. Na tela, o Modo Feira a
+  1366 × 768 (o notebook da feira) e a 1920 × 1080: a barra de baixo, o canto de baixo do mapa, as
+  bolhas em cima das etiquetas e a coluna da direita do painel da árvore.
+- **Como foi medido — por régua, não por foto.** Um script de CDP abre o Edge headless em
+  1600 × 900, 1366 × 768, 1280 × 720, 1920 × 1080 e 390 × 844, joga o Modo Feira até ter bolha,
+  boletim, região aberta, painel da árvore e compra na barra — e em cada cena mede **a caixa de
+  cada elemento visível**: quem passa da janela, quem sai do bloco que o recorta, quem corta texto
+  sem reticências, qual botão está coberto (`elementFromPoint`, cinco pontos por botão), que texto
+  pinta por cima de que texto, alvo de toque abaixo de 44 px e fonte abaixo de 16 px. Duas
+  correções na própria régua tiraram o laudo de ~200 linhas de ruído para os defeitos de verdade:
+  **o que rola não está recortado** (está abaixo da dobra) e **o que foi recortado não sobrepõe
+  nada** (o retângulo continua lá, mas ninguém o pinta).
+- **Os oito defeitos:**
+  1. **Texto a 14 px em três lugares, contra o piso de 16 px do `§5`.** O `quick-buy.css` e o
+     `synergy.css` — os dois meus, do INTER — pediam `var(--tamanho-pequeno, 0.875rem)`, e esse
+     token **nunca existiu** no `theme.css`: a reserva valia sempre. O `outcome.css` tinha o mesmo
+     defeito desde antes, com outro nome inventado (`--texto-pequeno`), no estado da conquista.
+     **O teste que devia pegar isso não olhava dentro do `var()`** — só via `font-size: 0.875rem;`.
+     Agora ele lê toda medida escrita na declaração, reserva inclusive, e as quatro folhas do INTER
+     entraram na lista que ele audita.
+  2. **A prateleira de compra escorregava por cima das listras.** A coluna das listras era
+     `minmax(8rem, 1fr)` e o `.stripes` tem `min-width: 14rem` — abaixo do próprio mínimo o
+     elemento não encolhe, ele transborda. Medido a 1600 px com dois nós: a barra pedia 1700 px.
+     Agora a coluna tem piso de 14rem, quem cede é a prateleira (`minmax(0, auto)`, nome com
+     reticências) e o segundo nó só aparece a partir de **108rem** — era 96rem, e a soma de
+     107,6rem está escrita no `quick-buy.css`.
+  3. **A linha do conselho dividia o topo do mapa com a bolha da América do Norte.** Desceu para o
+     canto de baixo do quadro, em cima da legenda do calor, onde a faixa está livre.
+  4. **A bolha cobria o chip "◉ evento" da própria região** — 14 px dentro dele, medidos a 1280 px:
+     ela subia 3,4rem, e a conta certa é meia etiqueta + o chip + o fio de folga + meia bolha.
+  5. **A bolha cobria a etiqueta da vizinha, e a da Europa nascia cortada.** No mapa mais estreito
+     (54rem, o piso do `--largura-mundo`, que é o pior caso porque a etiqueta e a bolha não
+     encolhem): a bolha do Oriente Médio cobria **53% da etiqueta da Europa**, a linha do apoio
+     inclusive; a da Ásia Meridional, 32% da Ásia Oriental; a da Europa saía 11 px para fora do
+     desenho. O conserto é uma conta, e não um palpite — o `bubblePlacement` tenta pousar acima da
+     etiqueta, depois à direita, à esquerda e embaixo, e fica com o primeiro lugar que cabe inteiro
+     no quadro, não encosta em etiqueta nenhuma e não invade a faixa da legenda e do conselho. Dá:
+     América do Norte, América Latina, Ásia Oriental e Oceania **acima**; Europa e Oriente Médio
+     **à esquerda**; Ásia Meridional **à direita**; África **embaixo**. Sem lugar livre, volta para
+     cima — acontece só com a Oceania, encurralada entre a Ásia Meridional, a borda do desenho e a
+     legenda, e o que sobra dela é um canto de **10%** da etiqueta vizinha.
+  6. **As sinergias ficavam fora do painel da árvore a 1366 × 768.** A coluna da direita é um grid
+     com uma fila por seção, e o `INTER-08` acrescentou a terceira seção sem acrescentar a fila: as
+     sinergias caíam 164 px abaixo da borda, cortadas pelo `overflow: hidden` do diálogo, e o botão
+     "Comprar por 36 PAC" do detalhe era pintado por cima do título da contenção. Três filas, piso
+     de 12rem no detalhe e a coluna rolando quando não couber.
+  7. **O painel do Modo Feira perdia a moldura de cima e a de baixo a 1366 × 768** — pedia 10 px a
+     mais do que o palco tinha, e o palco recorta. Agora ele para na altura do palco e rola por
+     dentro.
+  8. **A prateleira continuava na barra depois do fim da partida**, convidando para um clique que o
+     `handleUnlock` já recusava. Numa tela que diz "Derrota", "Comprar agora" é a tela mentindo.
+  9. **O balão dos 4 passos cobria a linha do conselho** — 74% dela, medido numa partida normal a
+     1366 × 768. Os dois pousam no canto de baixo do mapa, e o balão é opaco por exigência de
+     contraste, então a linha ficava escrita embaixo dele. O conselho agora cala enquanto um passo
+     está no ar, pela mesma regra que já o calava com o painel do Modo Feira: quem ensina a operar
+     tem a vez, e o conselho volta no passo seguinte.
+  10. **A prateleira de conquistas saía do painel dela num celular** — 12 px cortados à direita a
+      390 px, porque a coluna pedia 22rem fixos e a janela não tinha. É de antes do INTER
+      (`CONQ-02`); o conserto é o `min(22rem, 100%)` que deixa a coluna encolher abaixo do mínimo
+      quando não há largura, e acima de 22rem nada muda.
+- **As três guardas novas**, todas sem navegador, porque todos esses defeitos eram visíveis nos
+  arquivos: o piso de 16 px passou a olhar dentro do `var()` (`tests/theme.test.ts`); o lugar da
+  bolha é refeito do zero a partir do que o botão pede ao navegador, com as medidas lidas das
+  próprias folhas de estilo (`tests/bubbles.dom.test.ts`); e a coluna do painel compara **o número
+  de seções do `index.html` com o número de filas do CSS** (`tests/tree-panel.dom.test.ts`). Os
+  três foram conferidas quebrando de propósito o código que consertaram.
+- **O que a régua diz agora**, nas cinco janelas e em todas as telas (título, conquistas, escolha
+  do especialista, painel da feira, partida, boletim, região, árvore com detalhe e sinergias,
+  cartão crítico, pergunta de reinício e a tela de fim rolada até o fim): nenhuma janela rola para
+  o lado; **nenhuma sobreposição de texto sobre texto** fora da animação das moedas voadoras; nada
+  sai do bloco que o recorta, exceto dois recortes de propósito (a faixa da Antártida embaixo do
+  mapa e o retrato redondo); nenhum texto abaixo de 16 px — só o ponto `●` decorativo dos
+  controles, que é 0,75em e vem acompanhado da palavra; nenhum botão coberto fora dos painéis que
+  cobrem a página por ofício; e nenhum erro no console.
+- **Pendente:**
+  - O `--texto-medio` do `outcome.css`, `region-panel.css`, `controls.css` e outros é outro token
+    que o `theme.css` não define. A reserva (1,125rem) está **acima** do piso, então não é defeito
+    de leitura — mas é um tamanho que a troca de tema não alcança.
+  - A tela do título precisa rolar 39 px a 1366 × 768 para mostrar a faixa de listras, e a escolha
+    do especialista, 23 px. São de antes do INTER (`VIS-08`, `REF-08`) e não afetam a partida.
+  - **O balão do tutorial cobre o canto de baixo do mapa** — a legenda, as etiquetas da Oceania e
+    da América Latina e, quando cai ali, uma bolha. É o desenho dele desde o P6: fundo opaco por
+    exigência de contraste, por cima do mundo, com "Entendi" e "Pular tutorial" à mão. Só vale
+    olhar de novo se o playtest mostrar alguém tentando clicar numa bolha através dele.
+  - **Duas bolhas na mesma região se encostam**, 40% de uma sobre a outra: o `--vez` as separa
+    2,6rem, e uma separação maior jogaria a segunda em cima da etiqueta da vizinha. Acontece em
+    ~12% dos pares (uma em oito regiões), as duas continuam clicáveis e as duas dizem o mesmo
+    valor.
+  - `favicon.ico` dá 404: a aba fica sem ícone. Custa um arquivo e uma linha no `index.html`.
+  - As moedas voadoras (`fly-gain`) se empilham a 4x e a última sai 15 px acima da janela antes de
+    sumir. É decoração com `pointer-events: none`, mas é a única coisa que ainda passa da borda.
+
 ## 2026-10-28 — Bolhas de PAC, evento legível, compra fora do painel e sinergias (épico INTER, completo)
 
 - **Parte / tarefa:** `INTER-01` a `INTER-08` ✔. Épico aberto e fechado na mesma sessão, pedido no

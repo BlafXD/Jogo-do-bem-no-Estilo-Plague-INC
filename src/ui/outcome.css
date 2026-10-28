@@ -315,7 +315,10 @@
    metros, nome e estado precisam não virar uma frase só. */
 .shelf__status {
   margin-left: auto;
-  font-size: var(--texto-pequeno, 0.875rem);
+  /* 1rem, como todo texto (§5): o `--texto-pequeno` nunca existiu no
+     theme.css, então a reserva de 0,875rem valia sempre e o estado da conquista
+     saía a 14px — lido de três metros, era o texto que sumia primeiro. */
+  font-size: var(--tamanho-base, 1rem);
   font-weight: 400;
   color: var(--cor-rotulo, #a7c0b4);
   white-space: nowrap;

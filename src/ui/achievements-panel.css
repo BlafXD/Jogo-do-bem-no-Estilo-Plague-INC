@@ -167,7 +167,12 @@
    condições quebrariam em quatro linhas cada. */
 .achievements-panel__shelf {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  /* O `min(22rem, 100%)` é o que impede a coluna de ser maior que o painel:
+     com `minmax(22rem, …)` cru, uma janela de 390 px ficava 12 px mais estreita
+     que a coluna e o `overflow: hidden` do diálogo cortava a borda direita das
+     condições — medido no Edge na conferência de enquadramento. Acima de 22rem
+     nada muda. */
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
   gap: 1rem 1.5rem;
   margin: 0;
   padding: 0;

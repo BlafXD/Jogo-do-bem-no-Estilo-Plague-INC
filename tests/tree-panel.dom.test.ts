@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ui } from '../src/data/i18n';
 import { createInitialState, type GameState } from '../src/engine/state';
@@ -187,5 +189,49 @@ describe('o Tab fica dentro do painel', () => {
     tab(dialog);
 
     expect(document.activeElement).toBe(dialog.querySelector('[data-tree-panel="close"]'));
+  });
+});
+
+/**
+ * A coluna da direita do painel, conferida contra o index.html.
+ *
+ * **O defeito que este teste pega.** Em tela cheia a coluna é um grid com uma
+ * fila por seção. O `INTER-08` acrescentou as sinergias ao index.html e não
+ * acrescentou a fila: a terceira seção caiu numa fila implícita, a coluna
+ * passou do painel e o `overflow: hidden` do diálogo cortou o que sobrou —
+ * medido no Edge a 1366 × 768, as sinergias ficavam 164 px abaixo da borda e o
+ * botão de comprar do detalhe era pintado por cima do título da contenção.
+ *
+ * As duas fontes são arquivos: dá para cobrar isso sem navegador nenhum.
+ */
+describe('as filas da coluna do painel', () => {
+  const html = readFileSync('index.html', 'utf8');
+  const css = readFileSync('src/ui/tree-panel.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  it('tem uma fila para cada seção que o index.html põe na coluna', () => {
+    const coluna = html.split('class="tree-panel__side"')[1]?.split('</div>')[0] ?? '';
+    const secoes = coluna.match(/<section /g)?.length ?? 0;
+
+    // A regra da tela cheia é a última que define as filas da coluna.
+    const regras = css.split('.tree-panel__side {').slice(1);
+    const ultima = regras.at(-1) ?? '';
+    const filas = /grid-template-rows:\s*([^;]+);/.exec(ultima)?.[1] ?? '';
+    const trilhas = filas
+      .replace(/minmax\([^)]*\)/g, 'x')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    expect(secoes, 'seções na coluna do index.html').toBe(3);
+    expect(trilhas.length, `filas em "${filas}"`).toBe(secoes);
+  });
+
+  /**
+   * E a coluna rola: com três seções e uma janela baixa, nem sempre cabe tudo —
+   * sem isto, o que não coube ficaria inalcançável atrás do recorte do diálogo.
+   */
+  it('rola quando as três seções não cabem', () => {
+    const regras = css.split('.tree-panel__side {').slice(1);
+    expect(regras.at(-1)).toContain('overflow-y: auto');
   });
 });

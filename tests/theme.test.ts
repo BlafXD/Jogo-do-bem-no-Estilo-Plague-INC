@@ -304,6 +304,13 @@ describe('as folhas dos módulos', () => {
     'critical-card.css',
     'tutorial.css',
     'icons.css',
+    // As folhas do épico INTER, que nasceram fora desta lista — e foi assim que
+    // o rótulo da prateleira e o painel de sinergias viveram a 14px sem ninguém
+    // reclamar.
+    'bubbles.css',
+    'coach.css',
+    'quick-buy.css',
+    'synergy.css',
   ];
 
   /**
@@ -334,17 +341,32 @@ describe('as folhas dos módulos', () => {
    * O P5-02 encontrou dois textos em 0,875rem — 14px — no event-cards.css, um
    * deles a palavra "CRÍTICO". Passaram porque ninguém estava olhando; este
    * teste é quem olha daqui em diante.
+   *
+   * **A conta olha dentro do `var()`.** Era por fora dele que os 14px voltavam:
+   * `font-size: var(--tamanho-pequeno, 0.875rem)`, com um token que o theme.css
+   * nunca definiu, é 0,875rem sempre — e a versão antiga deste teste, que só
+   * lia `font-size: 0.875rem;`, não via nada. Foi por essa fresta que o rótulo
+   * da prateleira, o painel de sinergias e o estado das conquistas chegaram à
+   * tela a 14px. Agora toda medida escrita na declaração conta, reserva
+   * inclusive.
    */
   it('não escreve nenhum texto abaixo do piso de 16px', () => {
+    const declaracao = /font-size:\s*([^;]+);/g;
+    const medidaEscrita = /([\d.]+)(rem|px)\b/g;
+
     for (const name of sheets) {
       const semComentarios = readCss(name).replace(/\/\*[\s\S]*?\*\//g, '');
 
-      for (const [, valor] of semComentarios.matchAll(/font-size:\s*([\d.]+)rem\s*;/g)) {
-        expect(Number(valor), `${name}: font-size ${valor}rem`).toBeGreaterThanOrEqual(1);
-      }
-
-      for (const [, valor] of semComentarios.matchAll(/font-size:\s*([\d.]+)px\s*;/g)) {
-        expect(Number(valor), `${name}: font-size ${valor}px`).toBeGreaterThanOrEqual(16);
+      for (const achado of semComentarios.matchAll(declaracao)) {
+        const valor = achado[1] ?? '';
+        for (const parte of valor.matchAll(medidaEscrita)) {
+          const [, medida = '', unidade] = parte;
+          const piso = unidade === 'rem' ? 1 : 16;
+          expect(
+            Number(medida),
+            `${name}: font-size ${medida}${unidade} em "${valor.trim()}"`,
+          ).toBeGreaterThanOrEqual(piso);
+        }
       }
     }
   });

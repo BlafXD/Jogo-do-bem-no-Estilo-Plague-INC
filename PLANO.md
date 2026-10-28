@@ -399,9 +399,13 @@ subir o `SAVE_VERSION` 3 → 4 (saves da versão 3 recusados, como no `REF-04`) 
       — *`src/ui/quick-buy.ts`/`.css` e o selo "3 prontos" no botão da árvore, os dois lendo o
       `readyToUnlock` novo do engine (três telas faziam a mesma varredura). **A prateleira mostra 2
       nós**, medido na tela: com três, a barra de baixo quebrava em três linhas a 1600 px, e a 1280
-      px os nomes sumiam — abaixo de 96rem ela mostra um só.*
+      px os nomes sumiam — abaixo de 96rem ela mostra um só. **Corrigido na conferência de
+      enquadramento do mesmo dia:** o segundo nó só cabe a partir de **108rem** (1728 px) — abaixo
+      disso a prateleira escorregava por cima das listras. Ver `PROGRESSO.md`, 2026-10-28.*
 - [x] `INTER-07` A linha do "agora faça isto", derivada do estado — **P** — *`src/ui/coach.ts`, no
-      topo do quadro do mapa. A escada é por **quanto se perde esperando**: bolha (expira) → conter
+      canto de baixo do quadro do mapa, em cima da legenda do calor — no topo ela dividia o lugar
+      com a bolha da América do Norte (conferência de enquadramento do mesmo dia). A escada é por
+      **quanto se perde esperando**: bolha (expira) → conter
       (o estrago é permanente) → apoio furado → comprar (que já está à vista na prateleira) → esperar.
       Nunca dá palpite de estratégia. Cala com o painel da feira no ar e na partida encerrada.*
 - [x] `INTER-08` Mais bônus na árvore: três **sinergias** que atravessam ramos — **G** — *`synergies.json`

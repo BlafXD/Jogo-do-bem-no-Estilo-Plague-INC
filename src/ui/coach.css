@@ -1,28 +1,43 @@
 /* A linha do "faça isto agora" (INTER-07).
 
-   Pousa no topo do **quadro** do mapa, sobre o mar, pelo mesmo motivo da legenda
-   do aquecimento no canto de baixo: ali ela não custa altura ao mundo, e está
-   onde o jogador já está olhando. Num estande, é a primeira coisa que alguém de
-   pé consegue ler. No palco (um nível acima) ela caía em cima do texto de
-   entrada do mapa — medido no Edge, e foi assim que o lugar foi escolhido.
+   Pousa no **quadro** do mapa, sobre o mar, pelo mesmo motivo da legenda do
+   aquecimento, que divide o canto de baixo com ela: ali ela não custa altura ao
+   mundo, e está onde o jogador já está olhando. Num estande, é a primeira coisa
+   que alguém de pé consegue ler. No palco (um nível acima) ela caía em cima do
+   texto de entrada do mapa — medido no Edge, e foi assim que o nível foi
+   escolhido; o canto foi escolhido depois, pela conferência de enquadramento.
 
    **O fundo é opaco de propósito.** Texto sobre a ilustração do mapa sem fundo
    não alcança o contraste AA que o §5 do GDD exige — é a mesma conclusão que o
    balão do tutorial registrou no layout.css. */
 
-/* Encostada na esquerda, e não centralizada: medido no Edge a 1280 px, a linha
-   centralizada caía em cima da etiqueta da Europa, que fica no meio do topo do
-   mapa. À esquerda ela passa por cima do oceano e do Alasca, e a etiqueta mais
-   próxima (América do Norte) começa abaixo dela. */
+/* **No canto de baixo, em cima da legenda do aquecimento** — e não mais no
+   topo. Encostada na esquerda, e não centralizada: medido no Edge a 1280 px, a
+   linha centralizada caía em cima da etiqueta da Europa, que fica no meio do
+   topo do mapa.
+
+   O topo foi abandonado pela mesma medição, depois do INTER-04: lá em cima a
+   faixa é disputada pela bolha da América do Norte (que pousa a 4,3rem acima do
+   anchor dela, a 5,9rem do teto do desenho) e pelo chip da Europa. Embaixo a
+   faixa está livre — a etiqueta mais baixa, a da Oceania, termina a 4,3rem do
+   chão do quadro, e a legenda ocupa 2,1rem dele. */
 .map__coach {
   position: absolute;
-  top: 0.5rem;
+  /* 0,5rem da legenda, 1,6rem de altura dela e 0,2rem de folga entre as duas.
+     A folga é curta de propósito: cada décimo que a linha sobe é um décimo a
+     menos para a bolha da África, que pousa embaixo da etiqueta dela e tem
+     0,2rem de sobra (bubbles.ts). */
+  bottom: 2.3rem;
   left: 0.75rem;
-  /* Abaixo das bolhas (que são 2) e acima das etiquetas: numa tela estreita a
-     linha e a bolha da América do Norte dividem o canto, e quem tem prazo para
-     ser clicada é a bolha. O clique atravessa a linha de qualquer jeito. */
+  /* Acima das etiquetas e abaixo das bolhas (que são 2). O clique atravessa a
+     linha de qualquer jeito, pelo `pointer-events` lá embaixo. */
   z-index: 1;
-  max-width: min(52rem, calc(100% - 1.5rem));
+  /* 38rem e não 52: é o que a frase mais longa do conselho pede ("A Inércia
+     está em 55, e o estrago dela não se desfaz: contenha na árvore"), e é
+     também onde a linha para antes da etiqueta da Oceania, que começa a 41,9rem
+     da esquerda no mapa mais estreito. Mais larga que isso, uma frase futura
+     passaria por baixo dela. */
+  max-width: min(38rem, calc(100% - 1.5rem));
   padding: 0.4rem 0.9rem;
   border: 1px solid var(--cor-borda, #a08d5e);
   border-radius: var(--raio-pequeno, 0.375rem);
