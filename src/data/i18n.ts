@@ -139,6 +139,32 @@ export const ui = {
     label: 'Árvore de habilidades',
     hint: 'Abre a árvore de habilidades por cima da partida. O número é o PAC que você tem para gastar.',
     points: (points: string) => `${points} PAC`,
+    /**
+     * Quantos nós estão ao alcance do caixa agora (INTER-06).
+     *
+     * **Existe para o jogador não precisar abrir o painel só para descobrir se
+     * tem o que comprar** — a 4x do Modo Feira, essa ida e volta custa meses de
+     * jogo. Vazio quando não há nenhum: um "0 prontos" pendurado no botão é
+     * ruído, e o começo da partida ficaria assim por três anos.
+     */
+    ready: (count: number) => (count === 0 ? '' : `${count} ${count === 1 ? 'pronto' : 'prontos'}`),
+    readyHint: (count: number) =>
+      count === 1 ? 'Um nó já cabe no seu PAC.' : `${count} nós já cabem no seu PAC.`,
+  },
+
+  // A prateleira de compra rápida da barra de baixo (INTER-06), pedida no chat
+  // em 2026-10-28: "não precisar ficar TODA hora na tela de melhorar o
+  // personagem".
+  //
+  // **O texto não recomenda nada.** A prateleira mostra os mais baratos ao
+  // alcance, e chamar isso de "recomendado" seria jogar pelo jogador — a escolha
+  // é o jogo (docs/GDD.md §2.4).
+  quickBuy: {
+    label: 'Comprar agora',
+    /** O nome acessível do botão: o nó, o ramo e o custo. */
+    said: (name: string, branch: string, cost: string) => `Comprar ${name} · ${branch} · ${cost}`,
+    /** A dica: o efeito do nó, com o mesmo texto do detalhe, e o custo. */
+    hint: (description: string, cost: string) => `${description} Custa ${cost}.`,
   },
 
   /**
@@ -494,6 +520,30 @@ export const ui = {
     where: (region: string, year: string) => `${region} · ${year}`,
 
     /**
+     * O que o evento **cobrou** (INTER-02).
+     *
+     * **Por que esta linha existe.** Até aqui o cartão dizia o nome, o lugar, o
+     * ano e um fato científico — e não dizia o que tinha acontecido com a
+     * partida. O pedido do chat chamou os eventos de "sem sentido", e era
+     * literal: o apoio caía, o PAC sumia, e a única tela que falava do evento
+     * não ligava uma coisa à outra. O número vem do `EventToll` do engine, que
+     * guarda o que de fato saiu — não o que o evento pediu.
+     *
+     * **Sem sinal de menos, e sem cor.** "Cobrou" já diz a direção, e o §5 do
+     * GDD não aceita informação que dependa de enxergar um detalhe. Cada parcela
+     * leva o rótulo do que perdeu, como no painel da região.
+     *
+     * As parcelas que saíram zeradas não entram na frase: um evento que pegou um
+     * caixa vazio não deve escrever "0 PAC" como se tivesse cobrado algo.
+     */
+    toll: {
+      support: (value: string) => `${value} de apoio`,
+      economy: (value: string) => `${value} de economia`,
+      points: (value: string) => `${value} PAC`,
+      line: (parts: readonly string[]) => `Cobrou: ${parts.join(' · ')}`,
+    },
+
+    /**
      * O aviso da Inércia (VIS-11): o nível que ela passou, o que ela faz e o
      * que a segura. Os números chegam como argumento — a cadência e o nível são
      * do balance.json, e a força de cada turno é o nível em porcentagem (o
@@ -528,6 +578,83 @@ export const ui = {
 
     paused: (name: string) =>
       `Tempo pausado: ${name}. Aperte Retomar, ou a barra de espaço, para seguir.`,
+  },
+
+  // As sinergias da árvore (INTER-08): bônus que não moram em nó nenhum, e que
+  // só fecham quando **todos os cinco ramos** têm nós comprados.
+  //
+  // **Nenhuma frase aqui fala de ciência**, e isso é regra: o campo `fact` dos
+  // nós é onde mora ciência com fonte (regra 9), e a sinergia é uma afirmação
+  // sobre o jogo — "a agência agindo nas cinco frentes tem mais apoio" —, não
+  // sobre o mundo.
+  synergy: {
+    label: 'Sinergias',
+    intro: 'Bônus que nenhum nó dá sozinho: eles pedem nós comprados em todos os cinco ramos.',
+    /** "1 de 3" — quantas já estão fechadas. */
+    count: (done: number, total: number) => `${done} de ${total}`,
+    /** "1 nó em cada um dos 5 ramos" — a condição, escrita. */
+    requirement: (nodes: number, branches: number) =>
+      `${nodes} ${nodes === 1 ? 'nó' : 'nós'} em cada um dos ${branches} ramos`,
+    /** "3 de 5 ramos" — quanto falta. */
+    progress: (done: number, total: number) => `${done} de ${total} ramos`,
+    // Ícone **mais** rótulo, como na árvore: o §5 do GDD proíbe comunicar estado
+    // só por cor, e os dois sinais têm formas diferentes de longe.
+    status: {
+      done: { icon: '✔', label: 'Fechada' },
+      pending: { icon: '◌', label: 'Em aberto' },
+    },
+    /** O pop-up de quando uma sinergia fecha (src/ui/toast.ts). */
+    earned: 'Sinergia fechada',
+  },
+
+  // A linha do "faça isto agora", em cima do mapa (INTER-07). Pedido do chat em
+  // 2026-10-28: "as pessoas precisam entender de primeira o que está
+  // acontecendo", principalmente no Modo Feira.
+  //
+  // **Cada frase manda fazer uma coisa, e diz onde ela está.** Nenhuma explica
+  // mecânica — isso é do tutorial (P7-08) e das dicas dos indicadores — e
+  // nenhuma dá palpite de estratégia, que é o jogo (docs/GDD.md §2.4).
+  coach: {
+    bubble: (count: number) =>
+      count === 1
+        ? 'Tem uma bolha de PAC no mapa: clique nela, ou aperte B.'
+        : `Tem ${count} bolhas de PAC no mapa: clique nelas, ou aperte B.`,
+    contain: (level: number) =>
+      `A Inércia está em ${level}, e o estrago dela não se desfaz: contenha na árvore.`,
+    support: (region: string) => `O apoio furou o piso em ${region}: o ramo Sociedade o levanta.`,
+    buy: (count: number) =>
+      count === 1
+        ? 'Você já tem PAC para um nó: compre na barra de baixo.'
+        : `Você já tem PAC para ${count} nós: compre na barra de baixo.`,
+    wait: 'O PAC entra a cada mês. As teclas 2 e 4 aceleram o tempo.',
+  },
+
+  // As bolhas de PAC em cima do mapa (INTER-04), pedidas no chat em 2026-10-28:
+  // "uns pop-up em cada país que dá um bônus do PAC".
+  //
+  // **O texto evita preposição de propósito.** "na África" e "na Europa"
+  // funcionam, "na Oriente Médio" não — e os nomes das oito regiões não cabem
+  // numa regra só. O separador `·` resolve, e é o mesmo que o cartão de evento
+  // já usa para dizer onde a pancada caiu.
+  bubbles: {
+    /** O rótulo da camada inteira, para o leitor de tela. */
+    label: 'Oportunidades no mapa',
+    /** O que a bolha mostra escrito. Nunca só o desenho (§5). */
+    claim: (points: string) => `+${points} PAC`,
+    /** A frase que o leitor de tela lê no lugar da bolha. */
+    said: (points: string, region: string) => `Recolher ${points} PAC · ${region}`,
+    /**
+     * A dica com o número (§5: tooltip em tudo que tem número).
+     *
+     * O prazo vai escrito porque "está sumindo" é um estado, e um estado não
+     * pode depender de alguém perceber um pisca-pisca.
+     */
+    hint: (months: number) =>
+      `Clique para recolher. Some em ${months} ${months === 1 ? 'mês' : 'meses'}. A tecla B recolhe todas.`,
+    /** O atalho que recolhe tudo que está na mesa — o caminho sem mouse. */
+    key: 'b',
+    /** Como o atalho é anunciado quando ele recolhe algo. */
+    collected: (points: string) => `+${points} PAC recolhidos`,
   },
 
   // A contenção da Inércia (P7-03), com a regra do docs/GDD.md §2.6.
@@ -831,7 +958,7 @@ export const ui = {
     fair: {
       title: 'Como jogar, em duas frases',
       lines: [
-        'O tempo corre sozinho até 2100, e você acumula PAC a cada mês.',
+        'O tempo corre sozinho até 2100, e você acumula PAC — parte dele em bolhas no mapa, para clicar.',
         'Gaste o PAC na árvore de habilidades: o botão dela fica na barra de baixo. É só isso.',
       ],
       start: 'Começar',
@@ -845,7 +972,8 @@ export const ui = {
       indicators: {
         temperature: 'Sobe com as emissões acumuladas. Passar de 3 °C encerra a partida.',
         emissions: 'O que o mundo solta por ano. A meta é chegar a zero.',
-        actionPoints: 'O PAC compra os nós da árvore de habilidades.',
+        actionPoints:
+          'Compra os nós da árvore. Parte dele chega em bolhas no mapa: clique ou aperte B.',
         support: 'Apoio médio das 8 regiões. Se zerar, a agência é dissolvida.',
         inertia: 'Cresce com os seus cortes; a árvore de Sociedade a contém.',
       },

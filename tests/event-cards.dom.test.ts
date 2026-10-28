@@ -32,7 +32,7 @@ const CRITICO = climateEvents.filter(isCritical);
 const MODERADO = climateEvents.filter((e) => !isCritical(e));
 
 function card(eventId: string, ticksRemaining = CARD_TICKS): ActiveEvent {
-  return { eventId, target: 'na', ticksRemaining };
+  return { eventId, target: 'na', ticksRemaining, toll: { support: 0, economy: 0, points: 0 } };
 }
 
 function withCards(tick: number, ...actives: readonly ActiveEvent[]): GameState {
@@ -128,6 +128,37 @@ describe('o cartão na tela', () => {
     expect(textOf(root, '.events__fact')).toBe(critico.fact);
     expect(textOf(root, '.events__where')).toContain('América do Norte');
     expect(textOf(root, '.events__where')).toContain(String(yearForTick(600)));
+  });
+
+  /**
+   * A linha do pedágio (INTER-02): entra entre o "onde" e o fato real, e só
+   * aparece quando houve o que cobrar.
+   */
+  it('mostra o que o evento cobrou, antes do fato real', () => {
+    const root = mount();
+    const cobrado: ActiveEvent = {
+      eventId: critico.id,
+      target: 'na',
+      ticksRemaining: CARD_TICKS,
+      toll: { support: 3, economy: 2, points: 10 },
+    };
+    show(root, eventCardsView(withCards(600, cobrado)));
+
+    const texto = textOf(root, '.events__toll');
+    expect(texto).toContain('apoio');
+    expect(texto).toContain('PAC');
+
+    const linhas = Array.from(
+      root.querySelectorAll<HTMLElement>('.events__where, .events__toll, .events__fact'),
+    ).map((el) => el.className);
+    expect(linhas).toEqual(['events__where', 'events__toll', 'events__fact']);
+  });
+
+  it('sem pedágio, a linha não entra no cartão', () => {
+    const root = mount();
+    show(root, eventCardsView(withCards(600, card(critico.id))));
+
+    expect(root.querySelector('.events__toll')).toBeNull();
   });
 
   it('§5: a gravidade tem ícone E rótulo escrito, e o ícone é decoração', () => {

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+
+import { claimAllBubbles } from '../src/engine/bubbles';
 import { globalEmissions } from '../src/engine/climate';
 import { canContain, contain } from '../src/engine/inertia';
 import { isFinished, MEDAL_CEILING, medalFor, outcomeOf } from '../src/engine/outcome';
@@ -224,7 +226,9 @@ describe('a partida inteira', () => {
         }
       }
 
-      state = advanceTick(state);
+      // Quem joga bem recolhe as bolhas do mapa (INTER-03): a renda total é a
+      // mesma de antes, e só quem olha o mundo a recebe inteira.
+      state = claimAllBubbles(advanceTick(state));
     }
 
     return state;
@@ -317,7 +321,7 @@ describe('a partida inteira', () => {
   it('a vitória por zero líquido existe, mas nenhuma estratégia medida a alcança', () => {
     let tudo = start();
     for (const skill of skills) tudo = unlockSkill({ ...tudo, actionPoints: 999999 }, skill.id);
-    for (let i = 0; i < TOTAL_TICKS; i++) tudo = advanceTick(tudo);
+    for (let i = 0; i < TOTAL_TICKS; i++) tudo = claimAllBubbles(advanceTick(tudo));
 
     expect(globalEmissions(tudo)).toBeLessThan(balance.netZeroEmissions);
     expect(outcomeOf(tudo)).toMatchObject({ ending: 'netZero' });

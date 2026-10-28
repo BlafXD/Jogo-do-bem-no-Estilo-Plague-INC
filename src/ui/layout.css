@@ -278,7 +278,11 @@ body {
        fileira e a linha de atalhos, na de baixo. */
     .base {
       position: relative;
-      grid-template-columns: fit-content(32rem) minmax(14rem, 1fr) auto;
+      /* Quatro colunas desde o INTER-06: controles, listras, prateleira de
+         compra e o botão da árvore. As listras cedem a largura — elas são a
+         assinatura visual da partida, e encolher não as apaga —, e a prateleira
+         pega o que precisar até caber três nós. */
+      grid-template-columns: fit-content(32rem) minmax(8rem, 1fr) auto auto;
     }
 
     /* O balão do tutorial fica logo acima da barra, por cima do mundo, em vez

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { temperatureFor } from '../src/engine/climate';
+import { CARD_TICKS } from '../src/engine/events';
 import { fromSave, SAVE_VERSION, toSave } from '../src/engine/save';
 import { unlockSkill } from '../src/engine/skills';
 import { balance, createInitialState, type GameState } from '../src/engine/state';
@@ -119,6 +120,66 @@ describe('o formato do save', () => {
     };
 
     expect(fromSave(quebrado)).toEqual({ ok: false, reason: 'badSkills' });
+  });
+
+  /**
+   * Os cartões de evento, conferidos um por um desde o INTER-02 — a dívida que
+   * o P7-01 tinha deixado aqui. O que mudou a conta foi o `toll`: um número que
+   * a tela escreve como fato não pode vir de um save sem conferência.
+   */
+  describe('os cartões de evento do save', () => {
+    const cartão = {
+      eventId: 'heatwave',
+      target: 'na',
+      ticksRemaining: 3,
+      toll: { support: 2, economy: 1, points: 4 },
+    };
+
+    function comCartão(active: unknown) {
+      const envelope = toSave(createInitialState(1));
+      return { ...envelope, state: { ...envelope.state, activeEvents: [active] } };
+    }
+
+    it('aceita um cartão bem formado e o devolve igual', () => {
+      const lido = fromSave(comCartão(cartão));
+
+      expect(lido.ok).toBe(true);
+      expect(lido.ok && lido.state.activeEvents[0]).toEqual(cartão);
+    });
+
+    it('recusa pedágio ausente, negativo ou que não é número', () => {
+      for (const toll of [
+        undefined,
+        null,
+        'muito',
+        { support: -1, economy: 0, points: 0 },
+        {
+          support: 0,
+          economy: NaN,
+          points: 0,
+        },
+      ]) {
+        expect(fromSave(comCartão({ ...cartão, toll }))).toEqual({
+          ok: false,
+          reason: 'badEvents',
+        });
+      }
+    });
+
+    it('recusa região inventada e idade fora da janela', () => {
+      expect(fromSave(comCartão({ ...cartão, target: 'marte' })).ok).toBe(false);
+      expect(fromSave(comCartão({ ...cartão, ticksRemaining: 0 })).ok).toBe(false);
+      expect(fromSave(comCartão({ ...cartão, ticksRemaining: CARD_TICKS + 1 })).ok).toBe(false);
+    });
+
+    /**
+     * **Aceita de propósito**, e é o oposto da regra das habilidades: quem
+     * renomear um evento no events.json não apaga a partida de ninguém. O cartão
+     * desaparece da tela (o `cardFor` devolve `null`) e o resto da partida segue.
+     */
+    it('aceita um id de evento que não existe mais no catálogo', () => {
+      expect(fromSave(comCartão({ ...cartão, eventId: 'tsunami' })).ok).toBe(true);
+    });
   });
 
   it('recusa compra repetida na lista', () => {

@@ -363,7 +363,14 @@ describe('o aquecimento e os alertas no desenho (P7-04)', () => {
   it('a região atingida por evento pulsa, e continua com hachura se o apoio furou', () => {
     const state: GameState = {
       ...comApoio('af', 5),
-      activeEvents: [{ eventId: 'drought', target: 'af', ticksRemaining: 2 }],
+      activeEvents: [
+        {
+          eventId: 'drought',
+          target: 'af',
+          ticksRemaining: 2,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+      ],
     };
     const root = mount(() => {}, state);
 

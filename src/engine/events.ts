@@ -21,6 +21,7 @@ import {
   REGION_IDS,
   type ActiveEvent,
   type ClimateEvent,
+  type EventToll,
   type GameState,
   type Region,
   type RegionId,
@@ -252,19 +253,31 @@ export function applyEvent(state: GameState, draw: EventDraw): GameState {
   const factor = damageMultiplier(draw.event, region);
   const { support, economy, points } = draw.event.impact;
 
+  // O pedágio: o que o evento **conseguiu levar**, e não o que ele pediu
+  // (INTER-02). Os três `Math.min` são os mesmos pisos de antes escritos do
+  // outro lado — `Math.max(0, x - y)` é `x - Math.min(x, y)` —, só que agora
+  // sobra registrado quanto saiu. É isso que o cartão mostra, e é por isso que
+  // ele pode mostrar: recalcular depois daria outro número, porque a
+  // resiliência da região muda ao longo da partida.
+  const toll: EventToll = {
+    support: Math.min(region.support, support * factor),
+    economy: Math.min(region.economy, economy * factor),
+    points: Math.min(state.actionPoints, points * factor),
+  };
+
   const hit: Region = {
     ...region,
-    support: Math.max(0, region.support - support * factor),
-    economy: Math.max(0, region.economy - economy * factor),
+    support: region.support - toll.support,
+    economy: region.economy - toll.economy,
   };
 
   return {
     ...state,
     regions: { ...state.regions, [draw.target]: hit },
-    actionPoints: Math.max(0, state.actionPoints - points * factor),
+    actionPoints: state.actionPoints - toll.points,
     activeEvents: [
       ...state.activeEvents,
-      { eventId: draw.event.id, target: draw.target, ticksRemaining: CARD_TICKS },
+      { eventId: draw.event.id, target: draw.target, ticksRemaining: CARD_TICKS, toll },
     ],
   };
 }

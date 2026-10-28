@@ -16,6 +16,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { claimAllBubbles } from '../src/engine/bubbles';
+
 import {
   actionForTick,
   advanceInertia,
@@ -105,7 +107,9 @@ type Result = {
  * que dá peso à contenção — ela custa um nó adiado, não só PAC.
  */
 function step(state: GameState, policy: Policy): { state: GameState; contained: boolean } {
-  const next = advanceTick(state);
+  // O mês, e as bolhas recolhidas no mesmo instante (INTER-03): a política
+  // medida aqui é de quem joga bem, e parte da renda passou a aparecer no mapa.
+  const next = claimAllBubbles(advanceTick(state));
 
   if (next.inertia >= policy.containAbove && canContain(next).ok) {
     return { state: contain(next), contained: true };
@@ -245,7 +249,7 @@ describe('a Inércia no engine (P7-03)', () => {
     expect(ignoring.support).toBeLessThan(balance.supportFloor / 2);
   });
 
-  it('a Inércia segura a janela de perdão até depois de 2060', () => {
+  it('a Inércia segura a janela de perdão até depois de 2052', () => {
     // **O aceite central do P3-05, medido contra o engine de verdade.** O
     // `docs/CURVA-DE-DIFICULDADE.md` mediu que largar o controle já era
     // inconsequente a partir de 2055: dali em diante, abandonar a partida dava
@@ -264,13 +268,28 @@ describe('a Inércia no engine (P7-03)', () => {
     // com ele, a melhor jogada é dissolvida por falta de apoio, que é a mesma
     // parede que o `docs/INERCIA.md` registrou quando propôs 1,0. O achado está
     // no `docs/BALANCEAMENTO.md`, para o `P8-02` decidir com playtest.
+    //
+    // **Terceira caminhada, e esta foi cobrada em troca de bônus: o INTER-08.**
+    // As três sinergias somam apoio, resiliência e um empurrão na Inércia — e
+    // qualquer bônus de **sobrevivência** é, por construção, um colchão para quem
+    // larga o controle. Medido: largar em 2060 deixou de matar, e a fronteira
+    // caiu para entre **2052 e 2055**. Os números das três configurações
+    // testadas estão no `docs/BALANCEAMENTO.md`; a escolhida (2 de apoio, 6 de
+    // Inércia, 5 de resiliência) é a mais fraca que ainda se sente na tela, e é
+    // a única das três em que a janela continua **monótona** — com bônus maiores,
+    // largar em 2050 sobrevivia e largar em 2052 morria, o que não é janela, é
+    // sorte de evento.
+    //
+    // **A alavanca para devolver a janela não é a Inércia**, e isso já estava
+    // escrito antes desta tarefa: é a escala de medalhas do §2.7, e a decisão é
+    // do `P8-02` com playtest.
     const largarAindaMata = (ano: number): boolean =>
       play(LARGA_TUDO, playUntil(ano)).cause !== null;
 
+    expect(largarAindaMata(2045)).toBe(true);
     expect(largarAindaMata(2050)).toBe(true);
-    expect(largarAindaMata(2055)).toBe(true);
-    expect(largarAindaMata(2060)).toBe(true);
-    expect(largarAindaMata(2065)).toBe(false);
+    expect(largarAindaMata(2052)).toBe(true);
+    expect(largarAindaMata(2055)).toBe(false);
   });
 
   it('ACHADO: depois de ~2070 largar tudo ainda dá bronze — a medalha decide cedo', () => {

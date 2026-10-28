@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+
+import { claimAllBubbles } from '../src/engine/bubbles';
 import {
   canUnlock,
   costFor,
@@ -404,6 +406,12 @@ describe('os efeitos contínuos', () => {
     expect(emissionCutFor(gameWith(0, ['solar', 'wind']), 'na')).toBeCloseTo(0.0095, 10);
   });
 
+  /**
+   * **As sinergias do INTER-08 não entram neste número, e isso é regra.** Elas
+   * só entregam empurrão único (apoio, resiliência, Inércia), e o
+   * `SYNERGY_EFFECTS` do state.ts recusa `emissionCut` na carga — com o número
+   * medido que explica por quê. A curva de emissão é dos nós, e só deles.
+   */
   it('a árvore inteira corta 12,25% ao ano, em todas as 8 regiões', () => {
     const tudo = gameWith(
       0,
@@ -499,7 +507,10 @@ function playGreedy(): GameState {
   let state = createInitialState(2025);
 
   for (let tick = 0; tick < TOTAL_TICKS; tick++) {
-    state = advanceTick(state);
+    // O comprador guloso também recolhe as bolhas (INTER-03): ele é a jogada de
+    // referência do orçamento, e uma referência que ignora 30% da própria renda
+    // mediria o orçamento de outro jogo.
+    state = claimAllBubbles(advanceTick(state));
 
     for (;;) {
       const affordable = skills
@@ -613,8 +624,12 @@ describe('a árvore ligada à simulação', () => {
     let taught: GameState = { ...createInitialState(1), unlockedSkills: ['climate-education'] };
 
     for (let tick = 0; tick < balance.ticksPerYear; tick++) {
-      plain = advanceTick(plain);
-      taught = advanceTick(taught);
+      // Os dois recolhem as bolhas (INTER-03): o que se compara aqui é a renda,
+      // e desde o INTER-03 parte dela chega pelo mapa — inclusive os +2 PAC/ano
+      // da educação climática, porque a bolha vale uma fatia de **toda** a
+      // renda, e não um número fixo.
+      plain = claimAllBubbles(advanceTick(plain));
+      taught = claimAllBubbles(advanceTick(taught));
     }
 
     expect(plain.actionPoints).toBeCloseTo(balance.basePointsPerYear, 6);

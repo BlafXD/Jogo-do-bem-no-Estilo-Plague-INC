@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+
+import { claimAllBubbles } from '../src/engine/bubbles';
 import { unlockSkill } from '../src/engine/skills';
 import { balance, createInitialState, REGION_IDS, type GameState } from '../src/engine/state';
 import { advanceTick } from '../src/engine/tick';
@@ -110,7 +112,11 @@ describe('hudView', () => {
     const before = hudView(state);
 
     for (let tick = 0; tick < balance.ticksPerYear; tick++) {
-      state = advanceTick(state);
+      // Com as bolhas (INTER-03), um ano só rende a entrada de base para quem
+      // recolhe o que aparece no mapa — a renda não mudou de tamanho, mudou de
+      // caminho. Quem ignora as bolhas fica com `1 − bubbleShare` dela, e é o
+      // tests/bubbles.test.ts que mede essa partida.
+      state = claimAllBubbles(advanceTick(state));
     }
     const after = hudView(state);
 

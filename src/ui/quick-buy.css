@@ -1,0 +1,96 @@
+/* A prateleira de compra rápida da barra de baixo (INTER-06).
+
+   Ela vive ao lado do botão da árvore, e o motivo é de olhar: o jogador que
+   acabou de ver o PAC subir no HUD está olhando o mundo, não o painel. A compra
+   óbvia acontece onde ele já está.
+
+   **Nenhum estado aqui depende de cor** (§5 do GDD): cada botão escreve o nome
+   do nó, o custo com unidade, e carrega no `title` o efeito do nó. */
+
+.quick-buy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.quick-buy__label {
+  margin: 0;
+  color: var(--cor-rotulo, #b9bfa7);
+  font-size: var(--tamanho-pequeno, 0.875rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Uma linha só, medido no Edge a 1600 px: com três itens a prateleira quebrava
+   em três linhas e empurrava a barra de baixo para 160 px de altura, comendo o
+   mapa — e espremer os três numa linha cortava o nome até a primeira letra. São
+   dois (`SHELF_LIMIT`), sem quebra. O nome corta com reticências quando precisa,
+   e continua inteiro no `title` e no nome acessível. */
+.quick-buy__list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.quick-buy__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--alvo-toque, 2.75rem);
+  min-width: 0;
+  max-width: 12.5rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--cor-borda, #a08d5e);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: var(--cor-fundo, #0f1812);
+  color: var(--cor-valor, #f3efe0);
+  font: inherit;
+  font-size: var(--tamanho-base, 1rem);
+  cursor: pointer;
+}
+
+.quick-buy__item:hover {
+  border-color: var(--cor-destaque, #e2cd95);
+  background: var(--cor-destaque-suave, rgb(226 205 149 / 12%));
+}
+
+.quick-buy__item:focus-visible {
+  outline: 3px solid var(--cor-alerta, #f2a65a);
+  outline-offset: 2px;
+}
+
+.quick-buy__icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  color: var(--cor-rotulo, #b9bfa7);
+}
+
+/* O nome corta com reticências em vez de empurrar a barra: a barra de baixo tem
+   três vizinhos de largura fixa, e o nome mais longo da árvore tem 28
+   caracteres. O nome inteiro continua no `aria-label` e no `title`. */
+.quick-buy__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.quick-buy__cost {
+  flex: none;
+  color: var(--cor-destaque, #e2cd95);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* **Um nó só abaixo de 96rem (1536 px).** Medido no Edge a 1280 px — a tela do
+   notebook da feira —, os dois itens não cabiam entre as listras e o botão da
+   árvore: os nomes encolhiam até sumir e sobrava "36 PAC" com um ícone. Um item
+   cabe, e o selo do botão da árvore continua dizendo quantos nós estão ao
+   alcance. Esconder a prateleira inteira seria perder a tarefa justamente na
+   tela em que ela mais importa. */
+@media (max-width: 96rem) {
+  .quick-buy__item:nth-child(n + 2) {
+    display: none;
+  }
+}

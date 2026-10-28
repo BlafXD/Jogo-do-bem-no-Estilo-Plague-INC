@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { claimAllBubbles } from '../src/engine/bubbles';
+
 import {
   ACHIEVEMENTS,
   achievementsEarned,
@@ -115,7 +117,9 @@ function play(plan: Plan): GameState {
   let state = createInitialState(SEED);
 
   while (!isFinished(state)) {
-    state = advanceTick(state);
+    // Recolhe as bolhas do mês (INTER-03), como as outras partidas de
+    // referência: as cinco medem quem joga bem.
+    state = claimAllBubbles(advanceTick(state));
     if (isFinished(state)) break;
     if (state.year < plan.startYear) continue;
 

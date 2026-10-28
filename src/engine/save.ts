@@ -21,11 +21,17 @@
 // recomeçaria do zero a cada carga, e a partida deixaria de ser reprodutível
 // justamente onde isso importa.
 
+import { bubbleValue } from './bubbles';
 import { temperatureFor } from './climate';
+import { CARD_TICKS } from './events';
 import { skillById } from './skills';
 import {
+  balance,
   isCharacterId,
   parseRegions,
+  REGION_IDS,
+  type ActiveEvent,
+  type Bubble,
   type GameState,
   type RawRegion,
   type SkillId,
@@ -50,8 +56,17 @@ import { yearForTick } from './tick';
  * jogador escolheu. Um save da versão 2 não o tem, e uma partida sem personagem
  * é a "meio remendada" da regra acima: daqui a poucas tarefas (REF-05) o
  * personagem passa a dar bônus, e um save sem ele não saberia qual aplicar.
+ *
+ * **4 (INTER-02 e INTER-03):** duas mudanças de formato na mesma passagem, de
+ * propósito — subir a versão custa a partida em andamento de quem joga, e fazer
+ * isso duas vezes no mesmo dia custaria duas. Cada `ActiveEvent` ganhou o
+ * `toll`, o que o evento de fato cobrou (a dívida que o `docs/GDD.md §2.5`
+ * registrou em nome do `P7-04`), e o `GameState` ganhou o `bubbles`, as bolhas
+ * de PAC ainda na mesa. **Um save da versão 3 não tem como ser remendado aqui:**
+ * o pedágio depende da resiliência que a região tinha no instante da pancada, e
+ * esse instante já passou. Autorizado no chat em 2026-10-28.
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export type SaveEnvelope = {
   readonly version: number;
@@ -68,6 +83,8 @@ export type SaveRefusal =
   | 'badCharacter'
   | 'badRegions'
   | 'badSkills'
+  | 'badEvents'
+  | 'badBubbles'
   | 'badHistory';
 
 export type LoadResult =
@@ -117,6 +134,78 @@ function readSkills(value: unknown): readonly SkillId[] | null {
   }
 
   return value as readonly SkillId[];
+}
+
+/** Os três campos do pedágio de um evento (`EventToll`, docs/GDD.md §3). */
+const TOLL_FIELDS = ['support', 'economy', 'points'] as const;
+
+/**
+ * Os cartões de evento em cena, conferidos um por um — **a dívida que o P7-01
+ * deixou aqui, paga no INTER-02.**
+ *
+ * Até a versão 3 deste arquivo só se conferia que `activeEvents` era uma lista,
+ * e o comentário no lugar desta função explicava por que isso bastava: um cartão
+ * é vitrine, e um id inventado sai da tela no mês seguinte sem levar nada junto.
+ * **O `toll` muda a conta.** Ele é um número que a tela escreve como fato — "este
+ * evento cobrou 3,2 de apoio" —, e um save editado à mão passaria a mentir com a
+ * autoridade do jogo. Conferir é mais barato que confiar.
+ *
+ * **O `eventId` continua sem ser cobrado contra o catálogo**, e isso é escolha:
+ * quem renomear um evento no `events.json` não deve apagar a partida de ninguém,
+ * e o `cardFor` do event-cards.ts já devolve `null` para um id que não existe
+ * mais — o cartão desaparece, o resto da partida segue. É o oposto do
+ * `readSkills`, e a diferença é o que se perde: um nó comprado é PAC gasto, um
+ * cartão em cena é uma notícia de seis meses atrás.
+ */
+function readActiveEvents(value: unknown): readonly ActiveEvent[] | null {
+  if (!Array.isArray(value)) return null;
+
+  for (const entry of value) {
+    if (!isRecord(entry)) return null;
+    if (typeof entry.eventId !== 'string') return null;
+    if (typeof entry.target !== 'string') return null;
+    if (!(REGION_IDS as readonly string[]).includes(entry.target)) return null;
+
+    // Fora da faixa, a idade deduzida pelo `startTickOf` sairia errada: um
+    // `ticksRemaining` maior que a janela daria um cartão que entrou no futuro.
+    const remaining = entry.ticksRemaining;
+    if (!isFiniteNumber(remaining) || remaining <= 0 || remaining > CARD_TICKS) return null;
+
+    if (!isRecord(entry.toll)) return null;
+    for (const field of TOLL_FIELDS) {
+      const paid = entry.toll[field];
+      if (!isFiniteNumber(paid) || paid < 0) return null;
+    }
+  }
+
+  return value as readonly ActiveEvent[];
+}
+
+/**
+ * As bolhas de PAC na mesa (INTER-03), conferidas uma por uma.
+ *
+ * Mesma régua do `readActiveEvents`, e aqui ela aperta mais: o `value` de uma
+ * bolha **vira PAC** no clique seguinte, então um save editado à mão compraria a
+ * árvore inteira com uma bolha de um milhão. O teto é o valor de uma bolha nesta
+ * partida com alguma folga — não o valor exato, porque a bolha guarda o que
+ * valia quando nasceu e a renda do jogador cresce durante a partida.
+ */
+function readBubbles(value: unknown, points: number): readonly Bubble[] | null {
+  if (!Array.isArray(value)) return null;
+
+  for (const entry of value) {
+    if (!isRecord(entry)) return null;
+    if (typeof entry.target !== 'string') return null;
+    if (!(REGION_IDS as readonly string[]).includes(entry.target)) return null;
+    if (!isFiniteNumber(entry.value) || entry.value < 0 || entry.value > points) return null;
+
+    const remaining = entry.ticksRemaining;
+    if (!isFiniteNumber(remaining) || remaining <= 0 || remaining > balance.bubbleTicks) {
+      return null;
+    }
+  }
+
+  return value as readonly Bubble[];
 }
 
 /** Os números de um `Snapshot` (docs/GDD.md §3). Todos obrigatórios, todos finitos. */
@@ -201,15 +290,8 @@ export function fromSave(raw: unknown): LoadResult {
   const unlockedSkills = readSkills(saved.unlockedSkills);
   if (unlockedSkills === null) return { ok: false, reason: 'badSkills' };
 
-  // De `activeEvents` ainda só se confere que é uma lista. O P7-01 passou a
-  // preenchê-la, então há um formato a validar aqui — o que falta é a
-  // consequência de deixar passar: um cartão de evento em cena é vitrine com
-  // `ticksRemaining` contado para trás, e um id inventado no save some da tela
-  // no tick seguinte sem levar nada junto. Fica anotado como dívida, não como
-  // decisão de que não precisa.
-  if (!Array.isArray(saved.activeEvents)) {
-    return { ok: false, reason: 'wrongShape' };
-  }
+  const activeEvents = readActiveEvents(saved.activeEvents);
+  if (activeEvents === null) return { ok: false, reason: 'badEvents' };
 
   const history = readHistory(saved.history);
   if (history === null) return { ok: false, reason: 'badHistory' };
@@ -217,26 +299,34 @@ export function fromSave(raw: unknown): LoadResult {
   const tick = saved.tick as number;
   const cumulativeCO2 = saved.cumulativeCO2 as number;
 
-  return {
-    ok: true,
-    state: {
-      tick,
-      // Derivados: recalculados, nunca lidos do save. Um arquivo adulterado não
-      // consegue entregar um ano que não combina com o tick, nem uma
-      // temperatura que não combina com o CO₂ acumulado.
-      year: yearForTick(tick),
-      temperature: temperatureFor(cumulativeCO2),
-      cumulativeCO2,
-      // Narrowed pelo isCharacterId acima — é um CharacterId, não um string solto.
-      character: saved.character,
-      actionPoints: saved.actionPoints as number,
-      inertia: saved.inertia as number,
-      seed: saved.seed as number,
-      rngState: saved.rngState as number,
-      regions,
-      unlockedSkills,
-      activeEvents: saved.activeEvents as GameState['activeEvents'],
-      history,
-    },
+  const restored: GameState = {
+    tick,
+    // Derivados: recalculados, nunca lidos do save. Um arquivo adulterado não
+    // consegue entregar um ano que não combina com o tick, nem uma
+    // temperatura que não combina com o CO₂ acumulado.
+    year: yearForTick(tick),
+    temperature: temperatureFor(cumulativeCO2),
+    cumulativeCO2,
+    // Narrowed pelo isCharacterId acima — é um CharacterId, não um string solto.
+    character: saved.character,
+    actionPoints: saved.actionPoints as number,
+    inertia: saved.inertia as number,
+    seed: saved.seed as number,
+    rngState: saved.rngState as number,
+    regions,
+    unlockedSkills,
+    activeEvents,
+    bubbles: [],
+    history,
   };
+
+  // As bolhas são conferidas **depois** do estado montado, porque o teto do
+  // valor de uma delas depende da partida: `bubbleValue` lê os nós de PAC/ano
+  // comprados e o bônus do personagem. Uma bolha legítima nunca vale mais do que
+  // isso — a renda do jogador só cresce ao longo da partida, nunca encolhe —,
+  // então o teto barra o save adulterado sem recusar nenhuma bolha de verdade.
+  const bubbles = readBubbles(saved.bubbles, bubbleValue(restored));
+  if (bubbles === null) return { ok: false, reason: 'badBubbles' };
+
+  return { ok: true, state: { ...restored, bubbles } };
 }

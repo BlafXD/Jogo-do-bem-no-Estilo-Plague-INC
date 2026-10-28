@@ -8,6 +8,7 @@ import characterBuffsData from '../data/character-buffs.json';
 import eventsData from '../data/events.json';
 import regionsData from '../data/regions.json';
 import skillsData from '../data/skills.json';
+import synergiesData from '../data/synergies.json';
 import { createRngState, type RngState } from './rng';
 
 // ---------------------------------------------------------------- regiões ---
@@ -245,6 +246,54 @@ export type ActiveEvent = {
   readonly eventId: string;
   readonly target: RegionId;
   readonly ticksRemaining: number;
+  /** O que este evento de fato cobrou, no instante em que caiu (INTER-02). */
+  readonly toll: EventToll;
+};
+
+/**
+ * O pedágio de um evento: o que **de fato** saiu da partida (INTER-02).
+ *
+ * **Não é o `impact` do `ClimateEvent`.** O `impact` é o que o evento pede; o
+ * pedágio é o que ele consegue levar, depois da resiliência da região
+ * (`damageMultiplier`) e depois dos pisos — apoio, economia e PAC nunca ficam
+ * negativos, então um evento caro num bolso vazio cobra o que houver.
+ *
+ * **Por que fica guardado, em vez de recalculado.** O dano depende da
+ * resiliência **no instante da pancada**, e a resiliência muda depois: um cartão
+ * que recalculasse mostraria um número diferente do que foi cobrado, que é pior
+ * do que não mostrar nenhum. Era esta a dívida que o `docs/GDD.md §2.5`
+ * registrou em nome do `P7-04` — "guardar o valor aplicado exigiria campo novo
+ * no `ActiveEvent` e um `SAVE_VERSION` novo" —, e é ela que o INTER-02 paga,
+ * autorizada no chat em 2026-10-28.
+ */
+export type EventToll = {
+  /** Pontos de apoio público que a região perdeu. */
+  readonly support: number;
+  /** Pontos do índice econômico que a região perdeu. */
+  readonly economy: number;
+  /** PAC que saiu do caixa da agência. */
+  readonly points: number;
+};
+
+/**
+ * Uma bolha de PAC em cima de uma região (INTER-03).
+ *
+ * **Ela é renda esperando ser recolhida, não bônus.** O `bubbleShare` do
+ * balance.json fatia a renda do jogador entre o que cai sozinho e o que aparece
+ * aqui; o src/engine/bubbles.ts explica a conta e por que o teto de 46 PAC/ano
+ * medido no `REF-09` proíbe a alternativa mais simples.
+ *
+ * `value` fica **gravado na bolha**, e não recalculado na hora de recolher:
+ * entre o mês em que ela nasceu e o clique, o jogador pode ter comprado um nó de
+ * PAC/ano, e a bolha vale o que valia quando apareceu. É a mesma razão do
+ * `EventToll` logo acima.
+ */
+export type Bubble = {
+  readonly target: RegionId;
+  /** PAC que ela entrega, fixado no mês em que ela nasceu. */
+  readonly value: number;
+  /** Meses até ela sumir. Nasce com `bubbleTicks` e some sem pagar nada. */
+  readonly ticksRemaining: number;
 };
 
 // ------------------------------------------------------------------ estado ---
@@ -282,6 +331,15 @@ export type GameState = {
   readonly regions: Readonly<Record<RegionId, Region>>;
   readonly unlockedSkills: readonly SkillId[];
   readonly activeEvents: readonly ActiveEvent[];
+  /**
+   * As bolhas de PAC na mesa (INTER-03), do mais velho para o mais novo.
+   *
+   * Entra no save: sem isso, recarregar a partida devolveria bolhas já
+   * recolhidas, e o PAC de quem já gastou voltaria do nada. O **sorteio** delas
+   * não precisa de estado guardado — ele nasce de `seed` e `tick`, pelo motivo
+   * registrado no src/engine/bubbles.ts.
+   */
+  readonly bubbles: readonly Bubble[];
   readonly inertia: number;
   /**
    * Seed original da partida. Nunca muda — é o que identifica a partida e
@@ -347,6 +405,30 @@ export type Balance = {
   readonly containDiscountPerNode: number;
   /** Pontos de Inércia que uma contenção derruba. */
   readonly containRelief: number;
+  /**
+   * A fatia da renda de PAC que chega como **bolha no mapa**, de 0 a 1
+   * (INTER-03). O resto cai sozinho a cada mês, como antes.
+   *
+   * **É a chave que mantém o teto de 46 PAC/ano do `REF-09` de pé.** A renda
+   * total não subiu: ela foi dividida. Quem recolhe todas as bolhas de um ano
+   * arrecada o mesmo que arrecadava antes desta tarefa; quem ignora o mapa
+   * arrecada `1 − bubbleShare` disso. A varredura que escolheu o valor está em
+   * docs/BALANCEAMENTO.md.
+   */
+  readonly bubbleShare: number;
+  /** Quantas bolhas um ano de jogo sorteia, em média. */
+  readonly bubblesPerYear: number;
+  /**
+   * Meses que uma bolha espera antes de sumir sem pagar nada.
+   *
+   * **Medido em meses e não em segundos, ao contrário do `eventCardSeconds`**, e
+   * a diferença é de responsabilidade: o cartão é vitrine e quem decide quanto
+   * tempo ele fica é a tela, mas a bolha paga PAC — ela é regra de jogo, e regra
+   * de jogo não pode depender da velocidade que o jogador escolheu. O preço é
+   * assumido: a 4x a bolha dura um quarto do tempo de parede, que é a mesma
+   * pressa que a 4x impõe a tudo mais.
+   */
+  readonly bubbleTicks: number;
   readonly eventWeightPerDegree: number;
   /**
    * Impacto de apoio a partir do qual um evento é **crítico** e pausa o relógio
@@ -354,6 +436,21 @@ export type Balance = {
    * condição de fim (docs/GDD.md §2.7).
    */
   readonly criticalEventSupport: number;
+  /**
+   * Quantos **segundos reais** um cartão de evento fica no boletim (INTER-01).
+   *
+   * **O engine não lê esta chave** — é a UI que mede o tempo de tela, como é
+   * ela que decide pausar e avisar (`inertiaNoticeLevels`). Mora aqui porque a
+   * regra 8 vale para todo número ajustável, e porque este é um número de
+   * balanceamento de verdade: dele depende se alguém de pé num estande
+   * consegue ler o que aconteceu antes de o cartão sair.
+   *
+   * **Em segundos, e não em meses, por causa do Modo Feira.** A 4x um mês dura
+   * 0,375 s, e os 6 meses do `CARD_TICKS` davam 2,25 s de leitura. O
+   * `cardHoldTicks` (event-feed.ts) converte isto na janela em meses de cada
+   * velocidade.
+   */
+  readonly eventCardSeconds: number;
   readonly loseTemperature: number;
   /**
    * Emissão global anual, em GtCO₂, abaixo da qual o docs/GDD.md §2.7 considera
@@ -493,21 +590,21 @@ export type RawSkill = {
  */
 const knownEventIds = new Set(eventsData.map((event) => event.id));
 
-function parseEffect(raw: RawEffect, skillId: string): Effect {
+function parseEffect(raw: RawEffect, skillId: string, file = 'skills.json'): Effect {
   const untargeted = (UNTARGETED_EFFECTS as readonly string[]).includes(raw.kind);
   const targeted = (TARGETED_EFFECTS as readonly string[]).includes(raw.kind);
   const eventTargeted = (EVENT_TARGETED_EFFECTS as readonly string[]).includes(raw.kind);
 
   if (!untargeted && !targeted && !eventTargeted) {
-    throw new Error(`skills.json: "${skillId}" tem efeito de tipo desconhecido "${raw.kind}".`);
+    throw new Error(`${file}: "${skillId}" tem efeito de tipo desconhecido "${raw.kind}".`);
   }
   if (!Number.isFinite(raw.value) || raw.value <= 0) {
-    throw new Error(`skills.json: "${skillId}" tem efeito ${raw.kind} com valor ${raw.value}.`);
+    throw new Error(`${file}: "${skillId}" tem efeito ${raw.kind} com valor ${raw.value}.`);
   }
 
   if (untargeted) {
     if (raw.target !== undefined) {
-      throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" não leva target.`);
+      throw new Error(`${file}: o efeito ${raw.kind} de "${skillId}" não leva target.`);
     }
     // Um `return` por `kind`, e não um `as` que junte os dois literais: um
     // Effect de `kind` dupla (`'pointsPerYear' | 'inertiaCut'`) deixa de bater
@@ -520,25 +617,25 @@ function parseEffect(raw: RawEffect, skillId: string): Effect {
   if (eventTargeted) {
     const target = raw.target;
     if (target === undefined) {
-      throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" precisa de target.`);
+      throw new Error(`${file}: o efeito ${raw.kind} de "${skillId}" precisa de target.`);
     }
     if (!knownEventIds.has(target)) {
-      throw new Error(`skills.json: "${skillId}" aponta para o evento desconhecido "${target}".`);
+      throw new Error(`${file}: "${skillId}" aponta para o evento desconhecido "${target}".`);
     }
     // Corte é porcentagem: acima de 100 não faz sentido (a chance não vai a
     // menos de zero), e é o mesmo cuidado do `impact` negativo em events.json.
     if (raw.value > 100) {
-      throw new Error(`skills.json: "${skillId}" tem ${raw.kind} de ${raw.value}%, acima de 100.`);
+      throw new Error(`${file}: "${skillId}" tem ${raw.kind} de ${raw.value}%, acima de 100.`);
     }
     return { kind: 'eventChanceCut', target, value: raw.value };
   }
 
   const target = raw.target;
   if (target === undefined) {
-    throw new Error(`skills.json: o efeito ${raw.kind} de "${skillId}" precisa de target.`);
+    throw new Error(`${file}: o efeito ${raw.kind} de "${skillId}" precisa de target.`);
   }
   if (target !== 'global' && !(REGION_IDS as readonly string[]).includes(target)) {
-    throw new Error(`skills.json: "${skillId}" aponta para o alvo desconhecido "${target}".`);
+    throw new Error(`${file}: "${skillId}" aponta para o alvo desconhecido "${target}".`);
   }
   const regionTarget = target as RegionId | 'global';
 
@@ -636,6 +733,131 @@ function assertNoCycle(byId: ReadonlyMap<string, Skill>): void {
 
 /** A árvore inteira, validada na carga. Ordem igual à do skills.json. */
 export const skills: readonly Skill[] = parseSkills(skillsData);
+
+// --------------------------------------------------------------- sinergias ---
+
+/**
+ * Uma sinergia: um bônus que não mora em nó nenhum (INTER-08).
+ *
+ * **Por que ela existe, e por que não é "mais efeito no nó de fecho".** A forma
+ * de cada ramo é uma corrente de dois losangos (docs/GDD.md §2.4), e o nó de
+ * fecho exige **os dois** nós do meio, que exigem a raiz — então ter o nó de
+ * fecho já implica ter o losango inteiro. Isso torna qualquer "bônus por fechar
+ * o losango" matematicamente idêntico a somar efeito no nó de fecho: não é bônus
+ * novo, é número maior. A condição que **nenhum nó implica** é a que atravessa
+ * ramos, e é essa que a sinergia expressa.
+ *
+ * `nodesPerBranch` é a condição inteira: a sinergia fecha quando **todos os
+ * cinco ramos** têm pelo menos tantos nós comprados. Contar em vez de listar ids
+ * é o que a torna agnóstica de caminho — quem comprou `storage` em vez de
+ * `wind` cumpriu a mesma coisa, e listar um dos dois puniria uma rota legítima
+ * por capricho.
+ *
+ * **Nenhuma sinergia tem `fact`**, ao contrário dos nós, e isso é regra: o campo
+ * `fact` é onde mora ciência com fonte (regra 9), e uma sinergia é uma afirmação
+ * sobre **o jogo** — "a agência agindo nas cinco frentes tem mais apoio" —, não
+ * sobre o mundo. Inventar um fato para justificá-la seria exatamente o que o
+ * docs/CIENCIA.md recusa.
+ */
+export type Synergy = {
+  readonly id: string;
+  readonly name: string;
+  /** O efeito em uma frase, como a `description` de um nó. */
+  readonly description: string;
+  /** Nós comprados exigidos **em cada um** dos cinco ramos. */
+  readonly nodesPerBranch: number;
+  readonly effects: readonly Effect[];
+};
+
+/**
+ * Os `kind` de `Effect` que uma sinergia pode usar — os de **empurrão único**.
+ *
+ * **A recusa dos outros é balanceamento, não limitação técnica**, e o número que
+ * a decidiu está no docs/BALANCEAMENTO.md: a primeira versão da "Segunda
+ * fileira" cortava 0,5% ao ano de emissão, e isso **inverteu a ordem das quatro
+ * estratégias de referência do §4** — a partida que investe em Sociedade cedo
+ * passou a terminar mais fria (1,9414 °C) que a que ignora o ramo (1,9503 °C), e
+ * o "ramo Sociedade é uma armadilha" que o `P3-04` mediu deixou de valer. Largura
+ * passaria a ser a jogada dominante, e o dilema do §2.6 viraria preferência.
+ *
+ * Então a sinergia premia largura no eixo da **sobrevivência** — apoio,
+ * resiliência, Inércia —, e não no da temperatura. A escolha entre mitigar e
+ * adaptar continua sendo do jogador.
+ *
+ * Recusar na carga, em vez de ignorar em silêncio, é o que impede a armadilha
+ * óbvia: uma sinergia com `emissionCut` escrita daqui a um mês não faria nada, e
+ * ninguém descobriria.
+ */
+export const SYNERGY_EFFECTS = ['support', 'resilience', 'inertiaCut'] as const;
+
+/** Uma sinergia como ela sai do JSON, antes da validação. */
+export type RawSynergy = {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly nodesPerBranch: number;
+  readonly effects: readonly RawEffect[];
+};
+
+/**
+ * Valida o synergies.json na carga, como o parseSkills faz com a árvore.
+ *
+ * O `nodesPerBranch` é cobrado contra o tamanho real do menor ramo: uma sinergia
+ * que exigisse 9 nós por ramo seria inalcançável por construção, e um bônus
+ * impossível se parece com um bônus difícil — a mesma lição que o `CONQ-01`
+ * aprendeu com as conquistas.
+ */
+export function parseSynergies(raw: readonly RawSynergy[]): readonly Synergy[] {
+  const byId = new Map<string, Synergy>();
+
+  const smallest = Math.min(
+    ...SKILL_BRANCHES.map((branch) => skills.filter((skill) => skill.branch === branch).length),
+  );
+
+  for (const synergy of raw) {
+    if (!synergy.id.trim()) {
+      throw new Error('synergies.json: há uma sinergia sem id.');
+    }
+    if (byId.has(synergy.id)) {
+      throw new Error(`synergies.json: a sinergia "${synergy.id}" aparece mais de uma vez.`);
+    }
+    for (const field of ['name', 'description'] as const) {
+      if (!synergy[field].trim()) {
+        throw new Error(`synergies.json: "${synergy.id}" está sem ${field}.`);
+      }
+    }
+    if (!Number.isInteger(synergy.nodesPerBranch) || synergy.nodesPerBranch <= 0) {
+      throw new Error(
+        `synergies.json: "${synergy.id}" pede ${synergy.nodesPerBranch} nós por ramo.`,
+      );
+    }
+    if (synergy.nodesPerBranch > smallest) {
+      throw new Error(
+        `synergies.json: "${synergy.id}" pede ${synergy.nodesPerBranch} nós por ramo, e o menor ramo tem ${smallest}.`,
+      );
+    }
+    if (synergy.effects.length === 0) {
+      throw new Error(`synergies.json: "${synergy.id}" não tem efeito nenhum.`);
+    }
+    for (const effect of synergy.effects) {
+      if (!(SYNERGY_EFFECTS as readonly string[]).includes(effect.kind)) {
+        throw new Error(
+          `synergies.json: "${synergy.id}" usa o efeito ${effect.kind}, que não vale para sinergia. Valem: ${SYNERGY_EFFECTS.join(', ')}.`,
+        );
+      }
+    }
+
+    byId.set(synergy.id, {
+      ...synergy,
+      effects: synergy.effects.map((effect) => parseEffect(effect, synergy.id, 'synergies.json')),
+    });
+  }
+
+  return [...byId.values()];
+}
+
+/** As sinergias, validadas na carga. Ordem igual à do synergies.json. */
+export const synergies: readonly Synergy[] = parseSynergies(synergiesData);
 
 // ---------------------------------------------------------------- eventos ---
 
@@ -788,6 +1010,7 @@ export function createInitialState(seed: number, character: CharacterId | null =
     regions,
     unlockedSkills: [],
     activeEvents: [],
+    bubbles: [],
     inertia: 0,
     seed,
     rngState: createRngState(seed),

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "five-fronts",
+    "name": "Cinco frentes",
+    "description": "Soma 2 de apoio público em todas as 8 regiões, de uma vez.",
+    "nodesPerBranch": 1,
+    "effects": [
+      {
+        "kind": "support",
+        "target": "global",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "id": "second-row",
+    "name": "Segunda fileira",
+    "description": "Empurra a Inércia 6 pontos para baixo, de uma vez.",
+    "nodesPerBranch": 2,
+    "effects": [
+      {
+        "kind": "inertiaCut",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "id": "halfway",
+    "name": "Meio caminho",
+    "description": "Soma 5 de resiliência em todas as 8 regiões, o que reduz o dano dos eventos.",
+    "nodesPerBranch": 4,
+    "effects": [
+      {
+        "kind": "resilience",
+        "target": "global",
+        "value": 5
+      }
+    ]
+  }
+]

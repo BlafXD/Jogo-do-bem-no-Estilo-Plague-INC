@@ -306,6 +306,65 @@ describe('applyEvent', () => {
     expect(start.regions.la.support).toBe(antes);
     expect(start.activeEvents).toHaveLength(0);
   });
+
+  /**
+   * O pedágio (INTER-02). A pergunta que ele responde é a que o cartão passou a
+   * escrever: **quanto este evento levou**, e não quanto ele pediu.
+   */
+  describe('o pedágio', () => {
+    it('guarda o que de fato saiu de cada um dos três', () => {
+      if (event === undefined) throw new Error('evento sumiu');
+      const comCaixa: GameState = { ...start, actionPoints: 500 };
+      const depois = applyEvent(comCaixa, { event, target: 'la' });
+      const toll = depois.activeEvents[0]?.toll;
+
+      if (toll === undefined) throw new Error('cartão sem pedágio');
+      expect(toll.support).toBeCloseTo(comCaixa.regions.la.support - depois.regions.la.support, 10);
+      expect(toll.economy).toBeCloseTo(comCaixa.regions.la.economy - depois.regions.la.economy, 10);
+      expect(toll.points).toBeCloseTo(comCaixa.actionPoints - depois.actionPoints, 10);
+    });
+
+    /**
+     * É o que torna o número guardável: o `impact` é o mesmo em toda partida, e
+     * só o pedágio sabe quanta resiliência a região tinha no instante da
+     * pancada. Recalcular depois daria outro número.
+     */
+    it('é menor numa região resiliente que na mesma região sem resiliência', () => {
+      if (event === undefined) throw new Error('evento sumiu');
+      const frágil: GameState = {
+        ...start,
+        regions: { ...start.regions, la: { ...start.regions.la, resilience: 0 } },
+      };
+      const forte: GameState = {
+        ...start,
+        regions: { ...start.regions, la: { ...start.regions.la, resilience: 100 } },
+      };
+
+      const sem = applyEvent(frágil, { event, target: 'la' }).activeEvents[0]?.toll.support ?? 0;
+      const com = applyEvent(forte, { event, target: 'la' }).activeEvents[0]?.toll.support ?? 0;
+
+      expect(com).toBeLessThan(sem);
+      expect(com).toBeGreaterThan(0);
+    });
+
+    it('cobra só o que havia quando o piso corta — nunca mais que isso', () => {
+      if (event === undefined) throw new Error('evento sumiu');
+      const vazio: GameState = {
+        ...start,
+        actionPoints: 0,
+        regions: {
+          ...start.regions,
+          la: { ...start.regions.la, support: 0.5, economy: 0, resilience: 0 },
+        },
+      };
+
+      const toll = applyEvent(vazio, { event, target: 'la' }).activeEvents[0]?.toll;
+      if (toll === undefined) throw new Error('cartão sem pedágio');
+      expect(toll.support).toBe(0.5);
+      expect(toll.economy).toBe(0);
+      expect(toll.points).toBe(0);
+    });
+  });
 });
 
 describe('advanceEvents', () => {
@@ -313,7 +372,14 @@ describe('advanceEvents', () => {
     const start = createInitialState(5);
     const comCartao: GameState = {
       ...start,
-      activeEvents: [{ eventId: 'heatwave', target: 'na', ticksRemaining: 1 }],
+      activeEvents: [
+        {
+          eventId: 'heatwave',
+          target: 'na',
+          ticksRemaining: 1,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+      ],
     };
 
     expect(advanceEvents(comCartao).activeEvents.some((a) => a.eventId === 'heatwave')).toBe(false);
@@ -408,12 +474,27 @@ describe('eventById', () => {
 
 describe('startTickOf', () => {
   it('um cartão recém-criado começou neste tick', () => {
-    expect(startTickOf({ eventId: 'x', target: 'na', ticksRemaining: CARD_TICKS }, 40)).toBe(40);
+    expect(
+      startTickOf(
+        {
+          eventId: 'x',
+          target: 'na',
+          ticksRemaining: CARD_TICKS,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+        40,
+      ),
+    ).toBe(40);
   });
 
   it('cada tick a menos no cartão é um mês a mais de idade', () => {
     for (let age = 0; age < CARD_TICKS; age += 1) {
-      const active = { eventId: 'x', target: 'na' as const, ticksRemaining: CARD_TICKS - age };
+      const active = {
+        eventId: 'x',
+        target: 'na' as const,
+        ticksRemaining: CARD_TICKS - age,
+        toll: { support: 0, economy: 0, points: 0 },
+      };
       expect(startTickOf(active, 100)).toBe(100 - age);
     }
   });
@@ -459,7 +540,14 @@ describe('startTickOf', () => {
     const start = createInitialState(9);
     let state: GameState = {
       ...start,
-      activeEvents: [{ eventId: 'heatwave', target: 'na', ticksRemaining: CARD_TICKS }],
+      activeEvents: [
+        {
+          eventId: 'heatwave',
+          target: 'na',
+          ticksRemaining: CARD_TICKS,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+      ],
     };
 
     for (let i = 1; i < CARD_TICKS; i += 1) {

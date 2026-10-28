@@ -25,9 +25,10 @@
 
 import { ui } from '../data/i18n';
 import { eventById, isCritical, startTickOf } from '../engine/events';
-import { balance, type ActiveEvent, type GameState } from '../engine/state';
+import { balance, type EventToll, type GameState } from '../engine/state';
 import { yearForTick } from '../engine/tick';
 import { eventCast, momentCast, mountAvatar, personText, type Appearance } from './characters';
+import { feedFromState, type EventFeed, type FeedCard } from './event-feed';
 import { noticesInScene, type InertiaNotice } from './inertia-notices';
 
 // --------------------------------------------------------------- a view ---
@@ -38,6 +39,15 @@ import { noticesInScene, type InertiaNotice } from './inertia-notices';
  * e palavra, como os outros dois (docs/GDD.md §5).
  */
 export const EVENT_SEVERITIES = ['critical', 'moderate', 'inertia'] as const;
+
+/** Uma casa decimal: o apoio e a economia que o evento cobrou (INTER-02). */
+const tenths = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** PAC é inteiro, como em toda a árvore. */
+const units = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
 
 export type EventSeverity = (typeof EVENT_SEVERITIES)[number];
 
@@ -53,6 +63,14 @@ export type EventCardView = {
   readonly name: string;
   /** "Oceania · 2087" — onde bateu e quando. */
   readonly where: string;
+  /**
+   * "Cobrou: 3,2 de apoio · 8 PAC" — o que o evento levou (INTER-02).
+   *
+   * Vazio quando não houve pedágio nenhum: o aviso da Inércia não cobra por este
+   * caminho (ele age no `inertia.ts`), e um evento pode pegar uma região já em
+   * zero e um caixa vazio.
+   */
+  readonly toll: string;
   /** O fato real, uma frase. Vem do events.json, com fonte em docs/CIENCIA.md. */
   readonly fact: string;
   /**
@@ -68,7 +86,7 @@ export type EventCardView = {
 };
 
 export type EventCardsView = {
-  /** Do mais recente para o mais antigo. No máximo `CARD_TICKS` cartões. */
+  /** Do mais recente para o mais antigo. No máximo `FEED_LIMIT` cartões (INTER-01). */
   readonly cards: readonly EventCardView[];
   /** O aviso da auto-pausa, ou vazio quando o tempo está correndo. */
   readonly notice: string;
@@ -82,19 +100,42 @@ export type EventCardsView = {
  * nenhum — e a alternativa, recusar o save inteiro, jogaria fora uma partida de
  * vinte minutos por causa de uma linha de vitrine.
  */
-function cardFor(state: GameState, active: ActiveEvent): EventCardView | null {
-  const event = eventById(active.eventId);
+/**
+ * O pedágio em uma frase, ou vazio quando o evento não levou nada (INTER-02).
+ *
+ * **Uma casa decimal no apoio e na economia, PAC inteiro.** O apoio vai de 0 a
+ * 100 e um evento cobra frações dele — arredondar para inteiro mostraria "0 de
+ * apoio" numa pancada de 0,4, que é pequena mas não é nada. O PAC é contado em
+ * unidades na árvore inteira, então a casa decimal ali seria precisão falsa.
+ *
+ * **Uma parcela zerada não entra na frase**, e isso acontece de verdade: um
+ * evento que pega o caixa vazio cobra 0 de PAC, e escrever "0 PAC" ao lado de
+ * "3,2 de apoio" faria o jogador procurar um dinheiro que nunca saiu.
+ */
+function tollLine(toll: EventToll): string {
+  const parts: string[] = [];
+
+  if (toll.support > 0) parts.push(ui.events.toll.support(tenths.format(toll.support)));
+  if (toll.economy > 0) parts.push(ui.events.toll.economy(tenths.format(toll.economy)));
+  if (toll.points >= 1) parts.push(ui.events.toll.points(units.format(toll.points)));
+
+  return parts.length === 0 ? '' : ui.events.toll.line(parts);
+}
+
+function cardFor(state: GameState, entry: FeedCard): EventCardView | null {
+  const event = eventById(entry.eventId);
   if (event === undefined) return null;
 
-  const started = startTickOf(active, state.tick);
+  const started = entry.startTick;
   const severity: EventSeverity = isCritical(event) ? 'critical' : 'moderate';
   const badge = ui.events.severity[severity];
   const speaker = eventCast(event.id);
 
   return {
-    key: `${event.id}@${started}`,
+    key: entry.key,
     name: event.name,
-    where: ui.events.where(state.regions[active.target].name, String(yearForTick(started))),
+    where: ui.events.where(state.regions[entry.target].name, String(yearForTick(started))),
+    toll: tollLine(entry.toll),
     fact: event.fact,
     speaker,
     by: speaker === null ? '' : ui.cast.by(personText(speaker.person).short),
@@ -141,6 +182,9 @@ function noticeCard(notice: InertiaNotice): EventCardView {
     key: `inercia-${notice.level}@${notice.tick}`,
     name: ui.events.inertia.name(String(notice.level)),
     where: ui.events.where(ui.events.inertia.where, String(yearForTick(notice.tick))),
+    // A Inércia não cobra por aqui: ela age no inertia.ts, por cima das oito
+    // regiões, e não tem um pedágio de uma pancada para mostrar.
+    toll: '',
     fact: ui.events.inertia.fact(String(balance.inertiaActionEveryTicks), String(notice.level)),
     speaker: momentCast('inertia-notice'),
     by: '',
@@ -163,17 +207,25 @@ function noticeCard(notice: InertiaNotice): EventCardView {
  * `autoPaused` e `notices` vêm do main.ts em vez de serem deduzidos aqui:
  * os dois são estado da UI, e o controls.ts registra por que a pausa não mora
  * no GameState. O inertia-notices.ts diz o mesmo dos avisos.
+ *
+ * **O `feed` é a janela de leitura (INTER-01).** Ele diz quais cartões estão em
+ * cena e por quantos meses — uma janela medida em segundos reais, que a 4x do
+ * Modo Feira vale muito mais que os 6 meses do engine. Omitido, a view cai no
+ * `feedFromState`: exatamente o que ela fazia antes do INTER-01, lendo o
+ * `activeEvents` na janela do engine. Os avisos da Inércia usam a mesma janela,
+ * e é por isso que ela viaja dentro do boletim em vez de ser um argumento solto.
  */
 export function eventCardsView(
   state: GameState,
   autoPaused = false,
   notices: readonly InertiaNotice[] = [],
+  feed: EventFeed = feedFromState(state),
 ): EventCardsView {
-  const events = state.activeEvents.flatMap((active) => {
-    const card = cardFor(state, active);
-    return card === null ? [] : [{ tick: startTickOf(active, state.tick), rank: 1, card }];
+  const events = feed.cards.flatMap((entry) => {
+    const card = cardFor(state, entry);
+    return card === null ? [] : [{ tick: entry.startTick, rank: 1, card }];
   });
-  const warnings = noticesInScene(notices, state.tick).map((notice) => ({
+  const warnings = noticesInScene(notices, state.tick, feed.hold).map((notice) => ({
     tick: notice.tick,
     rank: 0,
     card: noticeCard(notice),
@@ -233,7 +285,12 @@ function cardElement(card: EventCardView, entering: boolean): HTMLLIElement {
 
   // O avatar é decoração: o nome de quem deu a notícia vai escrito acima.
   if (card.speaker !== null) item.append(mountAvatar(card.speaker));
-  item.append(head, where, paragraph('events__fact', card.fact));
+  item.append(head, where);
+  // O pedágio entre o "onde" e o fato real (INTER-02): primeiro o que
+  // aconteceu com a partida, depois o que isso é no mundo. A ordem inversa
+  // faria o jogador ler ciência antes de saber que perdeu apoio.
+  if (card.toll !== '') item.append(paragraph('events__toll', card.toll));
+  item.append(paragraph('events__fact', card.fact));
   return item;
 }
 

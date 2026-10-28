@@ -150,12 +150,48 @@ function heatLevelFor(state: GameState): number {
  * registra que o desgaste do tempo *para* no piso: uma região abaixo dele não
  * chegou ali sozinha — foi um evento (P7-01) ou a Inércia (P7-03) que a furou.
  */
-function alertFor(state: GameState, id: RegionId, low: boolean): RegionAlert | null {
-  if (state.activeEvents.some((active) => active.target === id)) {
+function alertFor(hit: ReadonlySet<RegionId>, id: RegionId, low: boolean): RegionAlert | null {
+  if (hit.has(id)) {
     return { kind: 'event', ...ui.map.alert.event };
   }
   if (low) return { kind: 'support', ...ui.map.alert.support };
   return null;
+}
+
+/**
+ * As regiões com evento em cena pela janela do **engine** — o padrão de quem
+ * chama o `mapView` sem dizer o que está no boletim.
+ *
+ * É o que o mapa fazia sozinho antes do INTER-01. A janela do boletim é maior
+ * (`feedRegions`, event-feed.ts), e é ela que o main.ts passa: o tutorial
+ * promete que "o mapa marca a região onde doeu", e no Modo Feira o mapa cumpria
+ * essa promessa por 2,25 s — menos tempo do que leva para ler o cartão que manda
+ * olhar o mapa.
+ */
+function hitRegions(state: GameState): ReadonlySet<RegionId> {
+  return new Set(state.activeEvents.map((active) => active.target));
+}
+
+/**
+ * A camada onde as bolhas de PAC pousam (INTER-04).
+ *
+ * Existe para o src/ui/bubbles.ts não precisar conhecer o `.map__stage` nem a
+ * ordem dos filhos dele: ele pede o anfitrião e escreve lá dentro. Devolve
+ * `null` antes de o mapa ser montado, e o `renderBubbles` sabe o que fazer com
+ * isso.
+ */
+export function bubbleHost(root: ParentNode): HTMLElement | null {
+  return root.querySelector<HTMLElement>('[data-map="bubbles"]');
+}
+
+/**
+ * A camada onde a linha do "faça isto agora" pousa (INTER-07).
+ *
+ * Mesmo arranjo do `bubbleHost`, e pela mesma razão: o src/ui/coach.ts não
+ * precisa saber como o mapa é montado por dentro.
+ */
+export function coachHost(root: ParentNode): HTMLElement | null {
+  return root.querySelector<HTMLElement>('[data-map="coach"]');
 }
 
 /**
@@ -170,12 +206,16 @@ function alertFor(state: GameState, id: RegionId, low: boolean): RegionAlert | n
  * aparecia como "Apoio 25" e "▲ crítico" ao mesmo tempo — a tela dizendo duas
  * coisas contra o próprio piso de 25.
  */
-export function mapView(state: GameState, selected: RegionId | null): MapView {
+export function mapView(
+  state: GameState,
+  selected: RegionId | null,
+  hit: ReadonlySet<RegionId> = hitRegions(state),
+): MapView {
   const cells = REGION_IDS.map((id): RegionCell => {
     const region = state.regions[id];
     const value = Math.round(region.support);
     const low = value < balance.supportFloor;
-    const alert = alertFor(state, id, low);
+    const alert = alertFor(hit, id, low);
     const shown = whole.format(value);
     const anchor = LABEL_ANCHORS[id];
 
@@ -325,7 +365,7 @@ function whenLoaded(image: HTMLImageElement, run: () => void): void {
 
 // ------------------------------------------------------------------- DOM ---
 
-type Slot = 'marker' | 'support' | 'meter' | 'alert' | 'heat';
+type Slot = 'marker' | 'support' | 'meter' | 'alert' | 'heat' | 'bubbles' | 'coach';
 
 function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -467,14 +507,29 @@ export function mountMap(root: Element, view: MapView, onSelect: (id: RegionId) 
     stage.append(button);
   }
 
+  // A camada das bolhas de PAC (INTER-04): vazia aqui, preenchida pelo
+  // bubbles.ts. Ela mora dentro do palco porque é a geometria do palco que ela
+  // usa — porcentagem do desenho —, e é montada aqui para o bubbles.ts não
+  // precisar conhecer a estrutura interna do mapa. É o mesmo arranjo dos
+  // `slot`s das etiquetas, um nível acima.
+  const bubbles = element('div', 'map__bubbles', 'bubbles');
+  bubbles.setAttribute('role', 'group');
+  bubbles.setAttribute('aria-label', ui.bubbles.label);
+  stage.append(bubbles);
+
   // A legenda do aquecimento (P7-04). É o que impede o aquecimento de ser só cor
   // (§5). Desde o VIS-04 ela fica no canto de baixo do desenho, sobre o mar
   // onde a Antártida foi cortada: embaixo do mapa, ela tirava da altura que a
   // tela cheia precisa para o mapa crescer.
   const caption = element('p', 'map__caption', 'heat');
 
+  // A linha do conselho (INTER-07) pousa **dentro do quadro**, e não no palco:
+  // no palco ela caía em cima do texto de entrada do mapa, medido no Edge. Aqui
+  // ela fica sobre o desenho, com o texto de entrada acima dela.
+  const coach = element('div', 'map__coach', 'coach');
+
   const frame = element('div', 'map__frame');
-  frame.append(stage, caption);
+  frame.append(stage, coach, caption);
   // O rolador existe por causa do §5: a etiqueta tem 16 px, e o mapa não pode
   // encolher abaixo da largura em que as oito cabem sem se tocar. Numa tela
   // estreita ele rola de lado, dentro da própria caixa; a página, não.

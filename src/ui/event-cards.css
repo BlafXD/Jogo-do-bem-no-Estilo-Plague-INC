@@ -158,6 +158,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* O que o evento cobrou (INTER-02). Fica mais forte que o "onde e quando" e no
+   mesmo tamanho do fato: é a linha que liga a pancada aos indicadores do HUD, e
+   era justamente ela que faltava para o evento não parecer "sem sentido".
+   Tabular pelo mesmo motivo do HUD — números alinhados entre os cartões. */
+.events__toll {
+  margin: 0.25rem 0 0;
+  color: var(--cor-valor, #f2f7f4);
+  font-size: var(--tamanho-base, 1rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
 /* O fato real — a razão de o cartão existir. Fica no tamanho de leitura, e não
    como letra miúda de rodapé: é ele que transforma o evento em conscientização
    em vez de só em dano (docs/GDD.md §2.5). */
@@ -180,8 +192,11 @@
   grid-column: 2;
 }
 
+/* `1 / -1` em vez de `span 3`: o cartão passou a ter quatro linhas quando o
+   pedágio aparece (INTER-02) e três quando não, e um `span` fixo deixaria o
+   avatar curto num dos dois casos. */
 .events__card > .avatar {
-  grid-row: 1 / span 3;
+  grid-row: 1 / -1;
 }
 
 .events__by {

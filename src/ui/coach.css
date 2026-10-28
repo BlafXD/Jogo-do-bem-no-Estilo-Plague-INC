@@ -1,0 +1,66 @@
+/* A linha do "faça isto agora" (INTER-07).
+
+   Pousa no topo do **quadro** do mapa, sobre o mar, pelo mesmo motivo da legenda
+   do aquecimento no canto de baixo: ali ela não custa altura ao mundo, e está
+   onde o jogador já está olhando. Num estande, é a primeira coisa que alguém de
+   pé consegue ler. No palco (um nível acima) ela caía em cima do texto de
+   entrada do mapa — medido no Edge, e foi assim que o lugar foi escolhido.
+
+   **O fundo é opaco de propósito.** Texto sobre a ilustração do mapa sem fundo
+   não alcança o contraste AA que o §5 do GDD exige — é a mesma conclusão que o
+   balão do tutorial registrou no layout.css. */
+
+/* Encostada na esquerda, e não centralizada: medido no Edge a 1280 px, a linha
+   centralizada caía em cima da etiqueta da Europa, que fica no meio do topo do
+   mapa. À esquerda ela passa por cima do oceano e do Alasca, e a etiqueta mais
+   próxima (América do Norte) começa abaixo dela. */
+.map__coach {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  /* Abaixo das bolhas (que são 2) e acima das etiquetas: numa tela estreita a
+     linha e a bolha da América do Norte dividem o canto, e quem tem prazo para
+     ser clicada é a bolha. O clique atravessa a linha de qualquer jeito. */
+  z-index: 1;
+  max-width: min(52rem, calc(100% - 1.5rem));
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--cor-borda, #a08d5e);
+  border-radius: var(--raio-pequeno, 0.375rem);
+  background: color-mix(in srgb, var(--cor-fundo, #0f1812) 88%, transparent);
+  /* A linha é conselho, não alvo: o clique atravessa para o mapa embaixo dela.
+     Sem isto, ela cobriria um pedaço do oceano — e, em tela estreita, a borda
+     norte da América do Norte. */
+  pointer-events: none;
+}
+
+.map__coach .coach__text {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--cor-valor, #f3efe0);
+  font-size: var(--tamanho-base, 1rem);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.map__coach .coach__icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  color: var(--cor-destaque, #e2cd95);
+}
+
+/* A bolha e a contenção são as duas que se perdem esperando: a borda esquerda
+   mais grossa as separa das outras sem depender de cor para dizer isso — o que
+   diz é o texto, e a borda só o acompanha. */
+.map__coach[data-cue='bubble'],
+.map__coach[data-cue='contain'] {
+  border-left: 4px solid var(--cor-alerta, #f2a65a);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .map__coach {
+    transition: border-color 0.3s ease;
+  }
+}

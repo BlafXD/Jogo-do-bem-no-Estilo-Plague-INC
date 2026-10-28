@@ -7,6 +7,7 @@
 //
 // Nada aqui é código de jogo: é o engine de produção sendo dirigido de fora.
 
+import { claimAllBubbles } from '../src/engine/bubbles';
 import { globalEmissions } from '../src/engine/climate';
 import { canContain, contain, containCost } from '../src/engine/inertia';
 import { outcomeOf } from '../src/engine/outcome';
@@ -190,7 +191,12 @@ export function simulate(strategy: Strategy): SimResult {
     // diferença passaria a contar o dano de evento como "não arrecadado", e a
     // economia do P3-04 deixaria de significar o que o nome dela diz.
     earnedPoints += pointsPerYear(state) / balance.ticksPerYear;
-    state = advanceTick(state);
+    // O mês, e em seguida as bolhas (INTER-03). **O `earnedPoints` acima
+    // continua certo porque a renda total não mudou** — o `bubbleShare` só
+    // mudou onde ela aparece. Quem é medido aqui é quem joga bem, e quem joga
+    // bem recolhe o que o mapa oferece; a partida de quem ignora as bolhas é
+    // medida à parte, no docs/BALANCEAMENTO.md.
+    state = claimAllBubbles(advanceTick(state));
 
     if (state.year >= strategy.startYear) {
       // Conter **ou** comprar, nunca os dois no mesmo mês: é a escolha que o
@@ -268,7 +274,7 @@ export function playOut(
   let defeated = outcomeOf(state).kind === 'defeat';
 
   while (!isOver(state)) {
-    state = advanceTick(state);
+    state = claimAllBubbles(advanceTick(state));
 
     // Mesma escolha do `simulate`: conter ou comprar, nunca os dois.
     const contencao = tryContain(state, { containAbove });

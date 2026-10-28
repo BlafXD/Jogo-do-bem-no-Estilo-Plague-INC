@@ -19,14 +19,18 @@ import {
   balance,
   characterBuffs,
   REGION_IDS,
+  SKILL_BRANCHES,
   skills,
+  synergies,
   type CharacterBuff,
+  type Effect,
   type GameState,
   type Region,
   type RegionId,
   type Skill,
   type SkillBranch,
   type SkillId,
+  type Synergy,
 } from './state';
 
 const byId: ReadonlyMap<SkillId, Skill> = new Map(skills.map((skill) => [skill.id, skill]));
@@ -104,12 +108,16 @@ function clamp(value: number): number {
 }
 
 /**
- * Aplica os efeitos de empurrão único de uma habilidade recém-comprada.
+ * Aplica os efeitos de empurrão único que acabaram de entrar na partida.
+ *
+ * Recebe **efeitos soltos**, e não a habilidade, porque desde o INTER-08 eles
+ * vêm de dois lugares: o nó comprado e a sinergia que a compra fechou. A conta é
+ * a mesma nos dois casos — é o mesmo `Effect` do docs/GDD.md §3.
  *
  * `emissionCut` e `pointsPerYear` não aparecem aqui de propósito: quem os lê é
  * o tick, a cada mês, a partir da lista de compras.
  */
-function applyImmediateEffects(state: GameState, skill: Skill): GameState {
+function applyImmediateEffects(state: GameState, effects: readonly Effect[]): GameState {
   let regions = state.regions;
   let inertia = state.inertia;
 
@@ -125,7 +133,7 @@ function applyImmediateEffects(state: GameState, skill: Skill): GameState {
     regions = touched as Record<RegionId, Region>;
   };
 
-  for (const effect of skill.effects) {
+  for (const effect of effects) {
     switch (effect.kind) {
       case 'support':
       case 'resilience':
@@ -144,6 +152,23 @@ function applyImmediateEffects(state: GameState, skill: Skill): GameState {
 }
 
 /**
+ * Os nós que o caixa de agora compra, do mais barato para o mais caro.
+ *
+ * **Mora aqui porque três telas fazem a mesma pergunta** (INTER-06/07): o selo
+ * do botão da árvore, a prateleira de compra rápida e a linha do "faça isto
+ * agora". Três implementações da mesma varredura é como elas discordam em
+ * silêncio — o mesmo argumento que levou o `averageSupport` para o state.ts.
+ *
+ * Devolve a habilidade inteira, e não só o id: quem chama precisa do nome, do
+ * ramo e do custo, e um segundo `skillById` por item seria desperdício.
+ */
+export function readyToUnlock(state: GameState): readonly Skill[] {
+  return skills
+    .filter((skill) => canUnlock(state, skill.id).ok)
+    .sort((a, b) => costFor(state, a) - costFor(state, b));
+}
+
+/**
  * Compra uma habilidade: cobra o PAC, guarda o id e aplica os efeitos imediatos.
  *
  * Quando a compra não é possível, devolve o estado recebido **intacto**, em vez
@@ -155,16 +180,86 @@ export function unlockSkill(state: GameState, id: SkillId): GameState {
   const skill = byId.get(id);
   if (skill === undefined || !canUnlock(state, id).ok) return state;
 
-  return {
-    ...applyImmediateEffects(state, skill),
+  const bought: GameState = {
+    ...applyImmediateEffects(state, skill.effects),
     actionPoints: state.actionPoints - costFor(state, skill),
     unlockedSkills: [...state.unlockedSkills, id],
   };
+
+  // A sinergia que esta compra fechou entrega os efeitos de empurrão único dela
+  // agora (INTER-08). Os contínuos — `emissionCut`, `pointsPerYear` — não
+  // precisam de nada aqui: o tick os lê do estado a cada mês, e a sinergia
+  // completa já faz parte do estado.
+  return synergiesEarned(state, bought).reduce(
+    (next, synergy) => applyImmediateEffects(next, synergy.effects),
+    bought,
+  );
+}
+
+// --------------------------------------------------------------- sinergias ---
+
+/** Quantos nós comprados o jogador tem em cada ramo. */
+function nodesByBranch(state: GameState): Readonly<Record<SkillBranch, number>> {
+  const count: Record<SkillBranch, number> = {
+    energy: 0,
+    transport: 0,
+    nature: 0,
+    industry: 0,
+    society: 0,
+  };
+
+  for (const id of state.unlockedSkills) {
+    const skill = byId.get(id);
+    if (skill !== undefined) count[skill.branch] += 1;
+  }
+
+  return count;
+}
+
+/**
+ * Quantos ramos já cumprem a condição de uma sinergia — o progresso dela.
+ *
+ * Mora no engine, e não na tela, pela razão do `averageSupport`: é a mesma conta
+ * que decide se a sinergia está fechada, e duas implementações dela é como a
+ * barra de progresso e o bônus discordam em silêncio.
+ */
+export function synergyProgress(state: GameState, synergy: Synergy): number {
+  const count = nodesByBranch(state);
+  return SKILL_BRANCHES.filter((branch) => count[branch] >= synergy.nodesPerBranch).length;
+}
+
+/** A sinergia está fechada? Todos os cinco ramos cumprem a condição. */
+export function hasSynergy(state: GameState, synergy: Synergy): boolean {
+  return synergyProgress(state, synergy) === SKILL_BRANCHES.length;
+}
+
+/** As sinergias fechadas, na ordem do synergies.json. */
+export function completedSynergies(state: GameState): readonly Synergy[] {
+  return synergies.filter((synergy) => hasSynergy(state, synergy));
+}
+
+/**
+ * As sinergias que fecharam **entre** dois estados.
+ *
+ * Usada pelo `unlockSkill` para aplicar o empurrão único e pela tela para
+ * mostrar o pop-up (INTER-08). Nenhuma sinergia se desfaz — nó comprado não se
+ * vende —, então a diferença é sempre num sentido só.
+ */
+export function synergiesEarned(before: GameState, after: GameState): readonly Synergy[] {
+  const had = new Set(completedSynergies(before).map((synergy) => synergy.id));
+  return completedSynergies(after).filter((synergy) => !had.has(synergy.id));
 }
 
 // --------------------------------------------------- os efeitos contínuos ---
 
-/** Percorre os efeitos das habilidades já compradas. */
+/**
+ * Percorre os efeitos das habilidades já compradas.
+ *
+ * **As sinergias (INTER-08) não entram aqui, e não é esquecimento:** elas só
+ * entregam efeito de **empurrão único**, e o `parseSynergies` recusa os outros
+ * na carga. Somá-las neste gerador criaria um caminho que nenhum dado percorre —
+ * o mesmo código morto que o galho regional foi durante quatro tarefas.
+ */
 function* unlockedEffects(state: GameState) {
   for (const id of state.unlockedSkills) {
     const skill = byId.get(id);

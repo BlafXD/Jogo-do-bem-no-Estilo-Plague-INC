@@ -538,3 +538,15 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
+
+/* O selo de quantos nós já cabem no caixa (INTER-06). Fica ao lado do saldo, em
+   cor de alerta, porque é um convite e não um indicador: "tem o que comprar".
+   Some sozinho quando não há nenhum — quem o esconde é o renderTreeButton. */
+.tree-button__ready {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--cor-alerta, #f2a65a);
+  color: var(--cor-tinta, #2a281d);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}

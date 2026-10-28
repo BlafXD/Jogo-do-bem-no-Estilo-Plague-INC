@@ -341,6 +341,79 @@ numa sessão só, cada uma pequena o bastante para ler sozinha. Suíte **1112 �
 
 ---
 
+## INTER — Interatividade: bolhas de PAC, evento legível e ação fora do painel (pedido no chat em 2026-10-28)
+
+Pedido do chat: o jogo precisa ficar **mais interativo**, o jogador precisa **entender o que está
+acontecendo**, a árvore precisa de **mais bônus**, não dá para ter que **abrir o painel toda hora**,
+e os eventos "aparecem muito rápido e sem sentido" — **principalmente no Modo Feira**, onde a
+rotação de visitantes exige que se entenda de primeira. Mais o pedido explícito: **pop-up por país
+que dá bônus de PAC**, como as bolhas de DNA do *Plague Inc*.
+
+**O diagnóstico que abriu o épico, com número.** No Modo Feira o jogo roda a 4x, então um tick dura
+0,375 s: o cartão de evento, que vive `CARD_TICKS = 6` meses, fica **2,25 s na tela**, e cai um
+evento novo a cada **1,9 s** (2,355 eventos por ano, §2.5). O boletim da feira é um letreiro que
+troca antes de qualquer pessoa ler. E "sem sentido" tem causa documentada: **o cartão não diz o que
+o evento fez** — a dívida que o `docs/GDD.md §2.5` registrou como do `P7-04` e que o `P7-04` não
+pagou.
+
+**A trava que o épico respeita.** O `REF-09` mediu que `basePointsPerYear` tem teto em **46**: em 48
+quem pula o ramo Sociedade passa a sobreviver e o dilema do `§2.6` vira preferência. Então bolha
+**não é PAC novo** — é uma **fatia da renda que já existe** (`bubbleShare`), e quem não olha o mapa
+arrecada menos. É a mesma troca do *Plague Inc*, onde o DNA também se paga com atenção.
+
+**Autorizado no chat em 2026-10-28, em bloco** ("permissão completa para agir com o plano INTER"):
+subir o `SAVE_VERSION` 3 → 4 (saves da versão 3 recusados, como no `REF-04`) e editar o
+`docs/GDD.md` (`§2.2`, `§2.5`, `§3`, `§4` e `§5`).
+
+- [x] `INTER-01` Cartão que dá tempo de ler: a janela do boletim em segundos reais, não em meses — **M**
+      — *`src/ui/event-feed.ts` (novo) e `eventCardSeconds` no `balance.json`. O boletim ganhou
+      memória própria: a janela sai dos segundos reais convertidos pela velocidade do relógio (6
+      meses a 1x, 22 a 4x), com teto de 4 cartões. **O chip do mapa saiu junto** — `mapView` passou a
+      receber as regiões do boletim, porque o tutorial promete que "o mapa marca a região onde doeu"
+      e na feira ele cumpria isso por 2,25 s. O engine não mudou: `ticksRemaining` continua sendo a
+      presença do evento no mundo.*
+- [x] `INTER-02` O evento diz o que fez: o pedágio aplicado guardado no `ActiveEvent` e escrito no
+      cartão (a dívida do `P7-04`) — **M** — *`EventToll` no `state.ts`, `applyEvent` guardando o que
+      **de fato** saiu (os três `Math.min` são os pisos de antes, escritos do outro lado), e a linha
+      "Cobrou: 3,2 de apoio · 8 PAC" no cartão. **O `fromSave` passou a conferir os cartões um por
+      um** — a dívida que o P7-01 deixou ali —, porque o pedágio é número que a tela escreve como
+      fato. O `eventId` continua sem ser cobrado contra o catálogo, de propósito.*
+- [x] `INTER-03` Bolhas de PAC: engine (`src/engine/bubbles.ts`, sorteio semeado, `claimBubble`) — **G**
+      — *A renda foi **fatiada**, não aumentada: `bubbleShare` 0,25. **Cadência fixa, lugar
+      sorteado** — a versão com sorteio por mês entregou 8 bolhas em 3 anos em vez de 6, e renda com
+      variância não cabe num jogo balanceado por varredura. **O sorteio tem gerador próprio**, de
+      `(seed, tick)`: consumir o `rngState` deslocaria todos os eventos de 2025 a 2100 e invalidaria
+      as cinco partidas de referência. Custo medido da mecânica inteira: **0,0005 °C** na melhor
+      partida. `claimAllBubbles` existe por dois motivos — o atalho de teclado e o harness.*
+- [x] `INTER-04` Bolhas na tela: botão por região no mapa, teclado e o "+X PAC" subindo — **M** —
+      *`src/ui/bubbles.ts`/`.css`, numa camada que o `mountMap` deixa pronta no palco. Cada bolha é
+      um `<button>` com valor escrito, nome acessível e prazo no `title` (§5), e a tecla **B**
+      recolhe todas — um alvo com prazo não pode ser a única porta da renda. Sem som, de propósito:
+      são 150 bolhas por partida, e o contrato do `[D-Musica]` tem seis efeitos, todos com dono.*
+- [x] `INTER-05` Rebalanceamento da renda fatiada, com o harness clicando as bolhas — **M** — *o
+      `planilha-engine` e as cinco partidas de referência passaram a recolher as bolhas: elas medem
+      quem **joga bem**, e quem joga bem olha o mapa. O preço de não olhar está medido e registrado:
+      prata → bronze (1,9777 → 2,0684 °C) para o comprador guloso, **uma faixa de medalha e não a
+      partida**. Tudo em `docs/BALANCEAMENTO.md`.*
+- [x] `INTER-06` Comprar sem abrir o painel: contagem no botão da árvore e atalhos de compra na barra — **M**
+      — *`src/ui/quick-buy.ts`/`.css` e o selo "3 prontos" no botão da árvore, os dois lendo o
+      `readyToUnlock` novo do engine (três telas faziam a mesma varredura). **A prateleira mostra 2
+      nós**, medido na tela: com três, a barra de baixo quebrava em três linhas a 1600 px, e a 1280
+      px os nomes sumiam — abaixo de 96rem ela mostra um só.*
+- [x] `INTER-07` A linha do "agora faça isto", derivada do estado — **P** — *`src/ui/coach.ts`, no
+      topo do quadro do mapa. A escada é por **quanto se perde esperando**: bolha (expira) → conter
+      (o estrago é permanente) → apoio furado → comprar (que já está à vista na prateleira) → esperar.
+      Nunca dá palpite de estratégia. Cala com o painel da feira no ar e na partida encerrada.*
+- [x] `INTER-08` Mais bônus na árvore: três **sinergias** que atravessam ramos — **G** — *`synergies.json`
+      + `src/ui/synergy.ts`, com a lista no painel da árvore. **Não é "bônus de losango fechado", e o
+      motivo está medido:** o nó de fecho exige os dois nós do meio, então tê-lo já implica o losango
+      inteiro — o bônus seria idêntico a somar efeito nele. A condição que nenhum nó implica é a que
+      atravessa ramos. **Nenhuma mexe na curva de emissão**: com corte, a sinergia inverteu a ordem
+      das quatro estratégias do §4 e largura virou jogada dominante. Preço assumido: a janela de
+      perdão caiu de "2060 ainda mata" para "2052 ainda mata" — é do `P8-02`, com playtest.*
+
+---
+
 ## Gelo (só se sobrar tempo)
 
 ~~Não puxar nada daqui antes do **M3**.~~ **A trava caiu**: o `M3` (`P8-05`, build da feira) está

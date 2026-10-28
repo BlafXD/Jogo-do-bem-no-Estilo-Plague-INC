@@ -692,3 +692,119 @@ Nenhum personagem reforça este efeito — ao contrário do `emissionCut` (REF-0
 Ricardo reforçam em 15% no ramo deles. Os quatro nós não têm ramo em comum com um personagem
 específico o bastante para justificar um buff novo, e criar um sem motivo seria inventar
 balanceamento para o `character-buffs.json` não pedir.
+
+### O épico `INTER`: a renda fatiada, as sinergias e o que isso custou (2026-10-28)
+
+Pedido do chat: o jogo mais interativo, com "pop-up em cada país que dá um bônus do PAC", a árvore
+com mais bônus, e o jogador entendendo o que acontece — **principalmente no Modo Feira**. As oito
+tarefas estão no `PLANO.md`; aqui ficam só os números.
+
+#### O defeito que abriu o épico, medido
+
+O cartão de evento vivia `CARD_TICKS = 6` meses. O Modo Feira roda a 4x, onde um mês dura 0,375 s:
+
+| Velocidade | Um mês | Cartão na tela | Evento novo a cada |
+|---|---|---|---|
+| 1x | 1,5 s | **9,0 s** | 7,6 s |
+| 2x | 0,75 s | **4,5 s** | 3,8 s |
+| 4x (Feira) | 0,375 s | **2,25 s** | **1,9 s** |
+
+Com 2,355 eventos por ano (`§2.5`), **na feira o boletim trocava antes de qualquer pessoa ler**. O
+`eventCardSeconds` (8 s) passou a ser a janela, convertida em meses pela velocidade: 6 meses a 1x
+(nada muda), 11 a 2x e 22 a 4x. O teto de 4 cartões em cena (`FEED_LIMIT`) é consequência disso —
+a 4x a janela nova guarda ~4,3 eventos ao mesmo tempo no fim da partida.
+
+#### A renda fatiada: por que a bolha não é PAC novo
+
+O `REF-09` mediu que `basePointsPerYear` tem teto em **46**: a 48, quem pula o ramo Sociedade passa
+a sobreviver e o dilema do `§2.6` vira preferência. Então a bolha **não soma renda, divide**:
+
+| | Automático, por mês | Por bolha | Bolhas por ano | Total ao ano |
+|---|---|---|---|---|
+| Antes do `INTER-03` | 3,833 | — | — | 46,0 |
+| Depois, recolhendo tudo | 2,875 | 5,75 | 2 | **46,0** |
+| Depois, sem recolher nada | 2,875 | — | — | **34,5** |
+
+**O `bubbleShare` é 0,25, e o número tem duas razões.** É a fatia que o chat aprovou ("~34
+automático + ~12 em bolhas") e é **exata em binário**: com 0,3, doze meses de renda automática mais
+duas bolhas davam 45,99999999999999, e o HUD — que arredonda PAC para baixo — mostrava **45** no fim
+do primeiro ano. Com 0,25 a conta fecha em 46 exatos.
+
+**A cadência é fixa (uma bolha a cada 6 meses), e só a região é sorteada.** A primeira versão
+sorteava se nascia bolha a cada mês, com chance `bubblesPerYear / ticksPerYear`. Medido com a seed
+2025: **8 bolhas em 3 anos em vez das 6 esperadas**, 13,8 PAC a mais — 10% da arrecadação do
+período. Renda que varia com a sorte não cabe num jogo balanceado por varredura de partidas de
+referência, e 2 PAC/ano a mais já derrubam o dilema. Com cadência fixa, quem recolhe tudo arrecada
+**exatamente** a renda de antes, e o sorteio decide só *onde olhar*.
+
+**O sorteio da região tem gerador próprio, derivado de `(seed, tick)`.** Consumir o `rngState` da
+partida deslocaria toda a sequência de eventos de 2025 a 2100 — e com ela as cinco partidas de
+referência, as varreduras deste arquivo e as temperaturas pinadas nos testes. Com o gerador
+separado, a mecânica inteira custou **0,0005 °C** na melhor partida medida (1,9508 → 1,9503 °C), e
+essa diferença vem só do PAC chegar em pedaços de 5,75 em vez de 3,833 por mês, o que adianta ou
+atrasa uma compra.
+
+#### O preço de não olhar o mapa
+
+Medido com o comprador guloso (compra o nó mais barato que couber, todo mês), seed 2025:
+
+| | Temperatura final | Emissões em 2100 | Nós comprados | Medalha |
+|---|---|---|---|---|
+| Recolhe as bolhas | 1,9777 °C | 1,191 Gt/ano | 30 | **Prata** |
+| Ignora as bolhas | 2,0684 °C | 2,708 Gt/ano | 25 | **Bronze** |
+
+**Custa uma faixa de medalha, e não custa a partida** — quem nunca clicou numa bolha chega vivo a
+2100. Era a trava que esta mecânica precisava ter: num estande de feira, metade das pessoas vai
+descobrir as bolhas no meio da partida.
+
+#### As sinergias: por que nenhuma mexe na curva de emissão
+
+A forma de cada ramo é uma corrente de dois losangos, e o nó de fecho exige **os dois** nós do meio,
+que exigem a raiz. Ou seja: **ter o nó de fecho já implica ter o losango inteiro**, e um "bônus por
+fechar o losango" seria matematicamente idêntico a somar efeito no nó de fecho — número maior, não
+bônus novo. A condição que nenhum nó implica é a que **atravessa ramos**, e é essa que a sinergia
+expressa (`nodesPerBranch`: tantos nós comprados em cada um dos cinco).
+
+**A primeira versão da "Segunda fileira" cortava 0,5% ao ano de emissão, e isso inverteu a ordem
+das quatro estratégias de referência do `§4`:**
+
+| Estratégia | Com o corte na sinergia | Sem ele (versão final) |
+|---|---|---|
+| `melhor` (ignora Sociedade) | 1,9503 °C | 1,9503 °C |
+| `sociedade-cedo` | **1,9414 °C** | 1,9706 °C |
+
+Com o corte, investir em Sociedade cedo passou a terminar **mais frio** que ignorá-la — e o "ramo
+Sociedade é uma armadilha" que o `P3-04` mediu deixou de valer, com largura virando a jogada
+dominante. Por isso o `SYNERGY_EFFECTS` do `state.ts` **recusa na carga** todo efeito contínuo: a
+sinergia premia largura no eixo da **sobrevivência** (apoio, resiliência, Inércia), nunca no da
+temperatura. A escolha entre mitigar e adaptar continua sendo do jogador.
+
+#### O que as sinergias custaram: a janela de perdão
+
+Qualquer bônus de sobrevivência é, por construção, um colchão para quem larga o controle. Medido
+com a política `LARGA_TUDO` do `tests/inercia.test.ts` (largar em tal ano e deixar a partida correr):
+
+| Bônus das três sinergias | 2045 | 2050 | 2052 | 2055 | 2060 | 2065 |
+|---|---|---|---|---|---|---|
+| Nenhum (antes do `INTER-08`) | mata | mata | mata | mata | **mata** | sobrevive |
+| 5 apoio / 10 Inércia / 8 resiliência | mata | **sobrevive** | mata | sobrevive | sobrevive | sobrevive |
+| **2 apoio / 6 Inércia / 5 resiliência** (escolhido) | mata | mata | **mata** | sobrevive | sobrevive | sobrevive |
+
+A configuração forte não é só mais permissiva — ela torna a janela **não monótona**: largar em 2050
+sobrevive e largar em 2052 morre, o que não é janela, é sorte de evento. A escolhida é a mais fraca
+que ainda se sente na tela e mantém a ordem. **A janela caiu de "2060 ainda mata" para "2052 ainda
+mata"**, e isso é débito assumido: a alavanca para devolvê-la é a escala de medalhas do `§2.7`, não
+a Inércia (subir a mordida dela já foi medido duas vezes e dissolve até a melhor jogada). É do
+`P8-02`, com playtest.
+
+#### Duas correções que só a tela achou
+
+Conferido no Edge headless, no jogo de verdade, em 1600 × 900:
+
+- **A bolha prometia menos do que pagava.** O rótulo arredondava para baixo, como o PAC do HUD: uma
+  bolha de 5,75 anunciava "+5 PAC" e movia o HUD de 78 para 84. A regra do HUD existe para o saldo
+  nunca prometer o que a compra vai negar; aqui o número é **ganho**, e arredondar para o mais perto
+  é o que faz a conta fechar aos olhos de quem clicou.
+- **A prateleira de compra rápida mostra 2 nós, não 3.** Com três, a barra de baixo passava da
+  largura a 1600 px: ou quebrava em três linhas (90 px de altura a menos para o mapa), ou espremia
+  os nomes até "E… 36 PAC". O selo do botão da árvore é quem diz o número de verdade.

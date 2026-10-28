@@ -209,7 +209,14 @@ describe('os alertas por região (P7-04)', () => {
   it('marca a região que um evento acaba de atingir', () => {
     const state: GameState = {
       ...start(),
-      activeEvents: [{ eventId: 'heatwave', target: 'ea', ticksRemaining: 3 }],
+      activeEvents: [
+        {
+          eventId: 'heatwave',
+          target: 'ea',
+          ticksRemaining: 3,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+      ],
     };
     const view = mapView(state, null);
 
@@ -222,7 +229,14 @@ describe('os alertas por região (P7-04)', () => {
     // crítico continua escrito no número e pintado de hachura no desenho.
     const state: GameState = {
       ...comApoio({ af: 5 }),
-      activeEvents: [{ eventId: 'drought', target: 'af', ticksRemaining: 2 }],
+      activeEvents: [
+        {
+          eventId: 'drought',
+          target: 'af',
+          ticksRemaining: 2,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+      ],
     };
     const view = mapView(state, null);
 
@@ -239,5 +253,34 @@ describe('os alertas por região (P7-04)', () => {
 
   it('numa partida recém-começada nenhuma região está em alerta', () => {
     expect(mapView(start(), null).cells.every((cell) => cell.alert === null)).toBe(true);
+  });
+
+  /**
+   * A janela do boletim (INTER-01) é maior que a do engine no Modo Feira, e o
+   * chip precisa acompanhar o cartão: quem termina de ler "o mapa marca a
+   * região onde doeu" tem de achar a marca ainda lá.
+   */
+  it('o chip de evento segue quem está no boletim, não o activeEvents', () => {
+    const state: GameState = { ...start(), activeEvents: [] };
+    const view = mapView(state, null, new Set(['ea']));
+
+    expect(celula(view, 'ea')?.alert?.kind).toBe('event');
+    expect(celula(view, 'na')?.alert).toBeNull();
+  });
+
+  it('boletim vazio tira o chip, mesmo com evento em cena no engine', () => {
+    const state: GameState = {
+      ...start(),
+      activeEvents: [
+        {
+          eventId: 'heatwave',
+          target: 'ea',
+          ticksRemaining: 3,
+          toll: { support: 0, economy: 0, points: 0 },
+        },
+      ],
+    };
+
+    expect(celula(mapView(state, null, new Set()), 'ea')?.alert).toBeNull();
   });
 });

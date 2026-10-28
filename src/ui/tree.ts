@@ -25,7 +25,7 @@
 // escolhido. O painel que os envolve é do tree-panel.ts.
 
 import { ui } from '../data/i18n';
-import { canUnlock, costFor, skillById, type UnlockRefusal } from '../engine/skills';
+import { canUnlock, costFor, readyToUnlock, skillById, type UnlockRefusal } from '../engine/skills';
 import {
   SKILL_BRANCHES,
   skills,
@@ -700,13 +700,26 @@ export function renderSkillDetail(root: HTMLElement, view: SkillDetailView | nul
 export type TreeButtonView = {
   /** O PAC para gastar, com a unidade. */
   readonly points: string;
+  /** "3 prontos" — quantos nós já cabem no caixa (INTER-06). Vazio com nenhum. */
+  readonly ready: string;
+  /** A dica do botão, que muda com a contagem. */
+  readonly readyHint: string;
 };
 
 export function treeButtonView(state: GameState): TreeButtonView {
   // Para baixo, pela regra do hud.ts: o número na tela nunca promete o que a
   // compra vai negar. Os dois números ficam lado a lado na tela, e o
   // tests/tree.test.ts trava que eles concordam.
-  return { points: ui.treeButton.points(wholePoints(state)) };
+  //
+  // A contagem de nós ao alcance (INTER-06) sai do `canUnlock` do engine, como
+  // o estado de cada nó: é a mesma pergunta, feita sobre a árvore inteira.
+  const ready = readyToUnlock(state).length;
+
+  return {
+    points: ui.treeButton.points(wholePoints(state)),
+    ready: ui.treeButton.ready(ready),
+    readyHint: ready === 0 ? ui.treeButton.hint : ui.treeButton.readyHint(ready),
+  };
 }
 
 /** O saldo de PAC arredondado para baixo, sem unidade. O painel usa também. */
@@ -734,10 +747,16 @@ export function mountTreeButton(root: Element, panelId: string, onOpen: () => vo
   const points = span('tree-button__points');
   points.dataset.treeButton = 'points';
 
+  // O selo de quantos nós já cabem no caixa (INTER-06). Nasce vazio e escondido;
+  // quem o acende é o `renderTreeButton`.
+  const ready = span('tree-button__ready');
+  ready.dataset.treeButton = 'ready';
+  ready.hidden = true;
+
   // O espaço entre os dois é para o nome acessível: dois `<span>` colados
   // viram "habilidades120" no leitor de tela. Na tela ele não aparece — num
   // contêiner flex, texto só de espaço não é desenhado, e quem separa é o gap.
-  button.append(span('tree-button__label', ui.treeButton.label), ' ', points);
+  button.append(span('tree-button__label', ui.treeButton.label), ' ', points, ' ', ready);
   prependIcon(button, 'tree', 'icon--button');
   button.addEventListener('click', onOpen);
   root.replaceChildren(button);
@@ -746,5 +765,16 @@ export function mountTreeButton(root: Element, panelId: string, onOpen: () => vo
 /** Escreve o saldo e se o painel está aberto no botão já montado. */
 export function renderTreeButton(root: ParentNode, view: TreeButtonView, open = false): void {
   write(root.querySelector('[data-tree-button="points"]'), view.points);
-  root.querySelector('button')?.setAttribute('aria-expanded', String(open));
+
+  const ready = root.querySelector<HTMLElement>('[data-tree-button="ready"]');
+  if (ready !== null) {
+    write(ready, view.ready);
+    ready.hidden = view.ready === '';
+  }
+
+  const button = root.querySelector('button');
+  button?.setAttribute('aria-expanded', String(open));
+  // A dica acompanha a contagem: com nós ao alcance ela diz quantos, e sem
+  // nenhum volta a explicar o que o botão faz.
+  if (button instanceof HTMLButtonElement) button.title = view.readyHint;
 }

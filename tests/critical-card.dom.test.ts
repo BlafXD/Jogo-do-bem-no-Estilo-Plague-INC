@@ -31,7 +31,7 @@ if (primeiro === undefined || segundo === undefined || MODERADO === undefined) {
 }
 
 function ativo(eventId: string, ticksRemaining = CARD_TICKS): ActiveEvent {
-  return { eventId, target: 'af', ticksRemaining };
+  return { eventId, target: 'af', ticksRemaining, toll: { support: 0, economy: 0, points: 0 } };
 }
 
 function partida(tick: number, ...ativos: readonly ActiveEvent[]): GameState {

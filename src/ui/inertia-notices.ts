@@ -54,14 +54,21 @@ export function crossedLevel(
 }
 
 /**
- * Os avisos ainda em cena no mês `tick`: os que entraram há menos de
- * `CARD_TICKS` meses, o mesmo tempo que um evento fica no boletim.
+ * Os avisos ainda em cena no mês `tick`: os que entraram há menos de `hold`
+ * meses, o mesmo tempo que um evento fica no boletim.
+ *
+ * `hold` é a janela do boletim (`EventFeed.hold`, INTER-01), que depende da
+ * velocidade do relógio — a 4x do Modo Feira ela vale 22 meses, não 6. O padrão
+ * é o `CARD_TICKS` do engine, que é o que esta função usava sozinha antes do
+ * INTER-01: um aviso saindo de cena em 6 meses enquanto o evento ao lado fica 22
+ * faria a mesma coluna piscar em dois ritmos.
  */
 export function noticesInScene(
   notices: readonly InertiaNotice[],
   tick: number,
+  hold: number = CARD_TICKS,
 ): readonly InertiaNotice[] {
-  return notices.filter((notice) => tick >= notice.tick && tick - notice.tick < CARD_TICKS);
+  return notices.filter((notice) => tick >= notice.tick && tick - notice.tick < hold);
 }
 
 /**
@@ -72,8 +79,9 @@ export function updateNotices(
   notices: readonly InertiaNotice[],
   before: GameState,
   after: GameState,
+  hold: number = CARD_TICKS,
 ): readonly InertiaNotice[] {
   const level = crossedLevel(before.inertia, after.inertia);
   const next = level === null ? notices : [...notices, { level, tick: after.tick }];
-  return noticesInScene(next, after.tick);
+  return noticesInScene(next, after.tick, hold);
 }

@@ -27,7 +27,7 @@ function withCards(tick: number, ...actives: readonly ActiveEvent[]): GameState 
 }
 
 function card(eventId: string, ticksRemaining = CARD_TICKS): ActiveEvent {
-  return { eventId, target: 'na', ticksRemaining };
+  return { eventId, target: 'na', ticksRemaining, toll: { support: 0, economy: 0, points: 0 } };
 }
 
 const CRITICO = climateEvents.filter(isCritical);
@@ -48,6 +48,57 @@ describe('eventCardsView', () => {
     // O fato é a razão de o cartão existir: sem ele, o P7-02 devolve dano sem
     // explicação, que é o que o P7-01 deixou pendente.
     expect(view?.fact.length).toBeGreaterThan(20);
+  });
+
+  /**
+   * O pedágio na frase do cartão (INTER-02). O que o evento **levou** —
+   * conferido contra o número que o engine guardou, não recalculado aqui.
+   */
+  describe('o que o evento cobrou', () => {
+    it('escreve as três parcelas quando as três saíram', () => {
+      const state = withCards(240, {
+        eventId: 'heatwave',
+        target: 'na',
+        ticksRemaining: CARD_TICKS,
+        toll: { support: 3.24, economy: 1.5, points: 8.4 },
+      });
+      const [view] = eventCardsView(state).cards;
+
+      expect(view?.toll).toBe(
+        ui.events.toll.line([
+          ui.events.toll.support('3,2'),
+          ui.events.toll.economy('1,5'),
+          ui.events.toll.points('8'),
+        ]),
+      );
+    });
+
+    it('não escreve a parcela que saiu zerada', () => {
+      const state = withCards(240, {
+        eventId: 'heatwave',
+        target: 'na',
+        ticksRemaining: CARD_TICKS,
+        toll: { support: 2, economy: 0, points: 0 },
+      });
+      const [view] = eventCardsView(state).cards;
+
+      expect(view?.toll).toBe(ui.events.toll.line([ui.events.toll.support('2,0')]));
+      expect(view?.toll).not.toContain('economia');
+      expect(view?.toll).not.toContain('PAC');
+    });
+
+    it('fica vazio quando o evento não levou nada', () => {
+      expect(eventCardsView(withCards(240, card('heatwave'))).cards[0]?.toll).toBe('');
+    });
+
+    /** O aviso da Inércia mora no mesmo boletim e não cobra por este caminho. */
+    it('o aviso da Inércia não tem pedágio', () => {
+      const state: GameState = { ...withCards(240), inertia: 60 };
+      const [view] = eventCardsView(state, false, [{ level: 50, tick: 240 }]).cards;
+
+      expect(view?.severity).toBe('inertia');
+      expect(view?.toll).toBe('');
+    });
   });
 
   it('o cabeçalho diz a região atingida e o ano em que o evento entrou', () => {

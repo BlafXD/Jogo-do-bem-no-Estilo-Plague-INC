@@ -83,6 +83,17 @@ tempo avança
 | **Resiliência** | 0–100 por região | reduz o dano dos eventos |
 | **Inércia** | 0–100 | força do antagonista |
 
+**Uma fatia do PAC não cai sozinha: ela aparece no mapa e expira** (INTER-03, pedido no chat em
+2026-10-28). A cada 6 meses uma **bolha de PAC** nasce em cima de uma região sorteada e fica
+`bubbleTicks` meses na mesa; recolhê-la é um clique, e a tecla `B` recolhe todas de uma vez. O
+`bubbleShare` do `§4` decide o tamanho da fatia.
+
+**A bolha não é PAC novo — é a renda de sempre, dividida.** Quem recolhe todas arrecada exatamente
+o que arrecadava antes de a mecânica existir; quem nunca olha o mapa arrecada `1 − bubbleShare`
+disso. O motivo está no `§4`: a renda anual tem um teto medido, e furá-lo desfaz o dilema do
+`§2.6`. O preço de ignorar as bolhas é **uma faixa de medalha**, não a partida — medido em
+`docs/BALANCEAMENTO.md`.
+
 ### 2.3 Regiões
 
 8 macrorregiões (América do Norte, América Latina, Europa, África, Oriente Médio, Ásia Oriental, Ásia Meridional, Oceania). Cada uma tem população, emissões próprias, matriz energética, apoio e resiliência. **Regiões diferentes = estratégias diferentes**: quem tem sol abundante e pouca verba não se resolve igual a quem tem indústria pesada e verba alta.
@@ -123,6 +134,32 @@ nó mira o mesmo evento:
 | Proteção oceânica (Natureza) | Branqueamento de corais |
 | Defesa costeira (Sociedade) | Ressaca e maré de tempestade |
 
+**Três sinergias premiam a largura** (INTER-08, autorizado no chat em 2026-10-28). Elas não moram
+em nó nenhum: fecham quando **todos os cinco ramos** têm pelo menos tantos nós comprados, e entregam
+um empurrão único.
+
+| Sinergia | Pede | Dá |
+|---|---|---|
+| **Cinco frentes** | 1 nó em cada ramo | +2 de apoio nas 8 regiões |
+| **Segunda fileira** | 2 nós em cada ramo | −6 de Inércia |
+| **Meio caminho** | 4 nós em cada ramo (o 1º losango fechado em todos) | +5 de resiliência nas 8 regiões |
+
+**Por que a condição atravessa ramos, e não "fechar o losango".** O nó de fecho exige **os dois** nós
+do meio, que exigem a raiz — ter o fecho já implica ter o losango inteiro. Um bônus por fechá-lo
+seria idêntico a somar efeito no nó de fecho: número maior, não bônus novo. A condição que nenhum nó
+implica é a que pede nós em ramos diferentes.
+
+**Nenhuma sinergia mexe na curva de emissão, e isso é regra cobrada na carga** (`SYNERGY_EFFECTS`,
+no `§3`). Medido: com corte de emissão, a sinergia **inverte a ordem das quatro estratégias de
+referência do `§4`** — investir em Sociedade cedo passa a terminar mais frio que ignorá-la, e o
+"ramo Sociedade é uma armadilha" do `P3-04` deixa de valer, com largura virando jogada dominante.
+Então a sinergia premia largura no eixo da **sobrevivência** (apoio, resiliência, Inércia), e a
+escolha entre mitigar e adaptar continua sendo do jogador. Os números estão em
+`docs/BALANCEAMENTO.md`, junto com o que isso custou: a janela de perdão do `§2.6` encolheu.
+
+**Nenhuma sinergia tem fato real.** O campo `fact` é onde mora ciência com fonte (regra 9), e uma
+sinergia é afirmação sobre **o jogo**, não sobre o mundo.
+
 **A Indústria ficou de fora, de propósito.** O nó de mesma posição no ramo dela — Cimento de baixo
 carbono — não tem par honesto com nenhum dos 20 eventos; forçar um vínculo fraco seria o tipo de
 afirmação sobre o mundo que o `docs/CIENCIA.md` já recusa para alvo regional, só que aqui sobre
@@ -153,6 +190,18 @@ oceano, pesca em fuga, deslocamento climático e o recuo do seguro.
 > **Nota de honestidade científica — decidido no `P3-06`, em 2026-08-20: o tsunami saiu.** Ele estava no conceito original, mas tsunami é geológico: o aquecimento não causa nenhum. Manter o nome exigiria colar uma ressalva no evento, e a ressalva gastaria a frase educativa explicando o que ele **não** é. Em vez disso o evento virou **ressaca e maré de tempestade sobre um mar mais alto** — mesma imagem, a costa engolida pela água, e inteiramente climático. Não sobra licença a assumir. O motivo completo está em `docs/CIENCIA.md`. **Não venda desinformação como educação.**
 
 Cada evento carrega uma frase educativa curta ligada a um fenômeno real.
+
+**O cartão diz o que o evento cobrou** (INTER-02, autorizado no chat em 2026-10-28). Era a dívida
+que este parágrafo registrava em nome do `P7-04` — "guardar o valor aplicado exigiria campo novo no
+`ActiveEvent` e um `SAVE_VERSION` novo" —, e ela foi paga: o `EventToll` do `§3` guarda o que de
+fato saiu de apoio, economia e PAC, no instante da pancada. **Guardado, e não recalculado:** o dano
+depende da resiliência da região naquele mês, e a resiliência muda depois — um cartão que
+recalculasse mostraria um número diferente do que foi cobrado.
+
+**E o cartão fica tempo de ler** (INTER-01). A janela dele passou a ser medida em **segundos reais**
+(`eventCardSeconds`, no `§4`), e não em meses: a 4x do Modo Feira, os 6 meses de antes davam 2,25 s
+de leitura, com um evento novo caindo a cada 1,9 s. O boletim guarda no máximo 4 cartões, e a marca
+no mapa sai de cena junto com o cartão que a explica.
 
 ### 2.6 O antagonista — "A Inércia"
 
@@ -340,11 +389,33 @@ type GameState = {
   regions: Record<RegionId, Region>;
   unlockedSkills: SkillId[];
   activeEvents: ActiveEvent[];
+  bubbles: Bubble[];         // as bolhas de PAC na mesa (INTER-03)
   inertia: number;           // 0..100
   seed: number;              // identidade da partida — nunca muda
   rngState: number;          // posição do gerador — anda a cada sorteio
   history: Snapshot[];       // para o gráfico final
 };
+
+// O que um evento de fato cobrou, no instante da pancada (INTER-02).
+type EventToll = { support: number; economy: number; points: number };
+
+// Uma bolha de PAC em cima de uma região (INTER-03). O valor fica gravado nela:
+// entre o mês em que nasceu e o clique, a renda do jogador pode ter crescido.
+type Bubble = { target: RegionId; value: number; ticksRemaining: number };
+
+// Um bônus que não mora em nó nenhum (INTER-08). Fecha quando **todos** os cinco
+// ramos têm `nodesPerBranch` nós comprados.
+type Synergy = {
+  id: string;
+  name: string;
+  description: string;      // o efeito em uma frase; sem `fact` — não é ciência
+  nodesPerBranch: number;
+  effects: Effect[];        // só os de empurrão único (SYNERGY_EFFECTS)
+};
+
+// Os `kind` que uma sinergia pode usar. Os outros são recusados na carga, e o
+// motivo é balanceamento: ver §2.4 e docs/BALANCEAMENTO.md.
+const SYNERGY_EFFECTS = ['support', 'resilience', 'inertiaCut'];
 
 type Effect =
   | { kind: 'emissionCut'; target: RegionId | 'global'; value: number }   // % ao ano
@@ -363,6 +434,13 @@ type Skill = {
   cost: number;
   requires: SkillId[];
   effects: Effect[];
+};
+
+type ActiveEvent = {
+  eventId: string;
+  target: RegionId;
+  ticksRemaining: number;    // quanto tempo o cartão fica em cena, no engine
+  toll: EventToll;           // o que ele cobrou (INTER-02)
 };
 
 type ClimateEvent = {
@@ -408,6 +486,10 @@ Ponto de partida para ajustar com playtest, **não é sagrado**:
   "containCost": 140,              // PAC de uma contenção, com só o nó raiz
   "containDiscountPerNode": 0.1,   // desconto por nó de Sociedade além do primeiro
   "containRelief": 25,             // pontos de Inércia que a contenção derruba
+  "bubbleShare": 0.25,             // fatia da renda que chega como bolha no mapa (§2.2)
+  "bubblesPerYear": 2,             // bolhas por ano; a cadência é fixa, só o lugar é sorteado
+  "bubbleTicks": 12,               // meses que uma bolha espera antes de sumir sem pagar
+  "eventCardSeconds": 8,           // segundos reais que um cartão fica no boletim (§2.5)
   "eventWeightPerDegree": 1.8,     // multiplicador de frequência por °C
   "criticalEventSupport": 2.5,     // impacto de apoio que torna o evento crítico
   "loseTemperature": 3.0,
@@ -467,6 +549,22 @@ grandes". Com 2,5, os eventos que param o jogo são a ressaca e o colapso de saf
 alcançável abaixo de 2 °C, então **a primeira metade da partida nunca é interrompida.** A contagem
 que escolheu o valor está em `docs/BALANCEAMENTO.md`.
 
+**As bolhas de PAC (`bubbleShare`, `bubblesPerYear` e `bubbleTicks`).** A renda não subiu com elas:
+ela foi **dividida**. A parte automática cai a cada mês, como sempre; a fatia do `bubbleShare`
+aparece em cima de uma região e expira se ninguém recolher. Quem recolhe tudo arrecada exatamente os
+46 PAC/ano de antes — e é por isso que a mecânica existe desta forma: o `REF-09` mediu que **48
+PAC/ano já desfazem o dilema do §2.6**, então bolha como bônus por cima quebraria o jogo de
+propósito. **A cadência é fixa e só o lugar é sorteado**, porque a primeira versão (sorteio por mês)
+entregou 8 bolhas em 3 anos em vez de 6 — renda que varia com a sorte não cabe num jogo balanceado
+por varredura. O `bubbleTicks` é contado em **meses** e não em segundos, ao contrário do
+`eventCardSeconds`: a bolha paga PAC, e regra de jogo não pode depender da velocidade escolhida.
+
+**O tempo de leitura do cartão (`eventCardSeconds`).** É o único número daqui medido em **segundos
+reais**, e a razão é o Modo Feira: a 4x um mês dura 0,375 s, e a janela antiga de 6 meses dava 2,25 s
+de cartão na tela contra um evento novo a cada 1,9 s. **O engine não lê esta chave** — quem converte
+segundos em meses, pela velocidade do relógio, é a tela (`§2.5`), como ela já fazia com o
+`inertiaNoticeLevels`.
+
 **As três chaves que não mexem no jogo (`turningPointYear`, `calmInertia` e `rankingSize`).** São
 as únicas chaves daqui que nada no engine lê durante a partida — mudá-las não altera uma vírgula de
 uma simulação. Moram aqui mesmo assim porque a regra 8 vale para todo número ajustável. As duas
@@ -486,6 +584,10 @@ Todo ajuste de balanceamento vira uma linha em `docs/BALANCEAMENTO.md`: **valor 
 - Contraste mínimo AA (4.5:1) em todo texto.
 - Fonte mínima 16px; o jogo será visto de pé, numa feira, de longe.
 - Todo painel navegável por teclado; `Esc` sempre fecha.
+- **Nenhuma mecânica exige acertar um alvo com prazo.** As bolhas de PAC do `§2.2` somem sozinhas, e
+  um alvo que some é hostil para quem navega por teclado — o Tab chegaria nele depois. A tecla `B`
+  recolhe todas as bolhas da mesa de uma vez, e é a mesma função que o engine usa; sem ela, a fatia
+  de renda do `bubbleShare` seria inalcançável sem mouse.
 - Tooltip em tudo que tem número.
 - **Partida de demonstração da feira cabe em ~5 minutos** (modo rápido). Ninguém vai jogar 40 minutos no estande.
 

@@ -13,11 +13,11 @@
 //      duas conhece `requestAnimationFrame`: quem mede o tempo do quadro é a UI,
 //      que passa o resultado para cá. O engine não sabe que existe uma tela (§3).
 
+import { advanceBubbles, automaticPointsPerTick } from './bubbles';
 import { advanceClimate } from './climate';
 import { advanceEvents } from './events';
 import { recordSnapshot } from './history';
 import { advanceInertia } from './inertia';
-import { pointsPerYear } from './skills';
 import { balance, REGION_IDS, type GameState, type Region, type RegionId } from './state';
 
 /** Ticks de uma partida inteira: 75 anos × 12 meses. */
@@ -106,7 +106,11 @@ export function advanceTick(state: GameState): GameState {
     year: yearForTick(nextTick),
     // A entrada de PAC não é mais constante: o ramo Sociedade a aumenta, e por
     // isso ela é lida do estado a cada mês em vez de ser uma constante do módulo.
-    actionPoints: state.actionPoints + pointsPerYear(state) / balance.ticksPerYear,
+    //
+    // **E não é mais a renda inteira** (INTER-03): o `bubbleShare` do
+    // balance.json leva uma fatia dela para as bolhas do mapa, que o jogador
+    // recolhe ou perde. A renda total não mudou — mudou onde ela aparece.
+    actionPoints: state.actionPoints + automaticPointsPerTick(state),
     regions: decaySupport(afterClimate.regions),
   };
 
@@ -133,7 +137,13 @@ export function advanceTick(state: GameState): GameState {
   //
   // É também a ordem que o protótipo do P3-05 mediu, aplicando a regra por fora
   // do engine entre um `advanceTick` e o seguinte.
-  return advanceInertia(afterEvents);
+  const afterInertia = advanceInertia(afterEvents);
+
+  // As bolhas por último, e a ordem aqui não é regra: o valor delas sai do
+  // `pointsPerYear`, que depende dos nós comprados e não do que este mês fez
+  // (INTER-03). Ficam no fim porque é onde elas atrapalham menos a leitura das
+  // três regras acima, que têm ordem obrigatória.
+  return advanceBubbles(afterInertia);
 }
 
 // ------------------------------------------------- relógio de tempo real ---

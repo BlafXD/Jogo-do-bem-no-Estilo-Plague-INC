@@ -15,9 +15,10 @@
 // quadro depois da pausa entregar o intervalo inteiro de uma vez.
 
 import { achievementsEarned } from './engine/achievements';
+import { claimAllBubbles, claimBubble } from './engine/bubbles';
 import { contain } from './engine/inertia';
 import { isFinished } from './engine/outcome';
-import { canUnlock, skillById, unlockSkill } from './engine/skills';
+import { canUnlock, skillById, synergiesEarned, unlockSkill } from './engine/skills';
 import {
   createInitialState,
   skills,
@@ -63,8 +64,13 @@ import {
 } from './ui/event-cards';
 import { hudView, mountHud, renderHud } from './ui/hud';
 import { prependBrandMark } from './ui/icons';
+import { createFeed, feedRegions, updateFeed, type EventFeed } from './ui/event-feed';
+import { bubblesView, bubblesWorth, renderBubbles } from './ui/bubbles';
+import { coachView, mountCoach, renderCoach } from './ui/coach';
 import { crossedLevel, updateNotices, type InertiaNotice } from './ui/inertia-notices';
-import { focusRegion, mapView, mountMap, renderMap } from './ui/map';
+import { bubbleHost, coachHost, focusRegion, mapView, mountMap, renderMap } from './ui/map';
+import { mountQuickBuy, quickBuyView, renderQuickBuy } from './ui/quick-buy';
+import { mountSynergy, renderSynergy, synergyView } from './ui/synergy';
 import { mergeAchievements } from './ui/achievements';
 import {
   achievementsButtonView,
@@ -151,7 +157,9 @@ import { focusClose, mountTreePanel, renderTreePanel, treePanelView } from './ui
 import './ui/theme.css';
 import './ui/achievements-panel.css';
 import './ui/character-select.css';
+import './ui/bubbles.css';
 import './ui/characters.css';
+import './ui/coach.css';
 import './ui/contain.css';
 import './ui/fly.css';
 import './ui/critical-card.css';
@@ -162,11 +170,13 @@ import './ui/icons.css';
 import './ui/layout.css';
 import './ui/map.css';
 import './ui/outcome.css';
+import './ui/quick-buy.css';
 import './ui/region-panel.css';
 import './ui/screens.css';
 import './ui/session.css';
 import './ui/skip-link.css';
 import './ui/stripes.css';
+import './ui/synergy.css';
 import './ui/timeline-chart.css';
 import './ui/title.css';
 import './ui/toast.css';
@@ -209,6 +219,7 @@ const eventos = required('#eventos');
 const mapa = required('#mapa');
 const regiao = required('#regiao');
 const contencao = required('#contencao');
+const sinergias = required<HTMLElement>('#sinergias');
 const tree = required<HTMLElement>('#arvore');
 const telaTitulo = required<HTMLElement>('#tela-titulo');
 // A tela de escolha do especialista (REF-08).
@@ -226,6 +237,7 @@ const palco = required<HTMLElement>('.tabuleiro__palco');
 const base = required<HTMLElement>('#base');
 const listras = required<HTMLElement>('#listras');
 const atalhoArvore = required<HTMLElement>('#atalho-arvore');
+const compraRapida = required<HTMLElement>('#compra-rapida');
 const painelArvore = required<HTMLElement>('#painel-arvore');
 const detalheNo = required<HTMLElement>('#detalhe-no');
 // O cartão central do evento crítico (VIS-07).
@@ -283,6 +295,16 @@ let autoPaused = false;
  * src/ui/inertia-notices.ts.
  */
 let inertiaNotices: readonly InertiaNotice[] = [];
+
+/**
+ * O boletim do clima e a janela de leitura dele (INTER-01).
+ *
+ * Como os avisos acima, é estado da tela: não entra no save, e uma partida
+ * carregada começa com o boletim vazio. Quem o mantém é o laço de quadro, que é
+ * o único lugar daqui que sabe a velocidade do relógio — e a velocidade é o que
+ * decide quantos meses valem os `eventCardSeconds`.
+ */
+let eventFeed: EventFeed = createFeed();
 
 /**
  * A região escolhida no mapa (P5-01), ou nenhuma.
@@ -558,7 +580,7 @@ function handleToggleSound(): void {
 
 /** Os cartões de evento e o aviso de auto-pausa. */
 function renderEvents(): void {
-  renderEventCards(eventos, eventCardsView(state, autoPaused, inertiaNotices));
+  renderEventCards(eventos, eventCardsView(state, autoPaused, inertiaNotices, eventFeed));
 }
 
 /**
@@ -598,7 +620,14 @@ function checkAutoPause(): void {
  * quebrar, porque nada erraria em voz alta.
  */
 function renderSelection(): void {
-  renderMap(mapa, mapView(state, selectedRegion));
+  // O chip de evento no mapa sai da janela do boletim, e não do `activeEvents`
+  // (INTER-01): a notícia e o lugar dela entram e saem de cena juntos.
+  renderMap(mapa, mapView(state, selectedRegion, feedRegions(eventFeed)));
+  // As bolhas de PAC (INTER-04) pousam na camada que o mountMap deixou no palco.
+  renderBubbles(bubbleHost(mapa), bubblesView(state), handleClaimBubble);
+  // A linha do conselho (INTER-07) cala com o painel do Modo Feira no ar: os
+  // dois pousam no mesmo canto do mapa, e o painel já diz o que fazer.
+  renderCoach(coachHost(mapa), coachView(state, showsPanel(tutorial)));
   renderRegionPanel(regiao, regionPanelView(state, selectedRegion));
 }
 
@@ -626,6 +655,59 @@ function handleSelect(id: RegionId): void {
  * atravessar o HUD, a barra de tempo e os cartões de evento de novo para voltar
  * ao mapa — que é onde a pessoa estava.
  */
+/**
+ * Recolher uma bolha de PAC (INTER-04).
+ *
+ * Mesmo padrão do `handleUnlock` e do `handleContain`: a UI manda recolher e
+ * olha o que voltou. Recusada — a bolha já tinha sumido, ou dois cliques
+ * chegaram na mesma —, o `claimBubble` devolve **o mesmo objeto**, e a
+ * comparação por identidade desiste sem redesenhar nada.
+ *
+ * **Sem som, de propósito.** O contrato do `[D-Musica]` tem seis efeitos, todos
+ * com dono (P7-09), e uma partida tem 150 bolhas: um som por clique enterraria o
+ * alerta de evento crítico, que é o único que precisa ser ouvido. O retorno
+ * sonoro desta mecânica é o "+X PAC" subindo, que é visual e já existia.
+ *
+ * **Salva na hora**, como a compra: é PAC entrando no caixa, e o jogador não
+ * deveria perdê-lo por fechar a aba no mês seguinte.
+ */
+function handleClaimBubble(key: string): void {
+  if (isFinished(state)) return;
+
+  const next = claimBubble(state, key);
+  if (next === state) return;
+
+  const gained = next.actionPoints - state.actionPoints;
+  state = next;
+  renderGame();
+  floatGain(
+    hud.querySelector('[data-hud="actionPoints"]'),
+    ui.bubbles.claim(String(Math.round(gained))),
+  );
+  persist();
+}
+
+/**
+ * O atalho que recolhe **todas** as bolhas da mesa (INTER-04).
+ *
+ * É o caminho sem mouse, e ele não é cortesia: a bolha é um alvo com prazo, e o
+ * §5 do GDD não aceita uma mecânica de renda que só exista para quem acerta um
+ * clique em quatro segundos e meio. O engine atende com o `claimAllBubbles`, a
+ * mesma função que as partidas de referência do balanceamento usam.
+ */
+function handleClaimAll(): void {
+  if (isFinished(state) || state.bubbles.length === 0) return;
+
+  const worth = bubblesWorth(state);
+  state = claimAllBubbles(state);
+  renderGame();
+  floatGain(
+    hud.querySelector('[data-hud="actionPoints"]'),
+    ui.bubbles.claim(String(Math.round(worth))),
+  );
+  persist();
+}
+
 function handleCloseRegion(): void {
   const closing = selectedRegion;
   if (closing === null) return;
@@ -749,6 +831,7 @@ function handleFair(character: CharacterId): void {
   shownTick = state.tick;
   pausedForTick = state.tick;
   inertiaNotices = [];
+  eventFeed = createFeed();
   autoPaused = false;
 
   tutorial = createTutorial('fair');
@@ -790,6 +873,7 @@ function handleBackToTitle(): void {
   shownTick = state.tick;
   pausedForTick = state.tick;
   inertiaNotices = [];
+  eventFeed = createFeed();
   autoPaused = false;
 
   renderGame();
@@ -906,7 +990,15 @@ function renderTreePanelAll(inGame: boolean, finished: boolean): void {
   renderTree(tree, view, chosenSkill);
   renderSkillDetail(detalheNo, skillDetailView(view, chosenSkill, finished));
   renderContain(contencao, containView(state));
+  // As sinergias (INTER-08) são redesenhadas junto da contenção: as duas moram
+  // na mesma coluna do painel e respondem à mesma pergunta — o que fazer com o
+  // PAC.
+  renderSynergy(sinergias, synergyView(state));
   renderTreeButton(atalhoArvore, treeButtonView(state), panel.open);
+  // A prateleira de compra rápida (INTER-06) acompanha o botão: os dois leem a
+  // mesma pergunta do engine ("o que cabe no caixa agora"), e separá-los em dois
+  // lugares do render seria o jeito de eles discordarem.
+  renderQuickBuy(compraRapida, quickBuyView(state), handleUnlock);
   renderTreePanel(painelArvore, panel);
 
   // A árvore e a contenção ficam apagadas depois do fim. O `data-finished` só
@@ -1090,6 +1182,7 @@ function handleReset(character: CharacterId | null): void {
   shownTick = state.tick;
   pausedForTick = state.tick;
   inertiaNotices = [];
+  eventFeed = createFeed();
 
   // Um reinício desfaz a **auto**-pausa, e só ela. A pausa que o jogador pediu
   // continua valendo — é a regra que o controls.ts registra, e ela não muda
@@ -1120,6 +1213,7 @@ function handleUnlock(id: SkillId): void {
   // caminho até este clique é curto: basta a tecla Tab.
   if (isFinished(state)) return;
 
+  const before = state;
   const next = unlockSkill(state, id);
   // A recusa tem som próprio desde o P7-09. Até ali ela era calada, porque o
   // único som de compra soaria igual para o nó caro demais e para o que deu
@@ -1140,11 +1234,20 @@ function handleUnlock(id: SkillId): void {
   // vê o PAC saindo do bolso. Puro enfeite, depois do render — o número certo já
   // está escrito. O saldo do painel é o alvo porque o HUD fica atrás do fundo
   // escurecido enquanto a árvore está aberta.
-  flyCost(
-    detalheNo.querySelector('[data-detail="buy"]'),
-    painelArvore.querySelector('[data-tree-panel="points"]'),
-    `−${ui.tree.cost(String(spent))}`,
-  );
+  //
+  // **Os dois pontos do trajeto dependem de onde o clique nasceu** (INTER-06):
+  // comprando no painel, o custo voa do botão de comprar até o saldo do painel;
+  // comprando na prateleira da barra de baixo, ele voa do botão da prateleira
+  // até o indicador de PAC do HUD, que ali está à vista. O `flyCost` já desiste
+  // calado quando o elemento de partida está escondido, mas desistir calado nas
+  // duas compras seria perder o enfeite justamente na mais frequente.
+  const from = treeOpen
+    ? detalheNo.querySelector('[data-detail="buy"]')
+    : compraRapida.querySelector(`[data-skill="${id}"]`);
+  const to = treeOpen
+    ? painelArvore.querySelector('[data-tree-panel="points"]')
+    : hud.querySelector('[data-hud="actionPoints"]');
+  flyCost(from, to, `−${ui.tree.cost(String(spent))}`);
   // O pop-up de efeito (pedido no chat em 2026-10-26, "estilo Plague Inc"): o
   // que o nó acabou de mudar na partida, com o mesmo texto do detalhe — nada
   // inventado para a ocasião. `skillById` nunca devolve `undefined` aqui: o
@@ -1152,6 +1255,12 @@ function handleUnlock(id: SkillId): void {
   const skill = skillById(id);
   if (skill !== undefined)
     showToast(ui.toast.unlocked, ui.toast.effect(skill.name, skill.description));
+  // E, se a compra fechou uma sinergia (INTER-08), ela ganha o próprio pop-up:
+  // é um bônus que não saiu do nó comprado, e dizer isso no mesmo cartão do nó
+  // faria o jogador atribuir ao nó um efeito que não é dele.
+  for (const synergy of synergiesEarned(before, state)) {
+    showToast(ui.synergy.earned, ui.toast.effect(synergy.name, synergy.description));
+  }
   // Salva na hora, sem esperar o mês virar: a compra é a decisão que o jogador
   // mais lamentaria perder, e é justamente depois de clicar num nó caro que dá
   // vontade de fechar a aba.
@@ -1199,10 +1308,15 @@ mountStripes(listras);
 // O botão da barra de baixo abre o painel da árvore (VIS-05), pelo mesmo
 // caminho do link de pulo.
 mountTreeButton(atalhoArvore, painelArvore.id, openTree);
+mountQuickBuy(compraRapida);
 mountEventCards(eventos);
 mountMap(mapa, mapView(state, selectedRegion), handleSelect);
+// Depois do mapa: a linha do conselho (INTER-07) mora dentro do quadro dele, e
+// o anfitrião só existe depois do mountMap.
+mountCoach(coachHost(mapa));
 mountRegionPanel(regiao, handleCloseRegion);
 mountContain(contencao, handleContain);
+mountSynergy(sinergias);
 // O "Jogar de novo" do cartão vai direto ao reinício, sem os dois cliques que a
 // barra da partida exige. Os dois passos de lá existem para proteger vinte
 // minutos de jogo em curso; aqui não há mais partida para destruir.
@@ -1430,6 +1544,18 @@ document.addEventListener('keydown', (event) => {
   // tem o `1`, que agora funciona ali.
   if (activatesFocusedButton(event.key) && event.target instanceof HTMLButtonElement) return;
 
+  // O atalho das bolhas (INTER-04), antes dos atalhos de tempo: é uma tecla de
+  // letra, não colide com nenhum deles, e precisa valer com o jogo pausado —
+  // quem pausou para ler o boletim não deveria perder a bolha por isso.
+  if (event.key.toLowerCase() === ui.bubbles.key) {
+    const screen = currentScreen(screens, isFinished(state));
+    if (screen !== 'game') return;
+
+    event.preventDefault();
+    handleClaimAll();
+    return;
+  }
+
   const command = commandForKey(event.key);
   if (command === null) return;
 
@@ -1489,7 +1615,12 @@ function frame(now: number): void {
   // O aviso novo tem som próprio (P7-09), e só ele: a Inércia age a cada seis
   // meses, mas só avisa quando passa de um nível.
   if (state.tick !== before.tick) {
-    inertiaNotices = updateNotices(inertiaNotices, before, state);
+    // O boletim antes dos avisos: os dois usam a mesma janela, e é o boletim que
+    // a calcula a partir da velocidade escolhida. **A velocidade escolhida, e
+    // não a efetiva**: pausar não encurta o tempo de leitura de quem pausou
+    // justamente para ler.
+    eventFeed = updateFeed(eventFeed, state, control.speed);
+    inertiaNotices = updateNotices(inertiaNotices, before, state, eventFeed.hold);
     if (crossedLevel(before.inertia, state.inertia) !== null) playSfx(sound, 'inertia');
   }
 

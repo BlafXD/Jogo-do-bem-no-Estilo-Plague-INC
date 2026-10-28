@@ -523,17 +523,29 @@ describe('o botão da árvore na barra de baixo (VIS-04, VIS-05)', () => {
   });
 
   /**
-   * O nome acessível é o texto do botão. Sem o espaço entre os dois pedaços, o
-   * leitor de tela leria "habilidades120".
+   * O nome acessível é o texto do botão. Sem o espaço entre os pedaços, o leitor
+   * de tela leria "habilidades120" — e, desde o INTER-06, "PAC5 prontos".
    */
-  it('diz o que é e quanto PAC há, com espaço entre os dois', () => {
+  it('diz o que é, quanto PAC há e quantos nós cabem, com espaço entre eles', () => {
     const root = montarBotao();
+    const view = treeButtonView(rich(120));
 
-    renderTreeButton(root, treeButtonView(rich(120)));
+    renderTreeButton(root, view);
 
-    expect(botao(root)?.textContent).toBe(
-      `${ui.treeButton.label} ${treeButtonView(rich(120)).points}`,
-    );
+    expect(botao(root)?.textContent).toBe(`${ui.treeButton.label} ${view.points} ${view.ready}`);
+    // Com 120 PAC há nós ao alcance, então o selo do INTER-06 está na frase.
+    expect(view.ready).not.toBe('');
+  });
+
+  /** Sem nada ao alcance, o selo some e o texto volta a ser o de antes. */
+  it('sem nó ao alcance, o botão diz só o que é e quanto PAC há', () => {
+    const root = montarBotao();
+    const view = treeButtonView(rich(0));
+
+    renderTreeButton(root, view);
+
+    expect(view.ready).toBe('');
+    expect(botao(root)?.textContent?.trim()).toBe(`${ui.treeButton.label} ${view.points}`);
   });
 
   it('atualiza o saldo sem recriar o botão', () => {

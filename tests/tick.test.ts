@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+
+import { claimAllBubbles } from '../src/engine/bubbles';
 import {
   advanceRealTime,
   advanceTick,
@@ -21,6 +23,24 @@ function run(ticks: number, seed = 2025): GameState {
   let state = createInitialState(seed);
   for (let i = 0; i < ticks; i++) {
     state = advanceTick(state);
+  }
+  return state;
+}
+
+/**
+ * A mesma partida, de quem **joga olhando o mapa**: o mês passa e as bolhas de
+ * PAC são recolhidas no mesmo instante (INTER-03).
+ *
+ * Existe porque a renda passou a chegar por dois caminhos — o `bubbleShare` do
+ * balance.json aparece em cima de uma região e expira se ninguém a recolher.
+ * Quem mede PAC tem de dizer **qual dos dois jogadores** está medindo, e o
+ * jogador de referência deste projeto é quem joga bem (docs/BALANCEAMENTO.md).
+ * A partida de quem ignora as bolhas é medida no tests/bubbles.test.ts.
+ */
+function runCollecting(ticks: number, seed = 2025): GameState {
+  let state = createInitialState(seed);
+  for (let i = 0; i < ticks; i++) {
+    state = claimAllBubbles(advanceTick(state));
   }
   return state;
 }
@@ -90,10 +110,13 @@ describe('advanceTick', () => {
    */
   it('acumula um ano de PAC a cada doze ticks, menos o que os eventos cobram', () => {
     // Doze meses, nenhum evento com custo de PAC ainda: a entrada de base, limpa.
-    expect(run(balance.ticksPerYear).actionPoints).toBeCloseTo(balance.basePointsPerYear, 6);
+    expect(runCollecting(balance.ticksPerYear).actionPoints).toBeCloseTo(
+      balance.basePointsPerYear,
+      6,
+    );
 
-    // Três anos: 138 de entrada menos 7,5 que os eventos levaram.
-    const tresAnos = run(balance.ticksPerYear * 3).actionPoints;
+    // Três anos: 138 de entrada menos o que os eventos levaram.
+    const tresAnos = runCollecting(balance.ticksPerYear * 3).actionPoints;
 
     expect(tresAnos).toBeCloseTo(130.5, 6);
     expect(tresAnos).toBeLessThan(balance.basePointsPerYear * 3);
@@ -272,8 +295,10 @@ describe('o fim da partida', () => {
     // caixa é menos, porque desde o P7-01 alguns eventos custam PAC — é o
     // `impact.points` do §2.5. Sem essa diferença, o campo seria decorativo.
     const gross = balance.basePointsPerYear * 75;
-    expect(end.actionPoints).toBeLessThan(gross);
-    expect(end.actionPoints).toBeGreaterThan(gross / 2);
+    const played = runCollecting(TOTAL_TICKS).actionPoints;
+
+    expect(played).toBeLessThan(gross);
+    expect(played).toBeGreaterThan(gross / 2);
   });
 });
 

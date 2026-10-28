@@ -105,6 +105,10 @@
       <div id="base" class="base">
         <div id="controles" class="ctl"></div>
         <div id="listras" class="stripes"></div>
+        <!-- A prateleira de compra rápida (INTER-06): os nós mais baratos ao
+             alcance do caixa, para comprar sem abrir o painel. Vazia, ela sai da
+             tela sozinha (src/ui/quick-buy.ts). -->
+        <div id="compra-rapida" class="quick-buy" hidden></div>
         <div id="atalho-arvore" class="base__arvore"></div>
       </div>
 
@@ -126,6 +130,10 @@
           <div class="tree-panel__side">
             <section id="detalhe-no" class="skill-detail"></section>
             <section id="contencao" class="contain"></section>
+            <!-- As sinergias (INTER-08): bônus que nenhum nó dá sozinho, com o
+                 que falta para cada uma. Não tem botão — a sinergia não se
+                 compra, se cumpre (src/ui/synergy.ts). -->
+            <section id="sinergias" class="synergy"></section>
           </div>
         </div>
       </div>

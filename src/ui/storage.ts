@@ -34,6 +34,8 @@ const REFUSAL_MESSAGES: Readonly<Record<SaveRefusal, string>> = {
   badCharacter: 'o save cita um personagem que não existe.',
   badRegions: 'as regiões do save não fecham.',
   badSkills: 'o save cita uma habilidade que não existe mais na árvore.',
+  badEvents: 'um cartão de evento do save está malformado ou com pedágio inválido.',
+  badBubbles: 'uma bolha de PAC do save está malformada ou vale mais do que poderia.',
   badHistory: 'a linha do tempo do save está incompleta ou fora de ordem.',
 };
 

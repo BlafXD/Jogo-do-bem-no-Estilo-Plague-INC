@@ -28,6 +28,84 @@ Regras curtas:
 
 ---
 
+## 2026-10-28 — Bolhas de PAC, evento legível, compra fora do painel e sinergias (épico INTER, completo)
+
+- **Parte / tarefa:** `INTER-01` a `INTER-08` ✔. Épico aberto e fechado na mesma sessão, pedido no
+  chat. Suíte **1138 → 1261**; 18 arquivos novos (6 de engine/UI, 7 de teste, 1 de dados, 4 de CSS).
+- **Do chat, antes de começar:** o pedido foi "deixar o jogo mais interativo", com quatro partes —
+  o jogador precisa **entender o que está acontecendo**, a árvore precisa de **mais bônus**, não dá
+  para ter que **abrir o painel toda hora**, e os eventos "aparecem muito rápido e sem sentido",
+  **principalmente no Modo Feira**. Mais o pedido explícito: "uns pop-up em cada país que dá um
+  bônus do PAC", como as bolhas de DNA do *Plague Inc*. A resposta foi um épico de 8 tarefas
+  proposto no chat e **autorizado em bloco** ("permissão completa para agir com o plano INTER"),
+  junto com as duas coisas que ele exigia: subir o `SAVE_VERSION` 3 → 4 e editar o `docs/GDD.md`.
+- **O diagnóstico que abriu o épico, com número.** No Modo Feira o jogo roda a 4x, e um mês dura
+  0,375 s: o cartão de evento, que vivia 6 meses, ficava **2,25 s na tela**, com um evento novo
+  caindo a cada **1,9 s**. E "sem sentido" tinha causa documentada: o cartão não dizia o que o
+  evento tinha feito — a dívida que o `docs/GDD.md §2.5` registrou em nome do `P7-04`.
+- **O que mudou:**
+  - `src/ui/event-feed.ts` (novo) — o boletim ganhou memória própria, com a janela medida em
+    **segundos reais** (`eventCardSeconds`) e convertida em meses pela velocidade: 6 a 1x, 22 a 4x,
+    teto de 4 cartões. O `mapView` passou a receber as regiões do boletim, para o chip do mapa sair
+    de cena junto com o cartão que o explica.
+  - `src/engine/state.ts`, `events.ts`, `save.ts` — `EventToll` novo: o `applyEvent` guarda o que
+    **de fato** saiu de apoio, economia e PAC, e o cartão escreve "Cobrou: 1,0 de apoio · 3,0 de
+    economia · 5 PAC". **`SAVE_VERSION` 3 → 4**, e o `fromSave` passou a conferir os cartões um por
+    um — a dívida que o P7-01 tinha deixado ali.
+  - `src/engine/bubbles.ts` (novo) + `src/ui/bubbles.*` — as bolhas de PAC no mapa. **A renda foi
+    fatiada, não aumentada** (`bubbleShare` 0,25): quem recolhe tudo arrecada os mesmos 46 PAC/ano,
+    quem ignora o mapa arrecada 34,5. Cadência fixa (uma a cada 6 meses), região sorteada por um
+    **gerador próprio** derivado de `(seed, tick)` — foi isso que impediu a mecânica de deslocar
+    todos os sorteios de evento da partida. A tecla **B** recolhe todas (§5).
+  - `src/ui/quick-buy.*` (novo) e o selo "3 prontos" no botão da árvore — comprar sem abrir o
+    painel. Os dois leem o `readyToUnlock` novo do `skills.ts`: três telas faziam a mesma varredura.
+  - `src/ui/coach.*` (novo) — a linha do "faça isto agora", no topo do quadro do mapa, ordenada por
+    **quanto se perde esperando**: bolha → conter → apoio furado → comprar → esperar.
+  - `src/data/synergies.json` (novo) + `src/ui/synergy.*` — três bônus que **atravessam ramos**,
+    com a lista no painel da árvore.
+  - `docs/GDD.md` — §2.2 (as bolhas), §2.4 (as sinergias), §2.5 (o pedágio e o tempo de leitura),
+    §3 (`EventToll`, `Bubble`, `Synergy`, `SYNERGY_EFFECTS`, `ActiveEvent` escrito por extenso), §4
+    (as quatro chaves novas) e §5 (nenhuma mecânica exige acertar alvo com prazo).
+  - `docs/BALANCEAMENTO.md` — a seção do épico, com as cinco medições.
+- **Três decisões que a medição tomou no lugar do palpite:**
+  1. **A bolha não podia ser PAC novo.** O `REF-09` mediu que 48 PAC/ano desfazem o dilema do §2.6.
+     Fatiar a renda manteve o teto de pé e transformou a mecânica em prêmio por atenção.
+  2. **O sorteio por mês foi trocado por cadência fixa.** Ele entregou 8 bolhas em 3 anos em vez de
+     6 (13,8 PAC a mais), e renda com variância não cabe num jogo balanceado por varredura.
+  3. **Nenhuma sinergia mexe na curva de emissão.** Com um corte de 0,5%/ano, a sinergia inverteu a
+     ordem das quatro estratégias do §4 — investir em Sociedade cedo passou a terminar mais frio que
+     ignorá-la, e largura virou jogada dominante. O `SYNERGY_EFFECTS` recusa efeito contínuo na
+     carga, para a armadilha não voltar escrita por engano daqui a um mês.
+- **Duas correções que só a tela achou** (Edge headless, 1600 × 900 e 1280 × 720):
+  - a bolha anunciava "+5 PAC" e movia o HUD de 78 para 84, porque o rótulo arredondava para baixo
+    como o PAC do HUD — mas ali o número é **ganho**, não saldo;
+  - a prateleira de compra rápida mostrava 3 nós e quebrava a barra de baixo em três linhas a 1600
+    px; a 1280 px os nomes sumiam. São **2**, e **1** abaixo de 96rem.
+- **Como verificar:**
+  ```bash
+  npx vitest run --maxWorkers=2   # 1261 testes; ver "Pendente" sobre o --maxWorkers
+  npm run dev                     # Modo Feira: a bolha aparece no 3º mês e vale +6 PAC;
+                                  # o cartão de evento diz "Cobrou:"; a barra de baixo
+                                  # tem "Comprar agora"; o painel da árvore tem "Sinergias"
+  ```
+  **Conferido no Edge headless, no jogo de verdade**, em 1600 × 900 e 1280 × 720: bolha clicada
+  (78 → 84 PAC), compra pela prateleira, cartão com pedágio, chip no mapa acompanhando o cartão,
+  lista de sinergias com progresso, e **nenhum erro no console**.
+- **Pendente:**
+  - **A janela de perdão encolheu de novo**, e desta vez em troca de bônus: largar o controle em
+    2060 deixou de matar, e a fronteira caiu para entre 2052 e 2055. A alavanca para devolvê-la é a
+    escala de medalhas do §2.7, não a Inércia — é do `P8-02`, com playtest.
+  - **O `npm test` padrão estoura a memória do Node nesta máquina** e derruba de 6 a 14 workers em
+    silêncio (o relatório fecha com "983 passed" em vez de 1261, sem nenhum teste vermelho). Com
+    `--maxWorkers=2` a suíte roda inteira. Não é código deste épico — é a máquina —, mas vale pôr o
+    `maxWorkers` no `vite.config.ts` para ninguém levar um verde falso.
+  - O tutorial dos 4 passos **não ganhou um passo sobre as bolhas**: quem ensina é a linha do
+    conselho, que aparece no 3º mês. Se o playtest mostrar que não basta, é um passo a mais.
+  - A `RANK-02` continua aberta — foi o único item do backlog que este épico não tocou.
+- **Evidência:** —
+
+---
+
 ## 2026-10-26 — Pop-ups, resumo da feira e mais vida na árvore (épico FEEDBACK, completo)
 
 - **Parte / tarefa:** `FEEDBACK-01` a `FEEDBACK-06` ✔. Épico aberto e fechado na mesma sessão, pedido
